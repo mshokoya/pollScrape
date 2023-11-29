@@ -36,8 +36,12 @@ const el = (document) => ({
   }
 })
 
+export const visitApollo = async (scraper) => {
+  await scraper.visit("https://app.apollo.io")
+  await page.waitForNavigation();
+}
+
 export const apolloLogin = async (scraper, email, pass) => {
-  await scraper.visit("https://app.apollo.io/#/login")
   const page = scraper.page()
   emailInput = page.$('input[class="zp_bWS5y zp_J0MYa"][name="email"]');
   passInput = page.$('input[class="zp_bWS5y zp_J0MYa"][name="password"]');
@@ -47,7 +51,8 @@ export const apolloLogin = async (scraper, email, pass) => {
     emailInput.type(email)
     passInput.type(pass)
     await submitButton.click()
-    await page.waitForSelector(".zp-link .zp_OotKe .zp_Xfylg", { visible: true });
+    await page.waitForNavigation()
+    // await page.waitForSelector(".zp-link .zp_OotKe .zp_Xfylg", { visible: true });
     return true
   }
 
