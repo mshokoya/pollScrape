@@ -1,12 +1,13 @@
+// import {
+
+// } from './apollo';
 import {
+  scraper,
   apolloLogin,
   visitGoogle,
   goToApolloSearchUrl,
   apolloScrapePage,
   visitApollo
-} from './apollo';
-import {
-  scraper
 } from './scraper';
 import {
   getBrowserCookies,
@@ -69,6 +70,18 @@ const startApollo = async (scraper, cookies, email, pass) => {
 
 // 100 max pages
 
-const startScrape = (scraper, socket, db, url) => {
-
+const startScrape = (scraper, socket, db) => async (url) => {
+  // visit page
+  // check the amount of leads
+  // check the amount of paginations
+  // wait for table to render
+  // scrape table
+  // change page number in db
+  // close browser
+  // repeat
+  scraper.
 }
+
+
+// we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
+//remeber to check

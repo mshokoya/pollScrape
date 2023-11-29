@@ -36,6 +36,44 @@ export const scraper = () => {
   }
 }
 
+export const visitApollo = async (scraper) => {
+  await scraper.visit("https://app.apollo.io")
+  await page.waitForNavigation();
+}
+
+export const apolloLogin = async (scraper, email, pass) => {
+  const page = scraper.page()
+  emailInput = page.$('input[class="zp_bWS5y zp_J0MYa"][name="email"]');
+  passInput = page.$('input[class="zp_bWS5y zp_J0MYa"][name="password"]');
+  submitButton = page.$('button[class="zp-button zp_zUY3r zp_H_wRH"][type="submit"]');
+
+  if (emailInput && passInput && submitButton) {
+    emailInput.type(email)
+    passInput.type(pass)
+    await submitButton.click()
+    await page.waitForNavigation()
+    // await page.waitForSelector(".zp-link .zp_OotKe .zp_Xfylg", { visible: true });
+    return true
+  }
+
+  return false
+}
+
+export const goToApolloSearchUrl = async (scraper, apolloSearchURL) => {
+  const page = await scraper.visit(apolloSearchURL);
+  await page.waitForSelector(".zp_RFed0", { visible: true });
+  // await page.waitForSelector(".zp-link .zp_OotKe .zp_LdIJ3 .zp_FvOcf .zp_FvOcf", { visible: true });
+}
+
+// export const apolloScrapePage = async (scraper) => {
+//   const page = scraper.page()
+//   const data = await page.evaluate(async () => {
+//     const data = await scrapeSinglePage(doc);
+//     return data
+//   });
+
+//   console.log(data)
+// }
+
 
 // ======================================
-
