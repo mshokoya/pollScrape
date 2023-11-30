@@ -16,6 +16,9 @@ import {
   apolloLoggedInURLSubstr,
   apolloLoggedOutURLSubstr
 } from './util'
+import {
+  selectAccForScrapingFILO
+} from "../db/util";
 import useProxy from 'puppeteer-page-proxy';
 
 
@@ -73,34 +76,21 @@ const startApollo = async (scraper, cookies, email, pass) => {
 
 
 
-const startScraping = (scraper, socket, db, browserConf) => async (urlList) => {
-
-  // {
-  //   domain: String,
-  //   accountType: String,
-  //   isSuspended: Boolean,
-  //   accountDetails: {
-  //     username: String,
-  //     password: String
-  //   },
-  //   cookies: String,
-  //   proxy: String,
-  // }
-
-  // {
-  //   url: String,
-  //   name: String,
-  //   page: String,
-  //   scrape: {
-  //     type: Map,
-  //     of: String
-  //   }
-  // }
+const startScraping = (scraper, socket, db, browserConf) => async (url) => {
+  
+  // for both methods, if does not exist (url *without page query* cannot be found) then create skelenton in db
+  const ai = await db.siteMetaData.getSiteMetaData(url);
+  const ad = await db.apolloData.getData(url);
 
   for (let link of urlList) {
     const p = scraper.page();
-    const user = db.getUser();
+
+    const allUsers = await db.account.getAllUses();
+    const user = selectAccForScrapingFILO(allUsers);
+
     const proxy = browserConf.proxies.getProxy(user);
+
+    
 
     await useProxy(p, proxy);
 
