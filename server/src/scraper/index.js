@@ -1,6 +1,3 @@
-// import {
-
-// } from './apollo';
 import {
   scraper,
   apolloLogin,
@@ -13,12 +10,15 @@ import {
   getBrowserCookies,
   setBrowserCookies,
   visitGoogle,
-  apolloLoggedInURLSubstr,
   apolloLoggedOutURLSubstr
 } from './util'
 import {
   selectAccForScrapingFILO
 } from "../db/util";
+import {
+  savePageScrapeToDB,
+  initApolloSkeletonInDB
+} from '../db/actions';
 import useProxy from 'puppeteer-page-proxy';
 
 
@@ -36,6 +36,55 @@ const startApollo = async (scraper, cookies, email, pass) => {
     await apolloLogin(s, email, pass)
   } 
 }
+
+
+//TODO work on page changing
+//TODO get cookies from db an add to browser
+//TODO proxy rotation
+// start apollo should use url
+const startScraping = (scraper, socket, db, browserConf) => async (url) => {
+  // for both methods, if does not exist (url *without page query* cannot be found) then create skelenton in db
+  await initApolloSkeletonInDB(url)
+
+  for (let link of urlList) {
+    const p = scraper.page();
+
+    const allUsers = await db.account.getAllUses();
+    const user = selectAccForScrapingFILO(allUsers);
+
+    const proxy = browserConf.proxies.getProxy(user);
+
+    await useProxy(p, proxy);
+
+    await startApollo(scraper, user.cookies); 
+    await goToApolloSearchUrl(scraper, link);
+    const data = await apolloScrapePage(scraper);
+
+    const cookies = await getBrowserCookies(p);
+
+    await savePageScrapeToDB(user._id, cookies);
+
+    await useProxy(p, null);
+  }
+
+  //loop
+    // reset browser (delete all cookies, go to google, change ip)
+    // from db get all apollo accs & select the 
+    // startApollo(scraper, cookies, email, pass)
+    // visit page
+    // check the amount of leads
+    // check the amount of paginations
+    // wait for table to render
+    // scrape table
+    // change page number in db
+    // update time last used
+    // close browser or reset browser?
+    // repeat
+}
+
+
+// we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
+//remeber to check
 
 // page
 // &page=1
@@ -73,50 +122,3 @@ const startApollo = async (scraper, cookies, email, pass) => {
 // 25 rows per table
 
 // 100 max pages
-
-
-
-const startScraping = (scraper, socket, db, browserConf) => async (url) => {
-  
-  // for both methods, if does not exist (url *without page query* cannot be found) then create skelenton in db
-  const ai = await db.siteMetaData.getSiteMetaData(url);
-  const ad = await db.apolloData.getData(url);
-
-  for (let link of urlList) {
-    const p = scraper.page();
-
-    const allUsers = await db.account.getAllUses();
-    const user = selectAccForScrapingFILO(allUsers);
-
-    const proxy = browserConf.proxies.getProxy(user);
-
-    
-
-    await useProxy(p, proxy);
-
-    await startApollo(scraper, user.cookies);
-    await goToApolloSearchUrl(scraper, link);
-    const data = await apolloScrapePage(scraper);
-    await db.addDataToDB(data);
-
-    await useProxy(p, null);
-  }
-
-  //loop
-    // reset browser (delete all cookies, go to google, change ip)
-    // from db get all apollo accs & select the 
-    // startApollo(scraper, cookies, email, pass)
-    // visit page
-    // check the amount of leads
-    // check the amount of paginations
-    // wait for table to render
-    // scrape table
-    // change page number in db
-    // update time last used
-    // close browser or reset browser?
-    // repeat
-}
-
-
-// we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
-//remeber to check
