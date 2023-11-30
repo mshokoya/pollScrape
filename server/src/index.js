@@ -7,6 +7,9 @@ const app = express();
 const server = createServer();
 const io = socketIO(server);
 
+//  free proxies
+// https://proxyscrape.com/free-proxy-list
+
 
 io.on('connection', (socket) => {
   console.log('A user connected');
