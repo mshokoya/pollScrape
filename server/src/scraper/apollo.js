@@ -37,7 +37,7 @@ const el = (document) => ({
 })
 
 // ==============================
-const scraperStatus = (() => {
+export const scraperStatus = (() => {
   let shouldContinueRunning = true;
 
   return {

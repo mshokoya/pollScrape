@@ -27,6 +27,7 @@ export const scraper = () => {
     visit: async (url) => {
       const v = await browser.goto(url);
       page = v
+      return page;
     },
     close: async () => {
       await browser.close();
@@ -65,15 +66,16 @@ export const goToApolloSearchUrl = async (scraper, apolloSearchURL) => {
   // await page.waitForSelector(".zp-link .zp_OotKe .zp_LdIJ3 .zp_FvOcf .zp_FvOcf", { visible: true });
 }
 
-// export const apolloScrapePage = async (scraper) => {
-//   const page = scraper.page()
-//   const data = await page.evaluate(async () => {
-//     const data = await scrapeSinglePage(doc);
-//     return data
-//   });
-
-//   console.log(data)
-// }
+export const apolloScrapePage = async (scraper) => {
+  const page = scraper.page()
+  const data = await page.evaluate(async () => {
+    const data = await scrapeSinglePage(doc);
+    return data
+  });
+  console.log('apolloScrapePage');
+  console.log(data);
+  return data;
+}
 
 
 // ======================================

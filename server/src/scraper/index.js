@@ -16,6 +16,7 @@ import {
   apolloLoggedInURLSubstr,
   apolloLoggedOutURLSubstr
 } from './util'
+import useProxy from 'puppeteer-page-proxy';
 
 
 const startApollo = async (scraper, cookies, email, pass) => {
@@ -70,16 +71,60 @@ const startApollo = async (scraper, cookies, email, pass) => {
 
 // 100 max pages
 
-const startScrape = (scraper, socket, db) => async (url) => {
-  // visit page
-  // check the amount of leads
-  // check the amount of paginations
-  // wait for table to render
-  // scrape table
-  // change page number in db
-  // close browser
-  // repeat
-  scraper.
+
+
+const startScraping = (scraper, socket, db, browserConf) => async (urlList) => {
+
+  // {
+  //   domain: String,
+  //   accountType: String,
+  //   isSuspended: Boolean,
+  //   accountDetails: {
+  //     username: String,
+  //     password: String
+  //   },
+  //   cookies: String,
+  //   proxy: String,
+  // }
+
+  // {
+  //   url: String,
+  //   name: String,
+  //   page: String,
+  //   scrape: {
+  //     type: Map,
+  //     of: String
+  //   }
+  // }
+
+  for (let link of urlList) {
+    const p = scraper.page();
+    const user = db.getUser();
+    const proxy = browserConf.proxies.getProxy(user);
+
+    await useProxy(p, proxy);
+
+    await startApollo(scraper, user.cookies);
+    await goToApolloSearchUrl(scraper, link);
+    const data = await apolloScrapePage(scraper);
+    await db.addDataToDB(data);
+
+    await useProxy(p, null);
+  }
+
+  //loop
+    // reset browser (delete all cookies, go to google, change ip)
+    // from db get all apollo accs & select the 
+    // startApollo(scraper, cookies, email, pass)
+    // visit page
+    // check the amount of leads
+    // check the amount of paginations
+    // wait for table to render
+    // scrape table
+    // change page number in db
+    // update time last used
+    // close browser or reset browser?
+    // repeat
 }
 
 
