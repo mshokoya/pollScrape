@@ -27,16 +27,25 @@ io.on('connection', (socket) => {
 });
 
 
-app.post('/apollo', async (req, res) => {
+app.post('/adduser', async (req, res) => {
   
 
-  res.json({
-    ok: true,
-    data: {
-      message: "hello world"
-    }
-  })
+  res.json({ok: true,data: {message: "hello world"}})
 });
+
+app.post('/addproxy', async (req, res) => {
+  
+
+  res.json({ok: true,data: {message: "hello world"}})
+});
+
+app.post('/startscrape', async (req, res) => {
+  
+
+  res.json({ok: true,data: {message: "hello world"}})
+});
+
+
 
 server.listen(4000, () => {
   console.log('connected to server on port 4000')

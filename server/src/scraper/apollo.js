@@ -225,7 +225,7 @@ const scrapeEmailColumn = async (emailColumn) => {
 
     // wait for email to populate after clicking button
     while(!noEmailText && !emailText && loopCounter < loopEnd) {
-      await sleep(15000)
+      await sleep(5000)
       loopCounter++
       emailText = emailColumn.getElementsByClassName('zp-link zp_OotKe zp_Iu6Pf')[0];
       noEmailText =  emailColumn.getElementsByClassName('zp_RIH0H zp_Iu6Pf')[0];

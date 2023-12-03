@@ -2,15 +2,16 @@
 //full = https://app.apollo.io/#/onboarding/checklist
 export const apolloLoggedInURLSubstr = "onboarding/checklist"
 // ================ 
-// ================ 
 //full = https://app.apollo.io/#/login
 export const apolloLoggedOutURLSubstr = "login"
 // ================ 
 //full = // https://app.apollo.io/#/people
 export const apolloPeopleURLSubstr = "/people"
+export const apolloTableRowSelector = ".zp_RFed0"
+
 
 export const setBrowserCookies = async (page, cookies) => {
-  const items = cookies
+  const items = JSON.parse(cookies)
     .map(cookie => {
       const item = Object.assign({}, cookie);
       if (!item.value) item.value = "";
@@ -35,8 +36,11 @@ export const setBrowserCookies = async (page, cookies) => {
 };
 
 export const getBrowserCookies = async page => {
-  const { cookies } =
-    await page._client.send("Network.getAllCookies", {});
+  const { cookies } = await page._client.send("Network.getAllCookies", {});
+
+  console.log('getBrowserCookies')
+  console.log(cookies)
+
   return cookies;
 };
 
@@ -45,6 +49,18 @@ export const visitGoogle = async (scraper) => {
   await page.waitForSelector(".RNNXgb", { visible: true });
 }
 
+export const apolloUpdatePageQueryString = (url) => {
+  const myURL = new URL(url);
+  const pageNum = myURL.searchParams.get('page');
+
+  if (pageNum) {
+    myURL.searchParams.set('page', parseInt(pageNum)+1)
+  } else {
+    myURL.searchParams.set('page', 2)
+  }
+
+  return myURL.href;
+}
 
 // https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
 

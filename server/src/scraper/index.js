@@ -1,7 +1,6 @@
 import {
   scraper,
   apolloLogin,
-  visitGoogle,
   goToApolloSearchUrl,
   apolloScrapePage,
   visitApollo
@@ -18,51 +17,52 @@ import {
 import {
   savePageScrapeToDB,
   initApolloSkeletonInDB,
-  getAllApolloAccounts
+  getAllApolloAccounts,
+  selectProxy,
 } from '../db/actions';
 import useProxy from 'puppeteer-page-proxy';
 
 
-const startApollo = async (scraper, cookies, email, pass) => {
+const setupApollo = async (scraper, account) => {
   const s = scraper();
   const p = s.page();
 
   await visitGoogle(s);
-  await setBrowserCookies(p, cookies);
+  await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
   await visitApollo(s);
 
-  const pageUrl = p.url()
+  const pageUrl = p.url();
   
+  // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    await apolloLogin(s, email, pass)
+    await apolloLogin(s, account.apollo.email, account.apollo.password)
   } 
 }
 
 
-//TODO work on page changing
-//TODO get cookies from db an add to browser
-//TODO proxy rotation
 // start apollo should use url
-const startScrapingApollo = (scraper, socket, db, browserConf) => async (url) => {
-  // for both methods, if does not exist (url *without page query* cannot be found) then create skelenton in db
-  await initApolloSkeletonInDB(url);
-
-  for (let link of urlList) {
+export const startScrapingApollo = (scraper, socket) => async (urlList) => {
+  for (let url of urlList) {
+    scraper.restartBrowser();
     const p = scraper.page();
+
+    await initApolloSkeletonInDB(url);
+
     const allUsers = await getAllApolloAccounts();
-    const user = selectAccForScrapingFILO(allUsers);
-    const proxy = browserConf.proxies.getProxy(user);
+    const account = selectAccForScrapingFILO(allUsers);
+    const proxy =  await selectProxy(account, allAccounts);
 
     await useProxy(p, proxy);
-    await startApollo(scraper, user.cookies); 
-    await goToApolloSearchUrl(scraper, link);
+    await setupApollo(scraper, account); 
+    await goToApolloSearchUrl(scraper, url);
 
     const data = await apolloScrapePage(scraper);
     const cookies = await getBrowserCookies(p);
 
-    await savePageScrapeToDB(user._id, cookies, url, data);
-    await useProxy(p, null);
+    await savePageScrapeToDB(account._id, cookies, proxy, url, data);
   }
+
+  scraper.close();
 
   //loop
     // reset browser (delete all cookies, go to google, change ip)
