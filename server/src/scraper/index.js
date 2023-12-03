@@ -22,8 +22,7 @@ import {
 } from '../db/actions';
 import useProxy from 'puppeteer-page-proxy';
 
-
-const setupApollo = async (scraper, account) => {
+const setupApollo = async (account) => {
   const s = scraper();
   const p = s.page();
 
@@ -41,7 +40,7 @@ const setupApollo = async (scraper, account) => {
 
 
 // start apollo should use url
-export const startScrapingApollo = (scraper, socket) => async (urlList) => {
+export const startScrapingApollo = async (urlList) => {
   for (let url of urlList) {
     scraper.restartBrowser();
     const p = scraper.page();
@@ -53,7 +52,7 @@ export const startScrapingApollo = (scraper, socket) => async (urlList) => {
     const proxy =  await selectProxy(account, allAccounts);
 
     await useProxy(p, proxy);
-    await setupApollo(scraper, account); 
+    await setupApollo(account); 
     await goToApolloSearchUrl(scraper, url);
 
     const data = await apolloScrapePage(scraper);
