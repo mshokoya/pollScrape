@@ -31,21 +31,21 @@ export const setBrowserCookies = async (page, cookies) => {
   await page.deleteCookie(...items);
 
   if (items.length){
-    await page._client.send("Network.setCookies", { cookies: items });
+    const client = await page.target().createCDPSession();
+    await client.send('Network.setCookies',  { cookies: items });
   }
 };
 
 export const getBrowserCookies = async page => {
-  const { cookies } = await page._client.send("Network.getAllCookies", {});
-
-  console.log('getBrowserCookies')
-  console.log(cookies)
+  // return page.cookies()
+  const client = await page.target().createCDPSession();
+  const { cookies } = await client.send('Network.getAllCookies');
 
   return cookies;
 };
 
 export const visitGoogle = async (scraper) => {
-  const page = scraper.visit("https://www.google.com/");
+  const page = await scraper.visit("https://www.google.com/");
   await page.waitForSelector(".RNNXgb", { visible: true });
 }
 

@@ -23,11 +23,13 @@ import {
 import useProxy from 'puppeteer-page-proxy';
 
 const setupApollo = async (account) => {
-  const s = scraper();
+  const s = scraper;
   const p = s.page();
 
   await visitGoogle(s);
-  await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
+  if (account.cookies) {
+    await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
+  }
   await visitApollo(s);
 
   const pageUrl = p.url();
@@ -40,19 +42,23 @@ const setupApollo = async (account) => {
 
 
 // start apollo should use url
+// TODO
+// handle account failed login
 export const startScrapingApollo = async (urlList) => {
   for (let url of urlList) {
-    scraper.restartBrowser();
+    await scraper.restartBrowser();
     const p = scraper.page();
 
     await initApolloSkeletonInDB(url);
 
     const allUsers = await getAllApolloAccounts();
-    const account = selectAccForScrapingFILO(allUsers);
-    const proxy =  await selectProxy(account, allAccounts);
+    // const account = selectAccForScrapingFILO(allUsers);
+    // const proxy =  await selectProxy(account, allAccounts);
+    const account = allUsers[0];
+    const proxy = "0.0.0.0.0:0000";
 
-    await useProxy(p, proxy);
-    await setupApollo(account); 
+    // await useProxy(p, proxy);
+    await setupApollo(account);
     await goToApolloSearchUrl(scraper, url);
 
     const data = await apolloScrapePage(scraper);
@@ -61,21 +67,8 @@ export const startScrapingApollo = async (urlList) => {
     await savePageScrapeToDB(account._id, cookies, proxy, url, data);
   }
 
-  scraper.close();
+  await scraper.close();
 
-  //loop
-    // reset browser (delete all cookies, go to google, change ip)
-    // from db get all apollo accs & select the 
-    // startApollo(scraper, cookies, email, pass)
-    // visit page
-    // check the amount of leads
-    // check the amount of paginations
-    // wait for table to render
-    // scrape table
-    // change page number in db
-    // update time last used
-    // close browser or reset browser?
-    // repeat
 }
 
 
