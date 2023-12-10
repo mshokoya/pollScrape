@@ -37,7 +37,6 @@ export const setBrowserCookies = async (page, cookies) => {
 };
 
 export const getBrowserCookies = async page => {
-  // return page.cookies()
   const client = await page.target().createCDPSession();
   const { cookies } = await client.send('Network.getAllCookies');
 
