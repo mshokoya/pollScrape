@@ -27,7 +27,6 @@ export const scraper = (() => {
       page = await browser.newPage()
     },
     restartBrowser: async () => {
-     
       if (browser !== undefined) await browser.close();
       browser = await puppeteer.launch({headless: false});
       page = await browser.newPage();
