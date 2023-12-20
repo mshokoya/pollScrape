@@ -16,10 +16,10 @@ const port = 4000;
 // https://geonode.com/free-proxy-list
 
 app.use(cors());
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
 app.post('/addaccount', async (req, res) => {
-  console.log('addAccount ')
+  console.log('addAccount')
   try {
     await addAccountToDB(req.body.email, req.body.password)
     res.json({ok: true, message: null, data: null})
