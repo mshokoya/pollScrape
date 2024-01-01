@@ -1,15 +1,10 @@
 import {
   scraper,
-  apolloLogin,
   goToApolloSearchUrl,
   apolloScrapePage,
-  visitApollo
 } from './scraper';
 import {
   getBrowserCookies,
-  setBrowserCookies,
-  visitGoogle,
-  apolloLoggedOutURLSubstr
 } from './util'
 import {
   selectAccForScrapingFILO
@@ -22,23 +17,15 @@ import {
 } from '../db/actions';
 import useProxy from 'puppeteer-page-proxy';
 
-const setupApollo = async (account) => {
+const checkUserIP = async () => {
   const s = scraper;
   const p = s.page();
 
-  await visitGoogle(s);
-  if (account.cookies) {
-    await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
-  }
-  await visitApollo(s);
-
-  const pageUrl = p.url();
-  
-  // check if logged in via url
-  if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    await apolloLogin(s, account.apollo.email, account.apollo.password)
-  } 
+  const page = await scraper.visit('https://whatismyipaddress.com')
+  await page.waitForTimeout(5000)
 }
+
+
 
 
 // start apollo should use url
@@ -52,12 +39,12 @@ export const startScrapingApollo = async (urlList) => {
     await initApolloSkeletonInDB(url);
 
     const allUsers = await getAllApolloAccounts();
-    // const account = selectAccForScrapingFILO(allUsers);
-    // const proxy =  await selectProxy(account, allAccounts);
-    const account = allUsers[0];
-    const proxy = "0.0.0.0.0:0000";
+    const account = selectAccForScrapingFILO(allUsers);
+    const proxy =  await selectProxy(account, allAccounts);
+    // const account = allUsers[0];
+    // const proxy = "0.0.0.0.0:0000";
 
-    // await useProxy(p, proxy);
+    await useProxy(p, proxy);
     await setupApollo(account);
     await goToApolloSearchUrl(scraper, url);
 
@@ -68,7 +55,6 @@ export const startScrapingApollo = async (urlList) => {
   }
 
   await scraper.close();
-
 }
 
 

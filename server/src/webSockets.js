@@ -8,7 +8,7 @@ export const socketIO = (() => {
   io.on('connection', (socket) => {
     console.log('A user connected');
 
-    sock = socket
+    sock = socket;
     
     //an event listener is set up for when a client disconnects.
     socket.on('disconnect', () => {

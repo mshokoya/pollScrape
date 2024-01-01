@@ -18,7 +18,7 @@ export const ApolloMetadataModel = new model('apollo', {
   fullURL: { type: String, default: "" },
   name: { type: String, default: "" },
   page: { type: Number, default: 0 }, //page to scrape
-  scrapes: { type: [Types.ObjectId], default: [] }
+  scrapes: { type: [Types.ObjectId], default: [] } // link to apolloData model
 });
 
 // TODO: 

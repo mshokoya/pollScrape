@@ -2,7 +2,12 @@ import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import StealthUserAgent from 'puppeteer-extra-plugin-anonymize-ua';
 import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
-import {apolloTableRowSelector} from './util';
+import {
+  apolloTableRowSelector,
+  setBrowserCookies,
+  visitGoogle,
+  apolloLoggedOutURLSubstr
+} from './util';
 import {apolloDoc} from './apollo';
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
@@ -124,3 +129,20 @@ export const apolloScrapePage = async (scraper) => {
   return data;
 }
 
+export const setupApollo = async (account) => {
+  const s = scraper;
+  const p = s.page();
+
+  await visitGoogle(s);
+  if (account.cookies) {
+    await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
+  }
+  await visitApollo(s);
+
+  const pageUrl = p.url();
+  
+  // check if logged in via url
+  if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
+    await apolloLogin(s, account.apollo.email, account.apollo.password)
+  } 
+}

@@ -29,6 +29,7 @@ app.post('/addaccount', async (req, res) => {
 });
 
 app.post('/addproxy', async (req, res) => {
+  console.log('add proxy')
   try {
     await addProxyToDB(req.body.proxy)
     res.status(200)
@@ -40,21 +41,19 @@ app.post('/addproxy', async (req, res) => {
 });
 
 app.post('/startscrape', async (req, res) => {
-  console.log('startScraping')
+  console.log('start scraping')
   startScrapingApollo([req.body.url])
   // startScrapingApollo()
-  res.json({ok: true,data: {message: "hello world"}})
+  res.json({ok: true, data: {message: "hello world"}})
 });
 
-app.use((err, req, res, next) => {
+app.use((err, _req, res, next) => {
   if (res.headersSent) {
     return next(err)
   }
   res.status(500)
   res.render('error', { error: err })
 })
-
-
 
 mongoose.connect('mongodb://localhost:27017/apollo')
   .then(() => {
