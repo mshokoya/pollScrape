@@ -3,6 +3,7 @@ import {connect, model, Types} from 'mongoose';
 export const AccountModel = new model('Account', {
   domain: { type: String, default: "" },
   accountType: { type: String, default: "" }, // free or premuim
+  trialTime: { type: String, default: "" },
   isSuspended: { type: String, default: false },
   apollo: {
     email: { type: String, default: "" },
@@ -17,23 +18,35 @@ export const ApolloMetadataModel = new model('apollo', {
   url: { type: String, default: "" },
   fullURL: { type: String, default: "" },
   name: { type: String, default: "" },
-  page: { type: Number, default: 0 }, //page to scrape
-  scrapes: { type: [Types.ObjectId], default: [] } // link to apolloData model
+  maxPages: { type: String, default: "" },
+  page: { type: Number, default: 0 }, // current page 
+  scrapes: { type: [Object], default: []} // [{page: 1, scrapeID: ""}] - is use in ApolloDataModel
 });
 
 // TODO: 
 //  might want to save cookes and proxy used for scrape
 
 export const ApolloDataModel = new model('apolloData', {
-    url: { type: String, default: "" },
-    maxPages: { type: String, default: "" },
+    scrapeID: { type: String, default: "null" },
+    account: { type: [Types.ObjectId], default: [] },
+    url: { type: String, default: "null" },
+    page: { type: String, default: "null" },
     data: {
-      type : {
-        page: Number,
-        fullURL: String,
-        data: String,
-      },
-      default: {}
+      name: { type: String, default: "null" },
+      linkedin: { type: String, default: "null" },
+      title: { type: String, default: "null" },
+      companyName: { type: String, default: "null" },
+      companyURL: { type: String, default: "null" },
+      comapnyLinkedin: { type: String, default: "null" },
+      companyTwitter: { type: String, default: "null" },
+      companyFacebook: { type: String, default: "null" },
+      email: { type: String, default: "null" },
+      isVerified: { type: Boolean, default: false },
+      location: { type: String, default: "null" },
+      employees: { type: String, default: "null" },
+      phone: { type: String, default: "null" },
+      industry: { type: String, default: "null" },
+      keywords: { type: [String], default: [] }
     }
 });
 
