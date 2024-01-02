@@ -16,6 +16,7 @@ export const AccountModel = new model('Account', {
 
 export const ApolloMetadataModel = new model('apollo', {
   url: { type: String, default: "" },
+  params: { type: Object, default: {} },
   fullURL: { type: String, default: "" },
   name: { type: String, default: "" },
   maxPages: { type: String, default: "" },
