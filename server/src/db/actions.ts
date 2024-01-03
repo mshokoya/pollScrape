@@ -53,7 +53,7 @@ export const savePageScrapeToDB = async (userID, cookies, proxy, url, data) => {
 
 }
 
-export const initApolloSkeletonInDB = async (url) => {
+export const initApolloSkeletonInDB = async (url: string) => {
   const session = await startSession();
   let apolloMetaData;
 

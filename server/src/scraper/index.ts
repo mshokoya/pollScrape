@@ -2,6 +2,7 @@ import {
   scraper,
   goToApolloSearchUrl,
   apolloScrapePage,
+  injectCookies
 } from './scraper';
 import {
   getBrowserCookies,
@@ -45,7 +46,7 @@ export const startScrapingApollo = async (urlList: string[]) => {
     // const proxy = "0.0.0.0.0:0000";
 
     await useProxy(p, proxy);
-    await setupApollo(account);
+    await injectCookies(account.cookies);
     await goToApolloSearchUrl(scraper, url);
 
     const data = await apolloScrapePage(scraper);
