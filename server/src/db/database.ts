@@ -1,6 +1,6 @@
 import {connect, model, Schema, Types} from 'mongoose';
 
-type Account = {
+export type IAccount = {
   domain: string
   accountType: string
   trialTime: string
@@ -14,7 +14,7 @@ type Account = {
   lastUsed: Date
 }
 
-type AccountMetaData = {
+export type IApolloMetaData = {
   url: string
   params: {[key: string]: string}
   fullURL: string
@@ -24,7 +24,7 @@ type AccountMetaData = {
   scrapes: {page: number, scrapeID: string}[]
 }
 
-type ApolloData = {
+export type IApolloData = {
   scrapeID: string
   account: string[]
   url: string
@@ -48,14 +48,14 @@ type ApolloData = {
   }
 }
 
-type Proxy = {
+export type IProxy = {
   proxy: string
   protocol: string,
   ipAddress: string
   port: string
 }
 
-const accountSchema = new Schema<Account>({
+const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
   accountType: { type: String, default: "" }, // free or premuim
   trialTime: { type: String, default: "" },
@@ -71,7 +71,7 @@ const accountSchema = new Schema<Account>({
 })
 
 
-const apolloMetaData = new Schema<AccountMetaData>({
+const apolloMetaData = new Schema<IApolloMetaData>({
   url: { type: String, default: "" },
   params: { type: Object, default: {} },
   fullURL: { type: String, default: "" },
@@ -81,12 +81,10 @@ const apolloMetaData = new Schema<AccountMetaData>({
   scrapes: { type: [Object], default: []} // [{page: 1, scrapeID: ""}] - is use in ApolloDataModel
 })
 
-
-
 // TODO: 
 //  might want to save cookes and proxy used for scrape
 
-const apolloData = new Schema<ApolloData>({
+const apolloData = new Schema<IApolloData>({
   scrapeID: { type: String, default: "null" },
   account: { type: [Types.ObjectId], default: [] },
   url: { type: String, default: "null" },
@@ -110,16 +108,14 @@ const apolloData = new Schema<ApolloData>({
   }
 })
 
-
-const proxy = new Schema<Proxy>({
+const proxy = new Schema<IProxy>({
   proxy: { type: String, default: "" },
   protocol: { type: String, default: "" },
   ipAddress: { type: String, default: "" },
   port: { type: String, default: "" }
 })
 
-
-export const AccountModel = model<Account>('account', accountSchema);
-export const ApolloMetadataModel = model('apollo', apolloMetaData);
-export const ApolloDataModel = model('apolloData', apolloData);
-export const ProxyModel = model('proxy', proxy);
+export const AccountModel = model<IAccount>('account', accountSchema);
+export const ApolloMetadataModel = model<IApolloMetaData>('apollo', apolloMetaData);
+export const ApolloDataModel = model<IApolloData>('apolloData', apolloData);
+export const ProxyModel = model<IProxy>('proxy', proxy);
