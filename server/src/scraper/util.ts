@@ -39,11 +39,11 @@ export const setBrowserCookies = async (page: Page, cookies: string) => {
   }
 };
 
-export const getBrowserCookies = async (page: Page) => {
+export const getBrowserCookies = async (page: Page): Promise<string[]> => {
   const client = await page.target().createCDPSession();
   const { cookies } = await client.send('Network.getAllCookies');
 
-  return cookies;
+  return (cookies as unknown) as string[];
 };
 
 export const visitGoogle = async () => {

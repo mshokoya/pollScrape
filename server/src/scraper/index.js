@@ -45,7 +45,7 @@ export const startScrapingApollo = async (urlList) => {
     // const proxy = "0.0.0.0.0:0000";
 
     await useProxy(p, proxy);
-    await setupApollo(account);
+    await setupApollo(account); // ---------------- edit
     await goToApolloSearchUrl(scraper, url);
 
     const data = await apolloScrapePage(scraper);

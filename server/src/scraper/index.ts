@@ -1,8 +1,8 @@
 import {
   scraper,
   goToApolloSearchUrl,
-  apolloScrapePage,
-  injectCookies
+  apolloScrapePage, // edit
+  setupApolloForScraping
 } from './scraper';
 import {
   getBrowserCookies,
@@ -17,6 +17,7 @@ import {
   selectProxy,
 } from '../db/actions';
 import useProxy from 'puppeteer-page-proxy';
+import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -33,25 +34,27 @@ const checkUserIP = async () => {
 // TODO
 // handle account failed login
 export const startScrapingApollo = async (urlList: string[]) => {
+
   for (let url of urlList) {
     await scraper.restartBrowser();
-    const p = scraper.page();
+    const page = scraper.page() as Page;
 
     await initApolloSkeletonInDB(url);
 
-    const allUsers = await getAllApolloAccounts();
-    const account = selectAccForScrapingFILO(allUsers);
+    const allAccounts = await getAllApolloAccounts();
+    const account = selectAccForScrapingFILO(allAccounts);
     const proxy =  await selectProxy(account, allAccounts);
     // const account = allUsers[0];
     // const proxy = "0.0.0.0.0:0000";
 
-    await useProxy(p, proxy);
-    await injectCookies(account.cookies);
-    await goToApolloSearchUrl(scraper, url);
+    await useProxy(page, proxy);
+    await setupApolloForScraping(account)
+    await goToApolloSearchUrl(url);
 
-    const data = await apolloScrapePage(scraper);
-    const cookies = await getBrowserCookies(p);
+    const data = await apolloScrapePage(); // edit
+    const cookies = await getBrowserCookies(page);
 
+    // @ts-ignore
     await savePageScrapeToDB(account._id, cookies, proxy, url, data);
   }
 

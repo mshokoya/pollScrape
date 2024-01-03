@@ -61,7 +61,6 @@ export const visitApollo = async () => {
 export const apolloLogin = async (email: string, password: string) => {
   const page = scraper.page() as Page
 
-
   // apollo login page
   const apolloEmailFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="email"]';
   const apolloPasswordFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="password"]';
@@ -116,25 +115,35 @@ export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
-export const apolloScrapePage = async () => {
+export const apolloScrapePage = async (): Promise<{[key: string]: string}[]> => {
   const page = scraper.page() as Page
 
   const data = await apolloDoc(page);
 
-  console.log('apolloScrapePage');
-  console.log(data);
-
   return data;
 }
 
-// export const injectCookies = async (cookies?: string) => {
-//   const page = scraper.page() as Page;
+export const injectCookies = async (cookies?: string) => {
+  const page = scraper.page() as Page;
 
-//   await visitGoogle();
-//   if (cookies) {
-//     await setBrowserCookies(page, cookies); // needs work (cookest from string to array)
-//   }
-// }
+  await visitGoogle();
+  if (cookies) {
+    await setBrowserCookies(page, cookies); // needs work (cookest from string to array)
+  }
+}
+
+export const setupApolloForScraping = async (account: IAccount) => {
+  await injectCookies(account.cookies)
+  await visitApollo();
+
+  const page = scraper.page() as Page;
+  const pageUrl = page.url();
+  
+  // check if logged in via url
+  if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
+    await apolloLogin(account.apollo.email, account.apollo.password)
+  } 
+}
 
 
 
@@ -152,5 +161,22 @@ export const apolloScrapePage = async () => {
 //   // check if logged in via url
 //   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
 //     await apolloLogin(account.apollo.email, account.apollo.password)
+//   } 
+// }
+
+// export const setupApollo = async (account) => {
+//   const p = scraper.page();
+
+//   await visitGoogle();
+//   if (account.cookies) {
+//     await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
+//   }
+//   await visitApollo(s);
+
+//   const pageUrl = p.url();
+  
+//   // check if logged in via url
+//   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
+//     await apolloLogin(s, account.apollo.email, account.apollo.password)
 //   } 
 // }

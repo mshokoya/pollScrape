@@ -1,12 +1,12 @@
 // Actions for scraper
-import {AccountModel, ApolloMetadataModel, ApolloDataModel, ProxyModel} from './database';
+import {AccountModel, ApolloMetadataModel, ApolloDataModel, ProxyModel, IAccount, IProxy} from './database';
 import {startSession} from 'mongoose';
 import {rmPageFromURLQuery, verifyProxy, shuffleArray} from './util';
 import { generateSlug } from "random-word-slugs";
 
 // https://www.ultimateakash.com/blog-details/IiwzQGAKYAo=/How-to-implement-Transactions-in-Mongoose-&-Node.Js-(Express)
 
-export const savePageScrapeToDB = async (userID, cookies, proxy, url, data) => {
+export const savePageScrapeToDB = async (userID: string, cookies: string[], proxy: string, url: string, data: {[key: string]: string}[]) => {
   const session = await startSession();
   try {
     session.startTransaction();
@@ -39,7 +39,7 @@ export const savePageScrapeToDB = async (userID, cookies, proxy, url, data) => {
       {
         fullURL: url, 
         page: fmtURL.page, 
-        "$push": { "scrapes": apolloData._id} // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
+        "$push": { "scrapes": apolloData!._id} // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
       }
       , 
       updateOpts
@@ -94,11 +94,11 @@ export const initApolloSkeletonInDB = async (url: string) => {
   await session.endSession();
 }
 
-export const getAllApolloAccounts = async () => {
-  return await AccountModel.find({}).lean()
+export const getAllApolloAccounts = async (): Promise<IAccount[]> => {
+  return await AccountModel.find({}).lean() as IAccount[]
 }
 
-export const selectProxy = async (account, allAccounts) => {
+export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string> => {
   let doesProxyStillWork = await verifyProxy(account.proxy)
 
   if (doesProxyStillWork) return account.proxy;
@@ -108,9 +108,8 @@ export const selectProxy = async (account, allAccounts) => {
     .map((u) => u.proxy) //retrun list of proxies
 
   const allProxiesNotInUse = shuffleArray(
-    ProxyModel.find({})
-    .lean()
-    .filter((p) => !allProxiesInUse.includes(p))
+    (ProxyModel.find({}).lean() as any)
+      .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
   )
   
   for (let proxy of allProxiesNotInUse) {
@@ -118,5 +117,5 @@ export const selectProxy = async (account, allAccounts) => {
     if (doesProxyStillWork) return proxy;
   }
 
-  throw new Error('No Proxies Work: please add new proxies')
+  throw new Error('[PROXY_ERROR]: No Proxies Work: please add new proxies')
 }
