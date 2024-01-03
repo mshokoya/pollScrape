@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer-extra';
+import { Browser, Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import StealthUserAgent from 'puppeteer-extra-plugin-anonymize-ua';
 import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
@@ -8,7 +9,7 @@ import {
   visitGoogle,
   apolloLoggedOutURLSubstr
 } from './util';
-import {apolloDoc} from './apollo';
+import {apolloDoc} from './dom';
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
 // https://gist.github.com/jeroenvisser101/636030fe66ea929b63a33f5cb3a711ad
@@ -23,41 +24,41 @@ puppeteer.use(AdBlockerPlugin({ blockTrackers: true }))
 // login - https://app.apollo.io/#/login
 
 export const scraper = (() => {
-  let browser;
-  let page;
+  let browser: Browser | null;
+  let page: Page | null;
   
   return {
     launchBrowser: async () => {
       browser = await puppeteer.launch({headless: false})
       page = await browser.newPage()
     },
-    restartBrowser: async () => {
-      if (browser !== undefined) await browser.close();
+    restartBrowser: async (): Promise<void> => {
+      if (browser !== null) await browser.close();
       browser = await puppeteer.launch({headless: false});
       page = await browser.newPage();
     },
-    visit: async (url) => {
-      await page.goto(url);
-      return page;
+    visit: async (url: string): Promise<Page> => {
+      await page!.goto(url);
+      return page!;
     },
     close: async () => {
-      await browser.close();
-      browser = undefined;
-      page = undefined;
+      await browser!.close();
+      browser = null;
+      page = null;
     },
     page: () => page,
     browser: () => browser,
   }
 })()
 
-export const visitApollo = async (scraper) => {
+export const visitApollo = async () => {
   const page = await scraper.visit("https://app.apollo.io")
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
   
 }
 
-export const apolloLogin = async (scraper, email, password) => {
-  const page = scraper.page()
+export const apolloLogin = async (email: string, password: string) => {
+  const page = scraper.page() as Page
 
 
   // apollo login page
@@ -81,7 +82,7 @@ export const apolloLogin = async (scraper, email, password) => {
   const submitButton = page.$(apolloSubmitButtonSelector);
  
   
-  if (emailInput && passInput && submitButton) {
+  if (!!emailInput && !!passInput && !!submitButton) {
     await page.click(outlookButtonSelector);
 
     // email input page
@@ -111,14 +112,14 @@ export const apolloLogin = async (scraper, email, password) => {
 }
 
 
-export const goToApolloSearchUrl = async (scraper, apolloSearchURL) => {
+export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
   const page = await scraper.visit(apolloSearchURL);
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
 
-export const apolloScrapePage = async (scraper) => {
-  const page = scraper.page()
+export const apolloScrapePage = async () => {
+  const page = scraper.page() as Page
 
   const data = await apolloDoc(page);
 
@@ -130,10 +131,9 @@ export const apolloScrapePage = async (scraper) => {
 }
 
 export const setupApollo = async (account) => {
-  const s = scraper;
-  const p = s.page();
+  const p = scraper.page();
 
-  await visitGoogle(s);
+  await visitGoogle();
   if (account.cookies) {
     await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
   }

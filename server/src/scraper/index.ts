@@ -31,7 +31,7 @@ const checkUserIP = async () => {
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (urlList) => {
+export const startScrapingApollo = async (urlList: string[]) => {
   for (let url of urlList) {
     await scraper.restartBrowser();
     const p = scraper.page();

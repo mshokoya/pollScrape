@@ -1,3 +1,6 @@
+import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
+import { scraper } from "./scraper"
+
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist
 export const apolloLoggedInURLSubstr = "onboarding/checklist"
@@ -10,9 +13,9 @@ export const apolloPeopleURLSubstr = "/people"
 export const apolloTableRowSelector = ".zp_RFed0"
 
 
-export const setBrowserCookies = async (page, cookies) => {
+export const setBrowserCookies = async (page: Page, cookies: string) => {
   const items = JSON.parse(cookies)
-    .map(cookie => {
+    .map( (cookie: Record<string, string>) => {
       const item = Object.assign({}, cookie);
       if (!item.value) item.value = "";
       console.assert(!item.url, `Cookies must have a URL defined`);
@@ -26,7 +29,7 @@ export const setBrowserCookies = async (page, cookies) => {
       );
       return item;
   })
-  .filter(cookie => cookie.name);
+  .filter( (cookie: Record<string, string>) => cookie.name);
 
   await page.deleteCookie(...items);
 
@@ -36,26 +39,26 @@ export const setBrowserCookies = async (page, cookies) => {
   }
 };
 
-export const getBrowserCookies = async page => {
+export const getBrowserCookies = async (page: Page) => {
   const client = await page.target().createCDPSession();
   const { cookies } = await client.send('Network.getAllCookies');
 
   return cookies;
 };
 
-export const visitGoogle = async (scraper) => {
+export const visitGoogle = async () => {
   const page = await scraper.visit("https://www.google.com/");
   await page.waitForSelector(".RNNXgb", { visible: true });
 }
 
-export const apolloUpdatePageQueryString = (url) => {
+export const apolloUpdatePageQueryString = (url: string) => {
   const myURL = new URL(url);
-  const pageNum = myURL.searchParams.get('page');
+  const pageNum = myURL.searchParams.get('page') as string;
 
   if (pageNum) {
-    myURL.searchParams.set('page', parseInt(pageNum)+1)
+    myURL.searchParams.set('page', `${parseInt(pageNum)+1}`)
   } else {
-    myURL.searchParams.set('page', 2)
+    myURL.searchParams.set('page', '2')
   }
 
   return myURL.href;

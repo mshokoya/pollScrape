@@ -1,7 +1,7 @@
-
+import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 type HE = HTMLElement
 
-export const apolloDoc = async (page) => {
+export const apolloDoc = async (page: Page) => {
 
   return await page.evaluate(async () => {
     const na = 'N/A'
