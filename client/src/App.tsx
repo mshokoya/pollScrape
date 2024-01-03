@@ -14,8 +14,6 @@ function App() {
 
   const [scrapeURL, setScrapeURL] = useState('');
 
-
-
   const handleStartScrape = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const data = await fetchData('/startscrape', 'POST', {url: scrapeURL})
