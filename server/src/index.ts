@@ -31,12 +31,12 @@ app.post('/addaccount', async (req, res) => {
 app.post('/addproxy', async (req, res) => {
   console.log('add proxy')
   try {
-    await addProxyToDB(req.body.proxy)
-    res.status(200)
-    res.json({ok: true, message: null, data: null})
+    // await addProxyToDB(req.body.proxy)
+    // res.status(200)
+    // res.json({ok: true, message: null, data: null})
   } catch (err) {
-    res.status(400)
-    res.json({ok: false, message: 'failed to proxy', data: err})
+    // res.status(400)
+    // res.json({ok: false, message: 'failed to proxy', data: err})
   }
 });
 
@@ -47,7 +47,7 @@ app.post('/startscrape', async (req, res) => {
   res.json({ok: true, data: {message: "hello world"}})
 });
 
-app.use((err, _req, res, next) => {
+app.use((err: any, _req: any, res: any, next: any) => {
   if (res.headersSent) {
     return next(err)
   }

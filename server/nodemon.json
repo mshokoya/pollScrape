@@ -1,10 +1,12 @@
 {
-  "verbose": true,
-  "ignore": ["node_modules"],
-  "delay": "1000",
-  "watch": [ "src" ],
-  "ext": "js",
+  "watch": [
+    "src"
+  ],
+  "ext": "ts",
   "execMap": {
-    "js": "node --experimental-specifier-resolution=node src/index.js"
-  }
+    "ts": "tsx src/index.ts"
+  },
+  "ignore": [
+    "src/**/*.spec.ts"
+  ]
 }
