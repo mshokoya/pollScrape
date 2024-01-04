@@ -1,5 +1,6 @@
 import proxyVerifier, { Protocol, Proxy, CustomTestResult } from 'proxy-verifier';
 import { IAccount } from './database';
+import { deasync } from '@kaciras/deasync';
 
 export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
   return userAccounts.reduce((acc: IAccount, cv: any) => {
@@ -32,28 +33,32 @@ export const parseProxy = (proxy: string): Proxy => {
   }
 }
 
-export const verifyProxy = (proxy: string): CustomTestResult => {
-  let isOk: CustomTestResult;
-  proxyVerifier.test(
-    parseProxy(proxy), 
-    (err, result) => {
-      if (err) {
-        isOk = {
-          ok: false,
-          error: {
-            message: `Failed to verify proxy ${proxy}`,
-            code: '500',
-        },
-        status: 500,
-        headers: {},
-        data: {}
-        } as CustomTestResult;
-      }
-      isOk = result;
-    }
-  )
+export const verifyProxy = async (proxy: string): Promise<CustomTestResult> => {
 
-  return isOk!;
+  console.log(parseProxy(proxy))
+
+  const isOk = new Promise<CustomTestResult>(resolve => {
+    proxyVerifier.testAll(
+      parseProxy(proxy), 
+      (err, result) => {
+        if (err) {
+          resolve({
+            ok: false,
+            error: {
+              message: `Failed to verify proxy ${proxy}`,
+              code: '500',
+          },
+          status: 500,
+          headers: {},
+          data: {}
+          })
+        }
+        resolve(result);
+      }
+    )
+  })
+
+  return isOk;
 }
 
 export function shuffleArray(array: string[]): string[] {

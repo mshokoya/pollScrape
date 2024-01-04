@@ -35,23 +35,27 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     switch (selected) {
       case 'proxy_full':
         data = {url: input.proxy.proxy_full};
-        setInput(p => ({...p, proxy: proxy()}));
+        // setInput(p => ({...p, proxy: proxy()}));
         break;
       case 'proxy_split':
         data = {url: `${input.proxy.proxy_split.protocol}://${input.proxy.proxy_split.host}:${input.proxy.proxy_split.port}`};
-        setInput(p => ({...p, proxy: proxy()}))
+        // setInput(p => ({...p, proxy: proxy()}))
         break;
       case 'socks_full':
         data = {url: input.socks.socks_full};
-        setInput(p => ({...p, socks: socks()}))
+        // setInput(p => ({...p, socks: socks()}))
         break;
       case 'socks_split':
-        data = {url: `${input.proxy.proxy_split.protocol}://${input.socks.socks_split.host}:${input.socks.socks_split.port}`}
-        setInput(p => ({...p, socks: socks()}))
+        data = {url: `${input.socks.socks_split.protocol}://${input.socks.socks_split.host}:${input.socks.socks_split.port}`}
+        // setInput(p => ({...p, socks: socks()}))
         break;
     }
 
-    // await fetchData('/addproxy', 'POST', data)
+    console.log(data)
+
+    const res = await fetchData('/addproxy', 'POST', data)
+
+    console.log(res)
   }
 
   switch (selected) {
