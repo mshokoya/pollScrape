@@ -51,7 +51,12 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_full')}>Socks5 Full</button>
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_split')}>Socks5 Split</button>
         </div>
-      <ProxyComponent input={input} setInput={setInput} />
+
+        <ProxyComponent input={input} setInput={setInput} />
+        
+        <button className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit">
+          Add Proxy
+        </button>
       </div>
       
 

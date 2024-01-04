@@ -3,100 +3,59 @@ import {fetchData} from './core/util';
 import { ProxyField } from './components/ProxyField';
 
 function App() {
-  const [accounts, setAccounts] = useState([]);
-  const [proxies, setProxies] = useState([]);
-  const [scrapeData, setScrapeData] = useState([]);
-
-  const [proxy, setProxy] = useState('');
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const [scrapeURL, setScrapeURL] = useState('');
+  const [URLInput, setURLInput] = useState('');
+  const [scrapeType, setScrapeType] = useState('single')
 
   const handleStartScrape = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const data = await fetchData('/startscrape', 'POST', {url: scrapeURL})
-    setScrapeData(data)
-  }
-
-  const handleSubmitProxy = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const data = await fetchData('/addproxy', 'POST', {proxy})
-    setProxies(data)
-  }
-
-  const handleUploadAccount = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const data = await fetchData('/addaccount', 'POST', {email, password})
-    setAccounts(data)
+    
+    // const data = await fetchData('/startscrape', 'POST', {url: scrapeURL})
   }
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col center'>
       {/* <div className='mb-4'>
         <button onClick={handleStartScrape}> start scrape</button>
       </div> */}
       
-      <div className='mb-4'>
-        <form onSubmit={handleStartScrape}>
-          <div>
-            <label htmlFor="startScrape">URL:</label>
-            <input type="text" id="startScrape" value={scrapeURL} onChange={(e) => {setScrapeURL(e.currentTarget.value)}}/>
-          </div>
-          
-          <input type="submit" value="Start Scraping"/>
-        </form>
+      <div className='mb-4 text-center'>
+        <div>
+          <h2 className='text-[2rem] mb-3'>Apollo URL To Scrape</h2>
+          <form onSubmit={handleStartScrape}>
+            <div className='mb-3'>
+              <label className='mr-2' htmlFor="startScrape">URL:</label>
+              <input className='mr-5' type="text" id="startScrape" value={URLInput} onChange={ e => {setURLInput(e.currentTarget.value)}}/>
+              
+              <label className='mr-2' htmlFor="scrapeType">Choose a car:</label>
+              <select id="scrapeType" name="scrapeType" value={scrapeType} onChange={e => {setScrapeType(e.currentTarget.value)}}>
+                <option value="single">Scrape Single Page</option>
+                <option value="all">Scrape All Pages</option>
+                <option value="excessive">Excessive Scrape</option>
+              </select>
+            </div>
+            
+            <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Start Scraping"/>
+          </form>
+        </div>
       </div>
       
 
-      <div className='flex flex-col'>
+      <div className='flex justify-evenly'>
         {/* PROXIES */}
+        
         <div className='mb-4'>
+          <h2 className='text-[2rem] mb-3'>PROXIES</h2>
           <ProxyField proxyList={[]} />
-          {/* <form onSubmit={handleSubmitProxy}>
-            <div>
-              <label htmlFor="proxy">Proxy:</label>
-              <input type="text" id="proxy" value={proxy} onChange={(e) => {setProxy(e.currentTarget.value)}}/>
-            </div>
-            
-            <input type="submit" value="Add Proxy"/>
-          </form> */}
         </div>
 
         {/* ACCOUNTS */}
         <div className='mb-10'>
-          <h1>Accounts</h1>
-          <form onSubmit={handleUploadAccount}>
-            <div>
-              <label htmlFor="email">Upload Account:</label>
-              <input type="text" id="email" placeholder='email' value={email} onChange={(e) => {setEmail(e.target.value)}}/>
-            </div>
-            <div>
-              <label htmlFor="password">Upload Account:</label>
-              <input type="text" id="password" placeholder='password' value={password} onChange={(e) => {setPassword(e.target.value)}}/>
-            </div>
-    
-            <input type="submit" value="Add Account"/>
-          </form>
+          <h2 className='text-[2rem] mb-3'>ACCOUNTS</h2>
         </div>
 
         {/* RECORDS */}
         <div>
-          <div>
-            <div>Records</div>
-            {JSON.stringify(accounts)}
-          </div>
-
-          <div>
-            <div>proxies</div>
-            {JSON.stringify(proxies)}
-          </div>
-
-          <div>
-            <div>scraped data</div>
-            {JSON.stringify(scrapeData)}
-          </div>
+          <h2 className='text-[2rem] mb-3'>RECORDS</h2>
         </div>
 
       </div>
