@@ -15,19 +15,19 @@ export const AccountField = ({accountList}: {accountList: string[]}) => {
         <form onSubmit={handleSubmit}>
           <div className='mb-3'>
             <label className='mr-2' htmlFor="email">Email: </label>
-            <input className='mr-5' type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
+            <input type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
           </div>
 
           <div className='mb-3'>
             <label className='mr-2' htmlFor="password">Password: </label>
-            <input className='mr-5' type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
+            <input type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
           </div>
 
           <input className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit" value="Start Scraping"/>
         </form>
       </div>
       
-      <div className='mr-2 border-cyan-600 border rounded grow'>
+      <div className=' border-cyan-600 border rounded grow'>
         <ul>
           {
             accountList && accountList.map(p => ( <div>{p}</div>))

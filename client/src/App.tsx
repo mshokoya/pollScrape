@@ -1,6 +1,7 @@
 import {useState, FormEvent} from 'react';
 import { ProxyField } from './components/ProxyField';
 import { AccountField } from './components/AccountField';
+import { RecordField } from './components/RecordField';
 
 
 function App() {
@@ -15,9 +16,6 @@ function App() {
 
   return (
     <div className='flex flex-col center h-screen'>
-      {/* <div className='mb-4'>
-        <button onClick={handleStartScrape}> start scrape</button>
-      </div> */}
       
       <div className='mb-4 text-center'>
         <div>
@@ -26,10 +24,10 @@ function App() {
             <div className='mb-3'>
               <div className='mb-3'>
                 <label className='mr-2' htmlFor="startScrape">URL: </label>
-                <input className='mr-5' type="text" id="startScrape" value={URLInput} onChange={ e => {setURLInput(e.currentTarget.value)}}/>
+                <input type="text" id="startScrape" value={URLInput} onChange={ e => {setURLInput(e.currentTarget.value)}}/>
               </div>
               
-              <div>
+              <div className='mb-3'>
                 <label className='mr-2' htmlFor="scrapeType">Scrape Type: </label>
                 <select id="scrapeType" name="scrapeType" value={scrapeType} onChange={e => {setScrapeType(e.currentTarget.value)}}>
                   <option value="single">Scrape Single Page</option>
@@ -43,29 +41,26 @@ function App() {
           </form>
         </div>
       </div>
-      
 
-      <div className='flex justify-evenly grow'>
-
+      <div className='flex flex-auto justify-between grow gap-5 p-5'>
         {/* PROXIES */}
-        <div className='mb-4 flex flex-col'>
+        <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>PROXIES</h2>
           <ProxyField proxyList={[]} />
         </div>
 
         {/* ACCOUNTS */}
-        <div className='mb-4 flex flex-col'>
+        <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>ACCOUNTS</h2>
           <AccountField accountList={[]} />
         </div>
 
         {/* RECORDS */}
-        <div className='mb-4 flex flex-col'>
+        <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>RECORDS</h2>
+          <RecordField recordList={[]}/>
         </div>
-
       </div>
-
     </div>
   )
 }

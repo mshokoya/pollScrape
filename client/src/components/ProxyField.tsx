@@ -73,7 +73,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_full')}>Proxy Full</button>
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_split')}>Proxy Split</button>
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_full')}>Socks5 Full</button>
-          <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_split')}>Socks5 Split</button>
+          <button className=' border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_split')}>Socks5 Split</button>
         </div>
 
         <ProxyComponent input={input} setInput={setInput} />
@@ -83,7 +83,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
         </button>
       </div>
       
-      <div className='mr-2 border-cyan-600 border rounded grow'>
+      <div className='border-cyan-600 border rounded grow'>
         <ul>
           {
             proxyList && proxyList.map(p => ( <div>{p}</div>))
