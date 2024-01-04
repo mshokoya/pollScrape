@@ -1,4 +1,5 @@
 import { useState } from "react"
+import {fetchData} from '../core/util';
 
 
 const proxy = () => ({
@@ -27,6 +28,27 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
   let ProxyComponent: (input: any, setInput: any) => JSX.Element;
 
+  const handleClick = async () => {
+    switch (selected) {
+      case 'proxy_full':
+        await fetchData('/addproxy', 'POST', {url: input.proxy.proxy_full, type: 'proxy'})
+        setInput(p => ({...p, proxy: proxy()}))
+        break;
+      case 'proxy_split':
+        await fetchData('/addproxy', 'POST', {url: `${input.proxy.proxy_split.protocol}://${input.proxy.proxy_split.host}:${input.proxy.proxy_split.port}`, type: 'proxy'})
+        setInput(p => ({...p, proxy: proxy()}))
+        break;
+      case 'socks_full':
+        await fetchData('/addproxy', 'POST', {url: input.socks.socks_full, type: 'socks'})
+        setInput(p => ({...p, socks: socks()}))
+        break;
+      case 'socks_split':
+        await fetchData('/addproxy', 'POST', {url: `${input.socks.socks_split.host}:${input.socks.socks_split.port}`, type: 'socks'})
+        setInput(p => ({...p, socks: socks()}))
+        break;
+    }
+  }
+
   switch (selected) {
     case 'proxy_full':
       ProxyComponent = ProxyFull
@@ -54,7 +76,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
         <ProxyComponent input={input} setInput={setInput} />
         
-        <button className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit">
+        <button className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' onClick={handleClick} >
           Add Proxy
         </button>
       </div>
