@@ -6,6 +6,7 @@ import {createServer} from 'node:http';
 import {startScrapingApollo} from './scraper';
 // import {socketIO} from './webSockets';
 import {addAccountToDB, addProxyToDB} from './db';
+import { verifyProxy } from './db/util';
 
 const app = express();
 const server = createServer(app);
@@ -29,12 +30,13 @@ app.post('/addaccount', async (req, res) => {
 });
 
 app.post('/addproxy', async (req, res) => {
-  console.log('add proxy')
-  console.log(req.body)
   try {
+    console.log('addProxy')
+    // const verify = verifyProxy(req.body.url)
+    // console.log(verify)
     // await addProxyToDB(req.body.proxy)
     // res.status(200)
-    res.json({ok: true, message: null, data: null})
+    res.json({ok: true, message: "Proxy Verified", data: verify})
   } catch (err) {
     // res.status(400)
     res.json({ok: false, message: 'failed to proxy', data: err})

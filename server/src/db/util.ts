@@ -1,4 +1,4 @@
-import proxyVerifier, { Protocol, Proxy } from 'proxy-verifier';
+import proxyVerifier, { Protocol, Proxy, CustomTestResult } from 'proxy-verifier';
 import { IAccount } from './database';
 
 export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
@@ -32,13 +32,24 @@ export const parseProxy = (proxy: string): Proxy => {
   }
 }
 
-export const verifyProxy = (proxy: string): boolean => {
-  let isOk: boolean;
+export const verifyProxy = (proxy: string): CustomTestResult => {
+  let isOk: CustomTestResult;
   proxyVerifier.test(
     parseProxy(proxy), 
     (err, result) => {
-      if (err) return false;
-      isOk = result.ok;
+      if (err) {
+        isOk = {
+          ok: false,
+          error: {
+            message: `Failed to verify proxy ${proxy}`,
+            code: '500',
+        },
+        status: 500,
+        headers: {},
+        data: {}
+        } as CustomTestResult;
+      }
+      isOk = result;
     }
   )
 

@@ -14,16 +14,16 @@ export const AccountField = ({accountList}: {accountList: string[]}) => {
       <div className='mb-10'>
         <form onSubmit={handleSubmit}>
           <div className='mb-3'>
-            <label className='mr-2' htmlFor="email">Email: </label>
+            <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
             <input type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
           </div>
 
           <div className='mb-3'>
-            <label className='mr-2' htmlFor="password">Password: </label>
+            <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
             <input type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
           </div>
 
-          <input className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit" value="Start Scraping"/>
+          <input className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit" value="Add Account"/>
         </form>
       </div>
       
