@@ -30,13 +30,14 @@ app.post('/addaccount', async (req, res) => {
 
 app.post('/addproxy', async (req, res) => {
   console.log('add proxy')
+  console.log(req.body)
   try {
     // await addProxyToDB(req.body.proxy)
     // res.status(200)
-    // res.json({ok: true, message: null, data: null})
+    res.json({ok: true, message: null, data: null})
   } catch (err) {
     // res.status(400)
-    // res.json({ok: false, message: 'failed to proxy', data: err})
+    res.json({ok: false, message: 'failed to proxy', data: err})
   }
 });
 

@@ -3,19 +3,19 @@ import {fetchData} from '../core/util';
 
 
 const proxy = () => ({
-  proxy_full: "proxy fulla",
+  proxy_full: '',
   proxy_split: {
-    protocol: "proxy proto",
-    host: 'proxy host',
-    port: 'proxy port',
+    protocol: '',
+    host: '',
+    port: '',
   }
 })
 
 const socks = () => ({
-  socks_full: 'socks full',
+  socks_full: '',
   socks_split: {
-    host: 'socks host',
-    port: 'socks port'
+    host: '',
+    port: ''
   }
 })
 
@@ -47,6 +47,8 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
         setInput(p => ({...p, socks: socks()}))
         break;
     }
+
+    console.log('end')
   }
 
   switch (selected) {
@@ -65,8 +67,8 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
   }
 
   return (
-    <div>
-      <div>
+    <div className="flex flex-col grow">
+      <div className='mb-10'>
         <div className="mb-4">
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_full')}>Proxy Full</button>
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_split')}>Proxy Split</button>
@@ -81,8 +83,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
         </button>
       </div>
       
-
-      <div>
+      <div className='mr-2 border-cyan-600 border rounded grow'>
         <ul>
           {
             proxyList && proxyList.map(p => ( <div>{p}</div>))
@@ -217,6 +218,5 @@ const SocksSplit = ({input, setInput}) => {
         />
       </div>
     </div>
-    
   )
 }
