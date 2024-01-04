@@ -23,18 +23,23 @@ function App() {
           <h2 className='text-[2rem] mb-3'>Apollo URL To Scrape</h2>
           <form onSubmit={handleStartScrape}>
             <div className='mb-3'>
-              <label className='mr-2' htmlFor="startScrape">URL:</label>
-              <input className='mr-5' type="text" id="startScrape" value={URLInput} onChange={ e => {setURLInput(e.currentTarget.value)}}/>
+              <div className='mb-3'>
+                <label className='mr-2' htmlFor="startScrape">URL: </label>
+                <input className='mr-5' type="text" id="startScrape" value={URLInput} onChange={ e => {setURLInput(e.currentTarget.value)}}/>
+              </div>
               
-              <label className='mr-2' htmlFor="scrapeType">Choose a car:</label>
-              <select id="scrapeType" name="scrapeType" value={scrapeType} onChange={e => {setScrapeType(e.currentTarget.value)}}>
-                <option value="single">Scrape Single Page</option>
-                <option value="all">Scrape All Pages</option>
-                <option value="excessive">Excessive Scrape</option>
-              </select>
-            </div>
+              <div className='mb-5'>
+                <label className='mr-2' htmlFor="scrapeType">Scrape Type: </label>
+                <select id="scrapeType" name="scrapeType" value={scrapeType} onChange={e => {setScrapeType(e.currentTarget.value)}}>
+                  <option value="single">Scrape Single Page</option>
+                  <option value="all">Scrape All Pages</option>
+                  <option value="excessive">Excessive Scrape</option>
+                </select>
+              </div>
             
-            <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Start Scraping"/>
+              <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Start Scraping"/>
+            </div>
+
           </form>
         </div>
       </div>

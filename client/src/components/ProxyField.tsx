@@ -95,7 +95,6 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
 const ProxyFull = ({input, setInput}) => {
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value)
     setInput(p => ({
       ...p,
       proxy: {
@@ -107,7 +106,7 @@ const ProxyFull = ({input, setInput}) => {
 
   return (
     <div className="flex">
-      <h4 className="mr-4 border-cyan-600 border-b-2">Proxy</h4>
+      <h4 className="mr-4 border-cyan-600 border-b-2">Proxy: </h4>
       <input 
         value={input.proxy.proxy_full} 
         onChange={handleInput}
@@ -133,24 +132,24 @@ const ProxySplit = ({input, setInput}) => {
 
   return (
     <div>
-      <div>
-        <h4>Protocol</h4>
+      <div className='flex mb-2'>
+        <h4 className="mr-4 border-cyan-600 border-b-2">Protocol: </h4>
         <input 
           value={input.proxy.proxy_split.protocol} 
           onChange={handleInput}
           data-field='protocol'
         />
       </div>
-      <div>
-        <h4>Host</h4>
+      <div className='flex mb-2'>
+        <h4 className="mr-4 border-cyan-600 border-b-2">Host: </h4>
         <input 
           value={input.proxy.proxy_split.host} 
           onChange={handleInput}
           data-field='host'
         />
       </div>
-      <div>
-        <h4>Port</h4>
+      <div className='flex mb-2'>
+        <h4 className="mr-4 border-cyan-600 border-b-2">Port: </h4>
         <input 
           value={input.proxy.proxy_split.port} 
           onChange={handleInput}
@@ -174,8 +173,8 @@ const SocksFull = ({input, setInput}) => {
   }
 
   return (
-    <div>
-      <h4>Socks5</h4>
+    <div className='flex mb-2'>
+      <h4 className="mr-4 border-cyan-600 border-b-2">Socks5: </h4>
       <input 
         value={input.socks.socks_full} 
         onChange={handleInput}
@@ -201,16 +200,16 @@ const SocksSplit = ({input, setInput}) => {
 
   return (
     <div>
-      <div>
-        <h4>Host</h4>
+      <div className='flex mb-2'>
+        <h4 className="mr-4 border-cyan-600 border-b-2">Host: </h4>
         <input 
           value={input.socks.socks_split.host} 
           onChange={handleInput}
           data-field='host'
         />
       </div>
-      <div>
-        <h4>Port</h4>
+      <div className='flex mb-2'>
+        <h4 className="mr-4 border-cyan-600 border-b-2">Port: </h4>
         <input 
           value={input.socks.socks_full.port} 
           onChange={handleInput}
