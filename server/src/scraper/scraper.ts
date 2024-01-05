@@ -9,7 +9,7 @@ import {
   visitGoogle,
   apolloLoggedOutURLSubstr
 } from './util';
-import {apolloDoc} from './dom';
+import {apolloDoc} from './dom/scrapeData';
 import { IAccount } from '../db/database';
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha

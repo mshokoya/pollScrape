@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 app.post('/addaccount', async (req, res) => {
   console.log('addAccount')
   try {
-    await addAccountToDB(req.body.email, req.body.password)
+    // await addAccountToDB(req.body.email, req.body.password)
     res.json({ok: true, message: null, data: null})
   } catch (err) {
     res.json({ok: false, message: 'failed to add user', data: err})

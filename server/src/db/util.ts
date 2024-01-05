@@ -34,9 +34,6 @@ export const parseProxy = (proxy: string): Proxy => {
 }
 
 export const verifyProxy = async (proxy: string): Promise<CustomTestResult> => {
-
-  console.log(parseProxy(proxy))
-
   const isOk = new Promise<CustomTestResult>(resolve => {
     proxyVerifier.testAll(
       parseProxy(proxy), 
