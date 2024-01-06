@@ -30,7 +30,7 @@ app.post('/addaccount', async (req, res) => {
   }
 });
 
-app.get('/accounts', async (req, res) => {
+app.post('/account', async (req, res) => {
   console.log('addAccount')
   try {
     const data = {'apollo.email': req.body.email, 'apollo.password': req.body.password}
@@ -43,6 +43,34 @@ app.get('/accounts', async (req, res) => {
     if (save !== null) throw new Error("Account already exists");
 
     res.json({ok: true, message: null, data: save})
+  } catch (err) {
+    res.json({ok: false, message: 'failed to add user', data: err})
+  }
+})
+
+app.get('/account', async (_req, res) => {
+  console.log('getAccounts')
+  try {
+
+    const accounts = AccountModel.find({}).lean()
+    
+    res.json({ok: true, message: null, data: accounts})
+  } catch (err) {
+    res.json({ok: false, message: 'failed to add user', data: err})
+  }
+})
+
+app.put('/account', async (req, res) => {
+  try {
+    const update = await AccountModel.findOneAndUpdate(
+      {_id: req.body._id},
+      req.body,
+      { new: false }
+    )
+
+    if (update !== null) throw new Error("Failed to update");
+    
+    res.json({ok: true, message: null, data: update})
   } catch (err) {
     res.json({ok: false, message: 'failed to add user', data: err})
   }
