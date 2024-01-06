@@ -52,11 +52,11 @@ app.get('/account', async (_req, res) => {
   console.log('getAccounts')
   try {
 
-    const accounts = AccountModel.find({}).lean()
+    const accounts = await AccountModel.find({}).lean()
     
     res.json({ok: true, message: null, data: accounts})
   } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err})
+    res.json({ok: false, message: 'failed to get user', data: err})
   }
 })
 

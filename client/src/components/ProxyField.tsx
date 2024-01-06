@@ -74,7 +74,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
   }
 
   return (
-    <div className="flex flex-col grow">
+    <div className="flex flex-col grow ">
       <div className='mb-10'>
         <div className="mb-4">
           <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_full')}>Proxy Full</button>

@@ -1,8 +1,28 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 
-export const AccountField = ({accountList}: {accountList: string[]}) => {
-  const [input, setInput] = useState({email: '', password: ''})
+export type IAccount = {
+  domain: string
+  accountType: string
+  trialTime: string
+  isSuspended: boolean
+  apollo: {
+    email: string
+    password: string
+  },
+  cookies: string
+  proxy: string
+  lastUsed: Date
+}
+
+export const AccountField = () => {
+  const [input, setInput] = useState({email: '', password: ''});
+  const [accounts, setAccounts] = useState<IAccount[]>([])
+
+  useEffect(() => {
+    const lol = fetchData('/account', 'GET')
+      .then(data => setAccounts(data.data))
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -10,7 +30,7 @@ export const AccountField = ({accountList}: {accountList: string[]}) => {
   }
 
   return (
-    <div className="flex flex-col grow">
+    <div className="flex flex-col grow ">
       <div className='mb-10'>
         <form onSubmit={handleSubmit}>
           <div className='mb-3'>
@@ -27,12 +47,32 @@ export const AccountField = ({accountList}: {accountList: string[]}) => {
         </form>
       </div>
       
-      <div className=' border-cyan-600 border rounded grow'>
-        <ul>
-          {
-            accountList && accountList.map(p => ( <div>{p}</div>))
-          }
-        </ul>
+      <div className=' border-cyan-600 border rounded grow overflow-scroll'>
+        <table className="text-[0.7rem] m-auto w-full table-fixed">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Trial</th>
+              <th>Email</th>
+              <th>Password</th>
+            </tr>
+          </thead>
+          <tbody className="text-[0.5rem]">
+            {
+              accounts.length && accounts.map( 
+                (a, idx) => ( 
+                  <tr className='text-center' key={idx}>
+                    <td className='overflow-scroll'>{a.accountType}</td>
+                    <td className='overflow-scroll'>{a.trialTime}</td>
+                    <td className='overflow-scroll'>{a.apollo.email}</td>
+                    <td className='overflow-scroll'>{a.apollo.password}</td>
+                  </tr>
+                )
+              )
+            }
+          </tbody>
+          
+        </table>
       </div>
     </div>
   )
