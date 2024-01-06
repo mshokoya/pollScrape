@@ -53,7 +53,7 @@ export const scraper = (() => {
 })()
 
 export const visitApollo = async () => {
-  const page = await scraper.visit("https://app.apollo.io")
+  const page = await scraper.visit("https://app.apollo.io");
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
   
 }
