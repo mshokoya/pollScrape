@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import {createServer} from 'node:http';
 import {startScrapingApollo} from './scraper';
 // import {socketIO} from './webSockets';
+import { AccountModel } from './db/database'; 
 import {addAccountToDB, addProxyToDB} from './db';
 import { verifyProxy } from './db/util';
 
@@ -29,6 +30,24 @@ app.post('/addaccount', async (req, res) => {
   }
 });
 
+app.get('/accounts', async (req, res) => {
+  console.log('addAccount')
+  try {
+    const data = {'apollo.email': req.body.email, 'apollo.password': req.body.password}
+    const save = await AccountModel.findOneAndUpdate(
+      data,
+      { $setOnInsert: data },
+      { upsert: true, new: false }
+    )
+
+    if (save !== null) throw new Error("Account already exists");
+
+    res.json({ok: true, message: null, data: save})
+  } catch (err) {
+    res.json({ok: false, message: 'failed to add user', data: err})
+  }
+})
+
 app.post('/addproxy', async (req, res) => {
   try {
     const verify = await verifyProxy(req.body.url)
@@ -47,6 +66,8 @@ app.post('/startscrape', async (req, res) => {
   // startScrapingApollo()
   res.json({ok: true, data: {message: "hello world"}})
 });
+
+
 
 app.use((err: any, _req: any, res: any, next: any) => {
   if (res.headersSent) {

@@ -43,11 +43,11 @@ export const startScrapingApollo = async (urlList: string[]) => {
 
     const allAccounts = await getAllApolloAccounts();
     const account = selectAccForScrapingFILO(allAccounts);
-    const proxy =  await selectProxy(account, allAccounts);
+    // const proxy =  await selectProxy(account, allAccounts);
     // const account = allUsers[0];
-    // const proxy = "0.0.0.0.0:0000";
+    const proxy = "0.0.0.0.0:0000";
 
-    await useProxy(page, proxy);
+    // await useProxy(page, proxy);
     await setupApolloForScraping(account)
     await goToApolloSearchUrl(url);
 

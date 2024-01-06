@@ -57,7 +57,7 @@ export type IProxy = {
 
 const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
-  accountType: { type: String, default: "" }, // free or premuim
+  accountType: { type: String, default: "n/a" }, // free or premuim
   trialTime: { type: String, default: "" },
   isSuspended: { type: Boolean, default: false },
   apollo: {
