@@ -79,6 +79,7 @@ app.put('/account', async (req, res) => {
 app.post('/addproxy', async (req, res) => {
   try {
     const verify = await verifyProxy(req.body.url)
+    
     // await addProxyToDB(req.body.proxy)
     // res.status(200)
     res.json({ok: true, message: "Proxy Verified", data: verify})

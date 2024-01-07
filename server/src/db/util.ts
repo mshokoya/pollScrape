@@ -4,10 +4,57 @@ import proxyCheck from 'advanced-proxy-checker';
 import { IAccount } from './database';
 
 export type Proxy = {
-  valid: boolean,
-  status: string,
-  data: { ip: '47.243.175.55' }
+  protocol: string;
+  host: string;
+  port: string;
 }
+
+export type ProxyRes = {
+  valid: boolean,
+  status: string, // "Connection Successful"
+  data: {
+    ip: string;
+    hostname: string;
+    city: string;
+    region: string;
+    country: string;
+    loc: string;
+    org: string;
+    postal: string;
+    timezone: string;
+    asn: {
+      asn: string;
+      name: string;
+      domain: string;
+      route: string;
+      type: string;
+    },
+    company: {
+      name: string;
+      domain: string;
+      type: string;
+    },
+    privacy: {
+      vpn: boolean
+      proxy: boolean
+      tor: boolean
+      relay: boolean
+      hosting: boolean
+      service: string;
+    },
+    abuse: {
+      address: string;
+      country: string;
+      email: string;
+      name: string;
+      network: string;
+      phone: string;
+    },
+    fraudScore: number
+    riskLevel: string;
+  }
+}
+
 
 export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
   return userAccounts.reduce((acc: IAccount, cv: any) => {
@@ -29,7 +76,7 @@ export const rmPageFromURLQuery = (url: string): {url: string, page: string} => 
 }
 
 // {proxy: string, protocol: string, ipAddress: string, port: string}
-export const parseProxy = (proxy: string): any => {
+export const parseProxy = (proxy: string): Proxy => {
   const split = proxy.split('://'); // ["http", "0.0.0.0:8000"]
   const split2 = split[1].split(':'); // ["0.0.0.0", "8000"]
   
@@ -43,27 +90,8 @@ export const parseProxy = (proxy: string): any => {
 // (FIX) dont use third party type
 export const verifyProxy = async (proxy: string): Promise<any> => {
   const isOk = await proxyCheck.full(proxy)
+
   console.log(isOk)
-  // const isOk = new Promise<CustomTestResult>(resolve => {
-  //   proxyVerifier.testAll(
-  //     parseProxy(proxy), 
-  //     (err, result) => {
-  //       if (err) {
-  //         resolve({
-  //           ok: false,
-  //           error: {
-  //             message: `Failed to verify proxy ${proxy}`,
-  //             code: '500',
-  //         },
-  //         status: 500,
-  //         headers: {},
-  //         data: {}
-  //         })
-  //       }
-  //       resolve(result);
-  //     }
-  //   )
-  // })
 
   return isOk;
 }
