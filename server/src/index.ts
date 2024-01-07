@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import {createServer} from 'node:http';
 import {startScrapingApollo} from './scraper';
 // import {socketIO} from './webSockets';
-import { AccountModel } from './db/database'; 
+import { AccountModel, ProxyModel } from './db/database'; 
 import {addAccountToDB, addProxyToDB} from './db';
 import { verifyProxy } from './db/util';
 
@@ -70,17 +70,25 @@ app.put('/account', async (req, res) => {
   }
 })
 
+app.get('/proxy', async (req, res) => {
+  try {
+    const proxies = await ProxyModel.find({}).lean()
+
+    res.json({ok: true, message: null, data: proxies})
+  } catch (err) {
+    res.json({ok: false, message: 'failed to proxy', data: err})
+  }
+});
+
 app.post('/addproxy', async (req, res) => {
   try {
     const proxyRes = await verifyProxy(req.body.url)
-    if (proxyRes.valid) {
-      await addProxyToDB(req.body.proxy)
-    }
-    
-    // res.status(200)
-    res.json({ok: true, message: "Proxy Verified", data: proxyRes})
+    // if (proxyRes.valid) {
+    //   await addProxyToDB(req.body.proxy)
+    // }
+
+    res.json({ok: true, message: null, data: proxyRes})
   } catch (err) {
-    // res.status(400)
     res.json({ok: false, message: 'failed to proxy', data: err})
   }
 });
@@ -91,8 +99,6 @@ app.post('/startscrape', async (req, res) => {
   // startScrapingApollo()
   res.json({ok: true, data: {message: "hello world"}})
 });
-
-
 
 app.use((err: any, _req: any, res: any, next: any) => {
   if (res.headersSent) {

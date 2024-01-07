@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 
 
@@ -26,6 +26,12 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     proxy: proxy(),
     socks: socks()
   })
+  const [proxies, setProxies] = useState([])
+
+  useEffect(() => {
+    fetchData('/proxy', 'GET')
+      .then( data => setProxies(data.data))
+  }, [])
 
   let ProxyComponent: (input: any, setInput: any) => JSX.Element;
 
@@ -54,8 +60,16 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     console.log(data)
 
     const res = await fetchData('/addproxy', 'POST', data)
+      .then((d) => {
+        if (d.data.valid === true) {
+          setProxies(p => [...p, d.data.data])
+        }
 
-    console.log(res)
+        return d
+      })
+
+    console.log(res.data.data)
+    console.log(res.data.valid)
   }
 
   switch (selected) {
@@ -90,12 +104,31 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
         </button>
       </div>
       
-      <div className='border-cyan-600 border rounded grow'>
-        <ul>
-          {
-            proxyList && proxyList.map(p => ( <div>{p}</div>))
-          }
-        </ul>
+      <div className=' border-cyan-600 border rounded grow overflow-scroll'>
+        <table className="text-[0.7rem] m-auto w-full table-fixed">
+          <thead>
+            <tr>
+              <th>Proto</th>
+              <th>Host</th>
+              <th>Port</th>
+              <th>Valid</th>
+            </tr>
+          </thead>
+          <tbody className="text-[0.5rem]">
+            {
+              proxies.length && proxies.map( 
+                (a, idx) => ( 
+                  <tr className='text-center' key={idx}>
+                    <td className='overflow-scroll'>{a.protocol}</td>
+                    <td className='overflow-scroll'>{a.host}</td>
+                    <td className='overflow-scroll'>{a.port}</td>
+                    <td className='overflow-scroll'>{a.valid}</td>
+                  </tr>
+                )
+              )
+            }
+          </tbody>
+        </table>
       </div>
     </div>
   )
@@ -124,7 +157,6 @@ const ProxyFull = ({input, setInput}) => {
 }
 
 const ProxySplit = ({input, setInput}) => {
-
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(p => ({
       ...p,

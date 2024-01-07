@@ -71,7 +71,6 @@ export const AccountField = () => {
               )
             }
           </tbody>
-          
         </table>
       </div>
     </div>
