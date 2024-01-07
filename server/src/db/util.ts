@@ -9,7 +9,7 @@ export type Proxy = {
   port: string;
 }
 
-export type ProxyRes = {
+export type ProxyResponse = {
   valid: boolean,
   status: string, // "Connection Successful"
   data: {
@@ -82,14 +82,14 @@ export const parseProxy = (proxy: string): Proxy => {
   
   return {
     protocol: split[0] as string,
-    ipAddress: split2[0],
-    port: parseInt(split2[1])
+    host: split2[0],
+    port: split2[1]
   }
 }
 
 // (FIX) dont use third party type
-export const verifyProxy = async (proxy: string): Promise<any> => {
-  const isOk = await proxyCheck.full(proxy)
+export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
+  const isOk: ProxyResponse = await proxyCheck.full(proxy)
 
   console.log(isOk)
 

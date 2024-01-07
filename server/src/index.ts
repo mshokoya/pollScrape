@@ -33,12 +33,7 @@ app.post('/addaccount', async (req, res) => {
 app.post('/account', async (req, res) => {
   console.log('addAccount')
   try {
-    const data = {'apollo.email': req.body.email, 'apollo.password': req.body.password}
-    const save = await AccountModel.findOneAndUpdate(
-      data,
-      { $setOnInsert: data },
-      { upsert: true, new: false }
-    )
+    const save = await addAccountToDB(req.body.email, req.body.password)
 
     if (save !== null) throw new Error("Account already exists");
 
@@ -51,7 +46,6 @@ app.post('/account', async (req, res) => {
 app.get('/account', async (_req, res) => {
   console.log('getAccounts')
   try {
-
     const accounts = await AccountModel.find({}).lean()
     
     res.json({ok: true, message: null, data: accounts})
@@ -78,11 +72,13 @@ app.put('/account', async (req, res) => {
 
 app.post('/addproxy', async (req, res) => {
   try {
-    const verify = await verifyProxy(req.body.url)
+    const proxyRes = await verifyProxy(req.body.url)
+    if (proxyRes.valid) {
+      await addProxyToDB(req.body.proxy)
+    }
     
-    // await addProxyToDB(req.body.proxy)
     // res.status(200)
-    res.json({ok: true, message: "Proxy Verified", data: verify})
+    res.json({ok: true, message: "Proxy Verified", data: proxyRes})
   } catch (err) {
     // res.status(400)
     res.json({ok: false, message: 'failed to proxy', data: err})
@@ -91,7 +87,7 @@ app.post('/addproxy', async (req, res) => {
 
 app.post('/startscrape', async (req, res) => {
   console.log('start scraping')
-  startScrapingApollo([req.body.url])
+  // startScrapingApollo([req.body.url])
   // startScrapingApollo()
   res.json({ok: true, data: {message: "hello world"}})
 });
