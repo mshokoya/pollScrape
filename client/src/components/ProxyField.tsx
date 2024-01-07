@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 
+export type Proxy = {
+  protocol: string;
+  host: string;
+  port: string;
+}
 
 const proxy = () => ({
   proxy_full: '',
@@ -26,7 +31,8 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     proxy: proxy(),
     socks: socks()
   })
-  const [proxies, setProxies] = useState([])
+  const [proxies, setProxies] = useState<Proxy[]>([])
+  const [reqInProcess, setreqInProcess] = useState<boolean>(false)
 
   useEffect(() => {
     fetchData('/proxy', 'GET')
@@ -36,6 +42,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
   let ProxyComponent: (input: any, setInput: any) => JSX.Element;
 
   const handleClick = async () => {
+    setreqInProcess(true)
     let data: {[key: string]: string} = {};
 
     switch (selected) {
@@ -62,14 +69,19 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     const res = await fetchData('/addproxy', 'POST', data)
       .then((d) => {
         if (d.data.valid === true) {
+          console.log('win')
+          console.log(d.data)
+          console.log(d.data.data)
           setProxies(p => [...p, d.data.data])
         }
+
+        console.log('lose')
+        setreqInProcess(false)
 
         return d
       })
 
-    console.log(res.data.data)
-    console.log(res.data.valid)
+
   }
 
   switch (selected) {
@@ -99,7 +111,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
         <ProxyComponent input={input} setInput={setInput} />
         
-        <button className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' onClick={handleClick} >
+        <button className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3 disabled:border-neutral-500 disabled:text-neutral-500' disabled={reqInProcess} onClick={handleClick} >
           Add Proxy
         </button>
       </div>
@@ -111,7 +123,6 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
               <th>Proto</th>
               <th>Host</th>
               <th>Port</th>
-              <th>Valid</th>
             </tr>
           </thead>
           <tbody className="text-[0.5rem]">
@@ -122,7 +133,6 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
                     <td className='overflow-scroll'>{a.protocol}</td>
                     <td className='overflow-scroll'>{a.host}</td>
                     <td className='overflow-scroll'>{a.port}</td>
-                    <td className='overflow-scroll'>{a.valid}</td>
                   </tr>
                 )
               )

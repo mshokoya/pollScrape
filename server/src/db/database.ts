@@ -51,7 +51,7 @@ export type IApolloData = {
 export type IProxy = {
   proxy: string
   protocol: string,
-  ipAddress: string
+  host: string
   port: string
 }
 
@@ -111,7 +111,7 @@ const apolloData = new Schema<IApolloData>({
 const proxy = new Schema<IProxy>({
   proxy: { type: String, default: "" },
   protocol: { type: String, default: "" },
-  ipAddress: { type: String, default: "" },
+  host: { type: String, default: "" },
   port: { type: String, default: "" }
 });
 

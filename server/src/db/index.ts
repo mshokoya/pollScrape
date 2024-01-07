@@ -16,7 +16,7 @@ export const addAccountToDB = async (email: string, password: string): Promise<I
 }
 
 export const addProxyToDB = async (proxy: string): Promise<IProxy> => {
-  await ProxyModel.create(parseProxy(proxy));
+  // await ProxyModel.create(parseProxy(proxy));
   const proxies = await ProxyModel.findOneAndUpdate(
     { proxy },
     { $setOnInsert: parseProxy(proxy) },

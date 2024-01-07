@@ -83,9 +83,12 @@ app.get('/proxy', async (req, res) => {
 app.post('/addproxy', async (req, res) => {
   try {
     const proxyRes = await verifyProxy(req.body.url)
-    // if (proxyRes.valid) {
-    //   await addProxyToDB(req.body.proxy)
-    // }
+    if (proxyRes.valid) {
+      await addProxyToDB(req.body.proxy)
+    }
+
+    console.log('eeyyaa')
+    console.log(proxyRes.valid)
 
     res.json({ok: true, message: null, data: proxyRes})
   } catch (err) {

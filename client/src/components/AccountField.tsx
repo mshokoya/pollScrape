@@ -20,7 +20,7 @@ export const AccountField = () => {
   const [accounts, setAccounts] = useState<IAccount[]>([])
 
   useEffect(() => {
-    const lol = fetchData('/account', 'GET')
+    fetchData('/account', 'GET')
       .then(data => setAccounts(data.data))
   }, [])
 
