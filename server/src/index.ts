@@ -96,9 +96,9 @@ app.post('/addproxy', async (req, res) => {
   }
 });
 
-app.post('/startscrape', async (req, res) => {
+app.post('/scrape', async (req, res) => {
   console.log('start scraping')
-  // startScrapingApollo([req.body.url])
+  startScrapingApollo(req.body.url)
   // startScrapingApollo()
   res.json({ok: true, data: {message: "hello world"}})
 });

@@ -94,6 +94,8 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
   if (isOk.valid) {
     isOk.data = parseProxy(proxy)
   }
+  
+  console.log('isOk')
   console.log(isOk)
 
   return isOk;

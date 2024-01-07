@@ -71,25 +71,25 @@ export const apolloDoc = async (page: Page) => {
       const nameColumn = scrapeNameColumn(tr.childNodes[0] as HE);
       const titleColumn = scrapeTitleColumn(tr.childNodes[1] as HE);
       const companyColumn = scrapeCompanyColumn(tr.childNodes[2] as HE); // obj
-      // const locationColumn = scrapeLocationColumn(tr.childNodes[4]);
-      // const employeesColumn = scrapeEmployeesColumn(tr.childNodes[5]);
-      // const emailColumn = await scrapeEmailColumn(tr.childNodes[6]);
-      // const industryColumn = scrapeIndustryColumn(tr.childNodes[7]);
-      // const keywordsColumn = scrapeKeywordsColumn(tr.childNodes[8]); // list
+      const locationColumn = scrapeLocationColumn(tr.childNodes[4] as HE);
+      const employeesColumn = scrapeEmployeesColumn(tr.childNodes[5] as HE);
+      const emailColumn = await scrapeEmailColumn(tr.childNodes[6] as HE);
+      const industryColumn = scrapeIndustryColumn(tr.childNodes[7] as HE);
+      const keywordsColumn = scrapeKeywordsColumn(tr.childNodes[8] as HE); // list
     
       return {
         'name': `"${nameColumn.name}"`,
         'linkedin': `"${nameColumn.linkedin}"`, 
         'title': `"${titleColumn}"`,
-        // 'website': `"${companyColumn.companyWebsite}"`,
-        // 'company linkedin': `"${companyColumn.companyLinkedin}"`,
-        // 'twitter': `"${companyColumn.companyTwitter}"`,
-        // 'facebook': `"${companyColumn.companyFacebook}"`,
-        // 'location': `"${locationColumn}"`,
-        // 'employees': `"${employeesColumn}"`,
-        // 'email': `"${emailColumn}"`,
-        // 'industry': `"${industryColumn}"`,
-        // 'keywords': `"${keywordsColumn}"`
+        'website': `"${companyColumn.companyWebsite}"`,
+        'company linkedin': `"${companyColumn.companyLinkedin}"`,
+        'twitter': `"${companyColumn.companyTwitter}"`,
+        'facebook': `"${companyColumn.companyFacebook}"`,
+        'location': `"${locationColumn}"`,
+        'employees': `"${employeesColumn}"`,
+        'email': `"${emailColumn}"`,
+        'industry': `"${industryColumn}"`,
+        'keywords': `"${keywordsColumn}"`
       }
     }
     

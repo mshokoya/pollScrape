@@ -66,7 +66,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
     console.log(data)
 
-    const res = await fetchData('/addproxy', 'POST', data)
+    await fetchData('/addproxy', 'POST', data)
       .then((d) => {
         if (d.data.valid === true) {
           console.log('win')
