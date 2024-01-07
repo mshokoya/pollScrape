@@ -1,6 +1,13 @@
-import proxyVerifier, { Protocol, Proxy, CustomTestResult } from 'proxy-verifier';
+
+//@ts-ignore
+import proxyCheck from 'advanced-proxy-checker';
 import { IAccount } from './database';
-import { deasync } from '@kaciras/deasync';
+
+export type Proxy = {
+  valid: boolean,
+  status: string,
+  data: { ip: '47.243.175.55' }
+}
 
 export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
   return userAccounts.reduce((acc: IAccount, cv: any) => {
@@ -22,39 +29,41 @@ export const rmPageFromURLQuery = (url: string): {url: string, page: string} => 
 }
 
 // {proxy: string, protocol: string, ipAddress: string, port: string}
-export const parseProxy = (proxy: string): Proxy => {
+export const parseProxy = (proxy: string): any => {
   const split = proxy.split('://'); // ["http", "0.0.0.0:8000"]
   const split2 = split[1].split(':'); // ["0.0.0.0", "8000"]
   
   return {
-    protocol: split[0] as Protocol,
+    protocol: split[0] as string,
     ipAddress: split2[0],
     port: parseInt(split2[1])
   }
 }
 
 // (FIX) dont use third party type
-export const verifyProxy = async (proxy: string): Promise<CustomTestResult> => {
-  const isOk = new Promise<CustomTestResult>(resolve => {
-    proxyVerifier.testAll(
-      parseProxy(proxy), 
-      (err, result) => {
-        if (err) {
-          resolve({
-            ok: false,
-            error: {
-              message: `Failed to verify proxy ${proxy}`,
-              code: '500',
-          },
-          status: 500,
-          headers: {},
-          data: {}
-          })
-        }
-        resolve(result);
-      }
-    )
-  })
+export const verifyProxy = async (proxy: string): Promise<any> => {
+  const isOk = await proxyCheck.full(proxy)
+  console.log(isOk)
+  // const isOk = new Promise<CustomTestResult>(resolve => {
+  //   proxyVerifier.testAll(
+  //     parseProxy(proxy), 
+  //     (err, result) => {
+  //       if (err) {
+  //         resolve({
+  //           ok: false,
+  //           error: {
+  //             message: `Failed to verify proxy ${proxy}`,
+  //             code: '500',
+  //         },
+  //         status: 500,
+  //         headers: {},
+  //         data: {}
+  //         })
+  //       }
+  //       resolve(result);
+  //     }
+  //   )
+  // })
 
   return isOk;
 }
