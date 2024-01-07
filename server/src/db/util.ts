@@ -7,7 +7,7 @@ export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
     if (cv.lastUsed < acc.lastUsed) {
       return cv
     }
-  }, Infinity as any)
+  }, Infinity as any);
 }
 
 export const rmPageFromURLQuery = (url: string): {url: string, page: string} => {
@@ -24,7 +24,7 @@ export const rmPageFromURLQuery = (url: string): {url: string, page: string} => 
 // {proxy: string, protocol: string, ipAddress: string, port: string}
 export const parseProxy = (proxy: string): Proxy => {
   const split = proxy.split('://'); // ["http", "0.0.0.0:8000"]
-  const split2 = split[1].split(':') // ["0.0.0.0", "8000"]
+  const split2 = split[1].split(':'); // ["0.0.0.0", "8000"]
   
   return {
     protocol: split[0] as Protocol,
@@ -33,6 +33,7 @@ export const parseProxy = (proxy: string): Proxy => {
   }
 }
 
+// (FIX) dont use third party type
 export const verifyProxy = async (proxy: string): Promise<CustomTestResult> => {
   const isOk = new Promise<CustomTestResult>(resolve => {
     proxyVerifier.testAll(

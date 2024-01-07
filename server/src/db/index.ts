@@ -6,5 +6,5 @@ export const addAccountToDB = async (email: string, password: string) => {
 }
 
 export const addProxyToDB = async (proxy: string) => {
-  await ProxyModel.create(parseProxy(proxy))
+  await ProxyModel.create(parseProxy(proxy));
 }

@@ -79,7 +79,7 @@ const apolloMetaData = new Schema<IApolloMetaData>({
   maxPages: { type: String, default: "" },
   page: { type: Number, default: 0 }, // current page 
   scrapes: { type: [Object], default: []} // [{page: 1, scrapeID: ""}] - is use in ApolloDataModel
-})
+});
 
 // TODO: 
 //  might want to save cookes and proxy used for scrape
@@ -106,14 +106,14 @@ const apolloData = new Schema<IApolloData>({
     industry: { type: String, default: "null" },
     keywords: { type: [String], default: [] }
   }
-})
+});
 
 const proxy = new Schema<IProxy>({
   proxy: { type: String, default: "" },
   protocol: { type: String, default: "" },
   ipAddress: { type: String, default: "" },
   port: { type: String, default: "" }
-})
+});
 
 export const AccountModel = model<IAccount>('account', accountSchema);
 export const ApolloMetadataModel = model<IApolloMetaData>('apollo', apolloMetaData);
