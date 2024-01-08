@@ -64,22 +64,22 @@ export const apolloUpdatePageQueryString = (url: string) => {
   return myURL.href;
 }
 
-const wait_for_browser = (callback: () => Promise<void>) => new Promise((resolve, reject) => {
+export const wait_for_browser = (callback: () => Promise<void>) => 
+  new Promise((resolve, reject) => {
+    const browser_check = setInterval(async () => {
+      const pageLength = (await scraper.browser()?.pages())?.length || 0
+      console.log('pages')
+      console.log(pageLength)
 
-  const browser_check = setInterval(async () => {
-    const pageLength = (await scraper.browser()?.pages())?.length || 0
-    console.log('pages')
-    console.log(pageLength)
+      if ( pageLength === 0 ) {
+        clearInterval(browser_check);
+        await callback()
+        resolve(true);
+      }
 
-    if ( pageLength === 0 ) {
-      clearInterval(browser_check);
-      await callback()
-      resolve(true);
-    }
-
-  }, 5000);
-
-});
+    }, 5000);
+  }
+);
 
 // https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
 
