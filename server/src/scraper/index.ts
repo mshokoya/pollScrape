@@ -27,9 +27,6 @@ const checkUserIP = async () => {
   await page.waitForTimeout(5000)
 }
 
-
-
-
 // start apollo should use url
 // TODO
 // handle account failed login
@@ -48,8 +45,9 @@ export const startScrapingApollo = async (urlList: string[]) => {
     const proxy = "0.0.0.0.0:0000";
 
     // await useProxy(page, proxy);
-    await setupApolloForScraping(account)
-    await goToApolloSearchUrl(url);
+
+    // await setupApolloForScraping(account)
+    // await goToApolloSearchUrl(url);
 
     const data = await apolloScrapePage(); // edit
     const cookies = await getBrowserCookies(page);

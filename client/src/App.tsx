@@ -2,6 +2,7 @@ import {useState, FormEvent} from 'react';
 import { ProxyField } from './components/ProxyField';
 import { AccountField } from './components/AccountField';
 import { RecordField } from './components/RecordField';
+import { fetchData } from './core/util';
 
 
 function App() {
@@ -11,7 +12,7 @@ function App() {
   const handleStartScrape = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    // const data = await fetchData('/startscrape', 'POST', {url: scrapeURL})
+    await fetchData('/scrape', 'POST', {url: URLInput})
   }
 
   return (

@@ -1,8 +1,19 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 
 export const RecordField = ({recordList}: {recordList: string[]}) => {
-  const [selected, setSelected] = useState(0)
+  const [selected, setSelected] = useState(0);
+  const [meta, setMeta] = useState([]);
+  const [records, setRecord] = useState([]);
+
+  useEffect(() => {
+    fetchData('/records', 'GET')
+      .then(() => {
+        
+      })
+
+    
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
