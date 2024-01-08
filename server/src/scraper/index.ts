@@ -5,7 +5,7 @@ import {
   setupApolloForScraping
 } from './scraper';
 import {
-  getBrowserCookies,
+  getBrowserCookies, wait_for_browser,
 } from './util'
 import {
   selectAccForScrapingFILO
@@ -57,6 +57,28 @@ export const startScrapingApollo = async (urlList: string[]) => {
   }
 
   await scraper.close();
+}
+
+export const apolloGetCookiesFromLogin = async () => {
+  if (!scraper.browser()) {
+    await scraper.launchBrowser()
+  }
+
+  scraper.visit('https://app.apollo.io/#/login')
+
+  const cookies = await wait_for_browser()
+    .then(async () => {
+      const client = await scraper.browser()?.target().createCDPSession();
+      const { cookies } = await client!.send('Network.getAllCookies');
+
+      console.log('HERE')
+      console.log(cookies)
+
+
+      return (cookies as unknown) as string[];
+    });
+
+  return cookies
 }
 
 

@@ -64,7 +64,7 @@ export const apolloUpdatePageQueryString = (url: string) => {
   return myURL.href;
 }
 
-export const wait_for_browser = (callback: () => Promise<void>) => 
+export const wait_for_browser = () => 
   new Promise((resolve, reject) => {
     const browser_check = setInterval(async () => {
       const pageLength = (await scraper.browser()?.pages())?.length || 0
@@ -73,7 +73,6 @@ export const wait_for_browser = (callback: () => Promise<void>) =>
 
       if ( pageLength === 0 ) {
         clearInterval(browser_check);
-        await callback()
         resolve(true);
       }
 
