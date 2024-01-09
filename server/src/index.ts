@@ -37,20 +37,20 @@ app.post('/account', async (req, res) => {
 
     if (save !== null) throw new Error("Account already exists");
 
-    res.json({ok: true, message: null, data: save})
+    res.json({ok: true, message: null, data: save});
   } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err})
+    res.json({ok: false, message: 'failed to add user', data: err});
   }
 })
 
 app.get('/account', async (_req, res) => {
   console.log('getAccounts')
   try {
-    const accounts = await AccountModel.find({}).lean()
+    const accounts = await AccountModel.find({}).lean();
     
-    res.json({ok: true, message: null, data: accounts})
+    res.json({ok: true, message: null, data: accounts});
   } catch (err) {
-    res.json({ok: false, message: 'failed to get user', data: err})
+    res.json({ok: false, message: 'failed to get user', data: err});
   }
 })
 
@@ -60,55 +60,55 @@ app.put('/account', async (req, res) => {
       {_id: req.body._id},
       req.body,
       { new: false }
-    )
+    );
 
     if (update !== null) throw new Error("Failed to update");
     
-    res.json({ok: true, message: null, data: update})
+    res.json({ok: true, message: null, data: update});
   } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err})
+    res.json({ok: false, message: 'failed to add user', data: err});
   }
 })
 
 app.get('/proxy', async (req, res) => {
   try {
-    const proxies = await ProxyModel.find({}).lean()
+    const proxies = await ProxyModel.find({}).lean();
 
-    res.json({ok: true, message: null, data: proxies})
+    res.json({ok: true, message: null, data: proxies});
   } catch (err) {
-    res.json({ok: false, message: 'failed to proxy', data: err})
+    res.json({ok: false, message: 'failed to proxy', data: err});
   }
 });
 
 app.post('/addproxy', async (req, res) => {
   try {
-    const proxyRes = await verifyProxy(req.body.url)
+    const proxyRes = await verifyProxy(req.body.url);
     if (proxyRes.valid) {
-      await addProxyToDB(req.body.proxy)
+      await addProxyToDB(req.body.proxy);
     }
 
-    console.log('eeyyaa')
-    console.log(proxyRes.valid)
+    console.log('eeyyaa');
+    console.log(proxyRes.valid);
 
-    res.json({ok: true, message: null, data: proxyRes})
+    res.json({ok: true, message: null, data: proxyRes});
   } catch (err) {
-    res.json({ok: false, message: 'failed to proxy', data: err})
+    res.json({ok: false, message: 'failed to proxy', data: err});
   }
 });
 
 app.post('/scrape', async (req, res) => {
-  console.log('start scraping')
-  startScrapingApollo(req.body.url)
+  console.log('start scraping');
+  startScrapingApollo(req.body.url);
   // startScrapingApollo()
-  res.json({ok: true, data: {message: "hello world"}})
+  res.json({ok: true, data: {message: "hello world"}});
 });
 
 app.use((err: any, _req: any, res: any, next: any) => {
   if (res.headersSent) {
-    return next(err)
+    return next(err);
   }
-  res.status(500)
-  res.render('error', { error: err })
+  res.status(500);
+  res.render('error', { error: err });
 })
 
 mongoose.connect('mongodb://localhost:27017/apollo')
@@ -116,6 +116,6 @@ mongoose.connect('mongodb://localhost:27017/apollo')
     console.log('mongoose started')
     server.listen(port, () => {
       console.log(`connected to server on port ${port}`)
-    })
-  })
+    });
+  });
 
