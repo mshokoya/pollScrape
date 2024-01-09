@@ -21,12 +21,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.post('/addaccount', async (req, res) => {
-  console.log('addAccount')
+  console.log('addAccount');
   try {
     // await addAccountToDB(req.body.email, req.body.password)
-    res.json({ok: true, message: null, data: null})
+    res.json({ok: true, message: null, data: null});
   } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err})
+    res.json({ok: false, message: 'failed to add user', data: err});
   }
 });
 
