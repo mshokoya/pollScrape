@@ -12,7 +12,6 @@ export const RecordField = ({recordList}: {recordList: string[]}) => {
         
       })
 
-      
   }, [])
 
   const handleSubmit = async (e) => {

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import {fetchData} from '../core/util';
+import { SlOptionsVertical } from "react-icons/sl";
 
 export type Proxy = {
   protocol: string;
@@ -41,7 +42,8 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
   let ProxyComponent: (input: any, setInput: any) => JSX.Element;
 
-  const handleClick = async () => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setreqInProcess(true)
     let data: {[key: string]: string} = {};
 
@@ -64,21 +66,16 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
         break;
     }
 
-    console.log(data)
-
     await fetchData('/addproxy', 'POST', data)
       .then((d) => {
         if (d.data.valid === true) {
-          console.log('win')
-          console.log(d.data)
-          console.log(d.data.data)
           setProxies(p => [...p, d.data.data])
         }
 
-        console.log('lose')
         setreqInProcess(false)
-
-        return d
+      })
+      .catch(err => {
+        setreqInProcess(false)
       })
 
 
@@ -99,30 +96,32 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
       break;
   }
 
+  const cls = (n: string) => `mr-2 border-cyan-600 border rounded p-1 ${selected === n ? 'text-neutral-500 border-neutral-500' : ''}`
+
   return (
     <div className="flex flex-col grow ">
       <div className='mb-10'>
         <div className="mb-4">
-          <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_full')}>Proxy Full</button>
-          <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('proxy_split')}>Proxy Split</button>
-          <button className='mr-2 border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_full')}>Socks5 Full</button>
-          <button className=' border-cyan-600 border rounded p-1' onClick={() => setSelected('socks_split')}>Socks5 Split</button>
+          <button className={cls('proxy_full')} onClick={() => setSelected('proxy_full')}>Proxy Full</button>
+          <button className={cls('proxy_split')} onClick={() => setSelected('proxy_split')}>Proxy Split</button>
+          <button className={cls('socks_full')} onClick={() => setSelected('socks_full')}>Socks Full</button>
+          <button className={cls('socks_split')} onClick={() => setSelected('socks_split')}>Socks Split</button>
         </div>
 
-        <ProxyComponent input={input} setInput={setInput} />
-        
-        <button className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3 disabled:border-neutral-500 disabled:text-neutral-500' disabled={reqInProcess} onClick={handleClick} >
-          Add Proxy
-        </button>
+        <form onSubmit={handleSubmit}>
+          <ProxyComponent input={input} setInput={setInput} />
+          <input disabled={reqInProcess} className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Add Proxy"/>
+        </form>
       </div>
       
       <div className=' border-cyan-600 border rounded grow overflow-scroll'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead>
             <tr>
-              <th>Proto</th>
-              <th>Host</th>
-              <th>Port</th>
+              <th className='w-[30%]' >Proto</th>
+              <th className='w-[30%]' >Host</th>
+              <th className='w-[30%]' >Port</th>
+              <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
             </tr>
           </thead>
           <tbody className="text-[0.5rem]">
@@ -159,6 +158,7 @@ const ProxyFull = ({input, setInput}) => {
     <div className="flex">
       <h4 className="mr-4 border-cyan-600 border-b-2">Proxy: </h4>
       <input 
+        required
         value={input.proxy.proxy_full} 
         onChange={handleInput}
       />
@@ -200,6 +200,7 @@ const ProxySplit = ({input, setInput}) => {
       <div className='flex mb-2'>
         <h4 className="mr-4 border-cyan-600 border-b-2">Port: </h4>
         <input 
+          required
           value={input.proxy.proxy_split.port} 
           onChange={handleInput}
           data-field='port'
@@ -223,8 +224,9 @@ const SocksFull = ({input, setInput}) => {
 
   return (
     <div className='flex mb-2'>
-      <h4 className="mr-4 border-cyan-600 border-b-2">Socks5: </h4>
+      <h4 className="mr-4 border-cyan-600 border-b-2">Socks: </h4>
       <input 
+        required
         value={input.socks.socks_full} 
         onChange={handleInput}
       />
@@ -260,6 +262,7 @@ const SocksSplit = ({input, setInput}) => {
       <div className='flex mb-2'>
         <h4 className="mr-4 border-cyan-600 border-b-2">Host: </h4>
         <input 
+          required
           value={input.socks.socks_split.host} 
           onChange={handleInput}
           data-field='host'
@@ -269,6 +272,7 @@ const SocksSplit = ({input, setInput}) => {
       <div className='flex mb-2'>
         <h4 className="mr-4 border-cyan-600 border-b-2">Port: </h4>
         <input 
+          required
           value={input.socks.socks_split.port} 
           onChange={handleInput}
           data-field='port'
