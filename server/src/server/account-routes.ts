@@ -5,16 +5,6 @@ import { AccountModel } from '../database/models/accounts';
 
 export const accountRoutes = (app: Express) => {
 
-  app.post('/addaccount', async (req, res) => {
-    console.log('addAccount');
-    try {
-      await addAccountToDB(req.body.email, req.body.password)
-      res.json({ok: true, message: null, data: null});
-    } catch (err) {
-      res.json({ok: false, message: err, data: err});
-    }
-  });
-
   app.post('/account', async (req, res) => {
     console.log('addAccount')
     try {

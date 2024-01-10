@@ -31,19 +31,12 @@ export const addCookiesToAccount = async (email: string, cookies: string): Promi
 }
 
 export const addProxyToDB = async (p: string): Promise<IProxy> => {
-  // await ProxyModel.create(parseProxy(proxy));
-  console.log('dsaddsadsdds')
-  console.log(parseProxy(p))
-  
 
   const proxy = await ProxyModel.findOneAndUpdate(
     { proxy: p },
     { $setOnInsert: parseProxy(p) },
-    { upsert: true, new: true }
+    { new: true }
   ).lean() as IProxy;
-
-
-  if (proxy === null) throw new Error('proxy already exists') 
 
   return proxy
 }

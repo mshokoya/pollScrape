@@ -18,12 +18,10 @@ export const proxyRoutes = (app: Express) => {
   app.post('/addproxy', async (req, res) => {
     console.log('addproxy')
     try {
-      // const proxyRes = await verifyProxy(req.body.url);
-      // if (proxyRes.valid) {
-      //   console.log('valid')
+      const proxyRes = await verifyProxy(req.body.url);
+      if (proxyRes.valid) {
         await addProxyToDB(req.body.proxy);
-      // }
-  
+      }
   
       res.json({ok: true, message: null, data: null});
     } catch (err) {
