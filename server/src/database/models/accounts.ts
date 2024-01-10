@@ -16,14 +16,14 @@ export type IAccount = {
 const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
   accountType: { type: String, default: "n/a" }, // free or premuim
-  trialTime: { type: String, default: "" },
+  trialTime: { type: String, default: "n/a" },
   isSuspended: { type: Boolean, default: false },
   email: { type: String, default: "" },
   password: { type: String, default: "" },
   cookies: { type: String, default: "" },
   proxy: { type: String, default: "http://000.000.000.000:0000" },
   // @ts-ignore
-  // lastUsed: { type: Date, default: Date() } // used to pick which to use to scrape
+  lastUsed: { type: Date, default: Date() } // used to pick which to use to scrape
 });
 
-export const AccountModel = model<IAccount>('acc', accountSchema);
+export const AccountModel = model<IAccount>('account', accountSchema);
