@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 
 export type IAccount = {
@@ -24,7 +24,7 @@ export const AccountField = () => {
       .then(data => setAccounts(data.data))
   }, [])
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await fetchData('/addaccount', 'POST', input)
   }
@@ -32,7 +32,7 @@ export const AccountField = () => {
   return (
     <div className="flex flex-col grow ">
       <div className='mb-10'>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={e => handleSubmit}>
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
             <input required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
