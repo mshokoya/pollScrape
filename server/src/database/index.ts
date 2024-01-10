@@ -7,22 +7,19 @@ import { ApolloMetadataModel } from "./models/metadata";
 import { generateSlug } from "random-word-slugs";
 
 export const addAccountToDB = async (email: string, password: string): Promise<IAccount> => {
-  const data = {'apollo.email': email, 'apollo.password': password}
 
-  const accounts = await AccountModel.findOneAndUpdate(
-    { 'apollo.email': email },
-    { $setOnInsert: data },
-    { upsert: false, new: true }
-  ).lean() as IAccount;
+  const account = AccountModel.findOne({email})
 
-  if (accounts === null) throw new Error('account already exists') 
+  if (account === null) throw new Error('account already exists')
 
-  return accounts
+  const newAcc = await AccountModel.create({email, password})
+
+  return newAcc
 }
 
 export const addCookiesToAccount = async (email: string, cookies: string): Promise<void> => {
   const account = await AccountModel.findOneAndUpdate(
-    { 'apollo.email': email },
+    { email },
     {cookies},
     { upsert: true, new: false }
   ).lean() as IAccount;

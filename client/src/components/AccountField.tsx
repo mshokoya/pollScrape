@@ -1,15 +1,14 @@
 import { FormEvent, useEffect, useState } from "react"
 import {fetchData} from '../core/util';
+import { SlOptionsVertical } from "react-icons/sl";
 
 export type IAccount = {
   domain: string
   accountType: string
   trialTime: string
   isSuspended: boolean
-  apollo: {
-    email: string
-    password: string
-  },
+  email: string
+  password: string
   cookies: string
   proxy: string
   lastUsed: Date
@@ -51,10 +50,10 @@ export const AccountField = () => {
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead>
             <tr>
-              <th>Type</th>
               <th>Trial</th>
               <th>Email</th>
               <th>Password</th>
+              <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
             </tr>
           </thead>
           <tbody className="text-[0.5rem]">
@@ -62,10 +61,9 @@ export const AccountField = () => {
               accounts.length && accounts.map( 
                 (a, idx) => ( 
                   <tr className='text-center' key={idx}>
-                    <td className='overflow-scroll'>{a.accountType}</td>
                     <td className='overflow-scroll'>{a.trialTime}</td>
-                    <td className='overflow-scroll'>{a.apollo.email}</td>
-                    <td className='overflow-scroll'>{a.apollo.password}</td>
+                    <td className='overflow-scroll'>{a.email}</td>
+                    <td className='overflow-scroll'>{a.password}</td>
                   </tr>
                 )
               )

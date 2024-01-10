@@ -141,9 +141,9 @@ export const ProxyField = () => {
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead>
             <tr>
-              <th className='w-[30%]' >Proto</th>
-              <th className='w-[30%]' >Host</th>
-              <th className='w-[30%]' >Port</th>
+              <th>Proto</th>
+              <th>Host</th>
+              <th>Port</th>
               <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
             </tr>
           </thead>
