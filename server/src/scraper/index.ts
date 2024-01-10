@@ -1,8 +1,6 @@
 import {
   scraper,
-  goToApolloSearchUrl,
   apolloScrapePage, // edit
-  setupApolloForScraping
 } from './scraper';
 import {
   getBrowserCookies, wait_for_browser,
@@ -10,14 +8,10 @@ import {
 import {
   selectAccForScrapingFILO
 } from "../database/util";
-import {
-  savePageScrapeToDB,
-  initApolloSkeletonInDB,
-  getAllApolloAccounts,
-} from '../database/actions';
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
+import { getAllApolloAccounts, initApolloSkeletonInDB } from '../database';
 
 const checkUserIP = async () => {
   const s = scraper;
