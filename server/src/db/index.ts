@@ -15,6 +15,16 @@ export const addAccountToDB = async (email: string, password: string): Promise<I
   return accounts
 }
 
+export const addCookiesToAccount = async (email: string, cookies: string): Promise<void> => {
+  const account = await AccountModel.findOneAndUpdate(
+    { 'apollo.email': email },
+    {cookies},
+    { upsert: true, new: false }
+  ).lean() as IAccount;
+
+  if (account === null) throw new Error('failed to save cookies')
+}
+
 export const addProxyToDB = async (proxy: string): Promise<IProxy> => {
   // await ProxyModel.create(parseProxy(proxy));
   const proxies = await ProxyModel.findOneAndUpdate(

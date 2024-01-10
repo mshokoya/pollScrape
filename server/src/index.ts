@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import {createServer} from 'node:http';
-import {startScrapingApollo} from './scraper';
+import {apolloGetCookiesFromLogin, startScrapingApollo} from './scraper';
 // import {socketIO} from './webSockets';
 import { AccountModel, ProxyModel } from './db/database'; 
 import {addAccountToDB, addProxyToDB} from './db';
@@ -96,11 +96,26 @@ app.post('/addproxy', async (req, res) => {
   }
 });
 
+app.post('/accountlogin', async (req, res) => {
+  try {
+    await apolloGetCookiesFromLogin()
+
+    res.json({ok: true, message: null, data: null});
+  } catch (err) {
+    res.json({ok: false, message: 'failed to proxy', data: err});
+  }
+})
+
 app.post('/scrape', async (req, res) => {
   console.log('start scraping');
-  startScrapingApollo(req.body.url);
-  // startScrapingApollo()
-  res.json({ok: true, data: {message: "hello world"}});
+  try {
+    await startScrapingApollo(req.body.url);
+
+    res.json({ok: true, message: null, data: null});
+  } catch (err) {
+    res.json({ok: false, message: 'failed to proxy', data: err});
+  }
+
 });
 
 app.use((err: any, _req: any, res: any, next: any) => {

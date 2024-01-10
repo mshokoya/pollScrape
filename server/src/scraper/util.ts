@@ -65,13 +65,16 @@ export const apolloUpdatePageQueryString = (url: string) => {
 }
 
 export const wait_for_browser = () => 
+
   new Promise((resolve, reject) => {
+    const pg = scraper.page()
+    
     const browser_check = setInterval(async () => {
       const pageLength = (await scraper.browser()?.pages())?.length || 0
       console.log('pages')
       console.log(pageLength)
 
-      if ( pageLength === 0 ) {
+      if ( pg!.url().includes('settings/account') ) {
         clearInterval(browser_check);
         resolve(true);
       }

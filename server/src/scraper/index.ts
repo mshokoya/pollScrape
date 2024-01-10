@@ -68,13 +68,11 @@ export const apolloGetCookiesFromLogin = async () => {
 
   const cookies = await wait_for_browser()
     .then(async () => {
-      const client = await scraper.browser()?.target().createCDPSession();
+      const client = await scraper.page()?.target().createCDPSession();
       const { cookies } = await client!.send('Network.getAllCookies');
 
-      console.log('HERE')
-      console.log(cookies)
-
-
+      await scraper.close()
+      
       return (cookies as unknown) as string[];
     });
 
