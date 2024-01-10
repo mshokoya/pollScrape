@@ -45,7 +45,7 @@ export const accountRoutes = (app: Express) => {
     }
   })
 
-  app.post('/accountlogin', async (req, res) => {
+  app.post('/account/login', async (req, res) => {
     try {
       await apolloGetCookiesFromLogin(req.body.account)
   
