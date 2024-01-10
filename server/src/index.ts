@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import {createServer} from 'node:http';
-import { dataRoutes } from './server/data-routes';
+import { recordRoutes } from './server/record-routes';
 import { proxyRoutes } from './server/proxy-routes';
 import { accountRoutes } from './server/account-routes';
 
@@ -19,7 +19,7 @@ const port = 4000;
 app.use(cors());
 app.use(bodyParser.json());
 
-dataRoutes(app);
+recordRoutes(app);
 proxyRoutes(app);
 accountRoutes(app);
 

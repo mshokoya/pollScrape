@@ -13,8 +13,8 @@ export const accountRoutes = (app: Express) => {
       if (save !== null) throw new Error("Account already exists");
   
       res.json({ok: true, message: null, data: save});
-    } catch (err) {
-      res.json({ok: false, message: 'failed to add user', data: err});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
     }
   })
 
@@ -24,8 +24,8 @@ export const accountRoutes = (app: Express) => {
       const accounts = await AccountModel.find({}).lean();
       
       res.json({ok: true, message: null, data: accounts});
-    } catch (err) {
-      res.json({ok: false, message: 'failed to get user', data: err});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
     }
   })
 
@@ -37,11 +37,11 @@ export const accountRoutes = (app: Express) => {
         { new: false }
       );
   
-      if (update !== null) throw new Error("Failed to update");
+      if (update !== null) throw new Error("Failed to update account");
       
       res.json({ok: true, message: null, data: update});
-    } catch (err) {
-      res.json({ok: false, message: 'failed to add user', data: err});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
     }
   })
 
@@ -50,8 +50,8 @@ export const accountRoutes = (app: Express) => {
       await apolloGetCookiesFromLogin(req.body.account)
   
       res.json({ok: true, message: null, data: null});
-    } catch (err) {
-      res.json({ok: false, message: 'failed to proxy', data: err});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
     }
   })
 

@@ -19,7 +19,7 @@ export const addAccountToDB = async (email: string, password: string): Promise<I
 
 export const addCookiesToAccount = async (email: string, cookies: string): Promise<void> => {
   const account = await AccountModel.findOneAndUpdate(
-    { email },
+    {email},
     {cookies},
     { upsert: true, new: false }
   ).lean() as IAccount;

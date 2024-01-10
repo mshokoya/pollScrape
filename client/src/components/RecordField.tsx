@@ -14,11 +14,6 @@ export const RecordField = ({recordList}: {recordList: string[]}) => {
 
   }, [])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    await fetchData('/addaccount', 'POST', input)
-  }
-
   return (
     <div className="flex flex-col grow">
       <div className=' border-cyan-600 border rounded h-[25%] mb-6'>

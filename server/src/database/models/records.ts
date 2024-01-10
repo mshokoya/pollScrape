@@ -48,4 +48,4 @@ const records = new Schema<IRecords>({
   }
 });
 
-export const ApolloDataModel = model<IRecords>('record', records);
+export const RecordsModel = model<IRecords>('record', records);
