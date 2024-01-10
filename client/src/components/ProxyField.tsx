@@ -72,16 +72,16 @@ export const ProxyField = () => {
 
     switch (selected) {
       case 'http_full':
-        data = {url: input.http.http_full};
+        data = {proxy: input.http.http_full};
         break;
       case 'http_split':
-        data = {url: `${input.http.http_split.protocol}://${input.http.http_split.host}:${input.http.http_split.port}`};
+        data = {proxy: `${input.http.http_split.protocol}://${input.http.http_split.host}:${input.http.http_split.port}`};
         break;
       case 'socks_full':
-        data = {url: input.socks.socks_full};
+        data = {proxy: input.socks.socks_full};
         break;
       case 'socks_split':
-        data = {url: `${input.socks.socks_split.protocol}://${input.socks.socks_split.host}:${input.socks.socks_split.port}`}
+        data = {proxy: `${input.socks.socks_split.protocol}://${input.socks.socks_split.host}:${input.socks.socks_split.port}`}
         break;
     }
 
@@ -91,10 +91,12 @@ export const ProxyField = () => {
           setProxies(p => [...p, d.data.data])
         }
 
+        console.log('here')
+
         setreqInProcess(false)
       })
-      .catch(() => {
-  
+      .catch((err: unknown) => {
+        console.log(err.message)
         setreqInProcess(false)
       })
 

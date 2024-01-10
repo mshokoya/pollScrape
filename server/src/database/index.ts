@@ -30,17 +30,22 @@ export const addCookiesToAccount = async (email: string, cookies: string): Promi
   if (account === null) throw new Error('failed to save cookies')
 }
 
-export const addProxyToDB = async (proxy: string): Promise<IProxy> => {
+export const addProxyToDB = async (p: string): Promise<IProxy> => {
   // await ProxyModel.create(parseProxy(proxy));
-  const proxies = await ProxyModel.findOneAndUpdate(
-    { proxy },
-    { $setOnInsert: parseProxy(proxy) },
-    { upsert: false, new: true }
+  console.log('dsaddsadsdds')
+  console.log(parseProxy(p))
+  
+
+  const proxy = await ProxyModel.findOneAndUpdate(
+    { proxy: p },
+    { $setOnInsert: parseProxy(p) },
+    { upsert: true, new: true }
   ).lean() as IProxy;
 
-  if (proxies === null) throw new Error('proxy already exists') 
 
-  return proxies
+  if (proxy === null) throw new Error('proxy already exists') 
+
+  return proxy
 }
 
 export const saveScrapeToDB = async (userID: string, cookies: string[], proxy: string, url: string, data: {[key: string]: string}[]) => {

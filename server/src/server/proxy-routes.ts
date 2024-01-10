@@ -16,16 +16,16 @@ export const proxyRoutes = (app: Express) => {
   });
 
   app.post('/addproxy', async (req, res) => {
+    console.log('addproxy')
     try {
-      const proxyRes = await verifyProxy(req.body.url);
-      if (proxyRes.valid) {
+      // const proxyRes = await verifyProxy(req.body.url);
+      // if (proxyRes.valid) {
+      //   console.log('valid')
         await addProxyToDB(req.body.proxy);
-      }
+      // }
   
-      console.log('eeyyaa');
-      console.log(proxyRes.valid);
   
-      res.json({ok: true, message: null, data: proxyRes});
+      res.json({ok: true, message: null, data: null});
     } catch (err) {
       res.json({ok: false, message: 'failed to proxy', data: err});
     }

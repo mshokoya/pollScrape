@@ -29,7 +29,7 @@ app.use((err: any, _req: any, res: any, next: any) => {
   }
   res.status(500);
   res.render('error', { error: err });
-})
+});
 
 mongoose.connect('mongodb://localhost:27017/apollo')
   .then(() => {

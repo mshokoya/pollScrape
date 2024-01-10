@@ -77,11 +77,12 @@ export const rmPageFromURLQuery = (url: string): {url: string, page: string} => 
   }
 }
 
-// {proxy: string, protocol: string, ipAddress: string, port: string}
+// (FIX): impliment better proxy validation
 export const parseProxy = (proxy: string): Proxy => {
   const split = proxy.split('://'); // ["http", "0.0.0.0:8000"]
   const split2 = split[1].split(':'); // ["0.0.0.0", "8000"]
-  
+
+
   return {
     protocol: split[0] as string,
     host: split2[0],

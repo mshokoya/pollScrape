@@ -70,7 +70,7 @@ export const apolloGetCookiesFromLogin = async (account: IAccount) => {
       return (cookies as unknown) as string[];
     });
 
-    await ------
+    // await ------
 }
 
 

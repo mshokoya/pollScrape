@@ -14,4 +14,4 @@ const proxy = new Schema<IProxy>({
   port: { type: String, default: "" }
 });
 
-export const ProxyModel = model<IProxy>('proxy', proxy);
+export const ProxyModel = model<IProxy>('proxies', proxy);
