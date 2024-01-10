@@ -4,13 +4,23 @@ import {fetchData} from '../core/util';
 export const RecordField = ({recordList}: {recordList: string[]}) => {
   const [selected, setSelected] = useState(0);
   const [meta, setMeta] = useState([]);
-  const [records, setRecord] = useState([]);
+  const [records, setRecords] = useState([]);
 
   useEffect(() => {
-    fetchData('/records', 'GET')
-      .then(() => {
-        
-      })
+    
+    new Promise(async (resolve, reject) => {
+      const meta = await fetchData('/metadata', 'GET');
+      const records = await fetchData('/records', 'GET');
+      resolve({meta, records})
+    })
+    .then( (data: any) => {
+      setMeta(data.meta)
+      setRecords(data.records)
+    })
+    .catch( (err: any) => {
+      console.log('error')
+      console.log(err.message)
+    })
 
   }, [])
 

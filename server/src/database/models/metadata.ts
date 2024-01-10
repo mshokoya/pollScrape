@@ -7,7 +7,7 @@ export type IMetaData = {
   name: string
   maxPages: string
   page: number
-  scrapes: {page: number, scrapeID: string}[]
+  scrapes: {page: number, id: string}[]
 }
 
 const metaData = new Schema<IMetaData>({
@@ -17,7 +17,7 @@ const metaData = new Schema<IMetaData>({
   name: { type: String, default: "" },
   maxPages: { type: String, default: "" },
   page: { type: Number, default: 0 }, // current page 
-  scrapes: { type: [Object], default: []} // [{page: 1, scrapeID: ""}] - is use in ApolloDataModel
+  scrapes: { type: [Object], default: []} // [{page: 1, id: ""}] - is use in ApolloDataModel
 });
 
-export const ApolloMetadataModel = model<IMetaData>('metadata', metaData);
+export const MetadataModel = model<IMetaData>('metadata', metaData);

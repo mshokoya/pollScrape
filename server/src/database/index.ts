@@ -2,9 +2,9 @@ import { startSession } from "mongoose";
 import { AccountModel, IAccount } from "./models/accounts";
 import { IProxy, ProxyModel } from "./models/proxy";
 import { parseProxy, rmPageFromURLQuery } from "./util";
-import { ApolloDataModel } from "./models/records";
-import { ApolloMetadataModel } from "./models/metadata";
 import { generateSlug } from "random-word-slugs";
+import { RecordsModel } from "./models/records";
+import { MetadataModel } from "./models/metadata";
 
 export const addAccountToDB = async (email: string, password: string): Promise<IAccount> => {
 
@@ -56,7 +56,7 @@ export const saveScrapeToDB = async (userID: string, cookies: string[], proxy: s
 
     const fmtURL = rmPageFromURLQuery(url)
 
-    const apolloData = await ApolloDataModel.findOneAndUpdate(
+    const apolloData = await RecordsModel.findOneAndUpdate(
       {url: fmtURL.url}, 
       {
         'data.page': fmtURL.page,
@@ -66,7 +66,7 @@ export const saveScrapeToDB = async (userID: string, cookies: string[], proxy: s
       updateOpts
     ).lean();
     
-    await ApolloMetadataModel.findOneAndUpdate(
+    await MetadataModel.findOneAndUpdate(
       {url: fmtURL.url}, 
       {
         fullURL: url, 
@@ -97,7 +97,7 @@ export const initApolloSkeletonInDB = async (url: string) => {
 
     const fmtURL = rmPageFromURLQuery(url)
 
-    await ApolloMetadataModel.findOneAndUpdate(
+    await MetadataModel.findOneAndUpdate(
       {url: fmtURL.url}, 
       {
         '$setOnInsert': {
@@ -108,7 +108,7 @@ export const initApolloSkeletonInDB = async (url: string) => {
       updateOpts
     ).lean();
 
-    await ApolloDataModel.findOneAndUpdate(
+    await RecordsModel.findOneAndUpdate(
       {url: fmtURL.url}, 
       {
         '$setOnInsert': {
