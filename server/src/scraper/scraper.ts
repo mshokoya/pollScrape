@@ -10,7 +10,8 @@ import {
   apolloLoggedOutURLSubstr
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
-import { IAccount } from '../db/database';
+import { IAccount } from '../database/models/accounts';
+
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
 // https://gist.github.com/jeroenvisser101/636030fe66ea929b63a33f5cb3a711ad

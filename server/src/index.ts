@@ -3,11 +3,10 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import {createServer} from 'node:http';
-import {apolloGetCookiesFromLogin, startScrapingApollo} from './scraper';
-// import {socketIO} from './webSockets';
-import { AccountModel, ProxyModel } from './db/database'; 
-import {addAccountToDB, addProxyToDB} from './db';
-import { verifyProxy } from './db/util';
+import { dataRoutes } from './server/data-routes';
+import { proxyRoutes } from './server/proxy-routes';
+import { accountRoutes } from './server/account-routes';
+
 
 const app = express();
 const server = createServer(app);
@@ -20,103 +19,9 @@ const port = 4000;
 app.use(cors());
 app.use(bodyParser.json());
 
-app.post('/addaccount', async (req, res) => {
-  console.log('addAccount');
-  try {
-    // await addAccountToDB(req.body.email, req.body.password)
-    res.json({ok: true, message: null, data: null});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err});
-  }
-});
-
-app.post('/account', async (req, res) => {
-  console.log('addAccount')
-  try {
-    const save = await addAccountToDB(req.body.email, req.body.password)
-
-    if (save !== null) throw new Error("Account already exists");
-
-    res.json({ok: true, message: null, data: save});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err});
-  }
-})
-
-app.get('/account', async (_req, res) => {
-  console.log('getAccounts')
-  try {
-    const accounts = await AccountModel.find({}).lean();
-    
-    res.json({ok: true, message: null, data: accounts});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to get user', data: err});
-  }
-})
-
-app.put('/account', async (req, res) => {
-  try {
-    const update = await AccountModel.findOneAndUpdate(
-      {_id: req.body._id},
-      req.body,
-      { new: false }
-    );
-
-    if (update !== null) throw new Error("Failed to update");
-    
-    res.json({ok: true, message: null, data: update});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to add user', data: err});
-  }
-})
-
-app.get('/proxy', async (req, res) => {
-  try {
-    const proxies = await ProxyModel.find({}).lean();
-
-    res.json({ok: true, message: null, data: proxies});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to proxy', data: err});
-  }
-});
-
-app.post('/addproxy', async (req, res) => {
-  try {
-    const proxyRes = await verifyProxy(req.body.url);
-    if (proxyRes.valid) {
-      await addProxyToDB(req.body.proxy);
-    }
-
-    console.log('eeyyaa');
-    console.log(proxyRes.valid);
-
-    res.json({ok: true, message: null, data: proxyRes});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to proxy', data: err});
-  }
-});
-
-app.post('/accountlogin', async (req, res) => {
-  try {
-    await apolloGetCookiesFromLogin()
-
-    res.json({ok: true, message: null, data: null});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to proxy', data: err});
-  }
-})
-
-app.post('/scrape', async (req, res) => {
-  console.log('start scraping');
-  try {
-    await startScrapingApollo(req.body.url);
-
-    res.json({ok: true, message: null, data: null});
-  } catch (err) {
-    res.json({ok: false, message: 'failed to proxy', data: err});
-  }
-
-});
+dataRoutes(app);
+proxyRoutes(app);
+accountRoutes(app);
 
 app.use((err: any, _req: any, res: any, next: any) => {
   if (res.headersSent) {

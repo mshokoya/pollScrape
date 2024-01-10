@@ -1,12 +1,49 @@
-// Actions for scraper
-import {AccountModel, ApolloMetadataModel, ApolloDataModel, ProxyModel, IAccount, IProxy} from './database';
-import {startSession} from 'mongoose';
-import {rmPageFromURLQuery, verifyProxy, shuffleArray} from './util';
+import { startSession } from "mongoose";
+import { AccountModel, IAccount } from "./models/accounts";
+import { IProxy, ProxyModel } from "./models/proxy";
+import { parseProxy, rmPageFromURLQuery } from "./util";
+import { ApolloDataModel } from "./models/records";
+import { ApolloMetadataModel } from "./models/metadata";
 import { generateSlug } from "random-word-slugs";
 
-// https://www.ultimateakash.com/blog-details/IiwzQGAKYAo=/How-to-implement-Transactions-in-Mongoose-&-Node.Js-(Express)
+export const addAccountToDB = async (email: string, password: string): Promise<IAccount> => {
+  const data = {'apollo.email': email, 'apollo.password': password}
 
-export const savePageScrapeToDB = async (userID: string, cookies: string[], proxy: string, url: string, data: {[key: string]: string}[]) => {
+  const accounts = await AccountModel.findOneAndUpdate(
+    { 'apollo.email': email },
+    { $setOnInsert: data },
+    { upsert: false, new: true }
+  ).lean() as IAccount;
+
+  if (accounts === null) throw new Error('account already exists') 
+
+  return accounts
+}
+
+export const addCookiesToAccount = async (email: string, cookies: string): Promise<void> => {
+  const account = await AccountModel.findOneAndUpdate(
+    { 'apollo.email': email },
+    {cookies},
+    { upsert: true, new: false }
+  ).lean() as IAccount;
+
+  if (account === null) throw new Error('failed to save cookies')
+}
+
+export const addProxyToDB = async (proxy: string): Promise<IProxy> => {
+  // await ProxyModel.create(parseProxy(proxy));
+  const proxies = await ProxyModel.findOneAndUpdate(
+    { proxy },
+    { $setOnInsert: parseProxy(proxy) },
+    { upsert: false, new: true }
+  ).lean() as IProxy;
+
+  if (proxies === null) throw new Error('proxy already exists') 
+
+  return proxies
+}
+
+export const saveScrapeToDB = async (userID: string, cookies: string[], proxy: string, url: string, data: {[key: string]: string}[]) => {
   const session = await startSession();
   try {
     session.startTransaction();
@@ -53,6 +90,7 @@ export const savePageScrapeToDB = async (userID: string, cookies: string[], prox
 
 }
 
+// https://www.ultimateakash.com/blog-details/IiwzQGAKYAo=/How-to-implement-Transactions-in-Mongoose-&-Node.Js-(Express)
 export const initApolloSkeletonInDB = async (url: string) => {
   const session = await startSession();
   let apolloMetaData;
@@ -96,26 +134,4 @@ export const initApolloSkeletonInDB = async (url: string) => {
 
 export const getAllApolloAccounts = async (): Promise<IAccount[]> => {
   return await AccountModel.find({}).lean() as IAccount[]
-}
-
-export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string> => {
-  let doesProxyStillWork = await verifyProxy(account.proxy)
-
-  if (doesProxyStillWork) return account.proxy;
-
-  const allProxiesInUse = allAccounts
-    .filter((u) => u.proxy === account.proxy) // remove user from list
-    .map((u) => u.proxy) //retrun list of proxies
-
-  const allProxiesNotInUse = shuffleArray(
-    (ProxyModel.find({}).lean() as any)
-      .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
-  )
-  
-  for (let proxy of allProxiesNotInUse) {
-    doesProxyStillWork = await verifyProxy(proxy)
-    if (doesProxyStillWork) return proxy;
-  }
-
-  throw new Error('[PROXY_ERROR]: No Proxies Work: please add new proxies')
 }

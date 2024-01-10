@@ -9,15 +9,15 @@ import {
 } from './util'
 import {
   selectAccForScrapingFILO
-} from "../db/util";
+} from "../database/util";
 import {
   savePageScrapeToDB,
   initApolloSkeletonInDB,
   getAllApolloAccounts,
-  selectProxy,
-} from '../db/actions';
+} from '../database/actions';
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
+import { IAccount } from '../database/models/accounts';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -59,7 +59,7 @@ export const startScrapingApollo = async (urlList: string[]) => {
   await scraper.close();
 }
 
-export const apolloGetCookiesFromLogin = async () => {
+export const apolloGetCookiesFromLogin = async (account: IAccount) => {
   if (!scraper.browser()) {
     await scraper.launchBrowser()
   }
@@ -72,11 +72,11 @@ export const apolloGetCookiesFromLogin = async () => {
       const { cookies } = await client!.send('Network.getAllCookies');
 
       await scraper.close()
-      
+
       return (cookies as unknown) as string[];
     });
 
-  return cookies
+    await ------
 }
 
 

@@ -1,7 +1,9 @@
 
 //@ts-ignore
 import proxyCheck from 'advanced-proxy-checker';
-import { IAccount } from './database';
+import { IAccount } from './models/accounts';
+import { shuffleArray } from '../helpers';
+import { IProxy, ProxyModel } from './models/proxy';
 
 export type Proxy = {
   protocol: string;
@@ -101,20 +103,24 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
   return isOk;
 }
 
-export function shuffleArray(array: string[]): string[] {
-  let currentIndex = array.length,  randomIndex;
+export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string> => {
+  let doesProxyStillWork = await verifyProxy(account.proxy)
 
-  // While there remain elements to shuffle.
-  while (currentIndex > 0) {
+  if (doesProxyStillWork) return account.proxy;
 
-    // Pick a remaining element.
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
+  const allProxiesInUse = allAccounts
+    .filter((u) => u.proxy === account.proxy) // remove user from list
+    .map((u) => u.proxy) //retrun list of proxies
 
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
+  const allProxiesNotInUse = shuffleArray(
+    (ProxyModel.find({}).lean() as any)
+      .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
+  )
+  
+  for (let proxy of allProxiesNotInUse) {
+    doesProxyStillWork = await verifyProxy(proxy)
+    if (doesProxyStillWork) return proxy;
   }
 
-  return array;
+  throw new Error('[PROXY_ERROR]: No Proxies Work: please add new proxies')
 }
