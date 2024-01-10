@@ -1,4 +1,3 @@
-import {useState, FormEvent} from 'react';
 import { ProxyField } from './components/ProxyField';
 import { AccountField } from './components/AccountField';
 import { RecordField } from './components/RecordField';
@@ -19,13 +18,13 @@ function App() {
         {/* PROXIES */}
         <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>PROXIES</h2>
-          <ProxyField proxyList={[]} />
+          <ProxyField />
         </div>
 
         {/* ACCOUNTS */}
         <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>ACCOUNTS</h2>
-          <AccountField accountList={[]} />
+          <AccountField />
         </div>
 
         {/* RECORDS */}

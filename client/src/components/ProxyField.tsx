@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useState, Dispatch, ChangeEvent } from "react"
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 
@@ -8,9 +8,32 @@ export type Proxy = {
   port: string;
 }
 
+type InputDispatch = Dispatch<React.SetStateAction<InputState>>
+
+type InputState = {
+  http: {
+    http_full: string;
+    http_split: {
+      protocol: string;
+      host: string;
+      port: string;
+    }
+  }
+  socks: {
+    socks_full: string;
+    socks_split: {
+      protocol: string;
+      host: string;
+      port: string;
+    }
+  }
+}
+
+type InputSubCompArgs = {input: InputState, setInput: InputDispatch}
+
 const proxy = () => ({
-  proxy_full: '',
-  proxy_split: {
+  http_full: '',
+  http_split: {
     protocol: 'https',
     host: '',
     port: '',
@@ -26,10 +49,10 @@ const socks = () => ({
   }
 })
 
-export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
-  const [selected, setSelected] = useState('proxy_full');
-  const [input, setInput] = useState({
-    proxy: proxy(),
+export const ProxyField = () => {
+  const [selected, setSelected] = useState('http_full');
+  const [input, setInput] = useState<InputState>({
+    http: proxy(),
     socks: socks()
   })
   const [proxies, setProxies] = useState<Proxy[]>([])
@@ -40,7 +63,7 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
       .then( data => setProxies(data.data))
   }, [])
 
-  let ProxyComponent: (input: any, setInput: any) => JSX.Element;
+  let ProxyComponent: (input: InputState, setInput: InputDispatch) => JSX.Element;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -48,21 +71,17 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     let data: {[key: string]: string} = {};
 
     switch (selected) {
-      case 'proxy_full':
-        data = {url: input.proxy.proxy_full};
-        // setInput(p => ({...p, proxy: proxy()}));
+      case 'http_full':
+        data = {url: input.http.http_full};
         break;
-      case 'proxy_split':
-        data = {url: `${input.proxy.proxy_split.protocol}://${input.proxy.proxy_split.host}:${input.proxy.proxy_split.port}`};
-        // setInput(p => ({...p, proxy: proxy()}))
+      case 'http_split':
+        data = {url: `${input.http.http_split.protocol}://${input.http.http_split.host}:${input.http.http_split.port}`};
         break;
       case 'socks_full':
         data = {url: input.socks.socks_full};
-        // setInput(p => ({...p, socks: socks()}))
         break;
       case 'socks_split':
         data = {url: `${input.socks.socks_split.protocol}://${input.socks.socks_split.host}:${input.socks.socks_split.port}`}
-        // setInput(p => ({...p, socks: socks()}))
         break;
     }
 
@@ -74,7 +93,8 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
 
         setreqInProcess(false)
       })
-      .catch(err => {
+      .catch(() => {
+  
         setreqInProcess(false)
       })
 
@@ -82,10 +102,11 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
   }
 
   switch (selected) {
-    case 'proxy_full':
+    case 'http_full':
+      
       ProxyComponent = ProxyFull
       break;
-    case 'proxy_split':
+    case 'http_split':
       ProxyComponent = ProxySplit
       break;
     case 'socks_full':
@@ -102,8 +123,8 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
     <div className="flex flex-col grow ">
       <div className='mb-10'>
         <div className="mb-4">
-          <button className={cls('proxy_full')} onClick={() => setSelected('proxy_full')}>Proxy Full</button>
-          <button className={cls('proxy_split')} onClick={() => setSelected('proxy_split')}>Proxy Split</button>
+          <button className={cls('http_full')} onClick={() => setSelected('http_full')}>HTTP Full</button>
+          <button className={cls('http_split')} onClick={() => setSelected('http_split')}>HTTP Split</button>
           <button className={cls('socks_full')} onClick={() => setSelected('socks_full')}>Socks Full</button>
           <button className={cls('socks_split')} onClick={() => setSelected('socks_split')}>Socks Split</button>
         </div>
@@ -143,37 +164,37 @@ export const ProxyField = ({proxyList}: {proxyList: string[]}) => {
   )
 }
 
-const ProxyFull = ({input, setInput}) => {
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+const ProxyFull = ({input, setInput}: InputSubCompArgs) => {
+  const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     setInput(p => ({
       ...p,
-      proxy: {
-        ...p.proxy,
-        proxy_full: e.target.value
+      http: {
+        ...p.http,
+        http_full: e.target.value
       }
     }))
   }
 
   return (
     <div className="flex">
-      <h4 className="mr-4 border-cyan-600 border-b-2">Proxy: </h4>
+      <h4 className="mr-4 border-cyan-600 border-b-2">HTTP: </h4>
       <input 
         required
-        value={input.proxy.proxy_full} 
+        value={input.http.http_full} 
         onChange={handleInput}
       />
     </div>
   )
 }
 
-const ProxySplit = ({input, setInput}) => {
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+const ProxySplit = ({input, setInput}: InputSubCompArgs) => {
+  const handleInput = (e: ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLInputElement>) => {
     setInput(p => ({
       ...p,
-      proxy: {
-        ...p.proxy,
-        ['proxy_split']: {
-          ...p.proxy.proxy_split,
+      http: {
+        ...p.http,
+        ['http_split']: {
+          ...p.http.http_split,
           [e.target.getAttribute('data-field')!]: e.target.value
         }
       }
@@ -184,7 +205,7 @@ const ProxySplit = ({input, setInput}) => {
     <div>
       <div className='flex mb-2'>
         <h4 className="mr-4 border-cyan-600 border-b-2">Protocol: </h4>
-        <select id="protocol" name="protocol" value={input.proxy.proxy_split.protocol} onChange={handleInput} data-field='protocol'>
+        <select id="protocol" name="protocol" value={input.http.http_split.protocol} onChange={handleInput} data-field='protocol'>
           <option value="https">HTTPS</option>
           <option value="http">HTTP</option>
         </select>
@@ -192,7 +213,7 @@ const ProxySplit = ({input, setInput}) => {
       <div className='flex mb-2'>
         <h4 className="mr-4 border-cyan-600 border-b-2">Host: </h4>
         <input 
-          value={input.proxy.proxy_split.host} 
+          value={input.http.http_split.host} 
           onChange={handleInput}
           data-field='host'
         />
@@ -201,7 +222,7 @@ const ProxySplit = ({input, setInput}) => {
         <h4 className="mr-4 border-cyan-600 border-b-2">Port: </h4>
         <input 
           required
-          value={input.proxy.proxy_split.port} 
+          value={input.http.http_split.port} 
           onChange={handleInput}
           data-field='port'
         />
@@ -211,8 +232,8 @@ const ProxySplit = ({input, setInput}) => {
   )
 }
 
-const SocksFull = ({input, setInput}) => {
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+const SocksFull = ({input, setInput}: InputSubCompArgs) => {
+  const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
     setInput(s => ({
       ...s,
       socks: {
@@ -234,9 +255,9 @@ const SocksFull = ({input, setInput}) => {
   )
 }
 
-const SocksSplit = ({input, setInput}) => {
+const SocksSplit = ({input, setInput}: InputSubCompArgs) => {
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInput = (e: ChangeEvent<HTMLSelectElement> | ChangeEvent<HTMLInputElement>) => {
     setInput(s => ({
       ...s,
       socks: {
