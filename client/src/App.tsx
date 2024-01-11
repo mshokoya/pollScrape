@@ -30,7 +30,7 @@ function App() {
         {/* RECORDS */}
         <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>RECORDS</h2>
-          <RecordField recordList={[]}/>
+          <RecordField />
         </div>
       </div>
 

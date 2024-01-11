@@ -6,6 +6,7 @@ import {createServer} from 'node:http';
 import { recordRoutes } from './server/record-routes';
 import { proxyRoutes } from './server/proxy-routes';
 import { accountRoutes } from './server/account-routes';
+import { metadataRoutes } from './server/metadata-route';
 
 
 const app = express();
@@ -19,6 +20,7 @@ const port = 4000;
 app.use(cors());
 app.use(bodyParser.json());
 
+metadataRoutes(app);
 recordRoutes(app);
 proxyRoutes(app);
 accountRoutes(app);
