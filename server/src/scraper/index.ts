@@ -5,7 +5,7 @@ import {
   goToApolloSearchUrl, // edit
 } from './scraper';
 import {
-  getBrowserCookies, waitForApolloLogin, wait_for_browser,
+  getBrowserCookies, waitForApolloLogin
 } from './util'
 import {
   selectAccForScrapingFILO, selectProxy
@@ -57,7 +57,7 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
 }
 
 
-export const apolloGetCookiesFromLogin = async (accountID: string) => {
+export const apolloGetCookiesFromLogin = async (accountID: IAccount) => {
   if (!scraper.browser()) {
     await scraper.launchBrowser()
   }
@@ -79,7 +79,7 @@ export const apolloGetCookiesFromLogin = async (accountID: string) => {
 
   if (cookies) {
     AccountModel.findOneAndUpdate(
-      {_id: accountID},
+      {_id: accountID._id},
       {cookies},
     )
   } else {

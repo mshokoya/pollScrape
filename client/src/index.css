@@ -24,3 +24,7 @@ input, select {
   background-color: black;
   height: 100vh;
 }
+
+.rowhide {
+  visibility: hidden;
+}

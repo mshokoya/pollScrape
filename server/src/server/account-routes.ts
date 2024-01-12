@@ -50,7 +50,7 @@ export const accountRoutes = (app: Express) => {
   app.get('/account/cookies', async (req, res) => {
     console.log('loginCookies')
     try{
-      await apolloGetCookiesFromLogin(req.body.id)
+      await apolloGetCookiesFromLogin(req.body.account)
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
