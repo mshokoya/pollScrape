@@ -17,6 +17,7 @@ export type IAccount = {
 }
 
 // https://jsfiddle.net/mfwYS/
+// https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
 
 export const AccountField = () => {
   const [input, setInput] = useState({email: '', password: ''});
@@ -39,7 +40,21 @@ export const AccountField = () => {
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
-    e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
+    const type = e.target.closest('td')?.dataset.type as string
+
+    switch (type) {
+      case 'opt':
+        console.log(e.target.closest('tr').dataset.idx)
+        break;
+      case 'extend':
+        e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
+        break;
+      default:
+        
+        break;
+    }
+
+    
   }
 
   return (
@@ -68,7 +83,7 @@ export const AccountField = () => {
                 <th>Trial</th>
                 <th>Email</th>
                 <th>Password</th>
-                <th className='w-[10%]'><IoOptionsOutline className='inline' /></th>
+                <th className='w-[5%]'><IoOptionsOutline className='inline' /></th>
               </tr>
             </thead>
             <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
@@ -76,11 +91,15 @@ export const AccountField = () => {
                 accounts.length && accounts.map( 
                   (a, idx) => ( 
                     <>
-                      <tr className='text-center' key={idx}>
-                        <td className='overflow-scroll'>{a.trialTime.toDateString()}</td>
-                        <td className='overflow-scroll'>{a.email}</td>
-                        <td className='overflow-scroll'>{a.password}</td>
-                        <td className='overflow-scroll' ><SlOptionsVertical className='inline'/></td>
+                      <tr className='text-center' data-idx={idx} key={idx}>
+                        <td className='overflow-scroll' data-type='extend' >{a.trialTime.toDateString()}</td>
+                        <td className='overflow-scroll' data-type='extend' >{a.email}</td>
+                        <td className='overflow-scroll' data-type='extend' >{a.password}</td>
+                        <td className='overflow-scroll' data-type='opt'>
+                          <button >
+                            <SlOptionsVertical className='inline'/>
+                          </button>
+                          </td>
                       </tr>
                       <tr>
                         <td colSpan={3} className="hidden">
