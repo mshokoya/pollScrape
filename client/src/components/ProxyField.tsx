@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState, Dispatch, ChangeEvent } from "react"
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
+import { IoOptionsOutline } from "react-icons/io5";
 
 export type Proxy = {
   protocol: string;
@@ -55,7 +56,43 @@ export const ProxyField = () => {
     http: proxy(),
     socks: socks()
   })
-  const [proxies, setProxies] = useState<Proxy[]>([])
+  const [proxies, setProxies] = useState<Proxy[]>([
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+    {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
+  ])
   const [reqInProcess, setreqInProcess] = useState<boolean>(false)
 
   useEffect(() => {
@@ -121,8 +158,20 @@ export const ProxyField = () => {
 
   const cls = (n: string) => `mr-2 border-cyan-600 border rounded p-1 ${selected === n ? 'text-neutral-500 border-neutral-500' : ''}`
 
+  const handleOptsClick = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
+    e.stopPropagation()
+    const type = e.target.closest('td')?.dataset.type as string
+
+    switch (type) {
+      case 'opt':
+        console.log(e.target.closest('tr').dataset.idx)
+        break;
+    }
+  }
+
   return (
-    <div className="flex flex-col grow ">
+    <div className="flex relative grow">
+    <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
       <div className='mb-10'>
         <div className="mb-4">
           <button className={cls('http_full')} onClick={() => setSelected('http_full')}>HTTP Full</button>
@@ -137,24 +186,29 @@ export const ProxyField = () => {
         </form>
       </div>
       
-      <div className=' border-cyan-600 border rounded grow overflow-scroll'>
+      <div className=' border-cyan-600 border rounded grow overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead>
             <tr>
               <th>Proto</th>
               <th>Host</th>
               <th>Port</th>
-              <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
+              <th className='w-[10%]'><IoOptionsOutline className='inline'/></th>
             </tr>
           </thead>
-          <tbody className="text-[0.5rem]">
+          <tbody className="text-[0.5rem]" onClick={handleOptsClick}>
             {
               proxies.length && proxies.map( 
                 (a, idx) => ( 
-                  <tr className='text-center' key={idx}>
+                  <tr className='text-center hover:border-cyan-600 hover:border' data-idx={idx} key={idx}>
                     <td className='overflow-scroll'>{a.protocol}</td>
                     <td className='overflow-scroll'>{a.host}</td>
                     <td className='overflow-scroll'>{a.port}</td>
+                    <td className='overflow-scroll' data-type='opt'>
+                      <button>
+                        <SlOptionsVertical className='inline'/>
+                      </button>
+                    </td>
                   </tr>
                 )
               )
@@ -162,6 +216,7 @@ export const ProxyField = () => {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   )
 }

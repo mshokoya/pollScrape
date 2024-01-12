@@ -78,7 +78,7 @@ export const AccountField = () => {
                 <th>Trial</th>
                 <th>Email</th>
                 <th>Password</th>
-                <th className='w-[5%]'><IoOptionsOutline className='inline' /></th>
+                <th className='w-[7%]'><IoOptionsOutline className='inline' /></th>
               </tr>
             </thead>
             <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
@@ -86,7 +86,7 @@ export const AccountField = () => {
                 accounts.length && accounts.map( 
                   (a, idx) => ( 
                     <>
-                      <tr className='text-center' data-idx={idx} key={idx}>
+                      <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
                         <td className='overflow-scroll' data-type='extend' >{a.trialTime.toDateString()}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.email}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.password}</td>
@@ -94,10 +94,10 @@ export const AccountField = () => {
                           <button >
                             <SlOptionsVertical className='inline'/>
                           </button>
-                          </td>
+                        </td>
                       </tr>
                       <tr>
-                        <td colSpan={3} className="hidden">
+                        <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
                           <div>_id: {a._id}</div>
                           <div>domain: {a.domain}</div>
                           <div>accountType: {a.accountType}</div>
