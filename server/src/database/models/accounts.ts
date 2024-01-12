@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose"
 
 export type IAccount = {
+  _id: string
   domain: string
   accountType: string
   trialTime: string

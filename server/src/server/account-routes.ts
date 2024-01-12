@@ -30,6 +30,7 @@ export const accountRoutes = (app: Express) => {
   })
 
   app.put('/account', async (req, res) => {
+    console.log('updateAccount')
     try {
       const update = await AccountModel.findOneAndUpdate(
         {_id: req.body._id},
@@ -47,6 +48,7 @@ export const accountRoutes = (app: Express) => {
 
   // (FIX): make reactive
   app.get('/account/cookies', async (req, res) => {
+    console.log('loginCookies')
     try{
       await apolloGetCookiesFromLogin(req.body.id)
       res.json({ok: true, message: null, data: null});

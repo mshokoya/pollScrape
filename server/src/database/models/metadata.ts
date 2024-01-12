@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose"
 
 export type IMetaData = {
+  _id: string
   url: string
   params: {[key: string]: string}
   fullURL: string

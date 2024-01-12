@@ -1,6 +1,7 @@
 import { Schema, Types, model } from "mongoose"
 
 export type IRecords = {
+  _id: string
   scrapeID: string
   url: string
   page: string
