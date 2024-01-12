@@ -7,7 +7,7 @@ export type IMetaData = {
   name: string
   maxPages: string
   page: number
-  scrapes: {page: number, id: string}[]
+  scrapes: {page: number, scrapeID: string}[]
 }
 
 const metaData = new Schema<IMetaData>({

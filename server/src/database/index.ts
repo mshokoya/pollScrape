@@ -5,13 +5,13 @@ import { parseProxy, rmPageFromURLQuery } from "./util";
 import { generateSlug } from "random-word-slugs";
 import { RecordsModel } from "./models/records";
 import { MetadataModel } from "./models/metadata";
+import { v4 as uuidv4 } from 'uuid';
 
 export const addAccountToDB = async (email: string, password: string): Promise<IAccount> => {
-
   const account = AccountModel.findOne({email})
 
   if (account === null) throw new Error('account already exists')
-
+  
   const newAcc = await AccountModel.create({email, password})
 
   return newAcc
@@ -38,44 +38,58 @@ export const addProxyToDB = async (p: string): Promise<IProxy> => {
   return proxy
 }
 
-export const saveScrapeToDB = async (userID: string, cookies: string[], proxy: string, url: string, data: {[key: string]: string}[]) => {
+export const saveScrapeToDB = async (
+  accountID: string, 
+  cookies: string[], 
+  proxy: string, 
+  url: string, 
+  data: {[key: string]: string}[],
+  metadataID: string,
+) => {
   const session = await startSession();
   try {
     session.startTransaction();
-    const updateOpts = {new: true, session, /* upsert: true */ }
+    const updateOpts = { session, upsert: true }
 
-    await AccountModel.findOneAndUpdate(
-      {_id: userID}, 
+    // ACCOUNT UPDATE
+    const acc = await AccountModel.findOneAndUpdate(
+      {_id: accountID},
       {
         cookies:  JSON.stringify(cookies),
         proxy,
         lastUsed: new Date()
-      }, 
+      },
       updateOpts
     ).lean();
 
+    console.log('acc')
+    console.log(acc)
+
+    // METADATA UPDATE
     const fmtURL = rmPageFromURLQuery(url)
-
-    const apolloData = await RecordsModel.findOneAndUpdate(
-      {url: fmtURL.url}, 
-      {
-        'data.page': fmtURL.page,
-        'data.fullURL': url,
-        'data.data': JSON.stringify(data)
-      }, 
-      updateOpts
-    ).lean();
+    const scrapeID = uuidv4()
     
-    await MetadataModel.findOneAndUpdate(
-      {url: fmtURL.url}, 
+    const meta = await MetadataModel.findOneAndUpdate(
+      {_id: metadataID}, 
       {
-        fullURL: url, 
         page: fmtURL.page, 
-        "$push": { "scrapes": apolloData!._id} // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
+        "$push": { page: parseInt(fmtURL.page), scrapeID } // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
       }
       , 
       updateOpts
     ).lean();
+
+    console.log('meta')
+    console.log(meta)
+
+    // RECORD UPDATE
+    const fmtData = data.map(() => ({scrapeID, url, page: fmtURL.page, data}))
+
+    const apolloData = await RecordsModel.insertMany(fmtData, updateOpts)
+
+    console.log('apolloData')
+    console.log(apolloData)
+    
 
     await session.commitTransaction();
   } catch (error) {

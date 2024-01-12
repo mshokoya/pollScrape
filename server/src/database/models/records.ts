@@ -1,8 +1,7 @@
 import { Schema, Types, model } from "mongoose"
 
 export type IRecords = {
-  id: string
-  account: string[]
+  scrapeID: string
   url: string
   page: string
   data: IRecord
@@ -27,8 +26,7 @@ export type IRecord = {
 }
 
 const records = new Schema<IRecords>({
-  id: { type: String, default: "null" },
-  account: { type: [Types.ObjectId], default: [] },
+  scrapeID: { type: String, default: "null" },
   url: { type: String, default: "null" },
   page: { type: String, default: "null" },
   data: {

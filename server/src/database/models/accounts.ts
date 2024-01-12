@@ -5,9 +5,8 @@ export type IAccount = {
   accountType: string
   trialTime: string
   isSuspended: boolean
-    email: string
-    password: string
-
+  email: string
+  password: string
   cookies: string
   proxy: string
   lastUsed: Date
@@ -16,7 +15,7 @@ export type IAccount = {
 const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
   accountType: { type: String, default: "n/a" }, // free or premuim
-  trialTime: { type: String, default: "n/a" },
+  trialTime: { type: String, default: "n/a" }, // should be trial end date & time
   isSuspended: { type: Boolean, default: false },
   email: { type: String, default: "" },
   password: { type: String, default: "" },
