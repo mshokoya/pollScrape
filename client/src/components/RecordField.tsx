@@ -135,7 +135,7 @@ export const RecordField = () => {
     <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
       <div className=' border-cyan-600 border rounded h-[25%] mb-6 overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
-          <thead>
+          <thead className='sticky top-0 bg-black'>
             <tr>
               <th>Name</th>
               <th>URL</th>
@@ -179,7 +179,7 @@ export const RecordField = () => {
 
       <div className='border-cyan-600 border rounded grow overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
-          <thead>
+          <thead className='sticky top-0 bg-black'>
             <tr>
               <th>Name</th>
               <th>Email</th>
@@ -187,7 +187,7 @@ export const RecordField = () => {
               <th className='w-[10%]'><IoOptionsOutline className='inline' /></th>
             </tr>
           </thead>
-          <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
+          <tbody className="text-[0.5rem] relative" onClick={handleExtendRow}>
           {
                 records.length && records.map( 
                   (a, idx) => ( 

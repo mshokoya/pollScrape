@@ -188,7 +188,7 @@ export const ProxyField = () => {
       
       <div className=' border-cyan-600 border rounded grow overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
-          <thead>
+          <thead className='sticky top-0 bg-black'>
             <tr>
               <th>Proto</th>
               <th>Host</th>
