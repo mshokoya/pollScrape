@@ -5,14 +5,14 @@ import {
   goToApolloSearchUrl, // edit
 } from './scraper';
 import {
-  getBrowserCookies, wait_for_browser,
+  getBrowserCookies, waitForApolloLogin, wait_for_browser,
 } from './util'
 import {
   selectAccForScrapingFILO, selectProxy
 } from "../database/util";
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { IAccount } from '../database/models/accounts';
+import { AccountModel, IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, initApolloSkeletonInDB, saveScrapeToDB } from '../database';
 
 const checkUserIP = async () => {
@@ -56,15 +56,15 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
   await scraper.close();
 }
 
-// (FIX) FINISH
-export const apolloGetCookiesFromLogin = async (account: IAccount) => {
+
+export const apolloGetCookiesFromLogin = async (accountID: string) => {
   if (!scraper.browser()) {
     await scraper.launchBrowser()
   }
 
   scraper.visit('https://app.apollo.io/#/login')
 
-  const cookies = await wait_for_browser()
+  const cookies = await waitForApolloLogin()
     .then(async () => {
       const client = await scraper.page()?.target().createCDPSession();
       const { cookies } = await client!.send('Network.getAllCookies');
@@ -72,9 +72,19 @@ export const apolloGetCookiesFromLogin = async (account: IAccount) => {
       await scraper.close()
 
       return (cookies as unknown) as string[];
-    });
+    })
+    .catch(() => {
+      return null
+    })
 
-    // await ------
+  if (cookies) {
+    AccountModel.findOneAndUpdate(
+      {_id: accountID},
+      {cookies},
+    )
+  } else {
+    throw new Error('failed to login (cookies)')
+  }
 }
 
 

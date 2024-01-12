@@ -64,15 +64,12 @@ export const apolloUpdatePageQueryString = (url: string) => {
   return myURL.href;
 }
 
-export const wait_for_browser = () => 
+export const waitForApolloLogin = () => 
 
   new Promise((resolve, _reject) => {
     const pg = scraper.page()
     
     const browser_check = setInterval(async () => {
-      const pageLength = (await scraper.browser()?.pages())?.length || 0
-      console.log('pages')
-      console.log(pageLength)
 
       if ( pg!.url().includes('settings/account') ) {
         clearInterval(browser_check);
