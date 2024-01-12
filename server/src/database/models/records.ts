@@ -5,23 +5,25 @@ export type IRecords = {
   account: string[]
   url: string
   page: string
-  data: {
-    name: string
-    linkedin: string
-    title: string
-    companyName: string
-    companyURL: string
-    comapnyLinkedin: string
-    companyTwitter: string
-    companyFacebook: string
-    email: string
-    isVerified: boolean
-    location: string
-    employees: string
-    phone: string
-    industry: string
-    keywords: string[]
-  }
+  data: IRecord
+}
+
+export type IRecord = {
+  name: string
+  linkedin: string
+  title: string
+  companyName: string
+  companyURL: string
+  comapnyLinkedin: string
+  companyTwitter: string
+  companyFacebook: string
+  email: string
+  isVerified: boolean
+  location: string
+  employees: string
+  phone: string
+  industry: string
+  keywords: string[]
 }
 
 const records = new Schema<IRecords>({

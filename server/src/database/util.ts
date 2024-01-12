@@ -107,21 +107,23 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
 export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string> => {
   let doesProxyStillWork = await verifyProxy(account.proxy)
 
-  if (doesProxyStillWork) return account.proxy;
+  if (doesProxyStillWork.valid) return account.proxy;
 
   const allProxiesInUse = allAccounts
-    .filter((u) => u.proxy === account.proxy) // remove user from list
+    // .filter((u) => u.proxy === account.proxy) // remove user from list  (??? why remove from list ?)
     .map((u) => u.proxy) //retrun list of proxies
 
   const allProxiesNotInUse = shuffleArray(
     (ProxyModel.find({}).lean() as any)
       .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
   )
+
+  if (!allProxiesInUse.length) return '';
   
   for (let proxy of allProxiesNotInUse) {
     doesProxyStillWork = await verifyProxy(proxy)
-    if (doesProxyStillWork) return proxy;
+    if (doesProxyStillWork.valid) return proxy;
   }
 
-  throw new Error('[PROXY_ERROR]: No Proxies Work: please add new proxies')
+  return '';
 }

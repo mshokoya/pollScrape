@@ -25,6 +25,10 @@ export const RecordField = () => {
 
   }, [])
 
+  const handleTableClick = () => {
+    
+  }
+
   return (
     <div className="flex flex-col grow">
 
@@ -38,7 +42,7 @@ export const RecordField = () => {
               <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
             </tr>
           </thead>
-          <tbody className="text-[0.5rem]">
+          <tbody className="text-[0.5rem]" onClick={handleTableClick}>
             {
               meta.length && meta.map( 
                 (a, idx) => ( 

@@ -1,17 +1,19 @@
 import {
   scraper,
-  apolloScrapePage, // edit
+  apolloScrapePage,
+  setupApolloForScraping,
+  goToApolloSearchUrl, // edit
 } from './scraper';
 import {
   getBrowserCookies, wait_for_browser,
 } from './util'
 import {
-  selectAccForScrapingFILO
+  selectAccForScrapingFILO, selectProxy
 } from "../database/util";
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
-import { getAllApolloAccounts, initApolloSkeletonInDB } from '../database';
+import { getAllApolloAccounts, initApolloSkeletonInDB, saveScrapeToDB } from '../database';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -24,7 +26,7 @@ const checkUserIP = async () => {
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (urlList: string[]) => {
+export const startScrapingApollo = async (urlList: string[], usingProxy: boolean) => {
 
   for (let url of urlList) {
     await scraper.restartBrowser();
@@ -34,25 +36,27 @@ export const startScrapingApollo = async (urlList: string[]) => {
 
     const allAccounts = await getAllApolloAccounts();
     const account = selectAccForScrapingFILO(allAccounts);
-    // const proxy =  await selectProxy(account, allAccounts);
-    // const account = allUsers[0];
-    const proxy = "0.0.0.0.0:0000";
 
-    // await useProxy(page, proxy);
+    if (usingProxy) {
+      const proxy =  await selectProxy(account, allAccounts);
+      if (proxy) {
+        await useProxy(page, proxy);
+      }
+    }
 
-    // await setupApolloForScraping(account)
-    // await goToApolloSearchUrl(url);
-
+    await setupApolloForScraping(account);
+    await goToApolloSearchUrl(url);
     const data = await apolloScrapePage(); // edit
     const cookies = await getBrowserCookies(page);
 
     // @ts-ignore
-    await savePageScrapeToDB(account._id, cookies, proxy, url, data);
+    await saveScrapeToDB(account._id, cookies, proxy, url, data);
   }
 
   await scraper.close();
 }
 
+// (FIX) FINISH
 export const apolloGetCookiesFromLogin = async (account: IAccount) => {
   if (!scraper.browser()) {
     await scraper.launchBrowser()

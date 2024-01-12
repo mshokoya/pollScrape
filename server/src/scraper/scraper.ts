@@ -11,6 +11,7 @@ import {
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
 import { IAccount } from '../database/models/accounts';
+import { IRecord } from '../database/models/records';
 
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
@@ -116,11 +117,9 @@ export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
-export const apolloScrapePage = async (): Promise<{[key: string]: string}[]> => {
+export const apolloScrapePage = async (): Promise<IRecord> => {
   const page = scraper.page() as Page
-
-  const data = await apolloDoc(page);
-
+  const data = (await apolloDoc(page) as unknown) as IRecord;
   return data;
 }
 
@@ -142,7 +141,7 @@ export const setupApolloForScraping = async (account: IAccount) => {
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    await apolloLogin(account.apollo.email, account.apollo.password)
+    await apolloLogin(account.email, account.password)
   } 
 }
 
