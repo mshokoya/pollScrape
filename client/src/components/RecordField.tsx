@@ -1,6 +1,7 @@
 import { MouseEvent, useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
+import { IoOptionsOutline } from "react-icons/io5";
 
 export type IMetaData = {
   _id: string
@@ -8,7 +9,7 @@ export type IMetaData = {
   params: {[key: string]: string}
   fullURL: string
   name: string
-  maxPages: string
+  maxPages: number
   page: number
   scrapes: {page: number, scrapeID: string}[]
 }
@@ -17,7 +18,7 @@ export type IRecords = {
   _id: string
   scrapeID: string
   url: string
-  page: string
+  page: number
   data: IRecord
 }
 
@@ -40,8 +41,61 @@ export type IRecord = {
 }
 
 export const RecordField = () => {
-  const [meta, setMeta] = useState<IMetaData[]>([]);
-  const [records, setRecords] = useState<IRecords[]>([]);
+  const [meta, setMeta] = useState<IMetaData[]>([
+    {_id: '12345', url: "www.gom", params: {lol: 'fds', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:1, scrapeID: 'd'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'cvxxc', poll: 'nhg'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes:[{page:2, scrapeID: 'd'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'cxzc', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:3, scrapeID: 'd'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'scxz', poll: 'ghf'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:4, scrapeID: 'd'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dasdsad', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes:[{page:5, scrapeID: 'd'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dscsc', poll: 'vcfg'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:1, scrapeID: 'p'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dsada', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:2, scrapeID: 'p'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dasdsad', poll: 'ythgf'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes:[{page:3, scrapeID: 'p'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dsadas', poll: 'jmhg'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:4, scrapeID: 'p'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'cxzcxz', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:5, scrapeID: 'p'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dasdsad', poll: 'xcvdf'}, fullURL: 'dsadsa', name: 'dad', maxPages: 4, page: 1, scrapes:[{page:1, scrapeID: 'c'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'vsdsc', poll: 'dsvf'}, fullURL: 'dsadsa', name: 'dad', maxPages: 4, page: 1, scrapes: [{page:2, scrapeID: 'c'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dasdsad', poll: 'vcxfr'}, fullURL: 'dsadsa', name: 'dad', maxPages: 4, page: 1, scrapes: [{page:3, scrapeID: 'c'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'hnfgbd', poll: 'kuyh'}, fullURL: 'dsadsa', name: 'dad', maxPages: 4, page: 1, scrapes:[{page:4, scrapeID: 'c'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'jmthgfd', poll: 'hntg'}, fullURL: 'dsadsa', name: 'dad', maxPages: 1, page: 1, scrapes: [{page:1, scrapeID: 'e'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'dasdsad', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 1, page: 1, scrapes: [{page:1, scrapeID: 'r'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'hyrtfg', poll: 'fdre'}, fullURL: 'dsadsa', name: 'dad', maxPages: 1, page: 1, scrapes:[{page:1, scrapeID: 't'}]},
+    {_id: '12345', url: "www.gom", params: {lol: 'vfd', poll: 'dfer'}, fullURL: 'dsadsa', name: 'dad', maxPages: 1, page: 1, scrapes: [{page:1, scrapeID: 'y'}]},
+
+  ]);
+  const [records, setRecords] = useState<IRecords[]>([
+    {_id: '12345', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '54343', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '64536', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '64522', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '47657', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '83756', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '59878', scrapeID: 'd', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '34525', scrapeID: 'p', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '06890', scrapeID: 'p', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '24565', scrapeID: 'p', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '25464', scrapeID: 'p', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '65434', scrapeID: 'p', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '89758', scrapeID: 'c', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '35445', scrapeID: 'c', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '65423', scrapeID: 'c', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '45237', scrapeID: 'c', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '98677', scrapeID: 'e', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '09780', scrapeID: 'e', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '12346', scrapeID: 'e', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '56465', scrapeID: 'r', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '18735', scrapeID: 'r', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '65445', scrapeID: 'r', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '15466', scrapeID: 't', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '75466', scrapeID: 't', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '09876', scrapeID: 'y', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '12eef', scrapeID: 'e', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '5342r', scrapeID: 'r', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '17564', scrapeID: 'r', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '58768', scrapeID: 'r', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '65456', scrapeID: 't', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: '987yh', scrapeID: 't', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+    {_id: 'tyr65', scrapeID: 'y', url: 'http:/dsadsa.com', page: 1, data: {name: 'mike', linkedin: 'fsd', title: 'fdsfds', companyName: "fdsw", companyURL: 'dsfw', comapnyLinkedin: 'thre', companyTwitter: 'grev', companyFacebook: 'tgerf', email: 'dfsfew', isVerified: true, location: 'cvfgd', employees: 'ds', phone: '324532', industry: 'fsdgre', keywords: ['fdssf', 'fdse']}},
+  ]);
 
   useEffect(() => {
     
@@ -77,16 +131,16 @@ export const RecordField = () => {
   }
 
   return (
-    <div className="flex flex-col grow">
-
-      <div className=' border-cyan-600 border rounded h-[25%] mb-6'>
+    <div className="flex relative grow">
+    <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
+      <div className=' border-cyan-600 border rounded h-[25%] mb-6 overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead>
             <tr>
               <th>Name</th>
               <th>URL</th>
               <th>MaxPages</th>
-              <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
+              <th className='w-[7%]'><IoOptionsOutline className='inline' /></th>
             </tr>
           </thead>
           <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
@@ -123,14 +177,14 @@ export const RecordField = () => {
         </table>
       </div>
 
-      <div className='border-cyan-600 border rounded grow overflow-scroll'>
+      <div className='border-cyan-600 border rounded grow overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead>
             <tr>
               <th>Name</th>
               <th>Email</th>
               <th>Title</th>
-              <th className='w-[10%]'><SlOptionsVertical className='inline'/></th>
+              <th className='w-[10%]'><IoOptionsOutline className='inline' /></th>
             </tr>
           </thead>
           <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
@@ -174,7 +228,7 @@ export const RecordField = () => {
           </tbody>
         </table>
       </div>
-
+    </div>
     </div>
   )
 }
