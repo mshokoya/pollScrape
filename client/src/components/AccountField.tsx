@@ -49,12 +49,7 @@ export const AccountField = () => {
       case 'extend':
         e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
         break;
-      default:
-        
-        break;
     }
-
-    
   }
 
   return (
