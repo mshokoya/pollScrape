@@ -28,10 +28,10 @@ export const AccountField = () => {
     {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookies: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
   ])
 
-  // useEffect(() => {
-  //   fetchData('/account', 'GET')
-  //     .then(data => setAccounts(data.data))
-  // }, [])
+  useEffect(() => {
+    fetchData('/account', 'GET')
+      .then(data => setAccounts(data.data))
+  }, [])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -40,13 +40,16 @@ export const AccountField = () => {
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
+    //@ts-ignore
     const type = e.target.closest('td')?.dataset.type as string
 
     switch (type) {
       case 'opt':
+        //@ts-ignore
         console.log(e.target.closest('tr').dataset.idx)
         break;
       case 'extend':
+        //@ts-ignore
         e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
         break;
     }

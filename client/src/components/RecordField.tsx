@@ -107,7 +107,7 @@ export const RecordField = () => {
 
   useEffect(() => {
     // eslint-disable-next-line no-async-promise-executor
-    new Promise(async (resolve, _) => {
+    new Promise(async (resolve) => {
       const meta = await fetchData('/metadata', 'GET');
       const records = await fetchData('/records', 'GET');
       resolve({meta, records})

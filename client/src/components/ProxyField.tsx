@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState, Dispatch, ChangeEvent } from "react"
+import { FormEvent, useEffect, useState, Dispatch, ChangeEvent, MouseEvent } from "react"
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
@@ -132,7 +132,7 @@ export const ProxyField = () => {
 
         setreqInProcess(false)
       })
-      .catch((err: unknown) => {
+      .catch((err: any) => {
         console.log(err.message)
         setreqInProcess(false)
       })
@@ -142,16 +142,19 @@ export const ProxyField = () => {
 
   switch (selected) {
     case 'http_full':
-      
+      //@ts-ignore
       ProxyComponent = ProxyFull
       break;
     case 'http_split':
+      //@ts-ignore
       ProxyComponent = ProxySplit
       break;
     case 'socks_full':
+      //@ts-ignore
       ProxyComponent = SocksFull
       break;
     case 'socks_split':
+      //@ts-ignore
       ProxyComponent = SocksSplit
       break;
   }
@@ -160,10 +163,12 @@ export const ProxyField = () => {
 
   const handleOptsClick = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
+    //@ts-ignore
     const type = e.target.closest('td')?.dataset.type as string
 
     switch (type) {
       case 'opt':
+        //@ts-ignore
         console.log(e.target.closest('tr').dataset.idx)
         break;
     }
@@ -181,6 +186,7 @@ export const ProxyField = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* @ts-ignore */}
           <ProxyComponent input={input} setInput={setInput} />
           <input disabled={reqInProcess} className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Add Proxy"/>
         </form>
