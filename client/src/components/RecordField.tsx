@@ -2,6 +2,8 @@ import { MouseEvent, useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
+import { MdCheckBoxOutlineBlank } from "react-icons/md";
+import { MdCheckBox } from "react-icons/md";
 
 export type IMetaData = {
   _id: string
@@ -41,6 +43,7 @@ export type IRecord = {
 }
 
 export const RecordField = () => {
+  const [checked, setChecked] = useState<number[]>([])
   const [meta, setMeta] = useState<IMetaData[]>([
     {_id: '12345', url: "www.gom", params: {lol: 'fds', poll: 'cascas'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes: [{page:1, scrapeID: 'd'}]},
     {_id: '12345', url: "www.gom", params: {lol: 'cvxxc', poll: 'nhg'}, fullURL: 'dsadsa', name: 'dad', maxPages: 5, page: 1, scrapes:[{page:2, scrapeID: 'd'}]},
@@ -124,6 +127,12 @@ export const RecordField = () => {
       case 'opt':
         console.log(e.target.closest('tr').dataset.idx)
         break;
+      case 'check':
+        const idx = parseInt(e.target.closest('tr').dataset.idx)
+        checked.includes(idx)
+          ? setChecked(p => p.filter(a => a !== idx))
+          : setChecked([...checked, idx])
+        break;
       case 'extend':
         e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
         break;
@@ -133,10 +142,11 @@ export const RecordField = () => {
   return (
     <div className="flex relative grow">
     <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
-      <div className=' border-cyan-600 border rounded h-[25%] mb-6 overflow-auto'>
+      <div className=' border-cyan-600 border rounded h-[32%] mb-6 overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead className='sticky top-0 bg-black'>
             <tr>
+              <th className='w-[7%]'><MdCheckBoxOutlineBlank className='inline' /></th>
               <th>Name</th>
               <th>URL</th>
               <th>MaxPages</th>
@@ -149,6 +159,13 @@ export const RecordField = () => {
                   (a, idx) => ( 
                     <>
                       <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
+                        <td data-type='check' data-idx={idx}>
+                          {
+                            checked.includes(idx)
+                              ? <MdCheckBox className='inline' />
+                              : <MdCheckBoxOutlineBlank className='inline' />
+                          }
+                        </td>
                         <td className='overflow-scroll' data-type='extend' >{a.name}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.url}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.maxPages}</td>
