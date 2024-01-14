@@ -45,7 +45,7 @@ export type IRecord = {
 // type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
 type MetaSubCompArgs = {meta: IMetaData[], metaChecked: number[], setMetaChecked: Dispatch<SetStateAction<number[]>>}
 // type RecordsDispatch = Dispatch<SetStateAction<IRecords[]>>
-type RecordsSubCompArgs = {records: IRecords[], recordsChecked: number[], setRecordsChecked: Dispatch<SetStateAction<number[]>>}
+type RecordsSubCompArgs = {records: IRecords[], recordsChecked: number[], setRecordsChecked: Dispatch<SetStateAction<number[]>>, meta: IMetaData[], metaChecked: number[]}
 
 export const RecordField = () => {
   const [metaChecked, setMetaChecked] = useState<number[]>([]);
@@ -128,7 +128,7 @@ export const RecordField = () => {
     <div className="flex relative grow">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <Meta meta={meta} metaChecked={metaChecked} setMetaChecked={setMetaChecked} />
-        <Record records={records} recordsChecked={recordsChecked} setRecordsChecked={setRecordsChecked} />
+        <Record records={records} recordsChecked={recordsChecked} setRecordsChecked={setRecordsChecked} meta={meta} metaChecked={metaChecked} />
       </div>
     </div>
   )
@@ -231,7 +231,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
 
 
 
-export const Record = ({records, recordsChecked, setRecordsChecked}: RecordsSubCompArgs) => {
+export const Record = ({records, recordsChecked, setRecordsChecked, meta, metaChecked}: RecordsSubCompArgs) => {
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
@@ -242,13 +242,6 @@ export const Record = ({records, recordsChecked, setRecordsChecked}: RecordsSubC
         //@ts-ignore
         console.log(e.target.closest('tr').dataset.idx)
         break;
-      case 'check':
-        //@ts-ignore
-        const idx = parseInt(e.target.closest('tr').dataset.idx)
-        recordsChecked.includes(idx)
-          ? setRecordsChecked(p => p.filter(a => a !== idx))
-          : setRecordsChecked([...recordsChecked, idx])
-        break;
       case 'extend':
         //@ts-ignore
         e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
@@ -256,10 +249,16 @@ export const Record = ({records, recordsChecked, setRecordsChecked}: RecordsSubC
     }
   }
 
-  const handleRecordToggle = () => {
-    recordsChecked.length === records.length
-      ? setRecordsChecked([])
-      : setRecordsChecked(records.map((_, idx) => idx))
+
+  const recordFilter = () => {
+    const filter: string[] = []
+    metaChecked.forEach( m => {
+      meta[m].scrapes.forEach(d => filter.push(d.scrapeID))
+    })
+
+    return filter.length
+      ? records.filter((r) => filter.includes(r.scrapeID))
+      : records
   }
 
   return (
@@ -267,13 +266,6 @@ export const Record = ({records, recordsChecked, setRecordsChecked}: RecordsSubC
     <table className="text-[0.7rem] m-auto w-full table-fixed">
       <thead className='sticky top-0 bg-black'>
         <tr>
-          <th className='w-[7%]' onClick={handleRecordToggle}>
-            {
-              recordsChecked.length === records.length
-                ? <MdCheckBox className='inline' />
-                : <MdCheckBoxOutlineBlank className='inline' />
-            }
-          </th>
           <th>Name</th>
           <th>Email</th>
           <th>Title</th>
@@ -282,17 +274,10 @@ export const Record = ({records, recordsChecked, setRecordsChecked}: RecordsSubC
       </thead>
       <tbody className="text-[0.5rem] relative" onClick={handleExtendRow}>
         {
-          records.length && records.map( 
+          records.length && recordFilter().map( 
             (a, idx) => ( 
               <>
                 <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
-                  <td data-type='check' data-idx={idx}>
-                    {
-                      recordsChecked.includes(idx)
-                        ? <MdCheckBox className='inline' />
-                        : <MdCheckBoxOutlineBlank className='inline' />
-                    }
-                  </td>
                   <td className='overflow-scroll' data-type='extend' >{a.data.name}</td>
                   <td className='overflow-scroll' data-type='extend' >{a.data.email}</td>
                   <td className='overflow-scroll' data-type='extend' >{a.data.title}</td>
