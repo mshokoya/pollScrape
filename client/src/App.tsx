@@ -1,13 +1,21 @@
+
 import { ProxyField } from './components/ProxyField';
 import { AccountField } from './components/AccountField';
 import { RecordField } from './components/RecordField';
 import { ScrapeField } from './components/ScrapeField';
+import { AccountPopup } from './components/AccountPopup';
+import { useState } from 'react';
 
+const ACCOUNT_POPUP = 'account'
+const PROXY_POPUP = 'proxy'
+const META_POPUP = 'meta'
+const RECORDS_POPUP = 'record'
+const NO_POPUP = ''
 
 function App() {
 
   return (
-    <div className='flex flex-col center h-screen'>
+    <div className='flex flex-col center h-screen z-0'>
 
       <div className='mb-4 text-center'>
         <h2 className='text-[2rem] mb-3'>Apollo URL To Scrape</h2>
@@ -30,7 +38,7 @@ function App() {
         {/* RECORDS */}
         <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>RECORDS</h2>
-          <RecordField />
+          <RecordField recordList={[]}/>
         </div>
       </div>
 

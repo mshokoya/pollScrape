@@ -2,6 +2,9 @@ import { FormEvent, MouseEvent, useEffect, useState } from "react"
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
+import { AccountPopup } from "./AccountPopup";
+
+
 
 export type IAccount = {
   _id: string
@@ -21,6 +24,9 @@ export type IAccount = {
 
 export const AccountField = () => {
   const [input, setInput] = useState({email: '', password: ''});
+  const [popup, setPopup] = useState(false);
+  const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
+  
   const [accounts, setAccounts] = useState<IAccount[]>([
     {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookies: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
     {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookies: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
@@ -37,6 +43,14 @@ export const AccountField = () => {
     e.preventDefault()
     await fetchData('/account', 'POST', input)
   }
+
+  const popupComp = () => {
+    return selectedAcc
+      ? <AccountPopup setPopup={setSelectedAcc} account={accounts[selectedAcc]} />
+      : ''
+  }
+  
+  
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
@@ -56,6 +70,8 @@ export const AccountField = () => {
   }
 
   return (
+    <>
+    {}
     <div className="flex relative grow">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <div className='mb-10'>
@@ -90,7 +106,7 @@ export const AccountField = () => {
                   (a, idx) => ( 
                     <>
                       <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
-                        <td className='overflow-scroll' data-type='extend' >{a.trialTime.toDateString()}</td>
+                        {/* <td className='overflow-scroll' data-type='extend' >{a.trialTime.toDateString()}</td> */}
                         <td className='overflow-scroll' data-type='extend' >{a.email}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.password}</td>
                         <td className='overflow-scroll' data-type='opt'>
@@ -104,13 +120,13 @@ export const AccountField = () => {
                           <div>_id: {a._id}</div>
                           <div>domain: {a.domain}</div>
                           <div>accountType: {a.accountType}</div>
-                          <div>trialTime: {a.trialTime.toDateString()}</div>
+                          {/* <div>trialTime: {a.trialTime}</div> */}
                           <div>isSuspended: {a.isSuspended}</div>
                           <div>email: {a.email}</div>
                           <div>password: {a.password}</div>
                           <div>cookies: {a.cookies}</div>
                           <div>proxy: {a.proxy}</div>
-                          <div>lastUsed: {a.lastUsed.toDateString()}</div>
+                          {/* <div>lastUsed: {a.lastUsed.toDateString()}</div> */}
                         </td>
                       </tr>
                     </>
@@ -122,5 +138,6 @@ export const AccountField = () => {
         </div>
       </div>
     </div>
+  </>
   )
 }

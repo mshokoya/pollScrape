@@ -47,7 +47,7 @@ export const accountRoutes = (app: Express) => {
   })
 
   // (FIX): make reactive
-  app.get('/account/cookies', async (req, res) => {
+  app.post('/account/cookies', async (req, res) => {
     console.log('loginCookies')
     try{
       await apolloGetCookiesFromLogin(req.body.account)

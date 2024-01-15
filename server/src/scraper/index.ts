@@ -56,13 +56,34 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
   await scraper.close();
 }
 
-
-export const apolloGetCookiesFromLogin = async (accountID: IAccount) => {
+// (FIX): need to impliment proxies // sort out inital login popups (look for close button)
+export const apolloGetCookiesFromLogin = async (account: IAccount) => {
   if (!scraper.browser()) {
     await scraper.launchBrowser()
   }
 
+  const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
+  const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
+
   scraper.visit('https://app.apollo.io/#/login')
+  const page = scraper.page()
+  await page?.waitForSelector(loginInputFieldSelector, {visible: true})
+  const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
+  const login = await page?.$$(loginInputFieldSelector)
+
+  if (!login || !submitButton) throw new Error('failed to login');
+
+  await login[0].type(account.email)
+  await login[1].type(account.password)
+
+  await submitButton?.click()
+
+
+  // error incorrect login // zp_nFR11
+  // error empty fields // error-label zp_HeV9x
+
+  // icons parent div //zp_RB9tu zp_0_HyN
+  // icon // zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy
 
   const cookies = await waitForApolloLogin()
     .then(async () => {
@@ -79,7 +100,7 @@ export const apolloGetCookiesFromLogin = async (accountID: IAccount) => {
 
   if (cookies) {
     AccountModel.findOneAndUpdate(
-      {_id: accountID._id},
+      {_id: account._id},
       {cookies},
     )
   } else {
