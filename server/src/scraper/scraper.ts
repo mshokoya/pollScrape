@@ -26,8 +26,8 @@ puppeteer.use(AdBlockerPlugin({ blockTrackers: true }))
 // login - https://app.apollo.io/#/login
 
 export const scraper = (() => {
-  let browser: Browser | null;
-  let page: Page | null;
+  let browser: Browser | null = null;
+  let page: Page | null = null;
   
   return {
     launchBrowser: async () => {

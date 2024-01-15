@@ -59,7 +59,7 @@ export type ProxyResponse = {
 }
 
 
-export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
+export const selectAccForScrapingFILO = (userAccounts: IAccount[]): IAccount => {
   return userAccounts.reduce((acc: IAccount, cv: any) => {
     if (cv.lastUsed < acc.lastUsed) {
       return cv
@@ -115,22 +115,21 @@ export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): P
     .map((u) => u.proxy) //retrun list of proxies
 
   let getProxies = (ProxyModel.find({}).lean() as unknown) as IProxy[]
-  if (!getProxies) return null;
 
+  if (!getProxies.length) throw new Error('failed to find proxies to use, please add proxies, minimum 15, to be safe add 30');
 
-  const allProxiesStr = getProxies
+  let allProxiesNotInUse: string[] = getProxies
     .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
-    .map(p => p.proxy )
+    .map(p => p.proxy );
 
-  
-  const allProxiesNotInUse = shuffleArray(allProxiesStr)
+  if (!allProxiesNotInUse.length) throw new Error('failed to find proxies to use, all proxies are in use, please add proxies, minimum 15, to be safe add 30')
 
-  if (!allProxiesInUse.length) return null;
+  allProxiesNotInUse = shuffleArray(allProxiesNotInUse)
   
   for (let proxy of allProxiesNotInUse) {
     doesProxyStillWork = await verifyProxy(proxy)
     if (doesProxyStillWork.valid) return proxy;
   }
 
-  return null;
+  throw new Error('failed to use proxies, try scrape again, its fails try adding new proxies, if that fails please contact the developer')
 }

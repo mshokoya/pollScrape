@@ -6,8 +6,12 @@ import { initMeta } from '../database';
 export const scrapeRoutes = (app: Express) => {
 
   app.post('/scrape', async (req, res) => {
+
     try {
-      const metaData = await initMeta(req.body.url)
+      const metaData = await initMeta(req.body.urls[0])
+
+      console.log('metaData')
+      console.log(metaData)
 
       await startScrapingApollo(
         metaData._id,
@@ -16,8 +20,8 @@ export const scrapeRoutes = (app: Express) => {
       )
   
       res.json({ok: true, message: null, data: null});
-    } catch (err) {
-      res.json({ok: false, message: 'failed to proxy', data: err});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
     }
   });
 

@@ -11,11 +11,13 @@ export const ScrapeField = () => {
 
     setreqInProcess(true)
 
-    await fetchData('/scrape', 'POST', {url: URLInput})
-      .then( () => {
+    await fetchData('/scrape', 'POST', {urls: [URLInput], usingProxy: false})
+      .then( (d) => {
+        console.log(d)
         setreqInProcess(false)
       })
-      .catch(() => {
+      .catch((err) => {
+        console.log(err)
         setreqInProcess(false)
       })
   }

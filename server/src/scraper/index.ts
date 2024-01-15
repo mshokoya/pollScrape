@@ -28,12 +28,29 @@ const checkUserIP = async () => {
 // TODO
 // handle account failed login
 export const startScrapingApollo = async (metaID: string, urlList: string[], usingProxy: boolean) => {
-
+  console.log('made it here')
   for (let url of urlList) {
     let proxy: string | null;
-    await scraper.restartBrowser();
 
-    const allAccounts = await getAllApolloAccounts();
+    const browser = await scraper.restartBrowser()
+      .then(() => {
+        console.log('started browser')
+      })
+    //   .catch(() => {
+    //     return new Error('failed to restart browser, if this continues please contact the developer')
+    //   });
+
+    // if (browser instanceof Error) {
+    //   throw browser
+    // }
+
+    const allAccounts = await getAllApolloAccounts()
+      .then((d) => {
+        console.log('allAccounts')
+        console.log(d)
+        return d
+      })
+
 
     if (!allAccounts) throw new Error('No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
     if (allAccounts.length < 15) {
@@ -45,10 +62,9 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
 
     if (usingProxy) {
       proxy =  await selectProxy(account, allAccounts);
-      if (proxy) {
+      if (!proxy) throw new Error(`failed to use proxy `)
         const page = scraper.page() as Page;
         await useProxy(page, proxy);
-      }
     }
 
     await setupApolloForScraping(account);
