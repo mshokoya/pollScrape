@@ -14,7 +14,7 @@ export type IAccount = {
   isSuspended: boolean
   email: string
   password: string
-  cookies: string
+  cookie: string
   proxy: string
   lastUsed: Date
 }
@@ -27,10 +27,10 @@ export const AccountField = () => {
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
   const [accounts, setAccounts] = useState<IAccount[]>([
-    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookies: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookies: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
-    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookies: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookies: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
+    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
+    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
   ])
 
   useEffect(() => {
@@ -43,9 +43,7 @@ export const AccountField = () => {
     await fetchData('/account', 'POST', input)
   }
 
-  const PopupComp = () => selectedAcc
-      ? <AccountPopup setPopup={setSelectedAcc} account={accounts[selectedAcc]} />
-      : null
+  
   
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -65,6 +63,30 @@ export const AccountField = () => {
         break;
     }
   }
+
+  const handleGetLoginCookie = () => {
+    if (!selectedAcc) return ;
+    fetchData<IAccount>('/account/cookies', 'POST', {account: accounts[selectedAcc]})
+      .then(data => {
+        if (data.ok) {
+          const updateAccs = accounts.map(
+            acc => (
+            acc._id === data.data._id
+              ? data.data
+              : acc
+            )
+          );
+
+          setAccounts(updateAccs)
+        } else {
+          console.log('handleGetLoginCookie fetchdata failed')
+        }
+      })
+  }
+
+  const PopupComp = () => selectedAcc
+      ? <AccountPopup setPopup={setSelectedAcc} getLoginCookie={handleGetLoginCookie} />
+      : null;
 
   return (
     <>
@@ -121,7 +143,7 @@ export const AccountField = () => {
                           <div>isSuspended: {a.isSuspended}</div>
                           <div>email: {a.email}</div>
                           <div>password: {a.password}</div>
-                          <div>cookies: {a.cookies}</div>
+                          <div>cookies: {a.cookie}</div>
                           <div>proxy: {a.proxy}</div>
                           {/* <div>lastUsed: {a.lastUsed.toDateString()}</div> */}
                         </td>

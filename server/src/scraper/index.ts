@@ -57,7 +57,7 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
 }
 
 // (FIX): need to impliment proxies // sort out inital login popups (look for close button)
-export const apolloGetCookiesFromLogin = async (account: IAccount) => {
+export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAccount> => {
   if (!scraper.browser()) {
     await scraper.launchBrowser()
   }
@@ -85,7 +85,7 @@ export const apolloGetCookiesFromLogin = async (account: IAccount) => {
   // icons parent div //zp_RB9tu zp_0_HyN
   // icon // zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy
 
-  const cookies = await waitForApolloLogin()
+  const cookie = await waitForApolloLogin()
     .then(async () => {
       const client = await scraper.page()?.target().createCDPSession();
       const { cookies } = await client!.send('Network.getAllCookies');
@@ -98,11 +98,18 @@ export const apolloGetCookiesFromLogin = async (account: IAccount) => {
       return null
     })
 
-  if (cookies) {
-    AccountModel.findOneAndUpdate(
+  if (cookie) {
+    const updatedAcc = await AccountModel.findOneAndUpdate(
       {_id: account._id},
-      {cookies},
-    )
+      { $set: {cookie: JSON.stringify(cookie)} },
+      {new: true}
+    ).lean();
+
+    if (updatedAcc) {
+      return updatedAcc
+    }
+
+    throw new Error('failed to login (save cookies)')
   } else {
     throw new Error('failed to login (cookies)')
   }
