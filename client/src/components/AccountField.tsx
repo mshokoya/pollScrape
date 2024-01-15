@@ -24,7 +24,6 @@ export type IAccount = {
 
 export const AccountField = () => {
   const [input, setInput] = useState({email: '', password: ''});
-  const [popup, setPopup] = useState(false);
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
   const [accounts, setAccounts] = useState<IAccount[]>([
@@ -44,12 +43,9 @@ export const AccountField = () => {
     await fetchData('/account', 'POST', input)
   }
 
-  const PopupComp = () => {
-    return selectedAcc
+  const PopupComp = () => selectedAcc
       ? <AccountPopup setPopup={setSelectedAcc} account={accounts[selectedAcc]} />
-      : 'dsadasdasd'
-  }
-  
+      : null
   
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -60,7 +56,8 @@ export const AccountField = () => {
     switch (type) {
       case 'opt':
         //@ts-ignore
-        console.log(e.target.closest('tr').dataset.idx)
+        const accIdx = e.target.closest('tr').dataset.idx;
+        setSelectedAcc(accIdx)
         break;
       case 'extend':
         //@ts-ignore
