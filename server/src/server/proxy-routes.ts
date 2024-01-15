@@ -19,6 +19,7 @@ export const proxyRoutes = (app: Express) => {
     console.log('addproxy')
     try {
       const proxyRes = await verifyProxy(req.body.url);
+      
       if (proxyRes.valid) {
         await addProxyToDB(req.body.proxy);
       }

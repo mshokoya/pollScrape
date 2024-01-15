@@ -39,18 +39,16 @@ export const setBrowserCookies = async (page: Page, cookies: string) => {
   }
 };
 
-export const getBrowserCookies = async (page: Page): Promise<string[]> => {
-  const client = await page.target().createCDPSession();
+export const getBrowserCookies = async (): Promise<string[]> => {
+  const client = await scraper.page()!.target().createCDPSession();
   const { cookies } = await client.send('Network.getAllCookies');
 
   return (cookies as unknown) as string[];
 };
 
-export const visitGoogle = async () => {
-  const page = await scraper.visit("https://www.google.com/");
-  await page.waitForSelector(".RNNXgb", { visible: true });
-}
 
+
+// (WARN) this is for automation page update
 export const apolloUpdatePageQueryString = (url: string) => {
   const myURL = new URL(url);
   const pageNum = myURL.searchParams.get('page') as string;
@@ -75,10 +73,16 @@ export const waitForApolloLogin = () =>
         clearInterval(browser_check);
         resolve(true);
       }
-
-    }, 5000);
+      
+    }, 3000);
   }
 );
+
+export const delay = (time: number) => {
+  return new Promise(function(resolve) { 
+      setTimeout(resolve, time)
+  });
+}
 
 // https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
 

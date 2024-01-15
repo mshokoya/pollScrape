@@ -6,6 +6,7 @@ import { shuffleArray } from '../helpers';
 import { IProxy, ProxyModel } from './models/proxy';
 
 export type Proxy = {
+  proxy: string;
   protocol: string;
   host: string;
   port: string;
@@ -66,14 +67,17 @@ export const selectAccForScrapingFILO = (userAccounts: IAccount[]) => {
   }, Infinity as any);
 }
 
-export const rmPageFromURLQuery = (url: string): {url: string, page: string} => {
+export const rmPageFromURLQuery = (url: string): {url: string, page: number, params: Record<string, string>} => {
   const myURL = new URL(url);
   const pageNum = myURL.searchParams.get('page');
   myURL.searchParams.delete('page');
+  
+  const paramsObj = Object.fromEntries(new URLSearchParams(myURL.search))
 
   return {
     url:  myURL.href,
-    page: pageNum ? pageNum : '1'
+    params: paramsObj,
+    page: pageNum ? parseInt(pageNum) : 1
   }
 }
 
@@ -83,6 +87,7 @@ export const parseProxy = (proxy: string): Proxy => {
   const split2 = split[1].split(':'); // ["0.0.0.0", "8000"]
 
   return {
+    proxy,
     protocol: split[0] as string,
     host: split2[0],
     port: split2[1]

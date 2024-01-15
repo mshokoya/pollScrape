@@ -3,7 +3,7 @@ import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 
-export type Proxy = {
+export type IProxy = {
   protocol: string;
   host: string;
   port: string;
@@ -56,7 +56,7 @@ export const ProxyField = () => {
     http: proxy(),
     socks: socks()
   })
-  const [proxies, setProxies] = useState<Proxy[]>([
+  const [proxies, setProxies] = useState<IProxy[]>([
     {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
     {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
     {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
@@ -96,7 +96,7 @@ export const ProxyField = () => {
   const [reqInProcess, setreqInProcess] = useState<boolean>(false)
 
   useEffect(() => {
-    fetchData('/proxy', 'GET')
+    fetchData<IProxy[]>('/proxy', 'GET')
       .then( data => setProxies(data.data))
   }, [])
 

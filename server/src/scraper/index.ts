@@ -5,6 +5,7 @@ import {
   goToApolloSearchUrl, // edit
 } from './scraper';
 import {
+  delay,
   getBrowserCookies, waitForApolloLogin
 } from './util'
 import {
@@ -13,7 +14,7 @@ import {
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { AccountModel, IAccount } from '../database/models/accounts';
-import { addCookiesToAccount, getAllApolloAccounts, initApolloSkeletonInDB, saveScrapeToDB } from '../database';
+import { addCookiesToAccount, getAllApolloAccounts, saveScrapeToDB } from '../database';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -26,15 +27,13 @@ const checkUserIP = async () => {
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (urlList: string[], usingProxy: boolean) => {
+export const startScrapingApollo = async (metaID: string, urlList: string[], usingProxy: boolean) => {
 
   for (let url of urlList) {
     await scraper.restartBrowser();
-    const page = scraper.page() as Page;
-
-    await initApolloSkeletonInDB(url);
 
     const allAccounts = await getAllApolloAccounts();
+
     if (!allAccounts) throw new Error('No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
     if (allAccounts.length < 15) {
       // (WARN)
@@ -46,6 +45,7 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
     if (usingProxy) {
       const proxy =  await selectProxy(account, allAccounts);
       if (proxy) {
+        const page = scraper.page() as Page;
         await useProxy(page, proxy);
       }
     }
@@ -53,10 +53,10 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
     await setupApolloForScraping(account);
     await goToApolloSearchUrl(url);
     const data = await apolloScrapePage(); // edit
-    const cookies = await getBrowserCookies(page);
+    const cookies = await getBrowserCookies();
 
     // @ts-ignore
-    await saveScrapeToDB(account._id, cookies, proxy, url, data);
+    await saveScrapeToDB(account._id, cookies, proxy, url, data, metaID);
   }
 
   await scraper.close();
@@ -70,10 +70,15 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
 
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
   const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
+  const incorrectLoginSelector = '[class="zp_nFR11"]'
+  const emptyFieldsSelector = '[class="error-label zp_HeV9x"]'
+  const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
+  const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'
 
   scraper.visit('https://app.apollo.io/#/login')
   const page = scraper.page()
-  await page?.waitForSelector(loginInputFieldSelector, {visible: true})
+  if (!page) throw Error('failed to start browser (cookies)')
+  await page.waitForSelector(loginInputFieldSelector, {visible: true})
   const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
   const login = await page?.$$(loginInputFieldSelector)
 
@@ -83,21 +88,32 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
   await login[1].type(account.password)
 
   await submitButton?.click()
-
-  
   // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
 
+  await delay(2000)
 
-  // error incorrect login --- zp_nFR11
-  // error empty fields --- error-label zp_HeV9x
+  const incorrectLogin = await page.$(incorrectLoginSelector)
+  const emptyFields = await page.$(emptyFieldsSelector)
 
-  // icons parent div --- zp_RB9tu zp_0_HyN
-  // icon --- zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy
+  if (incorrectLogin) {
+    throw Error('failed to login, incorrect login details, please make sure login details are correct by manually logging in')
+  } else if (emptyFields) {
+    throw Error('failed to login, email or password field empty, please update account details with corrent details')
+  }
+
+  await page.waitForNavigation()
+    // @ts-ignore
+    .then((res: () => void, rej: (msg: string) => void) => {
+      if (!page.url().includes('#/login')) {
+        res()
+      } else {
+        rej('failed to login, could not navigate to dashboard, please login maually and make sure login details are correct and working')
+      }
+    })
 
   const cookie = await waitForApolloLogin()
     .then(async () => {
-      const client = await scraper.page()?.target().createCDPSession();
-      const { cookies } = await client!.send('Network.getAllCookies');
+      const cookies = await getBrowserCookies()
 
       await scraper.close()
 

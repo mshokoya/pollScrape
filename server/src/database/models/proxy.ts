@@ -1,10 +1,11 @@
 import { Schema, model } from "mongoose";
 
 export type IProxy = {
-  proxy: string
-  protocol: string,
-  host: string
-  port: string
+  _id: string;
+  proxy: string;
+  protocol: string;
+  host: string;
+  port: string;
 }
 
 const proxy = new Schema<IProxy>({

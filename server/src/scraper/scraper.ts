@@ -6,7 +6,6 @@ import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import {
   apolloTableRowSelector,
   setBrowserCookies,
-  visitGoogle,
   apolloLoggedOutURLSubstr
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
@@ -123,6 +122,11 @@ export const apolloScrapePage = async (): Promise<IRecord> => {
   return data;
 }
 
+export const visitGoogle = async () => {
+  const page = await scraper.visit("https://www.google.com/");
+  await page.waitForSelector(".RNNXgb", { visible: true });
+}
+
 export const injectCookies = async (cookies?: string) => {
   const page = scraper.page() as Page;
 
@@ -133,7 +137,7 @@ export const injectCookies = async (cookies?: string) => {
 }
 
 export const setupApolloForScraping = async (account: IAccount) => {
-  await injectCookies(account.cookies)
+  await injectCookies(account.cookie)
   await visitApollo();
 
   const page = scraper.page() as Page;
@@ -144,8 +148,6 @@ export const setupApolloForScraping = async (account: IAccount) => {
     await apolloLogin(account.email, account.password)
   } 
 }
-
-
 
 // export const InjectCookies = async (account: IAccount) => {
 //   const page = scraper.page() as Page;
