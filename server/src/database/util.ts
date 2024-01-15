@@ -82,7 +82,6 @@ export const parseProxy = (proxy: string): Proxy => {
   const split = proxy.split('://'); // ["http", "0.0.0.0:8000"]
   const split2 = split[1].split(':'); // ["0.0.0.0", "8000"]
 
-
   return {
     protocol: split[0] as string,
     host: split2[0],
@@ -97,14 +96,11 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
   if (isOk.valid) {
     isOk.data = parseProxy(proxy)
   }
-  
-  console.log('isOk')
-  console.log(isOk)
 
   return isOk;
 }
 
-export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string> => {
+export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string | null> => {
   let doesProxyStillWork = await verifyProxy(account.proxy)
 
   if (doesProxyStillWork.valid) return account.proxy;
@@ -113,17 +109,23 @@ export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): P
     // .filter((u) => u.proxy === account.proxy) // remove user from list  (??? why remove from list ?)
     .map((u) => u.proxy) //retrun list of proxies
 
-  const allProxiesNotInUse = shuffleArray(
-    (ProxyModel.find({}).lean() as any)
-      .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
-  )
+  let getProxies = (ProxyModel.find({}).lean() as unknown) as IProxy[]
+  if (!getProxies) return null;
 
-  if (!allProxiesInUse.length) return '';
+
+  const allProxiesStr = getProxies
+    .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
+    .map(p => p.proxy )
+
+  
+  const allProxiesNotInUse = shuffleArray(allProxiesStr)
+
+  if (!allProxiesInUse.length) return null;
   
   for (let proxy of allProxiesNotInUse) {
     doesProxyStillWork = await verifyProxy(proxy)
     if (doesProxyStillWork.valid) return proxy;
   }
 
-  return '';
+  return null;
 }

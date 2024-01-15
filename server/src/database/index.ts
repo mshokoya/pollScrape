@@ -17,10 +17,10 @@ export const addAccountToDB = async (email: string, password: string): Promise<I
   return newAcc
 }
 
-export const addCookiesToAccount = async (_id: string, cookie: string[]): Promise<IAccount> => {
+export const addCookiesToAccount = async (_id: string, cookies: string[]): Promise<IAccount> => {
   const account = await AccountModel.findOneAndUpdate(
     {_id},
-    { '$set': {cookies: JSON.stringify(cookie)} },
+    { '$set': {cookie: JSON.stringify(cookies)} },
     { new: true }
   ).lean() as IAccount;
 

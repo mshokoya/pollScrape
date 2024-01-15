@@ -78,12 +78,15 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
 
   await submitButton?.click()
 
+  
+  // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
 
-  // error incorrect login // zp_nFR11
-  // error empty fields // error-label zp_HeV9x
 
-  // icons parent div //zp_RB9tu zp_0_HyN
-  // icon // zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy
+  // error incorrect login --- zp_nFR11
+  // error empty fields --- error-label zp_HeV9x
+
+  // icons parent div --- zp_RB9tu zp_0_HyN
+  // icon --- zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy
 
   const cookie = await waitForApolloLogin()
     .then(async () => {
