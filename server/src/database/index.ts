@@ -41,18 +41,18 @@ export const addProxyToDB = async (p: string): Promise<IProxy | null> => {
 export const saveScrapeToDB = async (
   accountID: string, 
   cookies: string[], 
-  proxy: string, 
   url: string, 
   data: {[key: string]: string}[],
   metadataID: string,
+  proxy?: string,
 ) => {
   const session = await startSession();
   try {
     session.startTransaction();
-    const updateOpts = { session, upsert: true }
+    const updateOpts = { new: true, session }
 
     // ACCOUNT UPDATE
-    const acc = await AccountModel.findOneAndUpdate(
+    const newAcc = await AccountModel.findOneAndUpdate(
       {_id: accountID},
       { '$set':{
         cookies:  JSON.stringify(cookies),
@@ -62,14 +62,16 @@ export const saveScrapeToDB = async (
       updateOpts
     ).lean();
 
-    console.log('acc')
-    console.log(acc)
+    console.log('newAcc')
+    console.log(newAcc)
+
+    if (!newAcc) throw new Error('failed to update account after scrape, if this continues please contact developer')
 
     // METADATA UPDATE
     const fmtURL = rmPageFromURLQuery(url)
     const scrapeID = uuidv4()
     
-    const meta = await MetadataModel.findOneAndUpdate(
+    const newMeta = await MetadataModel.findOneAndUpdate(
       {_id: metadataID}, 
       { '$set' :{
         page: fmtURL.page, 
@@ -78,11 +80,15 @@ export const saveScrapeToDB = async (
       updateOpts
     ).lean();
 
+    if (!newMeta) throw new Error('failed to update meta after scrape, if this continues please contact developer')
+
     // RECORD UPDATE
     const fmtData = data.map(() => ({scrapeID, url, page: fmtURL.page, data}))
 
-    await RecordsModel.insertMany(fmtData, updateOpts)
+    const records = await RecordsModel.insertMany(fmtData, updateOpts)
     
+    console.log('records')
+    console.log(records)
 
     await session.commitTransaction();
   } catch (error) {
@@ -94,7 +100,6 @@ export const saveScrapeToDB = async (
 
 // https://www.ultimateakash.com/blog-details/IiwzQGAKYAo=/How-to-implement-Transactions-in-Mongoose-&-Node.Js-(Express)
 export const initMeta = async (url: string): Promise<IMetaData> => {
-  const updateOpts = {new: true, upsert: true};
 
   const fmtURL = rmPageFromURLQuery(url)
 

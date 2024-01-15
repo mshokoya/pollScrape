@@ -13,7 +13,7 @@ import {
 } from "../database/util";
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { AccountModel, IAccount } from '../database/models/accounts';
+import { IAccount } from '../database/models/accounts';
 import { addCookiesToAccount, getAllApolloAccounts, saveScrapeToDB } from '../database';
 
 const checkUserIP = async () => {
@@ -30,6 +30,7 @@ const checkUserIP = async () => {
 export const startScrapingApollo = async (metaID: string, urlList: string[], usingProxy: boolean) => {
 
   for (let url of urlList) {
+    let proxy: string | null;
     await scraper.restartBrowser();
 
     const allAccounts = await getAllApolloAccounts();
@@ -43,7 +44,7 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
     const account = selectAccForScrapingFILO(allAccounts);
 
     if (usingProxy) {
-      const proxy =  await selectProxy(account, allAccounts);
+      proxy =  await selectProxy(account, allAccounts);
       if (proxy) {
         const page = scraper.page() as Page;
         await useProxy(page, proxy);
@@ -56,7 +57,7 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
     const cookies = await getBrowserCookies();
 
     // @ts-ignore
-    await saveScrapeToDB(account._id, cookies, proxy, url, data, metaID);
+    await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy);
   }
 
   await scraper.close();
@@ -77,8 +78,11 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
 
   scraper.visit('https://app.apollo.io/#/login')
   const page = scraper.page()
+
   if (!page) throw Error('failed to start browser (cookies)')
+
   await page.waitForSelector(loginInputFieldSelector, {visible: true})
+
   const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
   const login = await page?.$$(loginInputFieldSelector)
 

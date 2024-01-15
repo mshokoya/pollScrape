@@ -7,6 +7,7 @@ import { recordRoutes } from './server/record-routes';
 import { proxyRoutes } from './server/proxy-routes';
 import { accountRoutes } from './server/account-routes';
 import { metadataRoutes } from './server/metadata-route';
+import { scrapeRoutes } from './server/scrape-routes';
 
 
 const app = express();
@@ -24,6 +25,7 @@ metadataRoutes(app);
 recordRoutes(app);
 proxyRoutes(app);
 accountRoutes(app);
+scrapeRoutes(app);
 
 app.use((err: any, _req: any, res: any, next: any) => {
   if (res.headersSent) {
