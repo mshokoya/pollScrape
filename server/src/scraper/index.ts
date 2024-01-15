@@ -28,7 +28,7 @@ const checkUserIP = async () => {
 // TODO
 // handle account failed login
 export const startScrapingApollo = async (metaID: string, urlList: string[], usingProxy: boolean) => {
-  console.log('made it here')
+
   for (let url of urlList) {
     let proxy: string | null;
 
@@ -36,21 +36,8 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
       .then(() => {
         console.log('started browser')
       })
-    //   .catch(() => {
-    //     return new Error('failed to restart browser, if this continues please contact the developer')
-    //   });
-
-    // if (browser instanceof Error) {
-    //   throw browser
-    // }
 
     const allAccounts = await getAllApolloAccounts()
-      .then((d) => {
-        console.log('allAccounts')
-        console.log(d)
-        return d
-      })
-
 
     if (!allAccounts) throw new Error('No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
     if (allAccounts.length < 15) {
@@ -66,6 +53,9 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
         const page = scraper.page() as Page;
         await useProxy(page, proxy);
     }
+
+    console.log('account')
+    console.log(account)
 
     await setupApolloForScraping(account);
     await goToApolloSearchUrl(url);
@@ -196,3 +186,12 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
 // 25 rows per table
 
 // 100 max pages
+
+
+
+
+
+//  ONE POPUP 
+// Would you like Apollo to let you know when buyers search for companies like yours?
+// class="zp-button zp_zUY3r zp_MCSwB zp_iNK2i"
+// type="button"

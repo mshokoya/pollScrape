@@ -64,7 +64,7 @@ export const selectAccForScrapingFILO = (userAccounts: IAccount[]): IAccount => 
     if (cv.lastUsed < acc.lastUsed) {
       return cv
     }
-  }, Infinity as any);
+  }, {lastUsed: Infinity} as any);
 }
 
 export const rmPageFromURLQuery = (url: string): {url: string, page: number, params: Record<string, string>} => {
