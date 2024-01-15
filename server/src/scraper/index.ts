@@ -35,6 +35,12 @@ export const startScrapingApollo = async (urlList: string[], usingProxy: boolean
     await initApolloSkeletonInDB(url);
 
     const allAccounts = await getAllApolloAccounts();
+    if (!allAccounts) throw new Error('No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
+    if (allAccounts.length < 15) {
+      // (WARN)
+      console.log('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
+    }
+    
     const account = selectAccForScrapingFILO(allAccounts);
 
     if (usingProxy) {
