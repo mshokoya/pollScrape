@@ -44,10 +44,10 @@ export const AccountField = () => {
     await fetchData('/account', 'POST', input)
   }
 
-  const popupComp = () => {
+  const PopupComp = () => {
     return selectedAcc
       ? <AccountPopup setPopup={setSelectedAcc} account={accounts[selectedAcc]} />
-      : ''
+      : 'dsadasdasd'
   }
   
   
@@ -71,7 +71,7 @@ export const AccountField = () => {
 
   return (
     <>
-    {}
+    <PopupComp />
     <div className="flex relative grow">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <div className='mb-10'>
