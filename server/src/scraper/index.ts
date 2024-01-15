@@ -13,7 +13,7 @@ import {
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { AccountModel, IAccount } from '../database/models/accounts';
-import { getAllApolloAccounts, initApolloSkeletonInDB, saveScrapeToDB } from '../database';
+import { addCookiesToAccount, getAllApolloAccounts, initApolloSkeletonInDB, saveScrapeToDB } from '../database';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -99,17 +99,13 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
     })
 
   if (cookie) {
-    const updatedAcc = await AccountModel.findOneAndUpdate(
-      {_id: account._id},
-      { $set: {cookie: JSON.stringify(cookie)} },
-      {new: true}
-    ).lean();
 
-    if (updatedAcc) {
-      return updatedAcc
-    }
+    const newAccount = await addCookiesToAccount(account._id, cookie)
 
-    throw new Error('failed to login (save cookies)')
+    if (!newAccount) throw new Error('failed to login (save cookies)');
+
+    return newAccount
+    
   } else {
     throw new Error('failed to login (cookies)')
   }

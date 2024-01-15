@@ -10,21 +10,23 @@ import { v4 as uuidv4 } from 'uuid';
 export const addAccountToDB = async (email: string, password: string): Promise<IAccount> => {
   const account = AccountModel.findOne({email})
 
-  if (account === null) throw new Error('account already exists')
+  if (account !== null) throw new Error('account already exists')
   
   const newAcc = await AccountModel.create({email, password})
 
   return newAcc
 }
 
-export const addCookiesToAccount = async (email: string, cookies: string): Promise<void> => {
+export const addCookiesToAccount = async (_id: string, cookie: string[]): Promise<IAccount> => {
   const account = await AccountModel.findOneAndUpdate(
-    {email},
-    {cookies},
-    { upsert: true, new: false }
+    {_id},
+    { '$set': {cookies: JSON.stringify(cookie)} },
+    { new: true }
   ).lean() as IAccount;
 
   if (account === null) throw new Error('failed to save cookies')
+
+  return account
 }
 
 export const addProxyToDB = async (p: string): Promise<IProxy> => {

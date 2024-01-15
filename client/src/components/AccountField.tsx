@@ -27,7 +27,7 @@ export const AccountField = () => {
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
   const [accounts, setAccounts] = useState<IAccount[]>([
-    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: `${new Date('') || 'n/a'}`, isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
     {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
     {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
     {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
@@ -84,6 +84,11 @@ export const AccountField = () => {
       })
   }
 
+  const fmtDate = (n: any) => n.toDateString
+      ? n.toDateString()
+      : n;
+
+
   const PopupComp = () => selectedAcc
       ? <AccountPopup setPopup={setSelectedAcc} getLoginCookie={handleGetLoginCookie} />
       : null;
@@ -125,7 +130,7 @@ export const AccountField = () => {
                   (a, idx) => ( 
                     <>
                       <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
-                        {/* <td className='overflow-scroll' data-type='extend' >{a.trialTime.toDateString()}</td> */}
+                        <td className='overflow-scroll' data-type='extend' >{fmtDate(a.trialTime)}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.email}</td>
                         <td className='overflow-scroll' data-type='extend' >{a.password}</td>
                         <td className='overflow-scroll' data-type='opt'>
@@ -136,16 +141,16 @@ export const AccountField = () => {
                       </tr>
                       <tr>
                         <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
-                          <div>_id: {a._id}</div>
+                          <div>id: {a._id}</div>
                           <div>domain: {a.domain}</div>
                           <div>accountType: {a.accountType}</div>
-                          {/* <div>trialTime: {a.trialTime}</div> */}
+                          <div>trialTime: {fmtDate(a.trialTime)}</div>
                           <div>isSuspended: {a.isSuspended}</div>
                           <div>email: {a.email}</div>
                           <div>password: {a.password}</div>
                           <div>cookies: {a.cookie}</div>
                           <div>proxy: {a.proxy}</div>
-                          {/* <div>lastUsed: {a.lastUsed.toDateString()}</div> */}
+                          <div>lastUsed: {fmtDate(a.lastUsed)}</div>
                         </td>
                       </tr>
                     </>
