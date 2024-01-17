@@ -111,15 +111,11 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
     throw Error('failed to login, email or password field empty, please update account details with corrent details')
   }
 
-  await page.waitForNavigation()
-    // @ts-ignore
-    .then((res: () => void, rej: (msg: string) => void) => {
-      if (!page.url().includes('#/login')) {
-        res()
-      } else {
-        rej('failed to login, could not navigate to dashboard, please login maually and make sure login details are correct and working')
-      }
-    })
+  await delay(2000)
+
+  if (page.url().includes('#/login')) {
+    throw new Error('failed to login, could not navigate to dashboard, please login manually and make sure login details are correct and working')
+  }
 
   const cookie = await waitForApolloLogin()
     .then(async () => {
@@ -195,3 +191,19 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
 // Would you like Apollo to let you know when buyers search for companies like yours?
 // class="zp-button zp_zUY3r zp_MCSwB zp_iNK2i"
 // type="button"
+
+
+// TWO POPUP
+// Hit 25% higher response rates
+
+// checkout
+// <div role='dialog' class='apolloio-css-vars-reset zp zp-modal zp_iDDtd' aria-hidden='true' />
+
+// also 
+
+// apolloio-css-vars-reset zp_xfGlC
+
+// also
+
+// close icon 
+// zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy zp_cuqpV      (it is only child of dialog popup)
