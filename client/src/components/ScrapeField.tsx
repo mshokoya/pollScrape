@@ -1,6 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from "react"
 import {fetchData} from '../core/util';
-import moment from "moment";
 
 export const ScrapeField = () => {
   const [reqInProcess, setreqInProcess] = useState<boolean>(false)
@@ -51,7 +50,7 @@ export const ScrapeField = () => {
     }
   }
 
-  const secondsToTime = (e) => {
+  const secondsToTime = (e: number) => {
     let time = ''; 
     const h = Math.floor(e / 3600).toString().padStart(2,'0'),
           m = Math.floor(e % 3600 / 60).toString().padStart(2,'0'),

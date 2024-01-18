@@ -2,6 +2,7 @@ import { Express } from 'express';
 import { startScrapingApollo } from '../scraper';
 import { initMeta } from '../database';
 import { IMetaData } from '../database/models/metadata';
+import { scraper } from '../scraper/scraper';
 
 
 export const scrapeRoutes = (app: Express) => {
@@ -36,6 +37,7 @@ export const scrapeRoutes = (app: Express) => {
   
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
+      scraper.close()
       res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
     }
   });

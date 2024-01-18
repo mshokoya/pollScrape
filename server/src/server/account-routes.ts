@@ -2,6 +2,7 @@ import { Express } from 'express';
 import { addAccountToDB } from '../database';
 import { apolloGetCookiesFromLogin } from '../scraper';
 import { AccountModel } from '../database/models/accounts';
+import { scraper } from '../scraper/scraper';
 
 export const accountRoutes = (app: Express) => {
 
@@ -53,6 +54,7 @@ export const accountRoutes = (app: Express) => {
       const updatedAcc  = await apolloGetCookiesFromLogin(req.body.account)
       res.json({ok: true, message: null, data: updatedAcc});
     } catch (err: any) {
+      scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })
