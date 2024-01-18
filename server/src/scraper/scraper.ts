@@ -6,7 +6,8 @@ import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import {
   apolloTableRowSelector,
   setBrowserCookies,
-  apolloLoggedOutURLSubstr
+  apolloLoggedOutURLSubstr,
+  delay
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
 import { IAccount } from '../database/models/accounts';
@@ -59,7 +60,7 @@ export const visitApollo = async () => {
   
 }
 
-export const apolloLogin = async (email: string, password: string) => {
+export const apolloOutlookLogin = async (email: string, password: string) => {
   const page = scraper.page() as Page
 
   // apollo login page
@@ -116,7 +117,7 @@ export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
-export const apolloScrapePage = async (): Promise<IRecord> => {
+export const apolloStartPageScrape = async (): Promise<IRecord> => {
   const page = scraper.page() as Page
   const data = (await apolloDoc(page) as unknown) as IRecord;
   return data;
@@ -136,6 +137,54 @@ export const injectCookies = async (cookies?: string) => {
   }
 }
 
+export const apolloDefaultLogin = async (email: string, password: string) => {
+  if (!scraper.browser()) {
+    await scraper.launchBrowser()
+  }
+
+  const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
+  const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
+  const incorrectLoginSelector = '[class="zp_nFR11"]'
+  const emptyFieldsSelector = '[class="error-label zp_HeV9x"]'
+  const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
+  const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'
+
+  scraper.visit('https://app.apollo.io/#/login')
+  const page = scraper.page()
+
+  if (!page) throw Error('failed to start browser (cookies)')
+
+  await page.waitForSelector(loginInputFieldSelector, {visible: true})
+
+  const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
+  const login = await page?.$$(loginInputFieldSelector)
+
+  if (!login || !submitButton) throw new Error('failed to login');
+
+  await login[0].type(email)
+  await login[1].type(password)
+
+  await submitButton?.click()
+  // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
+
+  await delay(2000)
+
+  const incorrectLogin = await page.$(incorrectLoginSelector)
+  const emptyFields = await page.$(emptyFieldsSelector)
+
+  if (incorrectLogin) {
+    throw Error('failed to login, incorrect login details, please make sure login details are correct by manually logging in')
+  } else if (emptyFields) {
+    throw Error('failed to login, email or password field empty, please update account details with corrent details')
+  }
+
+  await delay(2000)
+
+  if (page.url().includes('#/login')) {
+    throw new Error('failed to login, could not navigate to dashboard, please login manually and make sure login details are correct and working')
+  }
+}
+
 export const setupApolloForScraping = async (account: IAccount) => {
   await injectCookies(account.cookie)
   await visitApollo();
@@ -145,7 +194,12 @@ export const setupApolloForScraping = async (account: IAccount) => {
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    await apolloLogin(account.email, account.password)
+    if (account.loginType === 'default') {
+      await apolloDefaultLogin(account.email, account.password)
+    } else if (account.loginType === 'outlook') {
+      await apolloOutlookLogin(account.email, account.password)
+    }
+    
   } 
 }
 

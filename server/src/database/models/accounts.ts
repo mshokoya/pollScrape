@@ -6,6 +6,7 @@ export type IAccount = {
   accountType: string
   trialTime: string
   isSuspended: boolean
+  loginType: 'default' | 'google' | 'outlook'
   email: string
   password: string
   cookie: string
@@ -18,6 +19,7 @@ const accountSchema = new Schema<IAccount>({
   accountType: { type: String, default: "n/a" }, // free or premuim
   trialTime: { type: String, default: "n/a" }, // should be trial end date & time
   isSuspended: { type: Boolean, default: false },
+  loginType: {type: String, default: "default"},
   email: { type: String, default: "" },
   password: { type: String, default: "" },
   cookie: { type: String, default: "" },

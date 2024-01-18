@@ -47,7 +47,7 @@ export const apolloDoc = async (page: Page) => {
   
     const scrapeSingleRow = async (tbody: HE) => {
       const res: Record<string, string> = {};
-      const th = document.querySelectorAll('th');
+      const columnNames = document.querySelectorAll('th');
   
       let tr = tbody.childNodes[0] as HE;
       // there are rows asking users to upgrade plan. if we're in this row then skip
@@ -55,8 +55,8 @@ export const apolloDoc = async (page: Page) => {
         tr = tbody.childNodes[1] as HE
       };
   
-      for (let i = 0; i < th.length; i++) {
-        switch (th[i].innerText) {
+      for (let i = 0; i < columnNames.length; i++) {
+        switch (columnNames[i].innerText) {
           case 'Name':
             const nameCol = scrapeNameColumn(tr.childNodes[i] as HE);
             res['Name'] = nameCol.name;

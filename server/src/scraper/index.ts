@@ -1,6 +1,6 @@
 import {
   scraper,
-  apolloScrapePage,
+  apolloStartPageScrape,
   setupApolloForScraping,
   goToApolloSearchUrl, // edit
 } from './scraper';
@@ -59,7 +59,7 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
 
     await setupApolloForScraping(account);
     await goToApolloSearchUrl(url);
-    const data = await apolloScrapePage(); // edit
+    const data = await  apolloStartPageScrape(); // edit
     const cookies = await getBrowserCookies();
 
     // @ts-ignore
@@ -71,51 +71,7 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
 
 // (FIX): need to impliment proxies // sort out inital login popups (look for close button)
 export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAccount> => {
-  if (!scraper.browser()) {
-    await scraper.launchBrowser()
-  }
-
-  const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
-  const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
-  const incorrectLoginSelector = '[class="zp_nFR11"]'
-  const emptyFieldsSelector = '[class="error-label zp_HeV9x"]'
-  const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
-  const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'
-
-  scraper.visit('https://app.apollo.io/#/login')
-  const page = scraper.page()
-
-  if (!page) throw Error('failed to start browser (cookies)')
-
-  await page.waitForSelector(loginInputFieldSelector, {visible: true})
-
-  const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
-  const login = await page?.$$(loginInputFieldSelector)
-
-  if (!login || !submitButton) throw new Error('failed to login');
-
-  await login[0].type(account.email)
-  await login[1].type(account.password)
-
-  await submitButton?.click()
-  // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
-
-  await delay(2000)
-
-  const incorrectLogin = await page.$(incorrectLoginSelector)
-  const emptyFields = await page.$(emptyFieldsSelector)
-
-  if (incorrectLogin) {
-    throw Error('failed to login, incorrect login details, please make sure login details are correct by manually logging in')
-  } else if (emptyFields) {
-    throw Error('failed to login, email or password field empty, please update account details with corrent details')
-  }
-
-  await delay(2000)
-
-  if (page.url().includes('#/login')) {
-    throw new Error('failed to login, could not navigate to dashboard, please login manually and make sure login details are correct and working')
-  }
+  await setupApolloForScraping(account)
 
   const cookie = await waitForApolloLogin()
     .then(async () => {
