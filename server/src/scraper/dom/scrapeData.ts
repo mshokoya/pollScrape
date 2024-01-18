@@ -45,119 +45,69 @@ export const apolloDoc = async (page: Page) => {
   
     const isEl = (el: HTMLElement): HTMLElement | {} => el ? el : {}
   
-    const scraperStatus = (() => {
-      let shouldContinueRunning = true;
+    const scrapeSingleRow = async (tbody: HE) => {
+      const res: Record<string, string> = {};
+      const th = document.querySelectorAll('th');
   
-      return {
-        shouldContinueRunning: () => shouldContinueRunning,
-        stopRunningScraper: () => {
-          shouldContinueRunning = false;
-        },
-        reset: () => {
-          shouldContinueRunning = true;
-        }
-      }
-    })()
-  
-  
-    const scrapeSingleRow = async (tbody: Element) => {
-      let tr = tbody.childNodes[0] as HE
-  
+      let tr = tbody.childNodes[0] as HE;
       // there are rows asking users to upgrade plan. if we're in this row then skip
       if (el.ad.isAdRow(tr)) {
         tr = tbody.childNodes[1] as HE
       };
   
-      const nameColumn = scrapeNameColumn(tr.childNodes[0] as HE);
-      const titleColumn = scrapeTitleColumn(tr.childNodes[1] as HE);
-      const companyColumn = scrapeCompanyColumn(tr.childNodes[2] as HE); // obj
-      const locationColumn = scrapeLocationColumn(tr.childNodes[4] as HE);
-      const employeesColumn = scrapeEmployeesColumn(tr.childNodes[5] as HE);
-      const emailColumn = await scrapeEmailColumn(tr.childNodes[6] as HE);
-      const industryColumn = scrapeIndustryColumn(tr.childNodes[7] as HE);
-      const keywordsColumn = scrapeKeywordsColumn(tr.childNodes[8] as HE); // list
-    
-      return {
-        'name': `"${nameColumn.name}"`,
-        'linkedin': `"${nameColumn.linkedin}"`, 
-        'title': `"${titleColumn}"`,
-        'website': `"${companyColumn.companyWebsite}"`,
-        'company linkedin': `"${companyColumn.companyLinkedin}"`,
-        'twitter': `"${companyColumn.companyTwitter}"`,
-        'facebook': `"${companyColumn.companyFacebook}"`,
-        'location': `"${locationColumn}"`,
-        'employees': `"${employeesColumn}"`,
-        'email': `"${emailColumn}"`,
-        'industry': `"${industryColumn}"`,
-        'keywords': `"${keywordsColumn}"`
+      for (const head of th) {
+        switch (head.innerText) {
+          case 'Name':
+            const nameCol = scrapeNameColumn(tr.childNodes[0] as HE);
+            res['Name'] = nameCol.name;
+            res['Linkedin'] = nameCol.linkedin;
+            break;
+          case 'Title':
+            res['Title'] = scrapeTitleColumn(tr.childNodes[1] as HE);
+            break;
+          case 'Company':
+            const companyCol = scrapeCompanyColumn(tr.childNodes[2] as HE); // obj
+            res['Company Website'] = companyCol.companyWebsite;
+            res['Company Linkedin'] = companyCol.companyLinkedin;
+            res['Company Twitter'] = companyCol.companyTwitter;
+            res['Company Facebook'] = companyCol.companyFacebook;
+            break;
+          case 'Quick Actions':
+            res['Email'] = await scrapeEmailColumn(tr.childNodes[3] as HE);
+            break;
+          case 'Email':
+            res['Email'] = await scrapeEmailColumn(tr.childNodes[3] as HE);
+            break;
+          case 'Contact Location':
+            res['Company Location'] = scrapeLocationColumn(tr.childNodes[4] as HE);
+            break;
+          case '# Employees':
+            res['Employees'] = scrapeEmployeesColumn(tr.childNodes[5] as HE);
+            break;
+          case 'Phone':
+            res['Phone'] = 'na Phone';
+            break;
+          case 'Industry':
+            res['Industry'] = scrapeIndustryColumn(tr.childNodes[7] as HE);
+            break;
+          case 'Keywords':
+            res['Keywords'] = scrapeKeywordsColumn(tr.childNodes[8] as HE); // list
+        }
       }
-    }
     
+      return res
+    }
+
     const scrapeSinglePage = async () => {
-      
       const allRows = getRows();
       const data = [];
     
       for (let row of allRows) {
-        let shouldContinueRunning = scraperStatus.shouldContinueRunning();
-        if (!shouldContinueRunning) break;
-        const singleRow = await scrapeSingleRow(row)
+        const singleRow = await scrapeSingleRow(row as HE)
         if (singleRow) data.push(singleRow);
       }
       
       return data
-    }
-    
-    const scrapeAllPages = async () => {
-      let freePlanError = el.errors.freePlan.error()
-      let limitedVersionError = el.errors.limitedVersionError()
-      let shouldContinueRunning = scraperStatus.shouldContinueRunning();
-      const data = []
-    
-      // next page loop
-      while ( !freePlanError && !limitedVersionError && shouldContinueRunning) {
-        const pageRows = await scrapeSinglePage();
-        data.push(pageRows);
-        freePlanError = el.errors.freePlan.error();
-        limitedVersionError = el.errors.limitedVersionError();
-        shouldContinueRunning = scraperStatus.shouldContinueRunning();
-        
-        if (!freePlanError && !limitedVersionError && shouldContinueRunning) {
-          await waitForNextPageToLoad(pageRows);
-        }
-      }
-  
-      freePlanError ? el.errors.freePlan.closeButton() : null
-      // reset stop button;
-      scraperStatus.reset()
-  
-      return data
-    }
-  
-    function waitForNextPageToLoad(prevRows: { name: string; linkedin: string; title: string; }[]) {
-      return new Promise<void>(async (resolve) => {
-        const nextPageButton = document.getElementsByClassName('zp-icon mdi zp_dZ0gM zp_j49HX zp_efSQj')[1] as HE // finds next page button
-
-        nextPageButton.click() // clicks next page button
-  
-        // the loop is used to wait for next page to load (verifies next page loaded when first row of content has changed)
-        while (true) {
-          // waits 3 seconds
-          await sleep(3000)
-          const freePlanError = document.getElementsByClassName('zp_lMRYw zp_YYCg6 zp_iGbgU')[0];
-          const limitedVersionError = document.getElementsByClassName('apolloio-css-vars-reset zp zp-modal zp_iDDtd zp_APRN8 api-error-modal')[0]
-          // gets first row on table data (while next page is loading, the previous page DOM element is visible)
-          const nextRow = scrapeSingleRow(getSingleRow(0))
-          // compare the previous page first row data to current pages first row data to see if page has changes yet
-          const sameRow = isSameRow(prevRows[0], nextRow)
-          // TODO check that its not last page
-          // if we get a page error or page is different we break out the loop (closing the function) 
-          if (!sameRow || freePlanError || limitedVersionError) {
-            break
-          };
-        }
-        resolve();
-      });
     }
     
     const scrapeNameColumn = (nameColumn: HE) => ({
@@ -218,6 +168,73 @@ export const apolloDoc = async (page: Page) => {
         ? email
         : na
     }
+
+
+    const scrapeActionColumn = async (emailColumn: HE) => {
+      let loopCounter = 0
+      let loopEnd = 3
+      let email = '';
+      const emailButton: HE | null = emailColumn.querySelector('[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB"]');
+      let emailPopupButton: HE | null = emailColumn.querySelector('[class="zp-button zp_zUY3r zp_hLUWg zp_n9QPr zp_B5hnZ zp_MCSwB zp_IYteB"]');
+      let noEmailButton: HE | null = emailColumn.querySelector('[class="zp-button zp_zUY3r zp_BAp0M zp_jSaSY zp_MCSwB zp_IYteB zp_wUX4E zp_wUX4E"]');
+  
+      if (emailButton) {
+        emailButton.click()
+        // wait for email to populate after clicking button
+        while(!emailPopupButton && !noEmailButton && loopCounter < loopEnd) {
+          await sleep(5000)
+          loopCounter++
+          emailPopupButton = emailColumn.querySelector('[class="zp-button zp_zUY3r zp_hLUWg zp_n9QPr zp_B5hnZ zp_MCSwB zp_IYteB"]');
+          noEmailButton = emailColumn.querySelector('[class="zp-button zp_zUY3r zp_BAp0M zp_jSaSY zp_MCSwB zp_IYteB zp_wUX4E zp_wUX4E"]');
+  
+          if (emailPopupButton) {
+            emailPopupButton.click()
+            email = await emailPopupButtonClick(emailPopupButton)
+          } else if (noEmailButton) {
+            email = na
+          }
+        }
+      
+      } else if (emailPopupButton) {
+        email = await emailPopupButtonClick(emailPopupButton)
+      } else if (noEmailButton) {
+        email = na
+      }
+    
+      return !!email
+        ? email
+        : na
+    }
+  
+    const emailPopupButtonClick = async (emailPopupButton: HE) => {
+      let email = '-';
+      let loopCounter = 0
+      let loopEnd = 5
+      let emailText = document.getElementsByClassName('zp_t08Bv')[0];
+  
+      
+      emailPopupButton.click()
+    
+  
+      if (!emailText){
+        while(!emailText && loopCounter < loopEnd) {
+          await sleep(1000)
+          loopCounter++
+          emailText = document.getElementsByClassName('zp_t08Bv')[0];
+    
+          if (emailText) {
+            email = emailText.innerHTML;
+          }
+    
+        } 
+      } else if (emailText) {
+        email = emailText.innerHTML;
+      }
+  
+      emailPopupButton.click()
+  
+      return email
+    }
     
     const scrapeIndustryColumn = (industryColumn: HE) => (el.columns.industry(industryColumn))
     
@@ -251,21 +268,12 @@ export const apolloDoc = async (page: Page) => {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
     
-    const isSameRow = (prev: {}, curr: {}) => {
-      return JSON.stringify(prev) === JSON.stringify(curr)
-    }
-    
-    function getSingleRow(idx: number) {
-      return document.getElementsByClassName("zp_RFed0")[idx];
-    }
-    
     function getRows() {
       return document.getElementsByClassName("zp_RFed0")
     }
   
   //  ============================ ACTION ========================
-    const data = await scrapeSinglePage()
   
-    return data
+    return await scrapeSinglePage()
   });
 }
