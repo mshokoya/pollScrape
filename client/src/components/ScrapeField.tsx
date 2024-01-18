@@ -23,7 +23,7 @@ export const ScrapeField = () => {
 
     // setreqInProcess(true)
 
-    // await fetchData('/scrape', 'POST', {url: URLInput, from: pages.start, to: pages.end,  usingProxy: false})
+    // await fetchData('/scrape', 'POST', {url: URLInput, from: pages.start, to: pages.end,  delay, usingProxy: false})
     //   .then( (d) => {
     //     console.log(d)
     //     setreqInProcess(false)
@@ -34,7 +34,7 @@ export const ScrapeField = () => {
     //   })
   }
 
-  const handlePages = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChanges = (e: ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value)
 
     if (e.target.dataset.start) {
@@ -43,10 +43,11 @@ export const ScrapeField = () => {
       setPages({...pages, end: val})
     } else if (e.target.dataset.delay) {
       const val = parseInt(e.target.value)
-
       val < 1 || e.target.value === ''
         ? setDelay(1)
         : setDelay(val)
+    } else if (e.target.dataset.url) {
+      setURLInput(e.currentTarget.value)
     }
   }
 
@@ -71,23 +72,30 @@ export const ScrapeField = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className='mb-3'>
-        <div className='mb-3'>
-          <label className='mr-2' htmlFor="startScrape">URL: </label>
-          <input required type="text" id="startScrape" value={URLInput} onChange={ e => {setURLInput(e.currentTarget.value)}}/>
-        </div>
-
-        <div className='mb-3' onChange={handlePages}>
-          <label className='mr-2' htmlFor="scrapeFrom">Start Page: </label>
-          <input required id='scrapeFrom' className='mr-2' type="number" min='1' max='100' value={pages.start} data-start />
-
-          <label className='mr-2' htmlFor="scrapeTo">End Page: </label>
-          <input required id='scrapeTo' className='mr-2' type="number" min='1' max='100' value={pages.end} data-end />
-
+      <div className='mb-3 flex'>
+        <div className='mb-3 text-left' onChange={handleChanges}>
+          <div className='mb-3'>
+            <label className='mr-2' htmlFor="startScrape">URL: </label>
+            <input required type="text" id="startScrape" value={URLInput} data-url />
+          </div>
+          
+          <div className='mb-3'>
+            <label className='mr-2' htmlFor="scrapeFrom">Start Page: </label>
+            <input required id='scrapeFrom' type="number" min='1' max='100' value={pages.start} data-start />
+          </div>
+          
+          <div className='mb-3'>
+            <label className='mr-2' htmlFor="scrapeTo">End Page: </label>
+            <input required id='scrapeTo' className='mr-2' type="number" min='1' max='100' value={pages.end} data-end />
+          </div>
+          
+          <div className='mb-3'>
           <label className='mr-2' htmlFor="delay">Delay: </label>
           <input required id='delay' className='mr-2' type='number' min='1' max='30' value={delay} data-delay />
-        </div>
+          </div>
 
+          <input disabled={reqInProcess} className='text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Start Scraping"/>
+        </div>
 
         <div className='mb-3'>
           <div>Estimated time</div>
@@ -101,8 +109,6 @@ export const ScrapeField = () => {
            <span className='text-pink-800'>{secondsToTime( (delay * 25) * numPagesScrape() )}</span> to scrape all pages
           </div>
         </div>
-      
-        <input disabled={reqInProcess} className='text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Start Scraping"/>
       </div>
     </form>
   )
