@@ -59,8 +59,8 @@ export const apolloDoc = async (page: Page) => {
           case 'Name':
             const nameCol = scrapeNameColumn(tr.childNodes[i] as HE);
             res['Name'] = nameCol.name;
-            res['Firstname'] = nameCol.trim().split(' ')[0]
-            res['Lastname'] = nameCol.trim().split(' ')[1]
+            res['Firstname'] = nameCol.name.trim().split(' ')[0]
+            res['Lastname'] = nameCol.name.trim().split(' ')[1]
             res['Linkedin'] = nameCol.linkedin;
             break;
           case 'Title':
@@ -68,6 +68,7 @@ export const apolloDoc = async (page: Page) => {
             break;
           case 'Company':
             const companyCol = scrapeCompanyColumn(tr.childNodes[i] as HE); // obj
+            res['Company Name'] = companyCol.companyName;
             res['Company Website'] = companyCol.companyWebsite;
             res['Company Linkedin'] = companyCol.companyLinkedin;
             res['Company Twitter'] = companyCol.companyTwitter;
@@ -83,7 +84,7 @@ export const apolloDoc = async (page: Page) => {
             res['Employees'] = scrapeEmployeesColumn(tr.childNodes[i] as HE);
             break;
           case 'Phone':
-            res['Phone'] = 'na Phone';
+            res['Phone'] = scrapePhoneColumn(tr.childNodes[i] as HE);
             break;
           case 'Industry':
             res['Industry'] = scrapeIndustryColumn(tr.childNodes[i] as HE);
@@ -134,6 +135,10 @@ export const apolloDoc = async (page: Page) => {
     window.scrapeLocationColumn = (locationColumn: HE) => (el.columns.location(locationColumn))
     
     window.scrapeEmployeesColumn = (employeesColumn: HE) => (el.columns.employees(employeesColumn))
+
+    window.scrapePhoneColumn = (phoneColumn: HE) => (phoneColumn.innerText === 'Request Mobile Number' ? na : phoneColumn.innerText)
+
+    window.scrapePhoneColumn = (phoneColumn: HE) => (phoneColumn.innerText === 'Request Mobile Number' ? na : phoneColumn.innerText)
   
     
     window.scrapeEmailColumn = async (emailColumn: HE) => {

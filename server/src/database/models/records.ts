@@ -9,21 +9,23 @@ export type IRecords = {
 }
 
 export type IRecord = {
-  name: string
-  linkedin: string
-  title: string
-  companyName: string
-  companyURL: string
-  comapnyLinkedin: string
-  companyTwitter: string
-  companyFacebook: string
-  email: string
+  Name: string
+  Firstname: string
+  Lastname: string
+  Linkedin: string
+  Title: string
+  'Company Name': string
+  'Company Website': string
+  'Comapny Linkedin': string
+  'Company Twitter': string
+  'Company Facebook': string
+  Email: string
   isVerified: boolean
-  location: string
-  employees: string
-  phone: string
-  industry: string
-  keywords: string[]
+  Location: string
+  Employees: string
+  Phone: string
+  Industry: string
+  Keywords: string[]
 }
 
 const records = new Schema<IRecords>({
@@ -36,7 +38,7 @@ const records = new Schema<IRecords>({
     Lastname: { type: String, default: "null" },
     Linkedin: { type: String, default: "null" },
     Title: { type: String, default: "null" },
-    companyName: { type: String, default: "null" },
+    'Company Name': { type: String, default: "null" },
     'Company Website': { type: String, default: "null" },
     'Company Linkedin': { type: String, default: "null" },
     'Company Twitter': { type: String, default: "null" },
@@ -53,4 +55,3 @@ const records = new Schema<IRecords>({
 
 export const RecordsModel = model<IRecords>('record', records);
 
-Request Mobile Number
