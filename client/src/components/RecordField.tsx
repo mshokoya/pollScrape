@@ -25,21 +25,21 @@ export type IRecords = {
 }
 
 export type IRecord = {
-  name: string
-  linkedin: string
-  title: string
-  companyName: string
-  companyURL: string
-  comapnyLinkedin: string
-  companyTwitter: string
-  companyFacebook: string
-  email: string
+  Name: string
+  Linkedin: string
+  Title: string
+  'Company Name': string
+  'Company Website': string
+  'Comapny Linkedin': string
+  'Company Twitter': string
+  'Company Facebook': string
+  Email: string
   isVerified: boolean
-  location: string
-  employees: string
-  phone: string
-  industry: string
-  keywords: string[]
+  Location: string
+  Employees: string
+  Phone: string
+  Industry: string
+  Keywords: string[]
 }
 
 // type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
@@ -166,7 +166,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
   }
 
   return (
-    <div className=' border-cyan-600 border rounded h-[32%] mb-6 overflow-auto'>
+    <div className=' border-cyan-600 border rounded min-h-[25%] max-h-[25%] mb-6 overflow-auto'>
     <table className="text-[0.7rem] m-auto w-full table-fixed">
       <thead className='sticky top-0 bg-black'>
         <tr>
@@ -231,7 +231,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
 
 
 
-export const Record = ({records, recordsChecked, setRecordsChecked, meta, metaChecked}: RecordsSubCompArgs) => {
+export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
@@ -244,7 +244,7 @@ export const Record = ({records, recordsChecked, setRecordsChecked, meta, metaCh
         break;
       case 'extend':
         //@ts-ignore
-        e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
+        e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
         break;
     }
   }
@@ -258,7 +258,7 @@ export const Record = ({records, recordsChecked, setRecordsChecked, meta, metaCh
 
     return filter.length
       ? records.filter((r) => filter.includes(r.scrapeID))
-      : records
+      : []
   }
 
   return (
@@ -278,9 +278,9 @@ export const Record = ({records, recordsChecked, setRecordsChecked, meta, metaCh
             (a, idx) => ( 
               <>
                 <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
-                  <td className='overflow-scroll' data-type='extend' >{a.data.name}</td>
-                  <td className='overflow-scroll' data-type='extend' >{a.data.email}</td>
-                  <td className='overflow-scroll' data-type='extend' >{a.data.title}</td>
+                  <td className='overflow-scroll' data-type='extend' >{a.data.Name}</td>
+                  <td className='overflow-scroll' data-type='extend' >{a.data.Email}</td>
+                  <td className='overflow-scroll' data-type='extend' >{a.data.Title}</td>
                   <td className='overflow-scroll' data-type='opt'>
                     <button >
                       <SlOptionsVertical className='inline'/>
@@ -289,21 +289,21 @@ export const Record = ({records, recordsChecked, setRecordsChecked, meta, metaCh
                 </tr>
                 <tr>
                   <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
-                    <div>name: {a.data.name}</div>
-                    <div>linkedin: {a.data.linkedin}</div>
-                    <div>title: {a.data.title}</div>
-                    <div>company name: {a.data.companyName}</div>
-                    <div>company url: {a.data.companyURL}</div>
-                    <div>company linkedin: {a.data.comapnyLinkedin}</div>
-                    <div>company twitter: {a.data.companyTwitter}</div>
-                    <div>company facebook: {a.data.companyFacebook}</div>
-                    <div>email: {a.data.email}</div>
+                    <div>name: {a.data.Name}</div>
+                    <div>linkedin: {a.data.Linkedin}</div>
+                    <div>title: {a.data.Title}</div>
+                    <div>company name: {a.data['Company Name']}</div>
+                    <div>company url: {a.data['Company Website']}</div>
+                    <div>company linkedin: {a.data['Comapny Linkedin']}</div>
+                    <div>company twitter: {a.data['Company Twitter']}</div>
+                    <div>company facebook: {a.data['Company Facebook']}</div>
+                    <div>email: {a.data.Email}</div>
                     <div>isVerified: {a.data.isVerified}</div>
-                    <div>location: {a.data.location}</div>
-                    <div>employees: {a.data.employees}</div>
-                    <div>phone: {a.data.phone}</div>
-                    <div>industry: {a.data.industry}</div>
-                    <div>keywords: {a.data.keywords}</div>
+                    <div>location: {a.data.Location}</div>
+                    <div>employees: {a.data.Employees}</div>
+                    <div>phone: {a.data.Phone}</div>
+                    <div>industry: {a.data.Industry}</div>
+                    <div>keywords: {a.data.Keywords}</div>
                   </td>
                 </tr>
               </>

@@ -27,38 +27,35 @@ const checkUserIP = async () => {
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (metaID: string, urlList: string[], usingProxy: boolean) => {
+export const startScrapingApollo = async (metaID: string, url: string, usingProxy: boolean) => {
+  let proxy: string | null;
 
-  for (let url of urlList) {
-    let proxy: string | null;
+  await scraper.restartBrowser()
 
-    await scraper.restartBrowser()
+  const allAccounts = await getAllApolloAccounts()
 
-    const allAccounts = await getAllApolloAccounts()
-
-    if (!allAccounts) throw new Error('No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
-    if (allAccounts.length < 15) {
-      // (WARN)
-      console.log('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
-    }
-    
-    const account = selectAccForScrapingFILO(allAccounts);
-
-    if (usingProxy) {
-      proxy =  await selectProxy(account, allAccounts);
-      if (!proxy) throw new Error(`failed to use proxy`)
-        const page = scraper.page() as Page;
-        await useProxy(page, proxy);
-    }
-
-    await setupApolloForScraping(account)
-    await goToApolloSearchUrl(url)
-
-    const data = await apolloStartPageScrape() // edit
-    const cookies = await getBrowserCookies()
-    // @ts-ignore
-    await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
+  if (!allAccounts) throw new Error('No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
+  if (allAccounts.length < 15) {
+    // (WARN)
+    console.log('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
   }
+  
+  const account = selectAccForScrapingFILO(allAccounts);
+
+  if (usingProxy) {
+    proxy =  await selectProxy(account, allAccounts);
+    if (!proxy) throw new Error(`failed to use proxy`)
+      const page = scraper.page() as Page;
+      await useProxy(page, proxy);
+  }
+
+  await setupApolloForScraping(account)
+  await goToApolloSearchUrl(url)
+
+  const data = await apolloStartPageScrape() // edit
+  const cookies = await getBrowserCookies()
+  // @ts-ignore
+  await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
 
   await scraper.close();
 }
