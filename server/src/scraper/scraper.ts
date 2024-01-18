@@ -7,11 +7,13 @@ import {
   apolloTableRowSelector,
   setBrowserCookies,
   apolloLoggedOutURLSubstr,
-  delay
+  delay,
+  getBrowserCookies
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
 import { IAccount } from '../database/models/accounts';
 import { IRecord } from '../database/models/records';
+import { addCookiesToAccount } from '../database';
 
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
@@ -105,11 +107,7 @@ export const apolloOutlookLogin = async (email: string, password: string) => {
 
     // apollo searchbar (logged in) (success)
     await page.waitForSelector(apolloLoggedInSearchBarSelector, { visible: true });
-
-    return true;
   }
-
-  return false;
 }
 
 export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
@@ -194,12 +192,19 @@ export const setupApolloForScraping = async (account: IAccount) => {
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
+    let p: Promise<void>;
+
     if (account.loginType === 'default') {
-      await apolloDefaultLogin(account.email, account.password)
-    } else if (account.loginType === 'outlook') {
-      await apolloOutlookLogin(account.email, account.password)
+      p = apolloDefaultLogin(account.email, account.password)
+    } else {
+      p = apolloOutlookLogin(account.email, account.password)
     }
-    
+
+    await p.then(async () => {
+      const cookies = await getBrowserCookies()
+      await addCookiesToAccount(account._id, cookies)
+      console.log('setupApolloForScraping end')
+    });
   } 
 }
 

@@ -33,7 +33,7 @@ export const addProxyToDB = async (p: string): Promise<IProxy | null> => {
   const fmtProxy = parseProxy(p)
   return await ProxyModel.findOneAndUpdate(
     { proxy: p },
-    { '$set': fmtProxy },
+    { $set: fmtProxy },
     { new: true }
   ).lean() as IProxy | null;
 }
@@ -51,10 +51,12 @@ export const saveScrapeToDB = async (
     session.startTransaction();
     const updateOpts = { new: true, session }
 
+    console.log(" IN DB SAVE")
+
     // ACCOUNT UPDATE
     const newAcc = await AccountModel.findOneAndUpdate(
       {_id: accountID},
-      { '$set':{
+      { $set:{
         cookies:  JSON.stringify(cookies),
         proxy,
         lastUsed: new Date()
@@ -62,8 +64,16 @@ export const saveScrapeToDB = async (
       updateOpts
     ).lean();
 
-    console.log('newAcc')
+    console.log(`
+    
+    
+    ACC SAVE
+    
+    
+    
+    `)
     console.log(newAcc)
+
 
     if (!newAcc) throw new Error('failed to update account after scrape, if this continues please contact developer')
 
@@ -73,21 +83,48 @@ export const saveScrapeToDB = async (
     
     const newMeta = await MetadataModel.findOneAndUpdate(
       {_id: metadataID}, 
-      { '$set' :{
-        page: fmtURL.page, 
-        "$push": { page: fmtURL.page, scrapeID } // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
-      }}, 
+      { 
+        $set: { page: fmtURL.page},
+        $push: { scrapes: {page: fmtURL.page, scrapeID} } // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
+      }, 
       updateOpts
     ).lean();
+
+    console.log(`
+    
+    
+    META SAVE
+    
+    
+    
+    `)
+    console.log(newMeta)
 
     if (!newMeta) throw new Error('failed to update meta after scrape, if this continues please contact developer')
 
     // RECORD UPDATE
-    const fmtData = data.map(() => ({scrapeID, url, page: fmtURL.page, data}))
+    const fmtData = data.map((d) => ({scrapeID, url, page: fmtURL.page, data: d}))
+
+    console.log(`
+    
+    
+    records FMT
+    
+    
+    
+    `)
+    console.log(fmtData)
 
     const records = await RecordsModel.insertMany(fmtData, updateOpts)
     
-    console.log('records')
+    console.log(`
+    
+    
+    records SAVED
+    
+    
+    
+    `)
     console.log(records)
 
     await session.commitTransaction();
@@ -95,7 +132,6 @@ export const saveScrapeToDB = async (
     await session.abortTransaction();
   }
   await session.endSession();
-
 }
 
 // https://www.ultimateakash.com/blog-details/IiwzQGAKYAo=/How-to-implement-Transactions-in-Mongoose-&-Node.Js-(Express)

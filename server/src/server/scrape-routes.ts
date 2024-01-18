@@ -10,9 +10,6 @@ export const scrapeRoutes = (app: Express) => {
     try {
       const metaData = await initMeta(req.body.urls[0])
 
-      console.log('metaData')
-      console.log(metaData)
-
       await startScrapingApollo(
         metaData._id,
         req.body.urls,

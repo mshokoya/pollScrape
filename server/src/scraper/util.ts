@@ -6,7 +6,7 @@ import { scraper } from "./scraper"
 export const apolloLoggedInURLSubstr = "onboarding/checklist"
 // ================ 
 //full = https://app.apollo.io/#/login
-export const apolloLoggedOutURLSubstr = "login"
+export const apolloLoggedOutURLSubstr = "#/login"
 // ================ 
 //full = // https://app.apollo.io/#/people
 export const apolloPeopleURLSubstr = "/people"

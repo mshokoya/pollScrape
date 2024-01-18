@@ -2,10 +2,9 @@ import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 type HE = HTMLElement
 
 export const apolloDoc = async (page: Page) => {
-
   return await page.evaluate(async () => {
-    const na = 'N/A'
-    const el = {
+    window.na = 'N/A'
+    window.el = {
       columns: {
         name: {
           name: (columnEl: HE) => (isEl(columnEl.querySelector('.zp_xVJ20 > a') as HE) as HE).innerHTML || na,
@@ -43,9 +42,9 @@ export const apolloDoc = async (page: Page) => {
       }
     }
   
-    const isEl = (el: HTMLElement): HTMLElement | {} => el ? el : {}
+    window.isEl = (el: HTMLElement): HTMLElement | {} => el ? el : {}
   
-    const scrapeSingleRow = async (tbody: HE) => {
+    window.scrapeSingleRow = async (tbody: HE) => {
       const res: Record<string, string> = {};
       const columnNames = document.querySelectorAll('th');
   
@@ -60,6 +59,8 @@ export const apolloDoc = async (page: Page) => {
           case 'Name':
             const nameCol = scrapeNameColumn(tr.childNodes[i] as HE);
             res['Name'] = nameCol.name;
+            res['Firstname'] = nameCol.trim().split(' ')[0]
+            res['Lastname'] = nameCol.trim().split(' ')[1]
             res['Linkedin'] = nameCol.linkedin;
             break;
           case 'Title':
@@ -73,7 +74,7 @@ export const apolloDoc = async (page: Page) => {
             res['Company Facebook'] = companyCol.companyFacebook;
             break;
           case 'Quick Actions':
-            res['Email'] = await scrapeEmailColumn(tr.childNodes[i] as HE);
+            res['Email'] = await scrapeActionColumn(tr.childNodes[i] as HE);
             break;
           case 'Contact Location':
             res['Company Location'] = scrapeLocationColumn(tr.childNodes[i] as HE);
@@ -95,26 +96,26 @@ export const apolloDoc = async (page: Page) => {
       return res
     }
 
-    const scrapeSinglePage = async () => {
+    window.scrapeSinglePage = async () => {
       const allRows = getRows();
       const data = [];
-    
+
       for (let row of allRows) {
         const singleRow = await scrapeSingleRow(row as HE)
         if (singleRow) data.push(singleRow);
       }
-      
+
       return data
     }
     
-    const scrapeNameColumn = (nameColumn: HE) => ({
+    window.scrapeNameColumn = (nameColumn: HE) => ({
       name: el.columns.name.name(nameColumn),
       linkedin: el.columns.name.linkedin(nameColumn)
     })
     
-    const scrapeTitleColumn = (titleColumn: HE) => (el.columns.title(titleColumn))
+    window.scrapeTitleColumn = (titleColumn: HE) => (el.columns.title(titleColumn))
     
-    const scrapeCompanyColumn = (companyColumn: HE) => {
+    window.scrapeCompanyColumn = (companyColumn: HE) => {
       return {
         companyName: el.columns.company.name(companyColumn) || na,
         companyWebsite: na,
@@ -130,12 +131,12 @@ export const apolloDoc = async (page: Page) => {
       }
     }
     
-    const scrapeLocationColumn = (locationColumn: HE) => (el.columns.location(locationColumn))
+    window.scrapeLocationColumn = (locationColumn: HE) => (el.columns.location(locationColumn))
     
-    const scrapeEmployeesColumn = (employeesColumn: HE) => (el.columns.employees(employeesColumn))
+    window.scrapeEmployeesColumn = (employeesColumn: HE) => (el.columns.employees(employeesColumn))
   
     
-    const scrapeEmailColumn = async (emailColumn: HE) => {
+    window.scrapeEmailColumn = async (emailColumn: HE) => {
       let loopCounter = 0
       let loopEnd = 10
       let email = '';
@@ -167,7 +168,7 @@ export const apolloDoc = async (page: Page) => {
     }
 
 
-    const scrapeActionColumn = async (emailColumn: HE) => {
+    window.scrapeActionColumn = async (emailColumn: HE) => {
       let loopCounter = 0
       let loopEnd = 3
       let email = '';
@@ -203,7 +204,7 @@ export const apolloDoc = async (page: Page) => {
         : na
     }
   
-    const emailPopupButtonClick = async (emailPopupButton: HE) => {
+    window.emailPopupButtonClick = async (emailPopupButton: HE) => {
       let email = '-';
       let loopCounter = 0
       let loopEnd = 5
@@ -233,14 +234,14 @@ export const apolloDoc = async (page: Page) => {
       return email
     }
     
-    const scrapeIndustryColumn = (industryColumn: HE) => (el.columns.industry(industryColumn))
+    window.scrapeIndustryColumn = (industryColumn) => (el.columns.industry(industryColumn))
     
-    const scrapeKeywordsColumn = (keywordsColumn: HE) => {
+    window.scrapeKeywordsColumn = (keywordsColumn) => {
       return Array.from(el.columns.keywords(keywordsColumn))
         .reduce((a, cv) => (a += cv.innerHTML), '')
     }
     
-    const populateSocialsLinks = (companyLink: string) => {
+    window.populateSocialsLinks = (companyLink) => {
       const data: Record<string, string> = {}
       const lowerCompanyLink = companyLink.toLowerCase();
       if (
@@ -261,11 +262,11 @@ export const apolloDoc = async (page: Page) => {
       return data
     }
     
-    function sleep(ms: number) {
+    window.sleep = (ms) => {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
     
-    function getRows() {
+    window.getRows = () => {
       return document.getElementsByClassName("zp_RFed0")
     }
   

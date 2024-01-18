@@ -31,22 +31,26 @@ const records = new Schema<IRecords>({
   url: { type: String, default: "null" },
   page: { type: String, default: "null" },
   data: {
-    name: { type: String, default: "null" },
-    linkedin: { type: String, default: "null" },
-    title: { type: String, default: "null" },
+    Name: { type: String, default: "null" },
+    Firstname: { type: String, default: "null" },
+    Lastname: { type: String, default: "null" },
+    Linkedin: { type: String, default: "null" },
+    Title: { type: String, default: "null" },
     companyName: { type: String, default: "null" },
-    companyURL: { type: String, default: "null" },
-    comapnyLinkedin: { type: String, default: "null" },
-    companyTwitter: { type: String, default: "null" },
-    companyFacebook: { type: String, default: "null" },
-    email: { type: String, default: "null" },
+    'Company Website': { type: String, default: "null" },
+    'Company Linkedin': { type: String, default: "null" },
+    'Company Twitter': { type: String, default: "null" },
+    'Company Facebook': { type: String, default: "null" },
+    Email: { type: String, default: "null" },
     isVerified: { type: Boolean, default: false },
-    location: { type: String, default: "null" },
-    employees: { type: String, default: "null" },
-    phone: { type: String, default: "null" },
-    industry: { type: String, default: "null" },
-    keywords: { type: [String], default: [] }
+    'Company Location': { type: String, default: "null" },
+    Employees: { type: String, default: "null" },
+    Phone: { type: String, default: "null" },
+    Industry: { type: String, default: "null" },
+    Keywords: { type: [String], default: [] }
   }
 });
 
 export const RecordsModel = model<IRecords>('record', records);
+
+Request Mobile Number

@@ -32,10 +32,7 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
   for (let url of urlList) {
     let proxy: string | null;
 
-    const browser = await scraper.restartBrowser()
-      .then(() => {
-        console.log('started browser')
-      })
+    await scraper.restartBrowser()
 
     const allAccounts = await getAllApolloAccounts()
 
@@ -49,21 +46,18 @@ export const startScrapingApollo = async (metaID: string, urlList: string[], usi
 
     if (usingProxy) {
       proxy =  await selectProxy(account, allAccounts);
-      if (!proxy) throw new Error(`failed to use proxy `)
+      if (!proxy) throw new Error(`failed to use proxy`)
         const page = scraper.page() as Page;
         await useProxy(page, proxy);
     }
 
-    console.log('account')
-    console.log(account)
+    await setupApolloForScraping(account)
+    await goToApolloSearchUrl(url)
 
-    await setupApolloForScraping(account);
-    await goToApolloSearchUrl(url);
-    const data = await  apolloStartPageScrape(); // edit
-    const cookies = await getBrowserCookies();
-
+    const data = await apolloStartPageScrape() // edit
+    const cookies = await getBrowserCookies()
     // @ts-ignore
-    await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy);
+    await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
   }
 
   await scraper.close();
