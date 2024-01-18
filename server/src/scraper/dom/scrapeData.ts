@@ -55,43 +55,40 @@ export const apolloDoc = async (page: Page) => {
         tr = tbody.childNodes[1] as HE
       };
   
-      for (const head of th) {
-        switch (head.innerText) {
+      for (let i = 0; i < th.length; i++) {
+        switch (th[i].innerText) {
           case 'Name':
-            const nameCol = scrapeNameColumn(tr.childNodes[0] as HE);
+            const nameCol = scrapeNameColumn(tr.childNodes[i] as HE);
             res['Name'] = nameCol.name;
             res['Linkedin'] = nameCol.linkedin;
             break;
           case 'Title':
-            res['Title'] = scrapeTitleColumn(tr.childNodes[1] as HE);
+            res['Title'] = scrapeTitleColumn(tr.childNodes[i] as HE);
             break;
           case 'Company':
-            const companyCol = scrapeCompanyColumn(tr.childNodes[2] as HE); // obj
+            const companyCol = scrapeCompanyColumn(tr.childNodes[i] as HE); // obj
             res['Company Website'] = companyCol.companyWebsite;
             res['Company Linkedin'] = companyCol.companyLinkedin;
             res['Company Twitter'] = companyCol.companyTwitter;
             res['Company Facebook'] = companyCol.companyFacebook;
             break;
           case 'Quick Actions':
-            res['Email'] = await scrapeEmailColumn(tr.childNodes[3] as HE);
-            break;
-          case 'Email':
-            res['Email'] = await scrapeEmailColumn(tr.childNodes[3] as HE);
+            res['Email'] = await scrapeEmailColumn(tr.childNodes[i] as HE);
             break;
           case 'Contact Location':
-            res['Company Location'] = scrapeLocationColumn(tr.childNodes[4] as HE);
+            res['Company Location'] = scrapeLocationColumn(tr.childNodes[i] as HE);
             break;
           case '# Employees':
-            res['Employees'] = scrapeEmployeesColumn(tr.childNodes[5] as HE);
+            res['Employees'] = scrapeEmployeesColumn(tr.childNodes[i] as HE);
             break;
           case 'Phone':
             res['Phone'] = 'na Phone';
             break;
           case 'Industry':
-            res['Industry'] = scrapeIndustryColumn(tr.childNodes[7] as HE);
+            res['Industry'] = scrapeIndustryColumn(tr.childNodes[i] as HE);
             break;
           case 'Keywords':
-            res['Keywords'] = scrapeKeywordsColumn(tr.childNodes[8] as HE); // list
+            res['Keywords'] = scrapeKeywordsColumn(tr.childNodes[i] as HE); // list
         }
       }
     
