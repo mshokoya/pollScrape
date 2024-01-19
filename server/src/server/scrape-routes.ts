@@ -8,31 +8,44 @@ import { scraper } from '../scraper/scraper';
 export const scrapeRoutes = (app: Express) => {
 
   app.post('/scrape', async (req, res) => {
-    let metadata: IMetaData;
-    const from = parseInt(req.body.from);
-    const to = parseInt(req.body.to)
+    // let metadata: IMetaData;
+    let metadata: IMetaData = req.body.meta;
+    let start: number | undefined;
+    let end: number | undefined;
+    let useProxy: boolean = req.body.url;
+    const url = req.body.url;
+
     try {
 
-      if (req.body.meta) {
-        metadata = req.body.meta
-      } else {
-        metadata = await initMeta(req.body.urls[0])
+      if (!start || !end || !url ) {
+        throw new Error('invald fields')
       }
 
-      for (let i = from; i <= to; i++) {
-        const url = new URL(req.body.url);
-        const search_params = url.searchParams;
-        
-        search_params.set('page', i.toString())
-        url.search = search_params.toString();
+      start = parseInt(req.body.start);
+      end = parseInt(req.body.end);
 
-        const newUrl = url.toString()
+      if (!useProxy) {
+        useProxy = req.body.proxy;
+      }
+      
+      if (!metadata) {
+        metadata = await initMeta(req.body.urls)
+      }
+
+      for (let i = start; i <= end; i++) {
+        const fmtURL = new URL(url);
+        const search_params = fmtURL.searchParams;
+        
+        search_params.set('page', i.toString());
+        fmtURL.search = search_params.toString();
+
+        const newUrl = fmtURL.toString();
 
         await startScrapingApollo(
           metadata._id,
           newUrl,
-          req.body.proxy
-        )
+          useProxy
+        );
       }
   
       res.json({ok: true, message: null, data: null});

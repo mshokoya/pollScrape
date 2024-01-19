@@ -59,13 +59,39 @@ export const scraper = (() => {
 export const visitApollo = async () => {
   const page = await scraper.visit("https://app.apollo.io");
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
-  
+}
+
+export const apolloGoogleLogin = async (email: string, password: string) => {
+  const page = scraper.page() as Page
+
+  // apollo login page
+  const apolloEmailFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="email"]';
+  const apolloPasswordFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="password"]';
+  const apolloSubmitButtonSelector = 'button[class="zp-button zp_zUY3r zp_H_wRH"][type="submit"]';
+
+  const apolloGmailButtonSelector = 'input[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD"]';
+  const gmailEmailFieldSelector = 'input[class="whsOnd zHQkBf"][type="email"]';
+  const gmailNextButtonSelector = 'input[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]';
+  // const 
+
+  const emailInput = page.$(apolloEmailFieldSelector);
+  const passInput = page.$(apolloPasswordFieldSelector);
+  const submitButton = page.$(apolloSubmitButtonSelector);
+
+  if (!!emailInput && !!passInput && !!submitButton) {
+    await page.click(apolloGmailButtonSelector);
+
+    await page.waitForSelector(gmailEmailFieldSelector, { visible: true });
+    await page.type(gmailEmailFieldSelector, email);
+
+    await delay(1000)
+  }
 }
 
 export const apolloOutlookLogin = async (email: string, password: string) => {
   const page = scraper.page() as Page
 
-  // apollo login page
+  // apollo login page (use to make sure navigated to login page)
   const apolloEmailFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="email"]';
   const apolloPasswordFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="password"]';
   const apolloSubmitButtonSelector = 'button[class="zp-button zp_zUY3r zp_H_wRH"][type="submit"]';
