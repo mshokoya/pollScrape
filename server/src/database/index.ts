@@ -7,12 +7,12 @@ import { RecordsModel } from "./models/records";
 import { IMetaData, MetadataModel } from "./models/metadata";
 import { v4 as uuidv4 } from 'uuid';
 
-export const addAccountToDB = async (email: string, password: string): Promise<IAccount> => {
-  const account = AccountModel.findOne({email})
+export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccount> => {
+  const acc = AccountModel.findOne({email: account.email})
 
-  if (account !== null) throw new Error('account already exists')
+  if (acc !== null) throw new Error('account already exists')
   
-  const newAcc = await AccountModel.create({email, password})
+  const newAcc = await AccountModel.create(account)
 
   return newAcc
 }

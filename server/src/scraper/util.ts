@@ -63,17 +63,16 @@ export const apolloUpdatePageQueryString = (url: string) => {
 }
 
 export const waitForApolloLogin = () => new Promise((resolve, _reject) => {
-    const pg = scraper.page()
+    const pg = scraper.page() as Page
     
     const browser_check = setInterval(async () => {
-      console.log('1')
-      if ( pg!.url().includes('settings/account') ) {
-        console.log('2')
+      if ( pg.url().includes('settings/account') ) {
         clearInterval(browser_check);
-        console.log('3')
         resolve(true);
+      } else if ( (await scraper.browser()!.pages()).length === 0) {
+        clearInterval(browser_check);
+        throw new Error("failed to get cookies please head to 'settings/account' page when loggeed in")
       }
-      
     }, 3000);
   }
 );

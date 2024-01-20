@@ -241,21 +241,31 @@ export const setupApolloForScraping = async (account: IAccount) => {
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    let p: Promise<void>;
-
-    if (account.loginType === 'default') {
-      p = apolloDefaultLogin(account.email, account.password)
-    } else {
-      p = apolloOutlookLogin(account.email, account.password)
-    }
-
-    await p.then(async () => {
-      const cookies = await getBrowserCookies()
-      await addCookiesToAccount(account._id, cookies)
-      console.log('setupApolloForScraping end')
-    });
+    logIntoApollo(account)
+    const cookies = await getBrowserCookies()
+    await addCookiesToAccount(account._id, cookies)
   } 
 }
+
+// (FIX) FINISH
+export const logIntoApollo = async (account: IAccount) => {
+  let p: Promise<void>;
+
+  switch (account.loginType) {
+    case 'default':
+      await apolloDefaultLogin(account.email, account.password)
+      break;
+    case 'outlook':
+      await apolloOutlookLogin(account.email, account.password)
+      break;
+    case 'google':
+      console.log('NEED TO IMPLIMENT')
+      throw new Error('NEED TO IMPLIMENT')
+    default:
+      await apolloDefaultLogin(account.email, account.password)
+  }
+}
+
 
 // export const InjectCookies = async (account: IAccount) => {
 //   const page = scraper.page() as Page;
