@@ -61,6 +61,7 @@ export const visitApollo = async () => {
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
 }
 
+// (FIX) complete func
 export const apolloGoogleLogin = async (email: string, password: string) => {
   const page = scraper.page() as Page
 
@@ -69,22 +70,44 @@ export const apolloGoogleLogin = async (email: string, password: string) => {
   const apolloPasswordFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="password"]';
   const apolloSubmitButtonSelector = 'button[class="zp-button zp_zUY3r zp_H_wRH"][type="submit"]';
 
+  // gmail button
   const apolloGmailButtonSelector = 'input[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD"]';
-  const gmailEmailFieldSelector = 'input[class="whsOnd zHQkBf"][type="email"]';
-  const gmailNextButtonSelector = 'input[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]';
-  // const 
 
-  const emailInput = page.$(apolloEmailFieldSelector);
-  const passInput = page.$(apolloPasswordFieldSelector);
-  const submitButton = page.$(apolloSubmitButtonSelector);
+  // email
+  const gmailEmailFieldSelector = 'input[class="whsOnd zHQkBf"][type="email"]';
+  const gmailInvalidEmailSelector = 'input[class="whsOnd zHQkBf"][type="email"][aria-invalid="true"]';
+
+  // password
+  const gmailPasswordFieldSelector = 'input[class="whsOnd zHQkBf"][type="password"]';
+  const gmailInvalidPasswordSelector = 'input[class="whsOnd zHQkBf"][type="password"][aria-invalid="true"]';
+
+  // email next button
+  const gmailNextButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]';
+
+  const emailInput = await page.$(apolloEmailFieldSelector);
+  const passInput = await page.$(apolloPasswordFieldSelector);
+  const submitButton = await page.$(apolloSubmitButtonSelector);
 
   if (!!emailInput && !!passInput && !!submitButton) {
     await page.click(apolloGmailButtonSelector);
 
     await page.waitForSelector(gmailEmailFieldSelector, { visible: true });
     await page.type(gmailEmailFieldSelector, email);
+    await page.click(gmailNextButtonSelector);
 
-    await delay(1000)
+    await page.waitForSelector(gmailPasswordFieldSelector, {visible: true, timeout: 5000});
+
+    const isEmailInvalid = await page.$(gmailInvalidEmailSelector)
+    if (isEmailInvalid) {
+      throw new Error('invalid email (google)')
+    }
+
+    await page.type(gmailPasswordFieldSelector, password);
+    await page.click(gmailNextButtonSelector);
+
+    // await page.waitForSelector()
+    // heres where multiple thing can happen e.g different type of verification or login 
+
   }
 }
 
@@ -107,9 +130,9 @@ export const apolloOutlookLogin = async (email: string, password: string) => {
   
   const apolloLoggedInSearchBarSelector = '.zp_bWS5y, .zp_J0MYa, .zp_EIhoD, zp_EYQkR';
 
-  const emailInput = page.$(apolloEmailFieldSelector);
-  const passInput = page.$(apolloPasswordFieldSelector);
-  const submitButton = page.$(apolloSubmitButtonSelector);
+  const emailInput = await page.$(apolloEmailFieldSelector);
+  const passInput = await page.$(apolloPasswordFieldSelector);
+  const submitButton = await page.$(apolloSubmitButtonSelector);
   
   if (!!emailInput && !!passInput && !!submitButton) {
     await page.click(outlookButtonSelector);

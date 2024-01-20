@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 type HE = HTMLElement
 
