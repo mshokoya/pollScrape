@@ -2,10 +2,13 @@ import {
   scraper,
   apolloStartPageScrape,
   setupApolloForScraping,
-  goToApolloSearchUrl, // edit
+  goToApolloSearchUrl,
+  logIntoApollo,
+  visitApollo,
+  visitApolloLoginPage, // edit
 } from './scraper';
 import {
-  getBrowserCookies, waitForApolloLogin
+  getBrowserCookies, waitForNavigationTo
 } from './util'
 import {
   selectAccForScrapingFILO, selectProxy
@@ -27,7 +30,7 @@ const checkUserIP = async () => {
 // TODO
 // handle account failed login
 export const startScrapingApollo = async (metaID: string, url: string, usingProxy: boolean) => {
-  let proxy: string | null;
+  let proxy: string | null = null;
 
   await scraper.restartBrowser()
 
@@ -52,17 +55,21 @@ export const startScrapingApollo = async (metaID: string, url: string, usingProx
 
   const data = await apolloStartPageScrape(); // edit
   const cookies = await getBrowserCookies();
-  // @ts-ignore
+
   await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy);
 
   await scraper.close();
 }
 
 // (FIX): need to impliment proxies // sort out inital login popups (look for close button)
-export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAccount> => {
-  await setupApolloForScraping(account)
+export const apolloLoginManuallyAndGetCookies = async (account: IAccount): Promise<string[] | null> => {
+  if (!scraper.browser()) {
+    await scraper.launchBrowser()
+  }
 
-  const cookie = await waitForApolloLogin()
+  await logIntoApollo(account)
+
+  return await waitForNavigationTo('settings/account')
     .then(async () => {
       const cookies = await getBrowserCookies()
 
@@ -73,18 +80,6 @@ export const apolloGetCookiesFromLogin = async (account: IAccount): Promise<IAcc
     .catch(() => {
       return null
     })
-
-  if (cookie) {
-
-    const newAccount = await addCookiesToAccount(account._id, cookie)
-
-    if (!newAccount) throw new Error('failed to login (save cookies)');
-
-    return newAccount
-    
-  } else {
-    throw new Error('failed to login (cookies)')
-  }
 }
 
 

@@ -8,7 +8,9 @@ import {
   setBrowserCookies,
   apolloLoggedOutURLSubstr,
   delay,
-  getBrowserCookies
+  getBrowserCookies,
+  waitForApolloLogin,
+  waitForNavigationTo
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
 import { IAccount } from '../database/models/accounts';
@@ -59,6 +61,11 @@ export const scraper = (() => {
 export const visitApollo = async () => {
   const page = await scraper.visit("https://app.apollo.io");
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
+}
+
+export const visitApolloLoginPage = async () => {
+  const page = await scraper.visit('https://app.apollo.io/#/login')
+  await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true });
 }
 
 // (FIX) complete func
@@ -114,6 +121,10 @@ export const apolloGoogleLogin = async (email: string, password: string) => {
 export const apolloOutlookLogin = async (email: string, password: string) => {
   const page = scraper.page() as Page
 
+  if (!page.url().includes(apolloLoggedOutURLSubstr)) {
+    await visitApolloLoginPage()
+  }
+
   // apollo login page (use to make sure navigated to login page)
   const apolloEmailFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="email"]';
   const apolloPasswordFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="password"]';
@@ -155,7 +166,7 @@ export const apolloOutlookLogin = async (email: string, password: string) => {
     await page.click(staySignedInButtonSelector);
 
     // apollo searchbar (logged in) (success)
-    await page.waitForSelector(apolloLoggedInSearchBarSelector, { visible: true });
+    await page.waitForSelector(apolloLoggedInSearchBarSelector, { visible: true, timeout: 10000 })
   }
 }
 
@@ -164,9 +175,9 @@ export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
-export const apolloStartPageScrape = async (): Promise<IRecord> => {
+export const apolloStartPageScrape = async () => {
   const page = scraper.page() as Page
-  const data = (await apolloDoc(page) as unknown) as IRecord;
+  const data = (await apolloDoc(page) as unknown) as IRecord[];
   return data;
 }
 
@@ -185,23 +196,17 @@ export const injectCookies = async (cookies?: string) => {
 }
 
 export const apolloDefaultLogin = async (email: string, password: string) => {
-  if (!scraper.browser()) {
-    await scraper.launchBrowser()
-  }
-
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
   const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
   const incorrectLoginSelector = '[class="zp_nFR11"]'
   const emptyFieldsSelector = '[class="error-label zp_HeV9x"]'
   const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
   const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'
-
-  scraper.visit('https://app.apollo.io/#/login')
-  const page = scraper.page()
-
-  if (!page) throw Error('failed to start browser (cookies)')
-
-  await page.waitForSelector(loginInputFieldSelector, {visible: true})
+  const page = scraper.page() as Page
+  
+  if (!page.url().includes(apolloLoggedOutURLSubstr)) {
+    await visitApolloLoginPage()
+  }
 
   const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
   const login = await page?.$$(loginInputFieldSelector)
@@ -232,24 +237,12 @@ export const apolloDefaultLogin = async (email: string, password: string) => {
   }
 }
 
-export const setupApolloForScraping = async (account: IAccount) => {
-  await injectCookies(account.cookie)
-  await visitApollo();
-
-  const page = scraper.page() as Page;
-  const pageUrl = page.url();
-  
-  // check if logged in via url
-  if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    logIntoApollo(account)
-    const cookies = await getBrowserCookies()
-    await addCookiesToAccount(account._id, cookies)
-  } 
-}
-
 // (FIX) FINISH
-export const logIntoApollo = async (account: IAccount) => {
-  let p: Promise<void>;
+export const logIntoApollo = async (account: Partial<IAccount>) => {
+  
+  if (!account.email || !account.password || !account.loginType) {
+    throw new Error('login details not provided')
+  }
 
   switch (account.loginType) {
     case 'default':
@@ -265,6 +258,23 @@ export const logIntoApollo = async (account: IAccount) => {
       await apolloDefaultLogin(account.email, account.password)
   }
 }
+
+export const setupApolloForScraping = async (account: IAccount) => {
+  await injectCookies(account.cookie)
+  await visitApollo();
+
+  const page = scraper.page() as Page;
+  const pageUrl = page.url();
+  
+  // check if logged in via url
+  if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
+    logIntoApollo(account)
+    const cookies = await getBrowserCookies()
+    await addCookiesToAccount(account._id, cookies)
+  } 
+}
+
+
 
 
 // export const InjectCookies = async (account: IAccount) => {

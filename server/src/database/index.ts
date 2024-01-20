@@ -3,7 +3,7 @@ import { AccountModel, IAccount } from "./models/accounts";
 import { IProxy, ProxyModel } from "./models/proxy";
 import { parseProxy, rmPageFromURLQuery } from "./util";
 import { generateSlug } from "random-word-slugs";
-import { RecordsModel } from "./models/records";
+import { IRecord, RecordsModel } from "./models/records";
 import { IMetaData, MetadataModel } from "./models/metadata";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -42,9 +42,9 @@ export const saveScrapeToDB = async (
   accountID: string, 
   cookies: string[], 
   url: string, 
-  data: {[key: string]: string}[],
+  data: IRecord[],
   metadataID: string,
-  proxy?: string,
+  proxy: string | null,
 ) => {
   const session = await startSession();
   try {

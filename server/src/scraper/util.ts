@@ -62,11 +62,11 @@ export const apolloUpdatePageQueryString = (url: string) => {
   return myURL.href;
 }
 
-export const waitForApolloLogin = () => new Promise((resolve, _reject) => {
+export const waitForNavigationTo = (location: string) => new Promise((resolve, _reject) => {
     const pg = scraper.page() as Page
     
     const browser_check = setInterval(async () => {
-      if ( pg.url().includes('settings/account') ) {
+      if ( pg.url().includes(location) ) {
         clearInterval(browser_check);
         resolve(true);
       } else if ( (await scraper.browser()!.pages()).length === 0) {
