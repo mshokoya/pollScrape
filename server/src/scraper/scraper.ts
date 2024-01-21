@@ -9,8 +9,6 @@ import {
   apolloLoggedOutURLSubstr,
   delay,
   getBrowserCookies,
-  waitForApolloLogin,
-  waitForNavigationTo
 } from './util';
 import {apolloDoc} from './dom/scrapeData';
 import { IAccount } from '../database/models/accounts';
@@ -20,6 +18,15 @@ import { addCookiesToAccount } from '../database';
 
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
 // https://gist.github.com/jeroenvisser101/636030fe66ea929b63a33f5cb3a711ad
+
+type Upgrade = {
+  plan: string
+  trialEnd: string
+  credits: {
+    used: string
+    limit: string
+  }
+}
 
 puppeteer.use(StealthPlugin());
 puppeteer.use(StealthUserAgent({
@@ -292,7 +299,7 @@ export const apolloGetCreditsInfo = async (): Promise<string[]> => {
   return [creditsUsed, creditsLimited];
 }
 
-export const apolloUpgradeAccount = async (): Promise<string[]> => {
+export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
   const page = scraper.page() as Page
   await scraper.visit('app.apollo.io/#/settings/plans/upgrade');
   const selector = await page!.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000});
@@ -313,5 +320,20 @@ export const apolloUpgradeAccount = async (): Promise<string[]> => {
   if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');
   const trialEndDate = trialEndSelector.innerText.split(':')[1].trim();
 
-  return [plan, trialEndDate]
+  const creditsSelector = await page.$$('div[class="zp_SJzex"]');
+  if (!creditsSelector) throw new Error('failed to upgrade, cannot find credits info');
+  const credits = creditsSelector[1].innerText
+
+  const credInfo = credits.spilt(' ');
+  const creditsUsed = credInfo[0];
+  const creditsLimited = credInfo[2];
+
+  return {
+    plan,
+    trialEnd: trialEndDate,
+    credits: {
+      used: creditsUsed,
+      limit: creditsLimited 
+    }
+  }
 }
