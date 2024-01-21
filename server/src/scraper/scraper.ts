@@ -337,3 +337,28 @@ export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
     }
   }
 }
+
+export const createApolloAccount = async () => {
+  scraper.restartBrowser()
+
+  const apollo = scraper.page()
+  const tempMail = await scraper.browser()?.newPage()
+  if (!tempMail) throw new Error('failed access email service, please try again')
+  
+  await tempMail.goto('temp-mail.org')
+  await tempMail.bringToFront(); 
+
+  const emailSelector = await tempMail.waitForSelector('input[class="emailbox-input opentip"]', {visible: true, timeout: 10000});
+  if (!emailSelector) throw new Error('failed to fine email, please try again')
+
+  const email = await tempMail.evaluate(() => {
+    const e = document!.querySelector('input[class="emailbox-input opentip"]')
+    //@ts-ignore
+    return e ? e.innerText : null
+  }) as string | null
+  
+  if (!email) throw new Error('faied to get email, please try again');
+
+  await apollo?.goto()
+
+}
