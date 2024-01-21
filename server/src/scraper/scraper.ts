@@ -274,39 +274,44 @@ export const setupApolloForScraping = async (account: IAccount) => {
   } 
 }
 
+export const apolloGetCreditsInfo = async (): Promise<string[]> => {
+  const page = scraper.page() as Page
+  await scraper.visit('app.apollo.io/#/settings/credits/current')
+  const selector = await page!.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000})
+  if (!selector) throw new Error('failed to get credit limit')
+  // 
+  const l = selector.innerText as string[]
+  console.log(l)
+  // 
+  const credInfo = l.spilt(' ');
+  const creditsUsed = credInfo[0];
+  const creditsLimited = credInfo[2];
 
+  const plan = await page.waitForSelector('div["zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000});
 
+  return [creditsUsed, creditsLimited];
+}
 
-// export const InjectCookies = async (account: IAccount) => {
-//   const page = scraper.page() as Page;
+export const apolloUpgradeAccount = async (): Promise<string[]> => {
+  const page = scraper.page() as Page
+  await scraper.visit('app.apollo.io/#/settings/plans/upgrade');
+  const selector = await page!.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000});
+  if (!selector) throw new Error('failed to upgrade account');
 
-//   await visitGoogle();
-//   if (account.cookies) {
-//     await setBrowserCookies(page, account.cookies); // needs work (cookest from string to array)
-//   }
-//   await visitApollo();
+  const upgradeButton = await page.$$('div[class="zp_LXyot"]');
+  await upgradeButton[1].click();
 
-//   const pageUrl = page.url();
-  
-//   // check if logged in via url
-//   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-//     await apolloLogin(account.apollo.email, account.apollo.password)
-//   } 
-// }
+  const confirmUpgradeButton = await page.$('button[class="zp-button zp_zUY3r zp_eFcMr zp_OztAP zp_Bn90r"]');
+  if (!confirmUpgradeButton) throw new Error('failed to upgrade, cannot find upgrade button')
+  await confirmUpgradeButton.click()
 
-// export const setupApollo = async (account) => {
-//   const p = scraper.page();
+  const planSelector = await page.waitForSelector('div["zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000});
+  if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
+  const plan = planSelector.innerText.split(' ')[0]
 
-//   await visitGoogle();
-//   if (account.cookies) {
-//     await setBrowserCookies(p, account.cookies); // needs work (cookest from string to array)
-//   }
-//   await visitApollo(s);
+  const trialEndSelector = await page.$('div[class="zp_SJzex"]');
+  if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');
+  const trialEndDate = trialEndSelector.innerText.split(':')[1].trim();
 
-//   const pageUrl = p.url();
-  
-//   // check if logged in via url
-//   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-//     await apolloLogin(s, account.apollo.email, account.apollo.password)
-//   } 
-// }
+  return [plan, trialEndDate]
+}

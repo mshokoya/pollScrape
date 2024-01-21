@@ -57,7 +57,7 @@ export const accountRoutes = (app: Express) => {
         {_id: req.body._id},
         req.body,
         { new: true }
-      );
+      ).lean();
   
       if (update !== null) throw new Error("Failed to update account");
       

@@ -19,7 +19,7 @@ export const recordRoutes = (app: Express) => {
     console.log('get record');
 
     try {
-      const record = await RecordsModel.findOne({_id: req.body._id})
+      const record = await RecordsModel.findOne({_id: req.body._id}).lean()
 
       if (record === null) throw new Error('cannot find record') 
 
