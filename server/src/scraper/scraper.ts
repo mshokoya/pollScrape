@@ -312,19 +312,40 @@ export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
   if (!confirmUpgradeButton) throw new Error('failed to upgrade, cannot find upgrade button')
   await confirmUpgradeButton.click()
 
-  const planSelector = await page.waitForSelector('div["zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000});
+  const planSelector = await page.waitForSelector('div[class="zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000});
   if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
-  const plan = planSelector.innerText.split(' ')[0]
+
+  const planStr = await planSelector.evaluate(() => {
+    const e = document.querySelector('div[class="zp-card-title zp_kiN_m"]')
+    //@ts-ignore
+    return e ? e.innerText : null
+  }) as string | null
+  if (!planStr) throw new Error('failed to find plan')
+  const plan = planStr.split(' ')[0];
+
 
   const trialEndSelector = await page.$('div[class="zp_SJzex"]');
   if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');
-  const trialEndDate = trialEndSelector.innerText.split(':')[1].trim();
+  const trialEndDateStr = await trialEndSelector.evaluate(() => {
+    const e = document.querySelector('div[class="zp_SJzex"]')
+    //@ts-ignore
+    return e ? e.innerText : null
+  })
+  if (!trialEndDateStr) throw new Error('failed to find trial end date')
+  const trialEndDate = trialEndDateStr.split(':')[1].trim();
 
   const creditsSelector = await page.$$('div[class="zp_SJzex"]');
   if (!creditsSelector) throw new Error('failed to upgrade, cannot find credits info');
-  const credits = creditsSelector[1].innerText
+  const creditsStr = await page.evaluate(() => {
+    const e = document.querySelectorAll('div[class="zp_SJzex"]')
+    if (!e) return null
+    if (e.length > 1) return null
+    //@ts-ignore
+    return e[1].innerText
+  })
+  if (!creditsStr) throw new Error('failed to upgrade, cannot find credits info');
 
-  const credInfo = credits.spilt(' ');
+  const credInfo = creditsStr.spilt(' ');
   const creditsUsed = credInfo[0];
   const creditsLimited = credInfo[2];
 
@@ -339,9 +360,10 @@ export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
 }
 
 export const createApolloAccount = async () => {
-  scraper.restartBrowser()
+  await scraper.restartBrowser()
 
-  const apollo = scraper.page()
+  const apollo = scraper.page() as Page
+
   const tempMail = await scraper.browser()?.newPage()
   if (!tempMail) throw new Error('failed access email service, please try again')
   
@@ -352,13 +374,28 @@ export const createApolloAccount = async () => {
   if (!emailSelector) throw new Error('failed to fine email, please try again')
 
   const email = await tempMail.evaluate(() => {
-    const e = document!.querySelector('input[class="emailbox-input opentip"]')
+    const e = document.querySelector('input[class="emailbox-input opentip"]')
     //@ts-ignore
     return e ? e.innerText : null
   }) as string | null
   
   if (!email) throw new Error('faied to get email, please try again');
 
-  await apollo?.goto()
+  await apollo?.goto('www.apollo.io/sign-up')
+  await apollo.bringToFront();
+
+  const input = await apollo?.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000})
+  if (!input) throw new Error('failed to register for apollo');
+  await input.type(email)
+  
+  const tsCheckbox = await apollo.$('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]')
+  if (!tsCheckbox) throw new Error('failed to find T&S checkbox')
+  await tsCheckbox.click()
+
+  const signupButton = await apollo.$('button[class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation mui-style-1t8qqg8"]')
+  if (!signupButton) throw new Error('failed to find signup button')
+  await signupButton.click()
+
+  // signup error selector p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]
 
 }
