@@ -378,7 +378,6 @@ export const createApolloAccount = async () => {
     //@ts-ignore
     return e ? e.innerText : null
   }) as string | null
-  
   if (!email) throw new Error('faied to get email, please try again');
 
   await apollo?.goto('www.apollo.io/sign-up')
@@ -398,4 +397,55 @@ export const createApolloAccount = async () => {
 
   // signup error selector p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]
 
+}
+
+const verifyGmail = async (recoverEmail: string) => {
+  
+
+  const page = scraper.page() as Page;
+
+  const verifyStr = await page.evaluate(() => {
+    const e = document.querySelector('span[jsslot]')
+    // @ts-ignore
+    return e ? e.innerText : null
+  })
+  if (!verifyStr) throw new Error('failed to confirm if verification is required')
+
+  if (verifyStr !== 'Verify that it’s you') throw new Error('verification not required')
+
+  const verificationMethods = await page.$$('div[class="vxx8jf"]')
+  let confirmRecovEmailIdx = -1;
+
+  if (!verificationMethods) throw new Error('failed to get verification methods')
+
+  if (verificationMethods.length !== 4) {
+    for (let i = 0; i < verificationMethods.length; i++) {
+      const isCRE = await page.evaluate((idx) => {
+        const c = document.querySelectorAll('div[class="vxx8jf')[idx]
+        // @ts-ignore
+        return c ? c.innerText : null
+      }, i) as string | null
+
+      if (isCRE && isCRE.includes('Confirm your recovery email')) {
+        confirmRecovEmailIdx = i
+        break
+      }
+    }
+  } else {
+    confirmRecovEmailIdx = 2;
+  }
+
+  if (confirmRecovEmailIdx === -1) throw new Error('failed to find "confirm email" recovery method')
+
+  await verificationMethods[confirmRecovEmailIdx].click()
+
+  const recovEmailInputEl = await page.waitForSelector('input[class="whsOnd zHQkBf"]', {visible: true, timeout: 10000});
+  if (!recovEmailInputEl) throw new Error('failed to find recovery email input')
+
+  await recovEmailInputEl.type(recoverEmail)
+
+  const newButton = await page.$('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]')
+  if (!newButton) throw new Error('failed to find next button')
+
+  await newButton.click()
 }
