@@ -20,17 +20,17 @@ export const ScrapeField = () => {
       return;
     }
 
-    // setreqInProcess(true)
+    setreqInProcess(true)
 
-    // await fetchData('/scrape', 'POST', {url: URLInput, from: pages.start, to: pages.end,  delay, usingProxy: false})
-    //   .then( (d) => {
-    //     console.log(d)
-    //     setreqInProcess(false)
-    //   })
-    //   .catch((err) => {
-    //     console.error(err)
-    //     setreqInProcess(false)
-    //   })
+    await fetchData('/scrape', 'POST', {url: URLInput, from: pages.start, to: pages.end,  delay, usingProxy: false})
+      .then( (d) => {
+        console.log(d)
+        setreqInProcess(false)
+      })
+      .catch((err) => {
+        console.error(err)
+        setreqInProcess(false)
+      })
   }
 
   const handleChanges = (e: ChangeEvent<HTMLInputElement>) => {
