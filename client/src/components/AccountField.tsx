@@ -41,6 +41,10 @@ export const AccountField = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await fetchData('/account', 'POST', input)
+      .then((d) => {
+        console.log('account post')
+        console.log(d)
+      })
   }
 
   

@@ -55,6 +55,10 @@ const verifyGmail = async (recoverEmail: string) => {
 export const apolloGoogleLogin = async (account: Partial<IAccount>) => {
   const page = scraper.page() as Page
 
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+
+  const apolloLoggedInSearchBarSelector = '.zp_bWS5y, .zp_J0MYa, .zp_EIhoD, zp_EYQkR';
+
   // apollo login page
   const apolloEmailFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="email"]';
   const apolloPasswordFieldSelector = 'input[class="zp_bWS5y zp_J0MYa"][name="password"]';
@@ -85,18 +89,20 @@ export const apolloGoogleLogin = async (account: Partial<IAccount>) => {
     await page.type(gmailEmailFieldSelector, account.email);
     await page.click(gmailNextButtonSelector);
 
-    await page.waitForNavigation({timeout: 5000})
+    // await page.waitForNavigation({timeout: 5000})
 
     const isEmailInvalid = await page.$(gmailInvalidEmailSelector)
     if (isEmailInvalid) throw new Error('invalid email (google)')
 
-    const isPasswordInvalid = page.$(gmailPasswordFieldSelector);
-    if (!isPasswordInvalid) throw new Error('invalid password (google)')
     
     await page.type(gmailPasswordFieldSelector, account.password);
     await page.click(gmailNextButtonSelector);
 
-    await page.waitForNavigation({timeout: 5000})
+    const isPasswordInvalid = await page.$(gmailInvalidPasswordSelector);
+    if (!isPasswordInvalid) throw new Error('invalid password (google)')
+
+    // await page.waitForNavigation({timeout: 5000})
+
 
     // ========== check if verification is needed ==========
     const verifyStr = await page.evaluate(() => {
@@ -105,14 +111,15 @@ export const apolloGoogleLogin = async (account: Partial<IAccount>) => {
       return e ? e.innerText : null
     })
   
+    // recovery email
     if (verifyStr === "Verify that it’s you") {
-      await verifyGmail(account)
+      if (!account.recoveryEmail) throw new Error('failed to verify email')
+      await verifyGmail(account.recoveryEmail)
     }
      // ===================================================
 
-    // await page.waitForSelector()
-    // heres where multiple thing can happen e.g different type of verification or login 
-
+    // apollo searchbar (logged in) (success)
+    await page.waitForSelector(apolloLoggedInSearchBarSelector, { visible: true, timeout: 10000 })
   }
 }
 

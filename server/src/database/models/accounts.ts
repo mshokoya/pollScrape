@@ -12,6 +12,7 @@ export type IAccount = {
   cookie: string
   proxy: string
   lastUsed: Date
+  recoveryEmail: string
 }
 
 const accountSchema = new Schema<IAccount>({
@@ -24,6 +25,7 @@ const accountSchema = new Schema<IAccount>({
   password: { type: String, default: "" },
   cookie: { type: String, default: "" },
   proxy: { type: String, default: "http://000.000.000.000:0000" },
+  recoveryEmail: { type: String, default: "" },
   // @ts-ignore
   lastUsed: { type: Date, default: Date() } // used to pick which to use to scrape
 });

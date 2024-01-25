@@ -19,8 +19,6 @@ import { addCookiesToAccount } from '../database';
 // https://www.zenrows.com/blog/puppeteer-extra#puppeteer-extra-plugin-recaptcha
 // https://gist.github.com/jeroenvisser101/636030fe66ea929b63a33f5cb3a711ad
 
-
-
 puppeteer.use(StealthPlugin());
 puppeteer.use(StealthUserAgent({
   stripHeadless: true,
@@ -36,12 +34,12 @@ export const scraper = (() => {
   
   return {
     launchBrowser: async () => {
-      browser = await puppeteer.launch()
+      browser = await puppeteer.launch({headless: false})
       page = await browser.newPage()
     },
     restartBrowser: async (): Promise<void> => {
       if (browser !== null) await browser.close();
-      browser = await puppeteer.launch({headless: false});
+      browser = await puppeteer.launch();
       page = await browser.newPage();
     },
     visit: async (url: string): Promise<Page> => {

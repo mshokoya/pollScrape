@@ -1,26 +1,33 @@
 import { Express } from 'express';
 import { addAccountToDB, addCookiesToAccount } from '../database';
 import { AccountModel } from '../database/models/accounts';
-import { logIntoApollo, scraper } from '../scraper/scraper';
+import { scraper } from '../scraper/scraper';
 import { apolloLoginManuallyAndGetCookies } from '../scraper';
 import { getBrowserCookies } from '../scraper/util';
+import { logIntoApollo } from '../scraper/apollo';
+import { apolloOutlookLogin, apolloOutlookSignup } from '../scraper/outlook';
 
 export const accountRoutes = (app: Express) => {
 
+  // (FIX) allow account overwrite. in  addAccountToDB use upsert
   app.post('/account', async (req, res) => {
     console.log('addAccount')
 
     const email = req.body.email;
     const password = req.body.password;
-    const loginType = req.body.loginType;
+    // const loginType = req.body.loginType;
+    const loginType = 'outlook';
 
     if (!email || !password || !loginType) {
       throw new Error('invalid request body')
     }
 
     try {
+      if (!scraper.browser()) {
+        await scraper.launchBrowser()
+      }
 
-      await logIntoApollo({email, password, loginType})
+      await apolloOutlookLogin({email, password, loginType})
 
       const cookie = await getBrowserCookies()
 
@@ -31,10 +38,12 @@ export const accountRoutes = (app: Express) => {
         cookie: JSON.stringify(cookie)
       })
   
-      if (save !== null) throw new Error("Account already exists");
+      // if (save !== null) throw new Error("Account already exists");
   
-      res.json({ok: true, message: null, data: save});
+      scraper.close()
+      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
+      if (scraper.browser()) await scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })

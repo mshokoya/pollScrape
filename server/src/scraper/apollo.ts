@@ -61,19 +61,19 @@ export const logIntoApollo = async (account: Partial<IAccount>) => {
 
   switch (account.loginType) {
     case 'default':
-      await apolloDefaultLogin(account.email, account.password)
+      await apolloDefaultLogin(account)
       break;
     case 'outlook':
-      await apolloOutlookLogin(account.email, account.password)
+      await apolloOutlookLogin(account)
       break;
     case 'google':
       await apolloGoogleLogin(account)
     default:
-      await apolloDefaultLogin(account.email, account.password)
+      await apolloDefaultLogin(account)
   }
 }
 
-export const apolloDefaultLogin = async (email: string, password: string) => {
+export const apolloDefaultLogin = async (account: Partial<IAccount>) => {
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
   const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
   const incorrectLoginSelector = '[class="zp_nFR11"]'
@@ -81,6 +81,8 @@ export const apolloDefaultLogin = async (email: string, password: string) => {
   const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
   const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'
   const page = scraper.page() as Page
+
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
   
   if (!page.url().includes(apolloLoggedOutURLSubstr)) {
     await visitApolloLoginPage()
@@ -91,8 +93,8 @@ export const apolloDefaultLogin = async (email: string, password: string) => {
 
   if (!login || !submitButton) throw new Error('failed to login');
 
-  await login[0].type(email)
-  await login[1].type(password)
+  await login[0].type(account.email)
+  await login[1].type(account.password)
 
   await submitButton?.click()
   // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
@@ -134,13 +136,18 @@ export const setupApolloForScraping = async (account: IAccount) => {
 export const apolloGetCreditsInfo = async (): Promise<string[]> => {
   const page = scraper.page() as Page
   await scraper.visit('app.apollo.io/#/settings/credits/current')
-  const selector = await page!.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000})
-  if (!selector) throw new Error('failed to get credit limit')
-  // 
-  const l = selector.innerText as string[]
-  console.log(l)
-  // 
-  const credInfo = l.spilt(' ');
+  const creditSelector = await page!.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000})
+  if (!creditSelector) throw new Error('failed to get credit limit')
+
+  const creditStr = await page.evaluate(() => {
+    const e = document.querySelector('div[class="zp_ajv0U"]')
+    // @ts-ignore
+    return e ? e.innerText : null
+  })
+
+  if (!creditStr) throw new Error('failed to get credit limit str')
+  
+  const credInfo = creditStr.spilt(' ');
   const creditsUsed = credInfo[0];
   const creditsLimited = credInfo[2];
 
