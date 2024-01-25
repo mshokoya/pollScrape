@@ -41,10 +41,13 @@ export const apolloOutlookSignup = async (account: Partial<IAccount>) => {
   if (!microsoftSignupButton) throw new Error('failed to signup, could not find microsoft signup button')
   await microsoftSignupButton.click({delay: 1000})
 
-  await outlookAuth(account as IAccount)
+  await outlookAuth(account )
 }
 
-const outlookAuth = async (account: IAccount) => {
+// (FIX) impliment fix for bad path (e.g incorrect email or password)
+const outlookAuth = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+  
   const page = scraper.page() as Page;
   // email input page
   const emailInputField = await page.waitForSelector('[class="form-control ltr_override input ext-input text-box ext-text-box"]', { visible: true, timeout: 10000 });
