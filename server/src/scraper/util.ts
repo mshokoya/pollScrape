@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { scraper } from "./scraper"
+import { scraper, visitGoogle } from "./scraper"
 
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist
@@ -46,22 +46,6 @@ export const getBrowserCookies = async (): Promise<string[]> => {
   return (cookies as unknown) as string[];
 };
 
-
-
-// (WARN) this is for automation page update
-export const apolloUpdatePageQueryString = (url: string) => {
-  const myURL = new URL(url);
-  const pageNum = myURL.searchParams.get('page') as string;
-
-  if (pageNum) {
-    myURL.searchParams.set('page', `${parseInt(pageNum)+1}`)
-  } else {
-    myURL.searchParams.set('page', '2')
-  }
-
-  return myURL.href;
-}
-
 export const waitForNavigationTo = (location: string) => new Promise((resolve, _reject) => {
     const pg = scraper.page() as Page
     
@@ -81,6 +65,15 @@ export const delay = (time: number) => {
   return new Promise(function(resolve) { 
       setTimeout(resolve, time)
   });
+}
+
+export const injectCookies = async (cookies?: string) => {
+  const page = scraper.page() as Page;
+
+  await visitGoogle();
+  if (cookies) {
+    await setBrowserCookies(page, cookies); // needs work (cookest from string to array)
+  }
 }
 
 // https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
