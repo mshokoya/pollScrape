@@ -2,7 +2,7 @@ import { addCookiesToAccount } from "../database";
 import { IAccount } from "../database/models/accounts";
 import { IRecord } from "../database/models/records";
 import { apolloDoc } from "./dom/scrapeData";
-import { apolloGoogleLogin } from "./gmail";
+import { apolloGmailLogin } from "./gmail";
 import { apolloOutlookLogin } from "./outlook";
 import { scraper } from "./scraper";
 import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies } from "./util";
@@ -66,10 +66,12 @@ export const logIntoApollo = async (account: Partial<IAccount>) => {
     case 'outlook':
       await apolloOutlookLogin(account)
       break;
-    case 'google':
-      await apolloGoogleLogin(account)
+    case 'gmail':
+      await apolloGmailLogin(account)
+      break
     default:
       await apolloDefaultLogin(account)
+      break;
   }
 }
 
@@ -179,7 +181,6 @@ export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
   }) as string | null
   if (!planStr) throw new Error('failed to find plan')
   const plan = planStr.split(' ')[0];
-
 
   const trialEndSelector = await page.$('div[class="zp_SJzex"]');
   if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');

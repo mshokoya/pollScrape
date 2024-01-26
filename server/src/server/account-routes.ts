@@ -16,7 +16,7 @@ export const accountRoutes = (app: Express) => {
     const email = req.body.email;
     const password = req.body.password;
     // const loginType = req.body.loginType;
-    const loginType = 'outlook';
+    const loginType = 'gmail';
 
     if (!email || !password || !loginType) {
       throw new Error('invalid request body')
@@ -27,23 +27,23 @@ export const accountRoutes = (app: Express) => {
         await scraper.launchBrowser()
       }
 
-      await apolloOutlookLogin({email, password, loginType})
+      await logIntoApollo({email, password, loginType})
 
-      const cookie = await getBrowserCookies()
+      // const cookie = await getBrowserCookies()
 
-      const save = await addAccountToDB({
-        email, 
-        password, 
-        loginType, 
-        cookie: JSON.stringify(cookie)
-      })
+      // const save = await addAccountToDB({
+      //   email, 
+      //   password, 
+      //   loginType, 
+      //   cookie: JSON.stringify(cookie)
+      // })
   
       // if (save !== null) throw new Error("Account already exists");
   
-      scraper.close()
+      // scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
-      if (scraper.browser()) await scraper.close()
+      // if (scraper.browser()) await scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })

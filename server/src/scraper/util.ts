@@ -76,6 +76,41 @@ export const injectCookies = async (cookies?: string) => {
   }
 }
 
+export const hideDom = async (page: Page) => {
+  await page.evaluate(() => {
+    const ol = document.createElement('div')
+    ol.className = 'zombie-s'
+    ol.style.cssText += 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background-color:black;pointer-events:none;display:flex;justify-content:center;align-items:center; font-size: 70%; color: white';
+    ol.innerText = 'Please do not do anything until this message is gone'
+    const dom = document.querySelector('html')
+    if (!dom) return ;
+    dom.insertBefore(ol, dom.firstChild)
+  })
+}
+
+export const waitForNavHideDom = async (page: Page) => {
+  await page.waitForNavigation({waitUntil: 'domcontentloaded'})
+    .then(async () => {
+      await page.evaluate(() => {
+        const ol = document.createElement('div')
+        ol.className = 'zombie-s'
+        ol.style.cssText += 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background-color:black;pointer-events:none;display:flex;justify-content:center;align-items:center; font-size: 70%; color: white';
+        ol.innerText = 'Please do not do anything until this message is gone'
+        const dom = document.querySelector('html')
+        if (!dom) return ;
+        dom.insertBefore(ol, dom.firstChild)
+      })
+    })
+}
+
+export const visibleDom = async (page: Page) => {
+  await page.evaluate(() => {
+    const element = document.querySelector('[class="zombie-s"]');
+    if (!element) return;
+    element.remove()
+  })
+}
+
 // https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
 
 // local values = {

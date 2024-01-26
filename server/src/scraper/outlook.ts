@@ -8,7 +8,7 @@
 
 import { scraper } from "./scraper";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { apolloLoggedOutURLSubstr, delay } from "./util";
+import { delay } from "./util";
 import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../database/models/accounts";
 
@@ -47,7 +47,7 @@ export const apolloOutlookSignup = async (account: Partial<IAccount>) => {
 // (FIX) impliment fix for bad path (e.g incorrect email or password)
 const outlookAuth = async (account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  
+
   const page = scraper.page() as Page;
   // email input page
   const emailInputField = await page.waitForSelector('[class="form-control ltr_override input ext-input text-box ext-text-box"]', { visible: true, timeout: 10000 });
@@ -80,17 +80,7 @@ const outlookAuth = async (account: Partial<IAccount>) => {
     const close = await page.$('[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]').catch(() => null)
     const  url = page.url();
 
-    if (
-      url.includes('app.apollo.io/#/onboarding-hub/queue') ||
-      url.includes('app.apollo.io/#/control-center') ||
-      url.includes('app.apollo.io/#/sequences') ||
-      url.includes('app.apollo.io/#/conversations') ||
-      url.includes('app.apollo.io/#/opportunities') ||
-      url.includes('app.apollo.io/#/enrichment-status') ||
-      url.includes('app.apollo.io/#/settings')
-    ) {
-      break
-    } else if (nextButton3) {
+    if (nextButton3) {
       await nextButton3.click({delay: 1000});
       counter = 0
     } else if (enableAuth) {
@@ -111,6 +101,16 @@ const outlookAuth = async (account: Partial<IAccount>) => {
     } else if (close) {
       await close.click({delay:1000})
       counter = 0
+    } else if (
+      url.includes('app.apollo.io/#/onboarding-hub/queue') ||
+      url.includes('app.apollo.io/#/control-center') ||
+      url.includes('app.apollo.io/#/sequences') ||
+      url.includes('app.apollo.io/#/conversations') ||
+      url.includes('app.apollo.io/#/opportunities') ||
+      url.includes('app.apollo.io/#/enrichment-status') ||
+      url.includes('app.apollo.io/#/settings')
+    ) {
+      break
     } else {
       counter++
     }

@@ -1,6 +1,4 @@
-import { Dispatch, SetStateAction } from "react"
-import { fetchData } from "../core/util"
-import { IAccount } from "./AccountField"
+import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
 
 type Props = {

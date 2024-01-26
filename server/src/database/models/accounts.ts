@@ -6,7 +6,7 @@ export type IAccount = {
   accountType: string
   trialTime: string
   isSuspended: boolean
-  loginType: 'default' | 'google' | 'outlook'
+  loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
   cookie: string
