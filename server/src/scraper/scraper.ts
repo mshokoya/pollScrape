@@ -3,7 +3,8 @@ import { Browser, Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import StealthUserAgent from 'puppeteer-extra-plugin-anonymize-ua';
 import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
-import devtools from 'puppeteer-extra-plugin-devtools';
+// import devtools from 'puppeteer-extra-plugin-devtools';
+import { hideDom } from './util';
 
 
 puppeteer.use(StealthPlugin());
@@ -44,4 +45,13 @@ export const scraper = (() => {
 export const visitGoogle = async () => {
   const page = await scraper.visit("https://www.google.com/");
   await page.waitForSelector(".RNNXgb", { visible: true });
+}
+
+export const apolloInitSignup = async (page: Page) => {
+  await scraper.visit('https://www.apollo.io/sign-up')
+    .then(async () => { await hideDom(page) })
+  
+  const tsCheckbox = await page.waitForSelector('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]', {visible: true})
+  if (!tsCheckbox) throw new Error('failed to find T&S checkbox')
+  await tsCheckbox.click()
 }

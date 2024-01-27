@@ -80,7 +80,7 @@ export const hideDom = async (page: Page) => {
   await page.evaluate(() => {
     const ol = document.createElement('div')
     ol.className = 'zombie-s'
-    ol.style.cssText += 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background-color:black;pointer-events:none;display:flex;justify-content:center;align-items:center; font-size: 70%; color: white';
+    ol.style.cssText += 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background-color:black;pointer-events:none;display:flex;justify-content:center;align-items:center; font-size: 70%; color: white';
     ol.innerText = 'Please do not do anything until this message is gone'
     const dom = document.querySelector('html')
     if (!dom) return ;
@@ -94,7 +94,7 @@ export const waitForNavHideDom = async (page: Page) => {
       await page.evaluate(() => {
         const ol = document.createElement('div')
         ol.className = 'zombie-s'
-        ol.style.cssText += 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background-color:black;pointer-events:none;display:flex;justify-content:center;align-items:center; font-size: 70%; color: white';
+        ol.style.cssText += 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background-color:black;pointer-events:none;display:flex;justify-content:center;align-items:center; font-size: 70%; color: white';
         ol.innerText = 'Please do not do anything until this message is gone'
         const dom = document.querySelector('html')
         if (!dom) return ;

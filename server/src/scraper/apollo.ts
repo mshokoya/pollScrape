@@ -1,9 +1,10 @@
+import { logIntoApollo } from ".";
 import { addCookiesToAccount } from "../database";
 import { IAccount } from "../database/models/accounts";
 import { IRecord } from "../database/models/records";
 import { apolloDoc } from "./dom/scrapeData";
-import { apolloGmailLogin } from "./gmail";
-import { apolloOutlookLogin } from "./outlook";
+import { apolloGmailLogin, apolloGmailSignup } from "./gmail";
+import { apolloOutlookLogin, apolloOutlookSignup } from "./outlook";
 import { scraper } from "./scraper";
 import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
@@ -52,28 +53,7 @@ export const apolloStartPageScrape = async () => {
   return data;
 }
 
-// (FIX) FINISH
-export const logIntoApollo = async (account: Partial<IAccount>) => {
-  
-  if (!account.email || !account.password || !account.loginType) {
-    throw new Error('login details not provided')
-  }
 
-  switch (account.loginType) {
-    case 'default':
-      await apolloDefaultLogin(account)
-      break;
-    case 'outlook':
-      await apolloOutlookLogin(account)
-      break;
-    case 'gmail':
-      await apolloGmailLogin(account)
-      break
-    default:
-      await apolloDefaultLogin(account)
-      break;
-  }
-}
 
 export const apolloDefaultLogin = async (account: Partial<IAccount>) => {
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]

@@ -9,7 +9,9 @@ import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
 import { addCookiesToAccount, getAllApolloAccounts, saveScrapeToDB } from '../database';
-import { apolloStartPageScrape, goToApolloSearchUrl, logIntoApollo, setupApolloForScraping } from './apollo';
+import { apolloDefaultLogin, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping } from './apollo';
+import { apolloOutlookLogin, apolloOutlookSignup } from './outlook';
+import { apolloGmailLogin, apolloGmailSignup } from './gmail';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -73,6 +75,49 @@ export const apolloLoginManuallyAndGetCookies = async (account: IAccount): Promi
     .catch(() => {
       return null
     })
+}
+
+// (FIX) FINISH
+export const logIntoApollo = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password || !account.loginType) {
+    throw new Error('login details not provided')
+  }
+
+  switch (account.loginType) {
+    case 'default':
+      await apolloDefaultLogin(account)
+      break;
+    case 'outlook':
+      await apolloOutlookLogin(account)
+      break;
+    case 'gmail':
+      await apolloGmailLogin(account)
+      break
+    default:
+      await apolloDefaultLogin(account)
+      break;
+  }
+}
+
+export const signupForApollo = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password || !account.loginType || !account.recoveryEmail) {
+    throw new Error('login details not provided')
+  }
+
+  switch (account.loginType) {
+    case 'default':
+      await apolloDefaultLogin(account)
+      break;
+    case 'outlook':
+      await apolloOutlookSignup(account)
+      break;
+    case 'gmail':
+      await apolloGmailSignup(account)
+      break
+    default:
+      await apolloDefaultLogin(account)
+      break;
+  }
 }
 
 
