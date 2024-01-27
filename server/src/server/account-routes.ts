@@ -112,4 +112,3 @@ export const accountRoutes = (app: Express) => {
   })
 
 }
-
