@@ -19,7 +19,7 @@ function App() {
       <div className='flex flex-auto justify-between grow gap-5 p-5'>
         {/* RECORDS */}
         <div className='flex flex-col basis-full'>
-          <h2 className='text-[2rem] mb-3'>RECORDS</h2>
+          {/* <h2 className='text-[2rem] mb-3'>RECORDS</h2> */}
           <RecordField />
         </div>
       </div>

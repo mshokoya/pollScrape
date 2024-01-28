@@ -250,6 +250,10 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
       case 'extend':
         //@ts-ignore
         e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
+        e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('border-cyan-600')
+        e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('border')
+
+         
         break;
     }
   }
@@ -268,7 +272,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
 
   return (
     <div className='border-cyan-600 border rounded grow overflow-auto'>
-    <table className=" w-[150%] font-light text-left table-fixed border-spacing-x-2">
+    <table className=" w-[150%] font-light text-left table-fixed border-spacing-x-2 border-collapse">
       <thead className='sticky top-0 bg-black text-sm z-50'>
         <tr>
           <th className="px-2 sticky left-0 bg-black">Name</th>
@@ -288,14 +292,17 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
           records.length && recordFilter().map( 
             (a, idx) => ( 
               <>
-                <tr className=' text-[0.8rem] h-[3rem] hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
-                  <td className='bg-black sticky left-0 px-2 overflow-hidden text-ellipsis' data-type='extend'>
+                <tr className='text-[0.8rem] h-[3rem] border border-cyan-600 border-opacity-30'  data-idx={idx} key={idx}>
+                  
+                  <td className='py-3 px-2 border-opacity-30 border border-cyan-600 bg-black sticky left-0  overflow-hidden text-ellipsis' data-type='extend'>
                     <div>{a.data.Name}</div>
                     <div><FaLinkedinIn /></div>
                   </td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Title}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis w-full max-w-full min-w-full' data-type='extend'>
-                    {a.data["Company Name"]}
+
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Title}</td>
+
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis w-full max-w-full min-w-full' data-type='extend'>
+                    <div className='mb-2'>{a.data["Company Name"]}</div>
                     <div className="flex gap-3">
                       {a.data["Company Website"] && <span><a href={a.data["Company Website"]}><BiLinkAlt /></a></span>}
                       {a.data["Company Linkedin"] && <span><a href={a.data["Company Linkedin"]}><FaLinkedinIn /></a></span>}
@@ -303,20 +310,28 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                       {a.data["Company Facebook"] && <span><a href={a.data["Company Facebook"]}><FaFacebookF /></a></span>}
                     </div>
                   </td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Email}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Location}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Employees}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Phone}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Industry}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Keywords}</td>
-                  <td className='px-2 overflow-hidden text-ellipsis' data-type='opt'>
+
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Email}</td>
+                  
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Location}</td>
+                  
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Employees}</td>
+                  
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Phone}</td>
+                  
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Industry}</td>
+                  
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='extend'>{a.data.Keywords}</td>
+                  
+                  <td className='py-3 px-2 overflow-hidden text-ellipsis' data-type='opt'>
                     <button >
                       <SlOptionsVertical className='inline'/>
-                    </button>
+                    </button> 
                   </td>
+
                 </tr>
-                <tr>
-                  <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
+                <tr >
+                  <td colSpan={10} className="hidden border-cyan-600 border">
                     <div>name: {a.data.Name}</div>
                     <div>linkedin: {a.data.Linkedin}</div>
                     <div>title: {a.data.Title}</div>
