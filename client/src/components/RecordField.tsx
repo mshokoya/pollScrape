@@ -250,6 +250,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
       case 'extend':
         //@ts-ignore
         e.target.closest('tr').nextSibling.classList.toggle('hidden')
+        //@ts-ignore
         e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
         break;
     }
@@ -292,7 +293,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                 <tr className='text-[0.8rem] h-[3rem] border border-cyan-600 border-opacity-30'  data-idx={idx} key={idx}>
                   
                   <td className='py-3 px-2 border-opacity-30 border border-cyan-600 bg-black sticky left-0  truncate' data-type='extend'>
-                    <div>{a.data.Name}</div>
+                    <div className='mb-2 truncate'>{a.data.Name}</div>
                     <div><FaLinkedinIn /></div>
                   </td>
 
