@@ -328,24 +328,65 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                   </td>
 
                 </tr>
-                <tr className="hidden">
-                  <td colSpan={10} className="hidden border-cyan-600 border">
-                    <div>name: {a.data.Name}</div>
-                    <div>linkedin: {a.data.Linkedin}</div>
-                    <div>title: {a.data.Title}</div>
-                    <div>company name: {a.data['Company Name']}</div>
-                    <div>company url: {a.data['Company Website']}</div>
-                    <div>company linkedin: {a.data['Company Linkedin']}</div>
-                    <div>company twitter: {a.data['Company Twitter']}</div>
-                    <div>company facebook: {a.data['Company Facebook']}</div>
-                    <div>email: {a.data.Email}</div>
-                    {/* <div>isVerified: {a.data.isVerified}</div> */}
-                    <div>location: {a.data.Location}</div>
-                    <div>employees: {a.data.Employees}</div>
-                    <div>phone: {a.data.Phone}</div>
-                    <div>industry: {a.data.Industry}</div>
-                    <div>keywords: {a.data.Keywords}</div>
-                  </td>
+                <tr className="hidden ">
+                  <table className="hidden border-cyan-600 border-y w-[15rem]">
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Name:</th>
+                      <td>{a.data.Name}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Linkedin:</th>
+                      <td>{a.data.Linkedin}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Title:</th>
+                      <td>{a.data.Title}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Company Name:</th>
+                      <td>{a.data['Company Name']}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Company Website:</th>
+                      <td>{a.data['Company Website']}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Company Linkedin:</th>
+                      <td>{a.data['Company Linkedin']}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Company Twitter:</th>
+                      <td>{a.data['Company Twitter']}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Company Facebook:</th>
+                      <td>{a.data['Company Facebook']}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Email:</th>
+                      <td>{a.data.Email}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Location:</th>
+                      <td>{a.data.Location}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Employees:</th>
+                      <td>{a.data.Employees}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Phone:</th>
+                      <td>{a.data.Phone}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Industry:</th>
+                      <td>{a.data.Industry}</td>
+                    </tr>
+                    <tr className="hover:border-cyan-600 hover:border-y">
+                      <th>Keywords:</th>
+                      <td>{a.data.Keywords}</td>
+                    </tr>
+                  </table>
                 </tr>
               </>
             )
