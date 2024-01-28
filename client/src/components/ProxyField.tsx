@@ -175,10 +175,10 @@ export const ProxyField = () => {
   }
 
   return (
-    <div className="flex relative grow">
+    <div className="flex relative grow text-xs">
     <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
-      <div className='mb-10'>
-        <div className="mb-4">
+      <div className='mb-2'>
+        <div className="mb-2">
           <button className={cls('http_full')} onClick={() => setSelected('http_full')}>HTTP Full</button>
           <button className={cls('http_split')} onClick={() => setSelected('http_split')}>HTTP Split</button>
           <button className={cls('socks_full')} onClick={() => setSelected('socks_full')}>Socks Full</button>

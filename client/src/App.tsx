@@ -35,15 +35,3 @@ function App() {
 }
 
 export default App
-
-        // {/* PROXIES */}
-        // <div className='flex flex-col basis-full'>
-        //   <h2 className='text-[2rem] mb-3'>PROXIES</h2>
-        //   <ProxyField />
-        // </div>
-
-        // {/* ACCOUNTS */}
-        // <div className='flex flex-col basis-full'>
-        //   <h2 className='text-[2rem] mb-3'>ACCOUNTS</h2>
-        //   <AccountField />
-        // </div>

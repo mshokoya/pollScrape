@@ -100,9 +100,9 @@ export const AccountField = () => {
   return (
     <>
     <PopupComp />
-    <div className="flex relative grow">
+    <div className="flex relative grow text-xs">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
-        <div className='mb-10'>
+        <div className='mb-2'>
           <form onSubmit={handleSubmit}>
             <div className='mb-3'>
               <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
