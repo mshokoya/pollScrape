@@ -249,11 +249,8 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
         break;
       case 'extend':
         //@ts-ignore
+        e.target.closest('tr').nextSibling.classList.toggle('hidden')
         e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
-        e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('border-cyan-600')
-        e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('border')
-
-         
         break;
     }
   }
@@ -330,7 +327,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                   </td>
 
                 </tr>
-                <tr >
+                <tr className="hidden">
                   <td colSpan={10} className="hidden border-cyan-600 border">
                     <div>name: {a.data.Name}</div>
                     <div>linkedin: {a.data.Linkedin}</div>
