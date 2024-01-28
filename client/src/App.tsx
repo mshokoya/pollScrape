@@ -17,18 +17,6 @@ function App() {
       </div>
 
       <div className='flex flex-auto justify-between grow gap-5 p-5'>
-        {/* PROXIES */}
-        <div className='flex flex-col basis-full'>
-          <h2 className='text-[2rem] mb-3'>PROXIES</h2>
-          <ProxyField />
-        </div>
-
-        {/* ACCOUNTS */}
-        <div className='flex flex-col basis-full'>
-          <h2 className='text-[2rem] mb-3'>ACCOUNTS</h2>
-          <AccountField />
-        </div>
-
         {/* RECORDS */}
         <div className='flex flex-col basis-full'>
           <h2 className='text-[2rem] mb-3'>RECORDS</h2>
@@ -41,3 +29,15 @@ function App() {
 }
 
 export default App
+
+        // {/* PROXIES */}
+        // <div className='flex flex-col basis-full'>
+        //   <h2 className='text-[2rem] mb-3'>PROXIES</h2>
+        //   <ProxyField />
+        // </div>
+
+        // {/* ACCOUNTS */}
+        // <div className='flex flex-col basis-full'>
+        //   <h2 className='text-[2rem] mb-3'>ACCOUNTS</h2>
+        //   <AccountField />
+        // </div>
