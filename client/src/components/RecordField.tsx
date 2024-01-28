@@ -328,63 +328,63 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                   </td>
 
                 </tr>
-                <tr className="hidden ">
-                  <table className="hidden border-cyan-600 border-y w-[15rem]">
+                <tr className="hidden">
+                  <table className="hidden border-cyan-600 border-y">
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Name:</th>
-                      <td>{a.data.Name}</td>
+                      <th className="whitespace-nowrap px-2">Name:</th>
+                      <td className="px-2">{a.data.Name}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Linkedin:</th>
-                      <td>{a.data.Linkedin}</td>
+                      <th className="whitespace-nowrap px-2">Linkedin:</th>
+                      <td className="px-2">{a.data.Linkedin}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Title:</th>
-                      <td>{a.data.Title}</td>
+                      <th className="whitespace-nowrap px-2">Title:</th>
+                      <td className="px-2">{a.data.Title}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Company Name:</th>
-                      <td>{a.data['Company Name']}</td>
+                      <th className="whitespace-nowrap px-2">Company Name:</th>
+                      <td className="px-2">{a.data['Company Name']}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Company Website:</th>
-                      <td>{a.data['Company Website']}</td>
+                      <th className="whitespace-nowrap px-2">Company Website:</th>
+                      <td className="px-2">{a.data['Company Website']}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Company Linkedin:</th>
-                      <td>{a.data['Company Linkedin']}</td>
+                      <th className="whitespace-nowrap px-2">Company Linkedin:</th>
+                      <td className="px-2">{a.data['Company Linkedin']}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Company Twitter:</th>
-                      <td>{a.data['Company Twitter']}</td>
+                      <th className="whitespace-nowrap px-2">Company Twitter:</th>
+                      <td className="px-2">{a.data['Company Twitter']}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Company Facebook:</th>
-                      <td>{a.data['Company Facebook']}</td>
+                      <th className="whitespace-nowrap px-2">Company Facebook:</th>
+                      <td className="px-2">{a.data['Company Facebook']}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Email:</th>
-                      <td>{a.data.Email}</td>
+                      <th className="whitespace-nowrap px-2">Email:</th>
+                      <td className="px-2">{a.data.Email}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Location:</th>
-                      <td>{a.data.Location}</td>
+                      <th className="whitespace-nowrap px-2">Location:</th>
+                      <td className="px-2">{a.data.Location}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Employees:</th>
-                      <td>{a.data.Employees}</td>
+                      <th className="whitespace-nowrap px-2">Employees:</th>
+                      <td className="px-2">{a.data.Employees}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Phone:</th>
-                      <td>{a.data.Phone}</td>
+                      <th className="whitespace-nowrap px-2">Phone:</th>
+                      <td className="px-2">{a.data.Phone}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Industry:</th>
-                      <td>{a.data.Industry}</td>
+                      <th className="whitespace-nowrap px-2">Industry:</th>
+                      <td className="px-2">{a.data.Industry}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
-                      <th>Keywords:</th>
-                      <td>{a.data.Keywords}</td>
+                      <th className="whitespace-nowrap px-2">Keywords:</th>
+                      <td className="px-2">{a.data.Keywords}</td>
                     </tr>
                   </table>
                 </tr>
