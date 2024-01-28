@@ -192,7 +192,7 @@ export const ProxyField = () => {
         </form>
       </div>
       
-      <div className=' border-cyan-600 border rounded grow overflow-auto'>
+      <div className='border-cyan-600 border rounded grow overflow-auto'>
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead className='sticky top-0 bg-black'>
             <tr>
