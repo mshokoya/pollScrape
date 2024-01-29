@@ -99,16 +99,16 @@ export const saveScrapeToDB = async (
   await session.endSession();
 }
 
-// https://www.ultimateakash.com/blog-details/IiwzQGAKYAo=/How-to-implement-Transactions-in-Mongoose-&-Node.Js-(Express)
-export const initMeta = async (url: string): Promise<IMetaData> => {
+export const initMeta = async (url: string, start: number, end: number): Promise<IMetaData> => {
 
-  const fmtURL = rmPageFromURLQuery(url)
+  const fmtURL = rmPageFromURLQuery(url) // sets page to 1
 
   const newMeta = await MetadataModel.create({
     name: generateSlug(), 
-    url, 
+    url,
     params: fmtURL.params,
-    page: fmtURL.page
+    start,
+    end,
   })
 
   return newMeta

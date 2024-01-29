@@ -15,3 +15,7 @@ export function shuffleArray<T>(array: T[]): T[] {
 
   return array;
 }
+
+export const isNumber = (value: any) => {
+  return typeof value === 'number';
+}
