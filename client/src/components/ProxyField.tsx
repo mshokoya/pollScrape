@@ -196,7 +196,7 @@ export const ProxyField = () => {
         <table className="text-[0.7rem] m-auto w-full table-fixed">
           <thead className='sticky top-0 bg-black'>
             <tr>
-              <th>Proto</th>
+              <th>Protocol</th>
               <th>Host</th>
               <th>Port</th>
               <th className='w-[10%]'><IoOptionsOutline className='inline'/></th>

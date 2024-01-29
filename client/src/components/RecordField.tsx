@@ -271,7 +271,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
   return (
     <div className='border-cyan-600 border rounded grow overflow-auto'>
     <table className=" w-[150%] font-light text-left table-fixed border-spacing-x-2 border-collapse">
-      <thead className='sticky top-0 bg-black text-sm z-50'>
+      <thead className='top-0 bg-black text-sm z-50'>
         <tr>
           <th className="px-2 sticky left-0 bg-black">Name</th>
           <th className="px-2">Title</th>
@@ -282,7 +282,6 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
           <th className="px-2">Phone</th>
           <th className="px-2">Industry</th>
           <th className="px-2">Keywords</th>
-          <th className='px-2 w-[2%]'><IoOptionsOutline className='inline' /></th>
         </tr>
       </thead>
       <tbody className="relative" onClick={handleExtendRow}>
@@ -290,7 +289,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
           records.length && recordFilter().map( 
             (a, idx) => ( 
               <>
-                <tr className='text-[0.8rem] h-[3rem] border border-cyan-600 border-opacity-30'  data-idx={idx} key={idx}>
+                <tr className='text-[0.8rem] border border-cyan-600 border-opacity-30'  data-idx={idx} key={idx}>
                   
                   <td className='py-3 px-2 border-opacity-30 border border-cyan-600 bg-black sticky left-0  truncate' data-type='extend'>
                     <div className='mb-2 truncate'>{a.data.Name}</div>
@@ -320,14 +319,9 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                   <td className='py-3 px-2 truncate' data-type='extend'>{a.data.Industry}</td>
                   
                   <td className='py-3 px-2 truncate' data-type='extend'>{a.data.Keywords}</td>
-                  
-                  <td className='py-3 px-2 truncate' data-type='opt'>
-                    <button >
-                      <SlOptionsVertical className='inline'/>
-                    </button> 
-                  </td>
 
                 </tr>
+
                 <tr className="hidden">
                   <table className="hidden border-cyan-600 border-y">
                     <tr className="hover:border-cyan-600 hover:border-y">

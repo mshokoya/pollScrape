@@ -10,7 +10,7 @@ export type IAccount = {
   _id: string
   domain: string
   accountType: string
-  trialTime: Date
+  trialTime: Date | string
   isSuspended: boolean
   email: string
   password: string
@@ -27,10 +27,10 @@ export const AccountField = () => {
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
   const [accounts, setAccounts] = useState<IAccount[]>([
-    // {_id: '12345', domain: 'domain', accountType: 'free', trialTime: `${new Date('') || 'n/a'}`, isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-    // {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
-    // {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-    // {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
+    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: `${new Date('') || 'n/a'}`, isSuspended: false, email: 'msefdsadsadefsdfsdfssadswdaedasdsasada@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
+    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
   ])
 
   useEffect(() => {
@@ -119,13 +119,15 @@ export const AccountField = () => {
         </div>
         
         <div className='border-cyan-600 border rounded grow overflow-auto'>
-          <table className="text-[0.7rem] m-auto w-full table-fixed">
+          <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
             <thead className='sticky top-0 bg-black'>
               <tr>
                 <th>Trial</th>
                 <th>Email</th>
                 <th>Password</th>
-                <th className='w-[7%]'><IoOptionsOutline className='inline' /></th>
+                <th>Type</th>
+                <th>TT</th>
+                <th className='w-[7%] sticky bg-black right-0'><IoOptionsOutline className='inline' /></th>
               </tr>
             </thead>
             <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
@@ -133,17 +135,19 @@ export const AccountField = () => {
                 accounts.length && accounts.map( 
                   (a, idx) => ( 
                     <>
-                      <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
-                        <td className='overflow-scroll' data-type='extend' >{fmtDate(a.trialTime)}</td>
-                        <td className='overflow-scroll' data-type='extend' >{a.email}</td>
-                        <td className='overflow-scroll' data-type='extend' >{a.password}</td>
-                        <td className='overflow-scroll' data-type='opt'>
+                      <tr className='text-[0.8rem] text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
+                        <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.email}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.password}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.accountType}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>
+                        <td className='overflow-scroll sticky bg-black right-0' data-type='opt'>
                           <button >
                             <SlOptionsVertical className='inline'/>
                           </button>
                         </td>
                       </tr>
-                      <tr>
+                      <tr className="hidden">
                         <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
                           <div>id: {a._id}</div>
                           <div>domain: {a.domain}</div>
