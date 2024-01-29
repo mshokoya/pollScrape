@@ -151,8 +151,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
     switch (type) {
       case 'opt':
         //@ts-ignore
-        console.log()
-        setSelectedAcc(e.target.closest('tr').dataset.idx)
+        setSelectedMeta(e.target.closest('tr').dataset.idx)
         break;
       case 'check':
         //@ts-ignore

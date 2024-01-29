@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState, Dispatch, ChangeEvent, MouseEvent } fro
 import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
+import { ProxyPopup } from "./ProxyPopup";
+import { proxyMockData } from "../core/mockdata";
 
 export type IProxy = {
   _id: string;
@@ -52,48 +54,13 @@ const socks = () => ({
 })
 
 export const ProxyField = () => {
+  const [selectedProxy, setSelectedProxy] = useState<number | null>(null)
   const [selected, setSelected] = useState('http_full');
   const [input, setInput] = useState<InputState>({
     http: proxy(),
     socks: socks()
   })
-  const [proxies, setProxies] = useState<IProxy[]>([
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-    // {protocol: "https://000.000.000.000:8000", host:'000.000.000.000', port: '8000'},
-  ])
+  const [proxies, setProxies] = useState<IProxy[]>(proxyMockData)
   const [reqInProcess, setreqInProcess] = useState<boolean>(false)
 
   useEffect(() => {
@@ -170,12 +137,19 @@ export const ProxyField = () => {
     switch (type) {
       case 'opt':
         //@ts-ignore
-        console.log(e.target.closest('tr').dataset.idx)
+        const accIdx = e.target.closest('tr').dataset.idx;
+        setSelectedProxy(accIdx)
         break;
     }
   }
 
+  const PopupComp = () => selectedProxy
+  ? <ProxyPopup setPopup={setSelectedProxy} proxy={proxies[selectedProxy]} />
+  : null;
+
   return (
+    <>
+    <PopupComp />
     <div className="flex relative grow text-xs">
     <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
       <div className='mb-2'>
@@ -225,6 +199,7 @@ export const ProxyField = () => {
       </div>
     </div>
     </div>
+  </>
   )
 }
 
