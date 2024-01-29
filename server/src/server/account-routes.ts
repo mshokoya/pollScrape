@@ -5,6 +5,7 @@ import { apolloInitSignup, scraper } from '../scraper/scraper';
 import { apolloLoginManuallyAndGetCookies, signupForApollo } from '../scraper';
 import { getBrowserCookies } from '../scraper/util';
 import { apolloOutlookLogin, apolloOutlookSignup } from '../scraper/outlook';
+import { getDomain } from '../helpers';
 
 export const accountRoutes = (app: Express) => {
 
@@ -14,14 +15,12 @@ export const accountRoutes = (app: Express) => {
 
     if (!req.body.account) throw new Error('please provide account')
 
-    const email = req.body.account.email;
-    const password = req.body.account.password;
-    const loginType = req.body.account.loginType;
-    // const recoveryEmail = req.body.account.recoveryEmail;
-    // const loginType = 'outlook';
+    const email = req.body.email;
+    const password = req.body.password;
+    const recoveryEmail = req.body.recoveryEmail;
 
-    if (!email || !password || !loginType) {
-      throw new Error('invalid request body')
+    if (!email || !password) {
+      throw new Error('invalid request params')
     }
 
     try {
@@ -29,16 +28,21 @@ export const accountRoutes = (app: Express) => {
         await scraper.launchBrowser()
       }
 
-      // {email, password, loginType, recoveryEmail: 'poopgame160@gmail.com'}
-      await signupForApollo(req.body.account)
+      const domain = getDomain(email);
+
+      const account: Partial<IAccount> = {email, password, domain}
+      if (recoveryEmail) account.recoveryEmail = recoveryEmail
+
+      await signupForApollo(account)
 
       const cookie = await getBrowserCookies()
 
       const save = await addAccountToDB({
         email, 
         password, 
-        loginType, 
-        cookie: JSON.stringify(cookie)
+        domain, 
+        cookie: JSON.stringify(cookie),
+        recoveryEmail
       })
   
       if (save !== null) throw new Error("Account already exists");
@@ -104,10 +108,26 @@ export const accountRoutes = (app: Express) => {
           }
         })
 
+      scraper.close()
       res.json({ok: true, message: null, data: updatedAcc});
     } catch (err: any) {
       scraper.close()
       res.json({ok: false, message: err.message, data: err});
+    }
+  })
+
+  app.delete('/account/:id', async (req, res) => {
+    const accountID = req.params.id
+
+    try {
+      if (!accountID) throw new Error('failed to delete account, please provide valid id')
+
+      await AccountModel.deleteOne({_id: accountID}).lean()
+        .catch(() => {throw new Error('Failed to delete account')})
+
+      res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: null});
     }
   })
 

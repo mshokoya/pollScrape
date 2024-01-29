@@ -43,6 +43,5 @@ export const metadataRoutes = (app: Express) => {
       res.json({ok: false, message: err.message, data: err});
     }
   });
-
 }
 

@@ -19,3 +19,10 @@ export function shuffleArray<T>(array: T[]): T[] {
 export const isNumber = (value: any) => {
   return typeof value === 'number';
 }
+
+export const getDomain = (email: string) => {
+  const d = email.split('@')[1];
+  const domain = d.split('.')[0];
+
+  return domain;
+}

@@ -100,14 +100,12 @@ export const logIntoApollo = async (account: Partial<IAccount>) => {
 }
 
 export const signupForApollo = async (account: Partial<IAccount>) => {
-  if (!account.email || !account.password || !account.loginType || !account.recoveryEmail) {
+  if (!account.email || !account.password || !account.domain) {
     throw new Error('login details not provided')
   }
 
-  switch (account.loginType) {
-    case 'default':
-      await apolloDefaultLogin(account)
-      break;
+  switch (account.domain) {
+    case 'hotmail':
     case 'outlook':
       await apolloOutlookSignup(account)
       break;
