@@ -56,6 +56,7 @@ export const startScrapingApollo = async (metaID: string, url: string, usingProx
   await scraper.close();
 }
 
+// (FIX): login is fully automated, Only part that should be automated is email and password input then submit, let user do rest
 // (FIX): need to impliment proxies // sort out inital login popups (look for close button)
 export const apolloLoginManuallyAndGetCookies = async (account: IAccount): Promise<string[] | null> => {
   if (!scraper.browser()) {

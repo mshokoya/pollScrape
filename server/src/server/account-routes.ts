@@ -45,7 +45,7 @@ export const accountRoutes = (app: Express) => {
         recoveryEmail
       })
   
-      if (save !== null) throw new Error("Account already exists");
+      if (save !== null) throw new Error("Failed to add account, account already exists");
   
       scraper.close()
       res.json({ok: true, message: null, data: null});
@@ -71,9 +71,9 @@ export const accountRoutes = (app: Express) => {
     try {
       const update = await AccountModel.findOneAndUpdate(
         {_id: req.body._id},
-        req.body,
+        {'$set': req.body },
         { new: true }
-      ).lean();
+      ).lean()
   
       if (update !== null) throw new Error("Failed to update account");
       
@@ -84,14 +84,14 @@ export const accountRoutes = (app: Express) => {
   })
 
   // (FIX): make reactive
-  app.post('/account/cookies', async (req, res) => {
-    console.log('loginCookies')
+  app.get('/account/login/a/:id', async (req, res) => {
+    console.log('login')
 
-    const account = req.body.account
+    const account = req.params.id
 
     try{
 
-      if (!account) throw new Error('invalid request body');
+      if (!account) throw new Error('Failed to login, invalid request body');
 
       const updatedAcc  = await apolloLoginManuallyAndGetCookies(req.body.account)
         .then(async (cookie) => {
@@ -99,12 +99,12 @@ export const accountRoutes = (app: Express) => {
 
             const newAccount = await addCookiesToAccount(account._id, cookie)
         
-            if (!newAccount) throw new Error('failed to login (save cookies)');
+            if (!newAccount) throw new Error('Failed to login (save cookies)');
         
             return newAccount
             
           } else {
-            throw new Error('failed to login (cookies)')
+            throw new Error('Failed to login (cookies)')
           }
         })
 
@@ -120,15 +120,48 @@ export const accountRoutes = (app: Express) => {
     const accountID = req.params.id
 
     try {
-      if (!accountID) throw new Error('failed to delete account, please provide valid id')
+      if (!accountID) throw new Error('Failed to delete account, please provide valid id')
 
       await AccountModel.deleteOne({_id: accountID}).lean()
-        .catch(() => {throw new Error('Failed to delete account')})
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: null});
     }
+  })
+
+  app.get('/account/check/:id', (req, res) => {
+
+    try {
+      const accountID = req.params.id
+      if (!accountID) throw new Error('Failed to check account, please provide valid id');
+
+      res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: null});
+    } 
+  })
+
+  app.get('account/upgrade/a/:id', async (req, res) => {
+    try {
+      const accountID = req.params.id
+      if (!accountID) throw new Error('Failed to check account, please provide valid id');
+
+      res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: null});
+    } 
+  })
+
+  app.get('account/upgrade/m/:id', async (req, res) => {
+    try {
+      const accountID = req.params.id
+      if (!accountID) throw new Error('Failed to check account, please provide valid id');
+
+      res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: null});
+    } 
   })
 
 }
