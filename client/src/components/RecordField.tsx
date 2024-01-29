@@ -59,23 +59,23 @@ export const RecordField = () => {
   const [meta, setMeta] = useState<IMetaData[]>(metaMockData);
   const [records, setRecords] = useState<IRecords[]>(recordMockData);
 
-  // useEffect(() => {
-  //   // eslint-disable-next-line no-async-promise-executor
-  //   new Promise(async (resolve) => {
-  //     const meta = await fetchData('/metadata', 'GET');
-  //     const records = await fetchData('/records', 'GET');
-  //     resolve({meta, records})
-  //   })
-  //   .then( (data: any) => {
-  //     console.log(data.meta.data)
-  //     setMeta(data.meta.data)
-  //     setRecords(data.records.data)
-  //   })
-  //   .catch( (err: any) => {
-  //     console.log('error')
-  //     console.log(err.message)
-  //   })
-  // }, [])
+  useEffect(() => {
+    // eslint-disable-next-line no-async-promise-executor
+    new Promise(async (resolve) => {
+      const meta = await fetchData('/metadata', 'GET');
+      const records = await fetchData('/records', 'GET');
+      resolve({meta, records})
+    })
+    .then( (data: any) => {
+      console.log(data.meta.data)
+      setMeta(data.meta.data)
+      setRecords(data.records.data)
+    })
+    .catch( (err: any) => {
+      console.log('error')
+      console.log(err.message)
+    })
+  }, [])
 
 
   return (

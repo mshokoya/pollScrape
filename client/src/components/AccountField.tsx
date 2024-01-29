@@ -18,13 +18,14 @@ export type IAccount = {
   cookie: string
   proxy: string
   lastUsed: Date
+  recoveryEmail: string;
 }
 
 // https://jsfiddle.net/mfwYS/
 // https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
 
 export const AccountField = () => {
-  const [input, setInput] = useState({email: '', password: ''});
+  const [input, setInput] = useState({email: '', password: '', recovery: ''});
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
   const [accounts, setAccounts] = useState<IAccount[]>(accountMockData)
@@ -34,6 +35,7 @@ export const AccountField = () => {
       .then(data => setAccounts(data.data))
   }, [])
 
+  // (FIX) email verification + get domain to determine login type
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await fetchData('/account', 'POST', input)
@@ -83,13 +85,19 @@ export const AccountField = () => {
       })
   }
 
+  const upgradeAccounts = async () => {
+    await  fetchData(`/account/upgrade`, 'GET')
+      .then(() => {})
+      .catch(() => {})
+  }
+
   const fmtDate = (n: any) => n.toDateString
       ? n.toDateString()
       : n;
 
 
   const PopupComp = () => selectedAcc
-      ? <AccountPopup setPopup={setSelectedAcc} getLoginCookie={handleGetLoginCookie} />
+      ? <AccountPopup setPopup={setSelectedAcc} getLoginCookie={handleGetLoginCookie} account={accounts[selectedAcc]} />
       : null;
 
   return (
@@ -109,9 +117,17 @@ export const AccountField = () => {
               <input required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
             </div>
 
-            <input className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit" value="Add Account"/>
+            <div className='mb-3'>
+              <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">RecoveryEmail:</label>
+              <input type="text" id="recovery" value={input.recovery} onChange={ e => {setInput(p => ({...p, recovery: e.target.value}))}}/>
+            </div>
+
+            <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>
+            
           </form>
         </div>
+
+        <input className='text-cyan-600 border-cyan-600 border rounded p-1 mb-1' type="button" value="Upgrade All Accounts" onClick={upgradeAccounts}/>
         
         <div className='border-cyan-600 border rounded grow overflow-auto'>
           <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
@@ -196,5 +212,3 @@ export const AccountField = () => {
   </>
   )
 }
-
-{/* <td colSpan={3} className="hidden hover:border-cyan-600 hover:border"> */}
