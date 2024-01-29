@@ -63,7 +63,10 @@ export const saveScrapeToDB = async (
     ).lean();
 
 
-    if (!newAcc) throw new Error('failed to update account after scrape, if this continues please contact developer')
+    if (!newAcc) {
+      await session.abortTransaction();
+      throw new Error('failed to update account after scrape, if this continues please contact developer')
+    }
 
     // METADATA UPDATE
     const fmtURL = rmPageFromURLQuery(url)
@@ -78,16 +81,20 @@ export const saveScrapeToDB = async (
       updateOpts
     ).lean();
 
-    if (!newMeta) throw new Error('failed to update meta after scrape, if this continues please contact developer')
+    if (!newMeta) {
+      await session.abortTransaction();
+      throw new Error('failed to update meta after scrape, if this continues please contact developer')
+    }
 
     // RECORD UPDATE
     const fmtData = data.map((d) => ({scrapeID, url, page: fmtURL.page, data: d}))
 
-    const records = await RecordsModel.insertMany(fmtData, updateOpts)
+    await RecordsModel.insertMany(fmtData, updateOpts)
 
     await session.commitTransaction();
   } catch (error) {
     await session.abortTransaction();
+    throw new Error('failed to save scrape to db')
   }
   await session.endSession();
 }
@@ -109,4 +116,39 @@ export const initMeta = async (url: string): Promise<IMetaData> => {
 
 export const getAllApolloAccounts = async (): Promise<IAccount[]> => {
   return await AccountModel.find({}).lean() as IAccount[]
+}
+
+export const deleteMetaAndRecords = async (metaID: string) => {
+  const session = await startSession();
+
+  try {
+    const meta = await MetadataModel.findOneAndDelete({_id: metaID}, {session}).lean();
+
+    if (!meta) {
+      await session.abortTransaction();
+      throw new Error('failed to delete meta data & records')
+    }
+
+    const scrapeIds = meta.scrapes.map((m) => m.scrapeID);
+    
+    await RecordsModel.deleteMany({scrapeID: {'$in': scrapeIds}}, session)
+    
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw new Error('failed to delete meta data & records')
+  }
+  await session.endSession();
+}
+
+export const updateMeta = async (meta: IMetaData) => {
+  const newMeta = await MetadataModel.findByIdAndUpdate(
+    {_id: meta._id},
+    {$set: meta},
+    {new: true}
+  )
+
+  if (!newMeta) throw new Error('failed to update metadata');
+
+  return newMeta;
 }
