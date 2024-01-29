@@ -47,9 +47,6 @@ export const AccountField = () => {
       })
   }
 
-  
-  
-
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
@@ -63,7 +60,9 @@ export const AccountField = () => {
         break;
       case 'extend':
         //@ts-ignore
-        e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
+        e.target.closest('tr').nextSibling.classList.toggle('hidden')
+        //@ts-ignore
+        e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
         break;
     }
   }
@@ -148,28 +147,58 @@ export const AccountField = () => {
                         </td>
                       </tr>
                       <tr className="hidden">
-                        <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
-                          <div>id: {a._id}</div>
-                          <div>domain: {a.domain}</div>
-                          <div>accountType: {a.accountType}</div>
-                          <div>trialTime: {fmtDate(a.trialTime)}</div>
-                          <div>isSuspended: {a.isSuspended}</div>
-                          <div>email: {a.email}</div>
-                          <div>password: {a.password}</div>
-                          <div>cookies: {a.cookie}</div>
-                          <div>proxy: {a.proxy}</div>
-                          <div>lastUsed: {fmtDate(a.lastUsed)}</div>
-                        </td>
-                      </tr>
-                    </>
-                  )
+                      <table className="hidden border-cyan-600 border-y text-[0.7rem]">
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Trial:</th>
+                          <td className="px-2">{fmtDate(a.trialTime)}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Email:</th>
+                          <td className="px-2">{a.email}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Password:</th>
+                          <td className="px-2">{a.password}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Account Type:</th>
+                          <td className="px-2">{a.accountType}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Domain:</th>
+                          <td className="px-2">{a.domain}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Is Account Suspended:</th>
+                          <td className="px-2">{a.isSuspended}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Cookies:</th>
+                          <td className="px-2">{!!a.cookie}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Proxy:</th>
+                          <td className="px-2">{a.proxy}</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">Last Used:</th>
+                          <td className="px-2">{fmtDate(a.lastUsed)}</td>
+                        </tr>
+                      </table>
+                    </tr>
+                  </>
                 )
-              }
-            </tbody>
-          </table>
+              )
+            }
+          </tbody>
+        </table>
+
         </div>
       </div>
     </div>
   </>
   )
 }
+
+{/* <td colSpan={3} className="hidden hover:border-cyan-600 hover:border"> */}

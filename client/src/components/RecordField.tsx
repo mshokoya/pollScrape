@@ -9,6 +9,7 @@ import { BiLinkAlt } from "react-icons/bi";
 import { FaTwitter } from "react-icons/fa";
 import { FaFacebookF } from "react-icons/fa";
 import LinesEllipsis from 'react-lines-ellipsis'
+import { MetaPopup } from "./MetaPopup";
 
 export type IMetaData = {
   _id: string
@@ -140,6 +141,8 @@ export const RecordField = () => {
 }
 
 export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
+  const [selectedMeta, setSelectedMeta] = useState<number | null>(null)
+
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
@@ -148,7 +151,8 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
     switch (type) {
       case 'opt':
         //@ts-ignore
-        console.log(e.target.closest('tr').dataset.idx)
+        console.log()
+        setSelectedAcc(e.target.closest('tr').dataset.idx)
         break;
       case 'check':
         //@ts-ignore
@@ -170,7 +174,13 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
       : setMetaChecked(meta.map((_, idx) => idx))
   }
 
+  const PopupComp = () => selectedMeta
+  ? <MetaPopup setPopup={setSelectedMeta} meta={meta[selectedMeta]} />
+  : null;
+
   return (
+    <>
+    <PopupComp />
     <div className=' border-cyan-600 min-w-[30%] max-w-[30%] border rounded overflow-auto'>
     <table className="text-[0.7rem] m-auto w-full table-fixed">
       <thead className='sticky top-0 bg-black'>
@@ -228,6 +238,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
       </tbody>
     </table>
   </div>
+  </>
   )
 }
 
@@ -242,7 +253,14 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
     //@ts-ignore
     const type = e.target.closest('td')?.dataset.type as string
 
+    const link = e.currentTarget.dataset.link as string
+
+    console.log(link)
+
+
     switch (type) {
+      case 'link':
+        break;
       case 'opt':
         //@ts-ignore
         console.log(e.target.closest('tr').dataset.idx)
@@ -293,7 +311,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                   
                   <td className='py-3 px-2 border-opacity-30 border border-cyan-600 bg-black sticky left-0  truncate' data-type='extend'>
                     <div className='mb-2 truncate'>{a.data.Name}</div>
-                    <div><FaLinkedinIn /></div>
+                    <div><a href={a.data.Linkedin} data-type='link'></a><FaLinkedinIn /></div>
                   </td>
 
                   <td className='py-3 px-2 truncate' data-type='extend'>{a.data.Title}</td>
@@ -301,10 +319,10 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                   <td className='py-3 px-2 overflow-hidden w-full max-w-full min-w-full' data-type='extend'>
                     <div className='mb-2 truncate'>{a.data["Company Name"]}</div>
                     <div className="flex gap-3">
-                      {a.data["Company Website"] && <span><a href={a.data["Company Website"]}><BiLinkAlt /></a></span>}
-                      {a.data["Company Linkedin"] && <span><a href={a.data["Company Linkedin"]}><FaLinkedinIn /></a></span>}
-                      {a.data["Company Twitter"] && <span><a href={a.data["Company Twitter"]}><FaTwitter /></a></span>}
-                      {a.data["Company Facebook"] && <span><a href={a.data["Company Facebook"]}><FaFacebookF /></a></span>}
+                      {a.data["Company Website"] && <span><BiLinkAlt /></span>}
+                      {a.data["Company Linkedin"] && <span><FaLinkedinIn /></span>}
+                      {a.data["Company Twitter"] && <span><FaTwitter /></span>}
+                      {a.data["Company Facebook"] && <span><FaFacebookF /></span>}
                     </div>
                   </td>
 

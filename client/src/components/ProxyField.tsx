@@ -4,6 +4,7 @@ import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 
 export type IProxy = {
+  _id: string;
   protocol: string;
   host: string;
   port: string;
