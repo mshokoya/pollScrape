@@ -3,6 +3,7 @@ import {fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
+import { accountMockData } from "../core/mockdata";
 
 
 
@@ -26,12 +27,7 @@ export const AccountField = () => {
   const [input, setInput] = useState({email: '', password: ''});
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
-  const [accounts, setAccounts] = useState<IAccount[]>([
-    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: `${new Date('') || 'n/a'}`, isSuspended: false, email: 'msefdsadsadefsdfsdfssadswdaedasdsasada@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
-    {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-    {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
-  ])
+  const [accounts, setAccounts] = useState<IAccount[]>(accountMockData)
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
