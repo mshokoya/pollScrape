@@ -47,7 +47,8 @@ export const visitGoogle = async () => {
   await page.waitForSelector(".RNNXgb", { visible: true });
 }
 
-export const apolloInitSignup = async (page: Page) => {
+export const apolloInitSignup = async () => {
+  const page = scraper.page() as Page
   await scraper.visit('https://www.apollo.io/sign-up')
     .then(async () => { await hideDom(page) })
   

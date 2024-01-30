@@ -12,9 +12,8 @@ import { delay } from "./util";
 import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../database/models/accounts";
 
-export const apolloOutlookLogin = async (account: Partial<IAccount>) => {
-  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  
+
+export const visitOutlookLoginAuthPortal = async () => {
   const page = scraper.page() as Page
   
   await visitApolloLoginPage();
@@ -22,24 +21,7 @@ export const apolloOutlookLogin = async (account: Partial<IAccount>) => {
   const microsoftLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD zp_bW01P"]')
   if (!microsoftLoginButton) throw new Error('failed to login, could not find microsoft login button')
   await microsoftLoginButton.click({delay: 1000})
-
-  await outlookAuth(account as IAccount)
 }
-
-export const apolloOutlookSignup = async (account: Partial<IAccount>) => {
-  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  
-  const page = scraper.page() as Page
-  
-  await apolloInitSignup(page)
-
-  const microsoftSignupButton = await page.$('button[id="microsoft-oauth-button"]')
-  if (!microsoftSignupButton) throw new Error('failed to signup, could not find microsoft signup button')
-  await microsoftSignupButton.click({delay: 1000})
-
-  await outlookAuth(account)
-}
-
 
 const outlookAuth = async (account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
@@ -131,4 +113,24 @@ const outlookAuth = async (account: Partial<IAccount>) => {
     }
     await delay(3000)
   }
+}
+
+export const apolloOutlookLogin = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+  await visitOutlookLoginAuthPortal()
+  await outlookAuth(account as IAccount)
+}
+
+export const apolloOutlookSignup = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+  
+  const page = scraper.page() as Page
+  
+  await apolloInitSignup()
+
+  const microsoftSignupButton = await page.$('button[id="microsoft-oauth-button"]')
+  if (!microsoftSignupButton) throw new Error('failed to signup, could not find microsoft signup button')
+  await microsoftSignupButton.click({delay: 1000})
+
+  await outlookAuth(account)
 }

@@ -51,63 +51,34 @@ const verifyGmail = async (recoverEmail: string) => {
   await newButton.click()
 }
 
-
-// (FIX) complete func
-export const apolloGmailLogin = async (account: Partial<IAccount>) => {
+export const visitGmailLoginAuthPortal = async () => {
   const page = scraper.page() as Page
 
-  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-
   await scraper.visit('https://app.apollo.io/#/login')
-    .then(async () => { await hideDom(page) })
+  .then(async () => { await hideDom(page) })
 
   await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true });
-  
+
   const gmailLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD"]')
   if (!gmailLoginButton) throw new Error('failed to login, could not find google login button')
   await gmailLoginButton.click({delay: 1000})
     // .then(async () => { 
     //   await waitForNavHideDom(page) 
     // })
-
-  const emailField = await page.waitForSelector('input[class="whsOnd zHQkBf"][type="email"]', { visible: true, timeout: 10000 });
-  if (!emailField) throw new Error('failed to login, could not input email');
-  await emailField.type(account.email)
-
-  const nextButton1 = await page.$('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]');
-  if (!nextButton1) throw new Error('failed to login, could not find next button to progress to password page');
-  await nextButton1.click({delay: 1000});
-
-  await gmailAuth(account);
-}
-
-// (FIX) complete func
-export const apolloGmailSignup = async (account: Partial<IAccount>) => {
-  const page = scraper.page() as Page
-
-  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-
-  await apolloInitSignup(page)
-  
-  const gmailSignupButton = await page.$('button[id="google-oauth-button"]')
-  if (!gmailSignupButton) throw new Error('failed to signup, could not find gmail signup button')
-  await gmailSignupButton.click({delay: 1000})
-
-  const emailField = await page.waitForSelector('input[class="whsOnd zHQkBf"][type="email"]', { visible: true, timeout: 10000 });
-  if (!emailField) throw new Error('failed to login, could not input email');
-  await emailField.type(account.email)
-
-  const nextButton1 = await page.$('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]');
-  if (!nextButton1) throw new Error('failed to login, could not find next button to progress to password page');
-  await nextButton1.click({delay: 1000});
-
-  await gmailAuth(account);
 }
 
 const gmailAuth = async (account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
 
   const page = scraper.page() as Page;
+
+  const emailField = await page.waitForSelector('input[class="whsOnd zHQkBf"][type="email"]', { visible: true, timeout: 10000 });
+  if (!emailField) throw new Error('failed to login, could not input email');
+  await emailField.type(account.email)
+
+  const nextButton1 = await page.$('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]');
+  if (!nextButton1) throw new Error('failed to login, could not find next button to progress to password page');
+  await nextButton1.click({delay: 1000});
 
   let counter = 0
   while (counter <= 5) {
@@ -183,5 +154,31 @@ const gmailAuth = async (account: Partial<IAccount>) => {
 
     await delay(3000)
   }
+}
+
+// (FIX) complete func
+export const apolloGmailLogin = async (account: Partial<IAccount>) => {
+  const page = scraper.page() as Page
+
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+
+  await visitGmailLoginAuthPortal()
+
+  await gmailAuth(account);
+}
+
+export const apolloGmailSignup = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+  
+  const page = scraper.page() as Page
+
+  await apolloInitSignup()
+  
+  const gmailSignupButton = await page.$('button[id="google-oauth-button"]')
+  if (!gmailSignupButton) throw new Error('failed to signup, could not find gmail signup button')
+  await gmailSignupButton.click({delay: 1000})
+
+
+  await gmailAuth(account);
 }
 
