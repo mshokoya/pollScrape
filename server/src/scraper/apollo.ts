@@ -24,6 +24,7 @@ type CreditsInfo = {
   renewalDateTime: string
   renewalStartDate: string
   renewalEndDate: string
+  trialDaysLeft: string
 };
 
 // (WARN) this is for automation page update
@@ -132,10 +133,8 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   if (!creditSelector) throw new Error('failed to get credit limit')
 
   const creditStr = await page.evaluate(() => {
-    let emailCreditInfo: any = document.querySelectorAll('div[class="zp_ajv0U"]')
+    const emailCreditInfo: any = document.querySelectorAll('div[class="zp_ajv0U"]')
     if (!emailCreditInfo && emailCreditInfo.length < 2) return null
-
-    
 
     const renewalDate = document.querySelector('[class="zp_SJzex"]')
     if (!renewalDate) return null
@@ -143,6 +142,8 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
 
     const renewalStartEnd = document.querySelector('[class="zp_kQfcf"]')
     if (!renewalStartEnd) return null
+
+    const trialDaysLeft = document.querySelector('[class="zp_EanJu"]')
     
     return {
       // @ts-ignore
@@ -151,6 +152,8 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
       renewalDate: renewalDate.lastChild.innerText as string,
       // @ts-ignore
       renewalStartEnd: renewalStartEnd.innerText as string,
+      // @ts-ignore
+      trialDaysLeft: trialDaysLeft ? trialDaysLeft.innerText : null
     }
   })
 
@@ -169,12 +172,15 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   const renewalStartDate = renewalStartEnd[0].trim()
   const renewalEndDate = renewalStartEnd[1].trim()
 
+  const trialDaysLeft = creditStr.trialDaysLeft || 'na';
+
   return {
     emailCreditsUsed,
     emailCreditsLimit,
     renewalDateTime,
     renewalStartDate,
-    renewalEndDate
+    renewalEndDate,
+    trialDaysLeft
   };
 }
 
