@@ -18,6 +18,14 @@ type Upgrade = {
   }
 }
 
+type CreditsInfo = {
+  emailCreditsUsed: string
+  emailCreditsLimit: string
+  renewalDateTime: string
+  renewalStartDate: string
+  renewalEndDate: string
+};
+
 // (WARN) this is for automation page update
 export const apolloUpdatePageQueryString = (url: string) => {
   const myURL = new URL(url);
@@ -115,27 +123,59 @@ export const setupApolloForScraping = async (account: IAccount) => {
 }
 
 
-export const apolloGetCreditsInfo = async (): Promise<string[]> => {
+export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   const page = scraper.page() as Page
   await scraper.visit('app.apollo.io/#/settings/credits/current')
-  const creditSelector = await page!.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000})
+
+
+  const creditSelector = await page.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!creditSelector) throw new Error('failed to get credit limit')
 
   const creditStr = await page.evaluate(() => {
-    const e = document.querySelector('div[class="zp_ajv0U"]')
-    // @ts-ignore
-    return e ? e.innerText : null
+    let emailCreditInfo: any = document.querySelectorAll('div[class="zp_ajv0U"]')
+    if (!emailCreditInfo && emailCreditInfo.length < 2) return null
+
+    
+
+    const renewalDate = document.querySelector('[class="zp_SJzex"]')
+    if (!renewalDate) return null
+    if (!renewalDate.lastChild) return null
+
+    const renewalStartEnd = document.querySelector('[class="zp_kQfcf"]')
+    if (!renewalStartEnd) return null
+    
+    return {
+      // @ts-ignore
+      emailCreditInfo: emailCreditInfo[1].innerText as string,
+      // @ts-ignore
+      renewalDate: renewalDate.lastChild.innerText as string,
+      // @ts-ignore
+      renewalStartEnd: renewalStartEnd.innerText as string,
+    }
   })
 
   if (!creditStr) throw new Error('failed to get credit limit str')
   
-  const credInfo = creditStr.spilt(' ');
-  const creditsUsed = credInfo[0];
-  const creditsLimited = credInfo[2];
+  // output = '0 of 100 emails / mo'
+  const credInfo = creditStr.emailCreditInfo.split(' ');
+  const emailCreditsUsed = credInfo[0];
+  const emailCreditsLimit = credInfo[2];
 
-  const plan = await page.waitForSelector('div["zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000});
+  // output = 'Credits will renew: Feb 27, 2024 8:00 AM'
+  const renewalDateTime = creditStr.renewalDate.split(':')[1].trim()
 
-  return [creditsUsed, creditsLimited];
+  // output = 'Jan 27, 2024 - Feb 27, 2024'
+  const renewalStartEnd = creditStr.renewalStartEnd.split('-')
+  const renewalStartDate = renewalStartEnd[0].trim()
+  const renewalEndDate = renewalStartEnd[1].trim()
+
+  return {
+    emailCreditsUsed,
+    emailCreditsLimit,
+    renewalDateTime,
+    renewalStartDate,
+    renewalEndDate
+  };
 }
 
 export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
