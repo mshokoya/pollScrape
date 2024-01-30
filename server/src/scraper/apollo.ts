@@ -19,12 +19,12 @@ type Upgrade = {
 }
 
 type CreditsInfo = {
-  emailCreditsUsed: string
-  emailCreditsLimit: string
-  renewalDateTime: string
-  renewalStartDate: string
-  renewalEndDate: string
-  trialDaysLeft: string
+  emailCreditsUsed: number
+  emailCreditsLimit: number
+  renewalDateTime: number
+  renewalStartDate: number
+  renewalEndDate: number
+  trialDaysLeft: number
 };
 
 // (WARN) this is for automation page update
@@ -173,18 +173,18 @@ export const apolloGetCreditsInfo = async (account: IAccount): Promise<CreditsIn
   
   // output = '0 of 100 emails / mo'
   const credInfo = creditStr.emailCreditInfo.split(' ');
-  const emailCreditsUsed = credInfo[0];
-  const emailCreditsLimit = credInfo[2];
+  const emailCreditsUsed = parseInt(credInfo[0]);
+  const emailCreditsLimit = parseInt(credInfo[2]);
 
   // output = 'Credits will renew: Feb 27, 2024 8:00 AM'
-  const renewalDateTime = creditStr.renewalDate.split(':')[1].trim()
+  const renewalDateTime = Date.parse(creditStr.renewalDate.split(':')[1].trim())
 
   // output = 'Jan 27, 2024 - Feb 27, 2024'
   const renewalStartEnd = creditStr.renewalStartEnd.split('-')
-  const renewalStartDate = renewalStartEnd[0].trim()
-  const renewalEndDate = renewalStartEnd[1].trim()
+  const renewalStartDate = Date.parse(renewalStartEnd[0].trim())
+  const renewalEndDate = Date.parse(renewalStartEnd[1].trim())
 
-  const trialDaysLeft = creditStr.trialDaysLeft || 'na';
+  const trialDaysLeft = parseInt(creditStr.trialDaysLeft) || -1;
 
   return {
     emailCreditsUsed,

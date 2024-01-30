@@ -13,7 +13,15 @@ export type IAccount = {
   proxy: string
   lastUsed: Date
   recoveryEmail: string
+  emailCreditsUsed: number
+  emailCreditsLimit: number
+  renewalDateTime: number | Date
+  renewalStartDate: number | Date
+  renewalEndDate: number | Date
+  trialDaysLeft: number
 }
+
+
 
 const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
@@ -26,6 +34,12 @@ const accountSchema = new Schema<IAccount>({
   cookie: { type: String, default: "" },
   proxy: { type: String, default: "http://000.000.000.000:0000" },
   recoveryEmail: { type: String, default: "" },
+  emailCreditsUsed: { type: Number, default: -1 },
+  emailCreditsLimit: { type: Number, default: -1 },
+  renewalDateTime: { type: Number, default: 0 }, // as Date
+  renewalStartDate: { type: Number, default: 0 }, // as Date
+  renewalEndDate: { type: Number, default: 0 }, // as Date
+  trialDaysLeft: { type: Number, default: -1 },
   // @ts-ignore
   lastUsed: { type: Date, default: Date() } // used to pick which to use to scrape
 });

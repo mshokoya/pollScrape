@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import { addAccountToDB, addCookiesToAccount } from '../database';
+import { addAccountToDB, updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { apolloInitSignup, scraper } from '../scraper/scraper';
 import { apolloLoginManuallyAndGetCookies, signupForApollo } from '../scraper';
@@ -88,17 +88,18 @@ export const accountRoutes = (app: Express) => {
   app.get('/account/login/a/:id', async (req, res) => {
     console.log('login')
 
-    const account = req.params.id
+    const accountID = req.params.id
 
     try{
 
-      if (!account) throw new Error('Failed to login, invalid request body');
+      if (!accountID) throw new Error('Failed to login, invalid request body');
 
       const updatedAcc  = await apolloLoginManuallyAndGetCookies(req.body.account)
         .then(async (cookie) => {
           if (cookie) {
 
-            const newAccount = await addCookiesToAccount(account._id, cookie)
+            const parsedCookie = JSON.stringify(cookie)
+            const newAccount = await updateAccount(accountID, {cookie: parsedCookie})
         
             if (!newAccount) throw new Error('Failed to login (save cookies)');
         
@@ -137,12 +138,14 @@ export const accountRoutes = (app: Express) => {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');
 
-      const account = await AccountModel.findById(accountID)
-      if (!account) throw new Error('Failed to find account')
+      const account = await AccountModel.findById(accountID);
+      if (!account) throw new Error('Failed to find account');
 
-      await apolloGetCreditsInfo(account)
+      const creditInfo = await apolloGetCreditsInfo(account);
 
-      res.json({ok: true, message: null, data: null});
+      const upAcc = await updateAccount(accountID, creditInfo);
+
+      res.json({ok: true, message: null, data: upAcc});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: null});
     } 
