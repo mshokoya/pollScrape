@@ -6,6 +6,7 @@ import { apolloLoginManuallyAndGetCookies, signupForApollo } from '../scraper';
 import { getBrowserCookies } from '../scraper/util';
 import { apolloOutlookLogin, apolloOutlookSignup } from '../scraper/outlook';
 import { getDomain } from '../helpers';
+import { apolloGetCreditsInfo } from '../scraper/apollo';
 
 export const accountRoutes = (app: Express) => {
 
@@ -130,11 +131,16 @@ export const accountRoutes = (app: Express) => {
     }
   })
 
-  app.get('/account/check/:id', (req, res) => {
+  app.get('/account/check/:id', async (req, res) => {
 
     try {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');
+
+      const account = await AccountModel.findById(accountID)
+      if (!account) throw new Error('Failed to find account')
+
+      await apolloGetCreditsInfo(account)
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
@@ -142,6 +148,7 @@ export const accountRoutes = (app: Express) => {
     } 
   })
 
+  // (FIX): make it work with batch (array of ID's in body and loop throught) (use websockets to notify when one completes and on to next)
   app.get('account/upgrade/a/:id', async (req, res) => {
     try {
       const accountID = req.params.id
@@ -154,6 +161,17 @@ export const accountRoutes = (app: Express) => {
   })
 
   app.get('account/upgrade/m/:id', async (req, res) => {
+    try {
+      const accountID = req.params.id
+      if (!accountID) throw new Error('Failed to check account, please provide valid id');
+
+      res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: null});
+    } 
+  })
+
+  app.get('account/mine/:id', async (req, res) => {
     try {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');

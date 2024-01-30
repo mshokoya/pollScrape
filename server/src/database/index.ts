@@ -17,14 +17,12 @@ export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccou
   return newAcc
 }
 
-export const addCookiesToAccount = async (_id: string, cookies: string[]): Promise<IAccount> => {
+export const updateAccount = async (_id: string, data: Partial<IAccount>): Promise<IAccount> => {
   const account = await AccountModel.findOneAndUpdate(
     {_id},
-    { $set : {cookie: JSON.stringify(cookies)} },
+    { $set : data },
     { new: true }
   ).lean() as IAccount;
-
-  if (account === null) throw new Error('failed to save cookies')
 
   return account
 }

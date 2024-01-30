@@ -1,12 +1,12 @@
 import { logIntoApollo } from ".";
-import { addCookiesToAccount } from "../database";
+import { updateAccount } from "../database";
 import { IAccount } from "../database/models/accounts";
 import { IRecord } from "../database/models/records";
 import { apolloDoc } from "./dom/scrapeData";
 import { apolloGmailLogin, apolloGmailSignup } from "./gmail";
 import { apolloOutlookLogin, apolloOutlookSignup } from "./outlook";
 import { scraper } from "./scraper";
-import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies } from "./util";
+import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, loginThenVisit } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
 type Upgrade = {
@@ -119,15 +119,27 @@ export const setupApolloForScraping = async (account: IAccount) => {
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
     logIntoApollo(account)
     const cookies = await getBrowserCookies()
-    await addCookiesToAccount(account._id, cookies)
+    const updatedAccount = await updateAccount(account._id, {cookie: JSON.stringify(cookies)})
+    if (!updatedAccount) throw new Error('Failed to save cookies')
   } 
 }
 
-
-export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
+// (FIX) test to make sure it works (test all possibilities)
+export const apolloGetCreditsInfo = async (account: IAccount): Promise<CreditsInfo> => {
   const page = scraper.page() as Page
-  await scraper.visit('app.apollo.io/#/settings/credits/current')
+  // await scraper.visit('app.apollo.io/#/settings/credits/current')
 
+  // await page.waitForNavigation({timeout:10000})
+  //   .then(async () => {
+  //     if (page.url().includes('/#/login')) {
+  //       await logIntoApollo(account);
+  //       const cookies = await getBrowserCookies();
+  //       await updateAccount(account._id, cookies);
+  //       await scraper.visit('app.apollo.io/#/settings/credits/current')
+  //     }
+  //   })
+
+  await loginThenVisit(account, 'app.apollo.io/#/settings/credits/current')
 
   const creditSelector = await page.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!creditSelector) throw new Error('failed to get credit limit')

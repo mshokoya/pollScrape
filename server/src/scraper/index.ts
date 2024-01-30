@@ -8,7 +8,7 @@ import {
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
-import { addCookiesToAccount, getAllApolloAccounts, saveScrapeToDB } from '../database';
+import { getAllApolloAccounts, saveScrapeToDB } from '../database';
 import { apolloDefaultLogin, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup } from './gmail';

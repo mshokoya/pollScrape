@@ -1,5 +1,8 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { scraper, visitGoogle } from "./scraper"
+import { logIntoApollo } from '.';
+import { updateAccount } from '../database';
+import { IAccount } from '../database/models/accounts';
 
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist
@@ -88,6 +91,14 @@ export const hideDom = async (page: Page) => {
   })
 }
 
+export const visibleDom = async (page: Page) => {
+  await page.evaluate(() => {
+    const element = document.querySelector('[class="zombie-s"]');
+    if (!element) return;
+    element.remove()
+  })
+}
+
 export const waitForNavHideDom = async (page: Page) => {
   await page.waitForNavigation({waitUntil: 'domcontentloaded'})
     .then(async () => {
@@ -103,12 +114,20 @@ export const waitForNavHideDom = async (page: Page) => {
     })
 }
 
-export const visibleDom = async (page: Page) => {
-  await page.evaluate(() => {
-    const element = document.querySelector('[class="zombie-s"]');
-    if (!element) return;
-    element.remove()
-  })
+
+export const loginThenVisit = async (account: IAccount, url: string) => {
+  const page = scraper.page() as Page
+  await scraper.visit(url)
+
+  await page.waitForNavigation({timeout:10000})
+    .then(async () => {
+      if (page.url().includes('/#/login')) {
+        await logIntoApollo(account);
+        const cookies = await getBrowserCookies();
+        await updateAccount(account._id, {cookie: JSON.stringify(cookies)});
+        await scraper.visit(url)
+      }
+    })
 }
 
 // https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
