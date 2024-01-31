@@ -209,7 +209,7 @@ export const accountRoutes = (app: Express) => {
   })
 
   // (FIX): make it work with batch (array of ID's in body and loop throught) (use websockets to notify when one completes and on to next)
-  // (FIX): logIntoApolloAndUpgradeAccount should return CreditsInfo type
+  // (FIX): logIntoApolloAndUpgradeAccount should return CreditsInfo type (page layout after upgrade is defferent)
   app.get('account/upgrade/a/:id', async (req, res) => {
     try {
       const accountID = req.params.id
@@ -223,7 +223,7 @@ export const accountRoutes = (app: Express) => {
       }
 
       const creditsInfo = await logIntoApolloAndUpgradeAccount(account)
-      const updatedAccount = await updateAccount(accountID, creditsInfo);
+      const updatedAccount = await updateAccount(accountID, creditsInfo); // (FIX)
 
       await scraper.close()
       res.json({ok: true, message: null, data: updatedAccount});
@@ -246,7 +246,7 @@ export const accountRoutes = (app: Express) => {
       }
 
       await manuallyLogIntoApollo(account)
-      await waitForNavigationTo(, 'settings page')
+      await waitForNavigationTo(, 'settings page') // (FIX)
         .then(async () => {
           const cookies = await getBrowserCookies()
           return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
