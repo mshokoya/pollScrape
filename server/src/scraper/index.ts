@@ -1,6 +1,6 @@
 import {scraper} from './scraper';
 import {
-  getBrowserCookies, waitForNavigationTo
+  getBrowserCookies, logIntoApolloThenVisit
 } from './util'
 import {
   selectAccForScrapingFILO, selectProxy
@@ -9,7 +9,7 @@ import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB } from '../database';
-import { apolloDefaultLogin, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping } from './apollo';
+import { apolloDefaultLogin, apolloGetCreditsInfo, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 
@@ -113,6 +113,19 @@ export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
   }
 }
 
+export const logIntoApolloAndUpgradeAccount = async (account: IAccount) => {
+  const page = scraper.page() as Page
+
+  await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/plans/upgrade')
+  return await upgradeApolloAccount()
+}
+
+export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
+  const page = scraper.page() as Page
+  
+  await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/credits/current')
+  return await apolloGetCreditsInfo()
+}
 
 // we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
 //remeber to check

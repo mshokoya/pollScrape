@@ -1,12 +1,10 @@
 import { Express } from 'express';
 import { addAccountToDB, updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
-import { apolloInitSignup, scraper } from '../scraper/scraper';
-import { apolloLoginManuallyAndGetCookies, logIntoApollo, manuallyLogIntoApollo, signupForApollo } from '../scraper';
+import { scraper } from '../scraper/scraper';
+import { logIntoApollo, logIntoApolloAndGetCreditsInfo, logIntoApolloAndUpgradeAccount, manuallyLogIntoApollo, signupForApollo } from '../scraper';
 import { getBrowserCookies, waitForNavigationTo } from '../scraper/util';
-import { apolloOutlookLogin, apolloOutlookSignup } from '../scraper/outlook';
 import { getDomain } from '../helpers';
-import { apolloGetCreditsInfo } from '../scraper/apollo';
 
 export const accountRoutes = (app: Express) => {
 
@@ -48,7 +46,7 @@ export const accountRoutes = (app: Express) => {
   
       if (save !== null) throw new Error("Failed to add account, account already exists");
   
-      scraper.close()
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       if (scraper.browser()) await scraper.close()
@@ -77,7 +75,6 @@ export const accountRoutes = (app: Express) => {
       const updatedAccount = updateAccount(accountID, req.body);
       if (!updateAccount) throw new Error('Failed to update account')
 
-      
       res.json({ok: true, message: null, data: updatedAccount});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
@@ -108,10 +105,10 @@ export const accountRoutes = (app: Express) => {
           return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
         })
 
-      scraper.close()
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
-      scraper.close()
+      await scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })
@@ -138,10 +135,10 @@ export const accountRoutes = (app: Express) => {
           return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
         })
 
-      scraper.close()
+      await scraper.close()
       res.json({ok: true, message: null, data: updatedAccount});
     } catch (err: any) {
-      scraper.close()
+      await scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })
@@ -164,8 +161,10 @@ export const accountRoutes = (app: Express) => {
       const cookies = await getBrowserCookies()
       await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
 
+      await scraper.close();
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
+      await scraper.close();
       res.json({ok: false, message: err.message, data: null});
     }
 
@@ -194,17 +193,23 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
-      const creditInfo = await apolloGetCreditsInfo(account);
+      if (!scraper.browser()) {
+        await scraper.launchBrowser()
+      }
 
-      const upAcc = await updateAccount(accountID, creditInfo);
+      const creditsInfo = await logIntoApolloAndGetCreditsInfo(account)
+      const updatedAccount = await updateAccount(accountID, creditsInfo);
 
-      res.json({ok: true, message: null, data: upAcc});
+      await scraper.close()
+      res.json({ok: true, message: null, data: updatedAccount});
     } catch (err: any) {
+      await scraper.close()
       res.json({ok: false, message: err.message, data: null});
     } 
   })
 
   // (FIX): make it work with batch (array of ID's in body and loop throught) (use websockets to notify when one completes and on to next)
+  // (FIX): logIntoApolloAndUpgradeAccount should return CreditsInfo type
   app.get('account/upgrade/a/:id', async (req, res) => {
     try {
       const accountID = req.params.id
@@ -213,8 +218,17 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
-      res.json({ok: true, message: null, data: null});
+      if (!scraper.browser()) {
+        await scraper.launchBrowser()
+      }
+
+      const creditsInfo = await logIntoApolloAndUpgradeAccount(account)
+      const updatedAccount = await updateAccount(accountID, creditsInfo);
+
+      await scraper.close()
+      res.json({ok: true, message: null, data: updatedAccount});
     } catch (err: any) {
+      await scraper.close()
       res.json({ok: false, message: err.message, data: null});
     } 
   })
@@ -224,8 +238,24 @@ export const accountRoutes = (app: Express) => {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');
 
+      const account = await AccountModel.findById(accountID).lean();
+      if (!account) throw new Error('Failed to find account');
+
+      if (!scraper.browser()) {
+        await scraper.launchBrowser()
+      }
+
+      await manuallyLogIntoApollo(account)
+      await waitForNavigationTo(, 'settings page')
+        .then(async () => {
+          const cookies = await getBrowserCookies()
+          return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
+        })
+
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
+      await scraper.close()
       res.json({ok: false, message: err.message, data: null});
     } 
   })

@@ -3,10 +3,8 @@ import { updateAccount } from "../database";
 import { IAccount } from "../database/models/accounts";
 import { IRecord } from "../database/models/records";
 import { apolloDoc } from "./dom/scrapeData";
-import { apolloGmailLogin, apolloGmailSignup } from "./gmail";
-import { apolloOutlookLogin, apolloOutlookSignup } from "./outlook";
 import { scraper } from "./scraper";
-import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, hideDom, injectCookies, loginThenVisit, waitForNavHideDom } from "./util";
+import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
 type Upgrade = {
@@ -83,7 +81,7 @@ export const apolloDefaultLogin = async (account: Partial<IAccount>) => {
     await visitApolloLoginPage()
   }
 
-  const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true})
+  const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
   const login = await page?.$$(loginInputFieldSelector)
 
   if (!login || !submitButton) throw new Error('failed to login');
@@ -129,21 +127,8 @@ export const setupApolloForScraping = async (account: IAccount) => {
 }
 
 // (FIX) test to make sure it works (test all possibilities)
-export const apolloGetCreditsInfo = async (account: IAccount): Promise<CreditsInfo> => {
+export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   const page = scraper.page() as Page
-  // await scraper.visit('app.apollo.io/#/settings/credits/current')
-
-  // await page.waitForNavigation({timeout:10000})
-  //   .then(async () => {
-  //     if (page.url().includes('/#/login')) {
-  //       await logIntoApollo(account);
-  //       const cookies = await getBrowserCookies();
-  //       await updateAccount(account._id, cookies);
-  //       await scraper.visit('app.apollo.io/#/settings/credits/current')
-  //     }
-  //   })
-
-  await loginThenVisit(account, 'app.apollo.io/#/settings/credits/current')
 
   const creditSelector = await page.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!creditSelector) throw new Error('failed to get credit limit')
@@ -202,8 +187,8 @@ export const apolloGetCreditsInfo = async (account: IAccount): Promise<CreditsIn
 
 export const upgradeApolloAccount = async (): Promise<Upgrade> => {
   const page = scraper.page() as Page
-  await scraper.visit('app.apollo.io/#/settings/plans/upgrade');
-  const selector = await page!.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000});
+
+  const selector = await page.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000}).catch(() => null);
   if (!selector) throw new Error('failed to upgrade account');
 
   const upgradeButton = await page.$$('div[class="zp_LXyot"]');
@@ -213,7 +198,7 @@ export const upgradeApolloAccount = async (): Promise<Upgrade> => {
   if (!confirmUpgradeButton) throw new Error('failed to upgrade, cannot find upgrade button')
   await confirmUpgradeButton.click()
 
-  const planSelector = await page.waitForSelector('div[class="zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000});
+  const planSelector = await page.waitForSelector('div[class="zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000}).catch(() => null);
   if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
 
   const planStr = await planSelector.evaluate(() => {
@@ -271,7 +256,7 @@ export const createApolloAccount = async () => {
   await tempMail.goto('temp-mail.org')
   await tempMail.bringToFront(); 
 
-  const emailSelector = await tempMail.waitForSelector('input[class="emailbox-input opentip"]', {visible: true, timeout: 10000});
+  const emailSelector = await tempMail.waitForSelector('input[class="emailbox-input opentip"]', {visible: true, timeout: 10000}).catch(() => null);
   if (!emailSelector) throw new Error('failed to fine email, please try again')
 
   const email = await tempMail.evaluate(() => {
@@ -284,7 +269,7 @@ export const createApolloAccount = async () => {
   await apollo?.goto('www.apollo.io/sign-up')
   await apollo.bringToFront();
 
-  const input = await apollo?.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000})
+  const input = await apollo?.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!input) throw new Error('failed to register for apollo');
   await input.type(email)
   

@@ -118,7 +118,7 @@ export const waitForNavHideDom = async () => {
 }
 
 
-export const loginThenVisit = async (account: IAccount, url: string) => {
+export const logIntoApolloThenVisit = async (account: IAccount, url: string) => {
   const page = scraper.page() as Page
   await scraper.visit(url)
 
