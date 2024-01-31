@@ -49,7 +49,7 @@ export const getBrowserCookies = async (): Promise<string[]> => {
   return (cookies as unknown) as string[];
 };
 
-export const waitForNavigationTo = (location: string) => new Promise((resolve, _reject) => {
+export const waitForNavigationTo = (location: string, dest?: string) => new Promise<boolean>((resolve, _reject) => {
     const pg = scraper.page() as Page
     
     const browser_check = setInterval(async () => {
@@ -58,7 +58,7 @@ export const waitForNavigationTo = (location: string) => new Promise((resolve, _
         resolve(true);
       } else if ( (await scraper.browser()!.pages()).length === 0) {
         clearInterval(browser_check);
-        throw new Error("failed to get cookies please head to 'settings/account' page when loggeed in")
+        throw new Error(`browser closed before reaching ${dest ? dest : 'destined route'}`)
       }
     }, 3000);
   }

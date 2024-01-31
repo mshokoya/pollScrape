@@ -2,7 +2,7 @@ import { Express } from 'express';
 import { addAccountToDB, updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { apolloInitSignup, scraper } from '../scraper/scraper';
-import { apolloLoginManuallyAndGetCookies, logIntoApollo, signupForApollo } from '../scraper';
+import { apolloLoginManuallyAndGetCookies, logIntoApollo, manuallyLogIntoApollo, signupForApollo } from '../scraper';
 import { getBrowserCookies, waitForNavigationTo } from '../scraper/util';
 import { apolloOutlookLogin, apolloOutlookSignup } from '../scraper/outlook';
 import { getDomain } from '../helpers';
@@ -84,7 +84,8 @@ export const accountRoutes = (app: Express) => {
     }
   })
 
-  // should only works with gmail & outlook auth logins
+  // (FIX): should only works with gmail & outlook auth logins
+  // (FIX): check if waitForNavigationTo func can get cookies after browser closed
   app.get('/account/login/m/:id', async (req, res) => {
     console.log('login manually')
     const accountID = req.params.id
@@ -100,24 +101,15 @@ export const accountRoutes = (app: Express) => {
         await scraper.launchBrowser()
       }
     
-      const updatedAcc  = await apolloLoginManuallyAndGetCookies(req.body.account)
-        .then(async (cookie) => {
-          if (cookie) {
-
-            const parsedCookie = JSON.stringify(cookie)
-            const newAccount = await updateAccount(accountID, {cookie: parsedCookie})
-        
-            if (!newAccount) throw new Error('Failed to login (save cookies)');
-        
-            return newAccount
-            
-          } else {
-            throw new Error('Failed to login automatically (cookies)')
-          }
+      await manuallyLogIntoApollo(account)
+      await waitForNavigationTo('/settings/account', 'settings page')
+        .then(async () => {
+          const cookies = await getBrowserCookies()
+          return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
         })
 
       scraper.close()
-      res.json({ok: true, message: null, data: updatedAccount});
+      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       scraper.close()
       res.json({ok: false, message: err.message, data: err});
@@ -145,23 +137,6 @@ export const accountRoutes = (app: Express) => {
           const cookies = await getBrowserCookies()
           return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
         })
-
-
-      // const updatedAcc  = await apolloLoginManuallyAndGetCookies(req.body.account)
-      //   .then(async (cookie) => {
-      //     if (cookie) {
-
-      //       const parsedCookie = JSON.stringify(cookie)
-      //       const newAccount = await updateAccount(accountID, {cookie: parsedCookie})
-        
-      //       if (!newAccount) throw new Error('Failed to login (save cookies)');
-        
-      //       return newAccount
-            
-      //     } else {
-      //       throw new Error('Failed to login automatically (cookies)')
-      //     }
-      //   })
 
       scraper.close()
       res.json({ok: true, message: null, data: updatedAccount});
@@ -235,6 +210,9 @@ export const accountRoutes = (app: Express) => {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');
 
+      const account = await AccountModel.findById(accountID).lean();
+      if (!account) throw new Error('Failed to find account');
+
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: null});
@@ -251,16 +229,4 @@ export const accountRoutes = (app: Express) => {
       res.json({ok: false, message: err.message, data: null});
     } 
   })
-
-  app.get('account/mine/:id', async (req, res) => {
-    try {
-      const accountID = req.params.id
-      if (!accountID) throw new Error('Failed to check account, please provide valid id');
-
-      res.json({ok: true, message: null, data: null});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: null});
-    } 
-  })
-
 }

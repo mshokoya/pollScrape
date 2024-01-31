@@ -200,7 +200,7 @@ export const apolloGetCreditsInfo = async (account: IAccount): Promise<CreditsIn
   };
 }
 
-export const apolloUpgradeAccount = async (): Promise<Upgrade> => {
+export const upgradeApolloAccount = async (): Promise<Upgrade> => {
   const page = scraper.page() as Page
   await scraper.visit('app.apollo.io/#/settings/plans/upgrade');
   const selector = await page!.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000});
