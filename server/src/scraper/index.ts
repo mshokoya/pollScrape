@@ -10,8 +10,8 @@ import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB } from '../database';
 import { apolloDefaultLogin, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping } from './apollo';
-import { apolloOutlookLogin, apolloOutlookSignup } from './outlook';
-import { apolloGmailLogin, apolloGmailSignup } from './gmail';
+import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
+import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -94,6 +94,22 @@ export const signupForApollo = async (account: Partial<IAccount>) => {
     default:
       await apolloDefaultLogin(account)
       break;
+  }
+}
+
+export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
+  if (!account.email || !account.password || !account.domain) {
+    throw new Error('login details not provided')
+  }
+
+  switch (account.domain) {
+    case 'hotmail':
+    case 'outlook':
+      await visitOutlookLoginAuthPortal(true)
+      break;
+    case 'gmail':
+      await visitGmailLoginAuthPortal(true)
+      break
   }
 }
 
