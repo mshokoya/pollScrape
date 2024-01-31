@@ -79,7 +79,8 @@ export const injectCookies = async (cookies?: string) => {
   }
 }
 
-export const hideDom = async (page: Page) => {
+export const hideDom = async () => {
+  const page = scraper.page() as Page;
   await page.evaluate(() => {
     const ol = document.createElement('div')
     ol.className = 'zombie-s'
@@ -99,7 +100,9 @@ export const visibleDom = async (page: Page) => {
   })
 }
 
-export const waitForNavHideDom = async (page: Page) => {
+export const waitForNavHideDom = async () => {
+  const page = scraper.page() as Page;
+  
   await page.waitForNavigation({waitUntil: 'domcontentloaded'})
     .then(async () => {
       await page.evaluate(() => {

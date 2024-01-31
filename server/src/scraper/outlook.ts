@@ -8,27 +8,30 @@
 
 import { apolloInitSignup, scraper } from "./scraper";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { delay } from "./util";
+import { delay, hideDom, waitForNavHideDom } from "./util";
 import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../database/models/accounts";
 
 
-export const visitOutlookLoginAuthPortal = async () => {
+export const visitOutlookLoginAuthPortal = async (hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   const page = scraper.page() as Page
   
-  await visitApolloLoginPage();
+  await visitApolloLoginPage(hideApolloDom);
 
   const microsoftLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD zp_bW01P"]')
   if (!microsoftLoginButton) throw new Error('failed to login, could not find microsoft login button')
   await microsoftLoginButton.click({delay: 1000})
+    .then(async () => { 
+      if (hidePortalDom) await waitForNavHideDom() 
+    })
 }
 
 const outlookAuth = async (account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-
+  
   const page = scraper.page() as Page;
 
-  const emailInputField = await page.waitForSelector('[class="form-control ltr_override input ext-input text-box ext-text-box"]', { visible: true, timeout: 10000 });
+  const emailInputField = await page.$('[class="form-control ltr_override input ext-input text-box ext-text-box"]')
   if (!emailInputField) throw new Error('failed to login, could not input email');
   await emailInputField.type(account.email)
 
@@ -115,9 +118,9 @@ const outlookAuth = async (account: Partial<IAccount>) => {
   }
 }
 
-export const apolloOutlookLogin = async (account: Partial<IAccount>) => {
+export const apolloOutlookLogin = async (account: Partial<IAccount>, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  await visitOutlookLoginAuthPortal()
+  await visitOutlookLoginAuthPortal(hideApolloDom, hidePortalDom)
   await outlookAuth(account as IAccount)
 }
 

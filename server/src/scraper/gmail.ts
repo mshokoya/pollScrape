@@ -51,20 +51,17 @@ const verifyGmail = async (recoverEmail: string) => {
   await newButton.click()
 }
 
-export const visitGmailLoginAuthPortal = async () => {
+export const visitGmailLoginAuthPortal = async (hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   const page = scraper.page() as Page
 
-  await scraper.visit('https://app.apollo.io/#/login')
-  .then(async () => { await hideDom(page) })
-
-  await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true });
+  await visitApolloLoginPage(hideApolloDom);
 
   const gmailLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD"]')
   if (!gmailLoginButton) throw new Error('failed to login, could not find google login button')
   await gmailLoginButton.click({delay: 1000})
-    // .then(async () => { 
-    //   await waitForNavHideDom(page) 
-    // })
+    .then(async () => { 
+      if (hidePortalDom) await waitForNavHideDom() 
+    })
 }
 
 const gmailAuth = async (account: Partial<IAccount>) => {

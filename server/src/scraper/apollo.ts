@@ -6,7 +6,7 @@ import { apolloDoc } from "./dom/scrapeData";
 import { apolloGmailLogin, apolloGmailSignup } from "./gmail";
 import { apolloOutlookLogin, apolloOutlookSignup } from "./outlook";
 import { scraper } from "./scraper";
-import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, loginThenVisit } from "./util";
+import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, hideDom, injectCookies, loginThenVisit, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
 type Upgrade = {
@@ -46,9 +46,13 @@ export const visitApollo = async () => {
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
 }
 
-export const visitApolloLoginPage = async () => {
+export const visitApolloLoginPage = async (hideApolloDom: boolean = false) => {
   const page = await scraper.visit('https://app.apollo.io/#/login')
-  await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true });
+    .then(async (page) => { 
+      if (hideApolloDom) await waitForNavHideDom() 
+      return page
+    })
+  // await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true, timeout: 10000 });
 }
 
 export const goToApolloSearchUrl = async (apolloSearchURL: string) => {

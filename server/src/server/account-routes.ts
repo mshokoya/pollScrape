@@ -86,42 +86,35 @@ export const accountRoutes = (app: Express) => {
 
   // should only works with gmail & outlook auth logins
   app.get('/account/login/m/:id', async (req, res) => {
-    console.log('login automatically')
+    console.log('login manually')
     const accountID = req.params.id
 
     try{
       if (!accountID) throw new Error('Failed to start demining, invalid request body');
 
+      const account = await AccountModel.findById(accountID)
+      if (!account) throw new Error("Failed to start demining, couldn't find account")
+      if (account.domain === 'default') throw new Error('Failed to start manual login, invalid email')
+
       if (!scraper.browser()) {
         await scraper.launchBrowser()
       }
-
-      const account = await AccountModel.findById(accountID)
-      if (!account) throw new Error("Failed to start demining, couldn't find account")
     
-      await logIntoApollo(account)
-      const updatedAccount = await waitForNavigationTo('settings/account')
-        .then(async () => {
-          const cookies = await getBrowserCookies()
-          return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
-        })
+      const updatedAcc  = await apolloLoginManuallyAndGetCookies(req.body.account)
+        .then(async (cookie) => {
+          if (cookie) {
 
-
-      // const updatedAcc  = await apolloLoginManuallyAndGetCookies(req.body.account)
-      //   .then(async (cookie) => {
-      //     if (cookie) {
-
-      //       const parsedCookie = JSON.stringify(cookie)
-      //       const newAccount = await updateAccount(accountID, {cookie: parsedCookie})
+            const parsedCookie = JSON.stringify(cookie)
+            const newAccount = await updateAccount(accountID, {cookie: parsedCookie})
         
-      //       if (!newAccount) throw new Error('Failed to login (save cookies)');
+            if (!newAccount) throw new Error('Failed to login (save cookies)');
         
-      //       return newAccount
+            return newAccount
             
-      //     } else {
-      //       throw new Error('Failed to login automatically (cookies)')
-      //     }
-      //   })
+          } else {
+            throw new Error('Failed to login automatically (cookies)')
+          }
+        })
 
       scraper.close()
       res.json({ok: true, message: null, data: updatedAccount});
