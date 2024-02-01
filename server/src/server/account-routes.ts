@@ -2,9 +2,10 @@ import { Express } from 'express';
 import { addAccountToDB, updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { scraper } from '../scraper/scraper';
-import { logIntoApollo, logIntoApolloAndGetCreditsInfo, logIntoApolloAndUpgradeAccount, manuallyLogIntoApollo, signupForApollo } from '../scraper';
-import { getBrowserCookies, waitForNavigationTo } from '../scraper/util';
+import { logIntoApollo, logIntoApolloAndGetCreditsInfo, logIntoApolloAndUpgradeAccount, logIntoApolloAndUpgradeAccountManually, manuallyLogIntoApollo, signupForApollo } from '../scraper';
+import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/util';
 import { getDomain } from '../helpers';
+import { apolloGetCreditsInfo } from '../scraper/apollo';
 
 export const accountRoutes = (app: Express) => {
 
@@ -222,7 +223,9 @@ export const accountRoutes = (app: Express) => {
         await scraper.launchBrowser()
       }
 
-      const creditsInfo = await logIntoApolloAndUpgradeAccount(account)
+
+      await logIntoApolloAndUpgradeAccount(account)
+      const creditsInfo = await logIntoApolloAndGetCreditsInfo(account)
       const updatedAccount = await updateAccount(accountID, creditsInfo); // (FIX)
 
       await scraper.close()
@@ -245,15 +248,12 @@ export const accountRoutes = (app: Express) => {
         await scraper.launchBrowser()
       }
 
-      await manuallyLogIntoApollo(account)
-      await waitForNavigationTo(, 'settings page') // (FIX)
-        .then(async () => {
-          const cookies = await getBrowserCookies()
-          return await updateAccount(accountID, {cookie: JSON.stringify(cookies)})
-        })
+      await logIntoApolloAndUpgradeAccountManually(account)
+      const creditsInfo = await logIntoApolloAndGetCreditsInfo(account)
+      const updatedAccount = await updateAccount(accountID, creditsInfo); // (FIX)
 
       await scraper.close()
-      res.json({ok: true, message: null, data: null});
+      res.json({ok: true, message: null, data: updatedAccount});
     } catch (err: any) {
       await scraper.close()
       res.json({ok: false, message: err.message, data: null});

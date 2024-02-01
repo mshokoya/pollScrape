@@ -113,11 +113,29 @@ export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
   }
 }
 
+// (FIX) make sure not already upgraded
 export const logIntoApolloAndUpgradeAccount = async (account: IAccount) => {
   const page = scraper.page() as Page
 
   await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/plans/upgrade')
   return await upgradeApolloAccount()
+}
+
+// (FIX) make sure not already upgraded
+// (FIX) hide dom after upgrade so scraping credits process is hidden
+export const logIntoApolloAndUpgradeAccountManually = async (account: IAccount) => {
+  const page = scraper.page() as Page
+
+  await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/plans/upgrade/')
+  const creditsInfo = await page.waitForSelector('[class="zp_EanJu]"', {visible: true}) // trial days left in top nav bar
+    .then(async () => {
+      await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/credits/current')
+      return await apolloGetCreditsInfo()
+    })
+    .catch(() => null)
+    if (!creditsInfo) throw new Error("Please check account, upgrade might've failed")
+
+    return creditsInfo
 }
 
 export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
@@ -126,6 +144,8 @@ export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
   await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/credits/current')
   return await apolloGetCreditsInfo()
 }
+
+
 
 // we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
 //remeber to check

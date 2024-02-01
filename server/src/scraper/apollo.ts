@@ -185,7 +185,7 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   };
 }
 
-export const upgradeApolloAccount = async (): Promise<Upgrade> => {
+export const upgradeApolloAccount = async (): Promise<void> => {
   const page = scraper.page() as Page
 
   const selector = await page.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000}).catch(() => null);
@@ -198,50 +198,50 @@ export const upgradeApolloAccount = async (): Promise<Upgrade> => {
   if (!confirmUpgradeButton) throw new Error('failed to upgrade, cannot find upgrade button')
   await confirmUpgradeButton.click()
 
-  const planSelector = await page.waitForSelector('div[class="zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000}).catch(() => null);
-  if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
+  // const planSelector = await page.waitForSelector('div[class="zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000}).catch(() => null);
+  // if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
 
-  const planStr = await planSelector.evaluate(() => {
-    const e = document.querySelector('div[class="zp-card-title zp_kiN_m"]')
-    //@ts-ignore
-    return e ? e.innerText : null
-  }) as string | null
-  if (!planStr) throw new Error('failed to find plan')
-  const plan = planStr.split(' ')[0];
+  // const planStr = await planSelector.evaluate(() => {
+  //   const e = document.querySelector('div[class="zp-card-title zp_kiN_m"]')
+  //   //@ts-ignore
+  //   return e ? e.innerText : null
+  // }) as string | null
+  // if (!planStr) throw new Error('failed to find plan')
+  // const plan = planStr.split(' ')[0];
 
-  const trialEndSelector = await page.$('div[class="zp_SJzex"]');
-  if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');
-  const trialEndDateStr = await trialEndSelector.evaluate(() => {
-    const e = document.querySelector('div[class="zp_SJzex"]')
-    //@ts-ignore
-    return e ? e.innerText : null
-  })
-  if (!trialEndDateStr) throw new Error('failed to find trial end date')
-  const trialEndDate = trialEndDateStr.split(':')[1].trim();
+  // const trialEndSelector = await page.$('div[class="zp_SJzex"]');
+  // if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');
+  // const trialEndDateStr = await trialEndSelector.evaluate(() => {
+  //   const e = document.querySelector('div[class="zp_SJzex"]')
+  //   //@ts-ignore
+  //   return e ? e.innerText : null
+  // })
+  // if (!trialEndDateStr) throw new Error('failed to find trial end date')
+  // const trialEndDate = trialEndDateStr.split(':')[1].trim();
 
-  const creditsSelector = await page.$$('div[class="zp_SJzex"]');
-  if (!creditsSelector) throw new Error('failed to upgrade, cannot find credits info');
-  const creditsStr = await page.evaluate(() => {
-    const e = document.querySelectorAll('div[class="zp_SJzex"]')
-    if (!e) return null
-    if (e.length > 1) return null
-    //@ts-ignore
-    return e[1].innerText
-  })
-  if (!creditsStr) throw new Error('failed to upgrade, cannot find credits info');
+  // const creditsSelector = await page.$$('div[class="zp_SJzex"]');
+  // if (!creditsSelector) throw new Error('failed to upgrade, cannot find credits info');
+  // const creditsStr = await page.evaluate(() => {
+  //   const e = document.querySelectorAll('div[class="zp_SJzex"]')
+  //   if (!e) return null
+  //   if (e.length > 1) return null
+  //   //@ts-ignore
+  //   return e[1].innerText
+  // })
+  // if (!creditsStr) throw new Error('failed to upgrade, cannot find credits info');
 
-  const credInfo = creditsStr.spilt(' ');
-  const creditsUsed = credInfo[0];
-  const creditsLimited = credInfo[2];
+  // const credInfo = creditsStr.spilt(' ');
+  // const creditsUsed = credInfo[0];
+  // const creditsLimited = credInfo[2];
 
-  return {
-    plan,
-    trialEnd: trialEndDate,
-    credits: {
-      used: creditsUsed,
-      limit: creditsLimited 
-    }
-  }
+  // return {
+  //   plan,
+  //   trialEnd: trialEndDate,
+  //   credits: {
+  //     used: creditsUsed,
+  //     limit: creditsLimited 
+  //   }
+  // }
 }
 
 
