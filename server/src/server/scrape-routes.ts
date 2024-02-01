@@ -60,10 +60,11 @@ export const scrapeRoutes = (app: Express) => {
           useProxy
         );
       }
-  
+
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
-      scraper.close()
+      await scraper.close()
       res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
     }
   });
