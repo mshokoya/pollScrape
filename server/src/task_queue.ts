@@ -2,13 +2,13 @@ import { Socket } from 'socket.io';
 import workerpool from 'workerpool';
 import mutex from 'mutexify';
 
-type QueueItem<T = unknown> = {
+type QueueItem<T = Record<string, any> | undefined> = {
   id: string, 
   action: (a:T) => any,
-  args: T
+  args?: T
 }
 
-type TIP_Item = [string, {}] 
+type TIP_Item = [id: string, args: Record<string, any> | undefined, workerpool.Promise<unknown>] 
 
 // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
 // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
@@ -17,7 +17,7 @@ export const TaskQueue = (io: Socket) => {
   const _Plock = mutex();
   let maxWorkers: number;
   const queue: QueueItem[] = [];
-  const TIP: [string, any][] = []
+  const TIP: TIP_Item[] = []
   const pool = workerpool.pool();
   
 
@@ -29,10 +29,13 @@ export const TaskQueue = (io: Socket) => {
   }
 
   const dequeue = () => { 
+    let val: QueueItem | undefined;
     _Qlock((r) => {
-      queue.shift()
+      val = queue.shift()
       r()
     })
+
+    return val ? val : undefined
   }
   const remove = (id: string) => {
     const taskIdx = queue.findIndex(task => task.id === id);
@@ -56,26 +59,26 @@ export const TaskQueue = (io: Socket) => {
     })
   }
 
+  const stop = () => {
+    pool.
+  }
 
-
-  const stop = () => {}
-
-  
-
-  const setMaxWorkers = (n: number) => { maxWorkers = n}
+  const setMaxWorkers = (n: number) => {maxWorkers = n}
 
   const exec = () => {
     const task = dequeue();
     if (!task) return;
-    TIP.push([task.id, task.args])
-    pool.exec(task.action, [task.args])
+    const tsk = pool.exec(task.action, [task.args])
       .then(() => {
         io.emit('task-complete', task.id)
-        TIP.
+        _TIP_Dequeue(task.id)
       })
-  }
+      .catch(() => {
+        io.emit('task-failed', task.id)
+        _TIP_Dequeue(task.id)
+      })
 
-  const init = () => {
+    _TIP_Enqueue([task.id, task.args, tsk])
   }
 
   return {
