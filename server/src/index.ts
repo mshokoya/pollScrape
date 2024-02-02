@@ -8,6 +8,8 @@ import { proxyRoutes } from './server/proxy-routes';
 import { accountRoutes } from './server/account-routes';
 import { metadataRoutes } from './server/metadata-route';
 import { scrapeRoutes } from './server/scrape-routes';
+import { initTaskQueue } from './task_queue';
+import { initSocketIO } from './websockets';
 
 
 const app = express();
@@ -38,8 +40,16 @@ app.use((err: any, _req: any, res: any, next: any) => {
 mongoose.connect('mongodb://localhost:27017/apollo')
   .then(() => {
     console.log('mongoose started')
+    
+    const io = initSocketIO(server)
+    console.log('socketIO started')
+
+    initTaskQueue(io)
+    console.log('taskQueue started')
+
     server.listen(port, () => {
       console.log(`connected to server on port ${port}`)
     });
+    
   });
 

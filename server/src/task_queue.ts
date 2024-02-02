@@ -1,4 +1,4 @@
-import { Socket } from 'socket.io';
+import { Server as IO, Socket } from 'socket.io';
 import workerpool, { Pool } from 'workerpool';
 import mutex from 'mutexify';
 import {cpus} from 'os';
@@ -13,7 +13,8 @@ type TIP_Item = [id: string, args: Record<string, any> | undefined, workerpool.P
 
 // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
 // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
-export const TaskQueue = (io: Socket) => {
+
+const TaskQueue = (io: IO) => {
   const _Qlock = mutex();
   const _Plock = mutex();
   let maxWorkers: number;
@@ -89,12 +90,12 @@ export const TaskQueue = (io: Socket) => {
     if (!task) return;
     const tsk = pool.exec(task.action, [task.args])
       .then(() => {
-        io.emit('task-complete', task.id)
+        // io.emit('task-complete', task.id)
         _TIP_Dequeue(task.id)
         exec()
       })
       .catch(() => {
-        io.emit('task-failed', task.id)
+        // io.emit('task-failed', task.id)
         _TIP_Dequeue(task.id)
         exec()
       })
@@ -103,7 +104,7 @@ export const TaskQueue = (io: Socket) => {
     exec();
   }
 
-  const init = () => {
+  function init() {
     pool = workerpool.pool({
       onCreateWorker() {
         console.log('event create')
@@ -130,4 +131,11 @@ export const TaskQueue = (io: Socket) => {
     taskQueue: () => queue,
     tasksInProcess: () => TIP
   }
+}
+
+export let taskQueue: ReturnType<typeof TaskQueue>;
+
+export const initTaskQueue = (io: IO) => {
+  taskQueue = TaskQueue(io)
+  return taskQueue
 }

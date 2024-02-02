@@ -1,7 +1,7 @@
-import socketIO from 'socket.io';
+import {Server as IO}  from 'socket.io';
 
-export const socketio = (server: any) => {
-  const io = new socketIO.Server(server);
+export const SocketIO = (server: any) => {
+  const io = new IO(server);
 
   io.on('connection', (socket) => {
     console.log('A user connected');
@@ -12,5 +12,12 @@ export const socketio = (server: any) => {
   
   });
 
+  return io
+}
+
+export let io: IO;
+
+export const initSocketIO = (server: unknown) => {
+  io = SocketIO(server);
   return io
 }
