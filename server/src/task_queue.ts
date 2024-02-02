@@ -11,68 +11,99 @@ type QueueItem<T = Record<string, any> | undefined> = {
 
 type TIP_Item = [id: string, args: Record<string, any> | undefined, workerpool.Promise<unknown>] 
 
+// https://dev.to/bleedingcode/increase-node-js-performance-with-libuv-thread-pool-5h10
+
+
 // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
 // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
-
 const TaskQueue = (io: IO) => {
   const _Qlock = mutex();
   const _Plock = mutex();
+  const exec_lock = mutex();
   let maxWorkers: number;
   const queue: QueueItem[] = [];
   const TIP: TIP_Item[] = []
   let pool: Pool;
 
-  const enqueue = (item: QueueItem) => { 
-    _Qlock((r) => {
-      queue.push(item)
-      r()
+  const enqueue = async (item: QueueItem) => { 
+    new Promise((res) => {
+      _Qlock((r) => {
+        queue.push(item)
+        r()
+        res(null)
+      })
     })
-    exec()
+    .then(() => {
+      exec()
+    })
   }
 
-  const dequeue = () => { 
-    let val: QueueItem | undefined;
-    _Qlock((r) => {
-      val = queue.shift()
-      r()
+  const dequeue = async (): Promise<QueueItem<Record<string, any> | undefined> | undefined> => { 
+    return new Promise((res) => {
+      _Qlock((r) => {
+        const val = queue.shift();
+        r();
+        res(val);
+      })
     })
-    exec()
-    return val
-  }
-  const remove = (id: string) => {
-    const taskIdx = queue.findIndex(task => task.id === id);
-    if (taskIdx === -1) return;
-    exec()
-    return queue.splice(taskIdx, 0)
   }
 
-  const _TIP_Enqueue = (item: TIP_Item) => { 
-    _Plock((r) => {
-      TIP.push(item)
-      r()
+  const remove = async (id: string) => {
+    return new Promise((res, rej) => {
+      _Qlock((r) => {
+        const taskIdx = queue.findIndex(task => task.id === id);
+        if (taskIdx === -1) rej('queue is empty');
+        const tsk = queue.splice(taskIdx, 0)
+        r();
+        res(tsk);
+      })
     })
-    exec()
-  }
-  const _TIP_Dequeue = (id: string) => { 
-    _Plock((r) => {
-      const taskIdx = TIP.findIndex(task => task[0] === id);
-      if (taskIdx > -1) return;
-      TIP.splice(taskIdx, 0)
-      r()
-    })
-    exec()
   }
 
-  const stop = (id: string) => {
-    _Plock(async (r) => {
-      const process = TIP.find(p => p[0] === id)
-      if (!process) return;
-      await process[2]
-        .cancel()
-        .then(() => {})
-        .catch(() => {})
+  const _TIP_Enqueue = async (item: TIP_Item) => { 
+    return new Promise((res) => {
+      _Plock((r) => {
+        TIP.push(item)
+        r()
+        res(null)
+      })
     })
-    exec()
+    .then(() => {
+      exec()
+    })
+  }
+
+  const _TIP_Dequeue = async (id: string) => { 
+    return new Promise((res, rej) => {
+      _Plock((r) => {
+        const taskIdx = TIP.findIndex(task => task[0] === id);
+        if (taskIdx < 0) {
+          r()
+          rej();
+        }
+        const tsk = TIP.splice(taskIdx, 0)
+        r()
+        res(tsk)
+      })
+    })
+  }
+
+  const stop = async(id: string) => {
+    return new Promise((res, rej) => {
+      _Plock(async (r) => {
+        const process = TIP.find(p => p[0] === id)
+        if (!process) return rej();
+        process[2]
+          .cancel()
+          .then(() => { res(null) })
+          .catch(() => { rej() })
+
+      })
+    })
+    .then(() => {
+      exec()
+    })
+    
   }
 
   const setMaxWorkers = (n: number) => {
@@ -86,35 +117,27 @@ const TaskQueue = (io: IO) => {
 
   const exec = async () => {
     if (pool.stats().activeTasks >= maxWorkers) return;
-    const task = dequeue();
+    const task = await dequeue();
     if (!task) return;
+
     const tsk = pool.exec(task.action, [task.args])
-      .then(() => {
+      .then(async () => {
         // io.emit('task-complete', task.id)
-        _TIP_Dequeue(task.id)
+        await _TIP_Dequeue(task.id)
         exec()
       })
-      .catch(() => {
+      .catch(async (e) => {
         // io.emit('task-failed', task.id)
-        _TIP_Dequeue(task.id)
+        await _TIP_Dequeue(task.id)
         exec()
       })
 
-    _TIP_Enqueue([task.id, task.args, tsk])
-    exec();
+      _TIP_Enqueue([task.id, task.args, tsk])
+      exec();
   }
 
   function init() {
     pool = workerpool.pool({
-      onCreateWorker() {
-        console.log('event create')
-        exec()
-        return {}
-      },
-      onTerminateWorker() { 
-        console.log('event terminate')
-        exec() 
-      },
       maxWorkers: cpus().length
     });
     maxWorkers = cpus().length
@@ -137,5 +160,6 @@ export let taskQueue: ReturnType<typeof TaskQueue>;
 
 export const initTaskQueue = (io: IO) => {
   taskQueue = TaskQueue(io)
+  taskQueue.init()
   return taskQueue
 }
