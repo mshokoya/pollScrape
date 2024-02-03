@@ -1,6 +1,5 @@
 import { Server as IO, Socket } from 'socket.io';
 import workerpool, { Pool } from 'workerpool';
-import mutex from 'mutexify';
 import {cpus} from 'os';
 import { Mutex } from 'async-mutex'
 
@@ -113,20 +112,13 @@ const TaskQueue = (io: IO) => {
   function init() {
     pool = workerpool.pool({
       onCreateWorker() {
-        console.log('event create')
         exec()
         return {}
       },
-      onTerminateWorker() { 
-        console.log('event terminate')
-        exec() 
-      },
-      // maxWorkers: cpus().length
-      maxWorkers: 5,
+      maxWorkers: cpus().length,
       maxQueueSize: 0
     });
-    // maxWorkers = cpus().length
-    maxWorkers = 2
+    maxWorkers = Math.round(cpus().length / 2)
   }
 
   return {
