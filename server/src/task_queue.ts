@@ -2,6 +2,7 @@ import { Server as IO, Socket } from 'socket.io';
 import workerpool, { Pool } from 'workerpool';
 import mutex from 'mutexify';
 import {cpus} from 'os';
+import { Mutex } from 'async-mutex'
 
 type QueueItem<T = Record<string, any> | undefined> = {
   id: string, 
@@ -17,88 +18,61 @@ type TIP_Item = [id: string, args: Record<string, any> | undefined, workerpool.P
 // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
 // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
 const TaskQueue = (io: IO) => {
-  const _Qlock = mutex();
-  const _Plock = mutex();
-  const exec_lock = mutex();
+  // const _Qlock = mutex();
+  // const _Plock = mutex();
+  const _Qlock = new Mutex();
+  const _Plock = new Mutex();
+  const exec_lock = new Mutex();
   let maxWorkers: number;
   const queue: QueueItem[] = [];
   const TIP: TIP_Item[] = []
   let pool: Pool;
-  let c = 0
 
-  const enqueue = async (item: QueueItem) => { 
-    new Promise((res) => {
-      _Qlock((r) => {
-        queue.push(item)
-        r()
-        res(null)
-      })
-    })
-    .then(() => {
+  const enqueue = async (item: QueueItem) => {
+    return _Qlock.runExclusive(() => {
+      queue.push(item)
+    }).finally(() => {
       exec()
     })
   }
 
-  const dequeue = async (): Promise<QueueItem<Record<string, any> | undefined> | undefined> => { 
-    return new Promise((res) => {
-      _Qlock((r) => {
-        const val = queue.shift();
-        r();
-        res(val);
-      })
+  const dequeue = async (): Promise<QueueItem<Record<string, any> | undefined> | undefined> => {
+    return _Qlock.runExclusive(() => {
+      return queue.shift();
     })
   }
 
   const remove = async (id: string) => {
-    return new Promise((res, rej) => {
-      _Qlock((r) => {
-        const taskIdx = queue.findIndex(task => task.id === id);
-        if (taskIdx === -1) rej('queue is empty');
-        const tsk = queue.splice(taskIdx, 0)
-        r();
-        res(tsk);
-      })
+    return _Qlock.runExclusive(() => {
+      const taskIdx = queue.findIndex(task => task.id === id);
+      if (taskIdx === -1) return null
+      return queue.splice(taskIdx, 1)[0]
     })
   }
 
   const _TIP_Enqueue = async (item: TIP_Item) => { 
-    return new Promise((res) => {
-      _Plock((r) => {
-        TIP.push(item)
-        r()
-        res(null)
-      })
-    })
-    .then(() => {
+    return _Plock.runExclusive(() => {
+      TIP.push(item)
+    }).finally(() => {
       exec()
     })
   }
 
   const _TIP_Dequeue = async (id: string) => { 
-    return new Promise((res, rej) => {
-      _Plock((r) => {
-        const taskIdx = TIP.findIndex(task => task[0] === id);
-        if (taskIdx < 0) rej();
-        const tsk = TIP.splice(taskIdx, 0)
-        r()
-        res(tsk)
-      })
+    return _Plock.runExclusive(() => {
+      const taskIdx = TIP.findIndex(task => task[0] === id);
+      if (taskIdx < 0) null;
+      return TIP.splice(taskIdx, 1)[0]
     })
   }
 
   const stop = async(id: string) => {
-    return new Promise((res, rej) => {
-      _Plock(async (r) => {
-        const process = TIP.find(p => p[0] === id)
-        if (!process) return rej();
-        process[2]
-          .cancel()
-          .then(() => { res(null) })
-          .catch(() => { rej() })
-
-      })
-    })
-    .then(() => {
+    return _Plock.runExclusive(async () => {
+      const process = TIP.find(p => p[0] === id)
+      if (!process) return null;
+      return await process[2]
+        .cancel()
+    }).finally(() => {
       exec()
     })
     
@@ -114,46 +88,26 @@ const TaskQueue = (io: IO) => {
   }
 
   const exec = async () => {
-    new Promise((res) => {
-      exec_lock((r) => {
-        c++
-        res(r())
-      })
-      
-    })
-    .then(async () => {
-      console.log(c)
-      if (
-        pool.stats().activeTasks >= maxWorkers ||
-        c + TIP.length > maxWorkers
-      ) return;
+    try {
+      await exec_lock.acquire()
+      if (pool.stats().activeTasks >= maxWorkers) return;
       const task = await dequeue();
       if (!task) return;
-  
       const tsk = pool.exec(task.action, [task.args])
         .then(async () => {
           // io.emit('task-complete', task.id)
-          console.log('then')
-          console.log(task.id)
-          await _TIP_Dequeue(task.id)
-          console.log('pp')
+          _TIP_Dequeue(task.id)
           exec()
-          
         })
         .catch(async (e) => {
-          console.log(e)
-          console.log('end')
-          console.log(task.id)
           // io.emit('task-failed', task.id)
-          await _TIP_Dequeue(task.id)
-          console.log('ee')
+          _TIP_Dequeue(task.id)
           exec()
         })
-  
-        await _TIP_Enqueue([task.id, task.args, tsk])
-        exec();
-    })
-    .finally(() => {c--})
+        _TIP_Enqueue([task.id, task.args, tsk])
+    } finally {
+      exec_lock.release()
+    }
   }
 
   function init() {
@@ -172,7 +126,7 @@ const TaskQueue = (io: IO) => {
       maxQueueSize: 0
     });
     // maxWorkers = cpus().length
-    maxWorkers = 1
+    maxWorkers = 2
   }
 
   return {
@@ -186,9 +140,10 @@ const TaskQueue = (io: IO) => {
     taskQueue: () => queue,
     tasksInProcess: () => TIP,
     c: () => {
-      console.log(_Qlock.locked)
-      console.log(_Plock.locked)
-      console.log(exec_lock.locked)
+      console.log('TIP')
+      console.log(TIP)
+      console.log('queue')
+      console.log(queue)
     }
   }
 }

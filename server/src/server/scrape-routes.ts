@@ -27,7 +27,7 @@ export const scrapeRoutes = (app: Express) => {
               }
               console.log(`ID is = 1  ... Counter at ${counter}`)
               counter++
-            }, 2000)
+            }, 500)
           })
       },
       args: {a: 1, b:2}
@@ -46,30 +46,30 @@ export const scrapeRoutes = (app: Express) => {
             }
             console.log(`ID is = 2 ... Counter at ${counter}`)
             counter++
-          }, 2000)
+          }, 500)
         })
       },
       args: {a: 1, b:2}
     })
 
-    taskQueue.enqueue({
-      id: generateSlug(), 
-      action: () => {
-        return new Promise((res, rej) => {
-          let counter = 0
-          console.log('Counting to 5')
-          const l = setInterval(() => {
-            if (counter === 5) {
-              clearInterval(l)
-              res(null)
-            }
-            console.log(`ID is = 3 ... Counter at ${counter}`)
-            counter++
-          }, 2000)
-        })
-      },
-      args: {a: 1, b:2}
-    })
+    // taskQueue.enqueue({
+    //   id: generateSlug(), 
+    //   action: () => {
+    //     return new Promise((res, rej) => {
+    //       let counter = 0
+    //       console.log('Counting to 5')
+    //       const l = setInterval(() => {
+    //         if (counter === 5) {
+    //           clearInterval(l)
+    //           res(null)
+    //         }
+    //         console.log(`ID is = 3 ... Counter at ${counter}`)
+    //         counter++
+    //       }, 2000)
+    //     })
+    //   },
+    //   args: {a: 1, b:2}
+    // })
 
 
     // console.log(taskQueue.tasksInProcess())
