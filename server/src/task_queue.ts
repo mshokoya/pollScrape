@@ -24,6 +24,7 @@ const TaskQueue = (io: IO) => {
   const queue: QueueItem[] = [];
   const TIP: TIP_Item[] = []
   let pool: Pool;
+  let c = 0
 
   const enqueue = async (item: QueueItem) => { 
     new Promise((res) => {
@@ -77,10 +78,7 @@ const TaskQueue = (io: IO) => {
     return new Promise((res, rej) => {
       _Plock((r) => {
         const taskIdx = TIP.findIndex(task => task[0] === id);
-        if (taskIdx < 0) {
-          r()
-          rej();
-        }
+        if (taskIdx < 0) rej();
         const tsk = TIP.splice(taskIdx, 0)
         r()
         res(tsk)
@@ -116,31 +114,65 @@ const TaskQueue = (io: IO) => {
   }
 
   const exec = async () => {
-    if (pool.stats().activeTasks >= maxWorkers) return;
-    const task = await dequeue();
-    if (!task) return;
-
-    const tsk = pool.exec(task.action, [task.args])
-      .then(async () => {
-        // io.emit('task-complete', task.id)
-        await _TIP_Dequeue(task.id)
-        exec()
+    new Promise((res) => {
+      exec_lock((r) => {
+        c++
+        res(r())
       })
-      .catch(async (e) => {
-        // io.emit('task-failed', task.id)
-        await _TIP_Dequeue(task.id)
-        exec()
-      })
-
-      _TIP_Enqueue([task.id, task.args, tsk])
-      exec();
+      
+    })
+    .then(async () => {
+      console.log(c)
+      if (
+        pool.stats().activeTasks >= maxWorkers ||
+        c + TIP.length > maxWorkers
+      ) return;
+      const task = await dequeue();
+      if (!task) return;
+  
+      const tsk = pool.exec(task.action, [task.args])
+        .then(async () => {
+          // io.emit('task-complete', task.id)
+          console.log('then')
+          console.log(task.id)
+          await _TIP_Dequeue(task.id)
+          console.log('pp')
+          exec()
+          
+        })
+        .catch(async (e) => {
+          console.log(e)
+          console.log('end')
+          console.log(task.id)
+          // io.emit('task-failed', task.id)
+          await _TIP_Dequeue(task.id)
+          console.log('ee')
+          exec()
+        })
+  
+        await _TIP_Enqueue([task.id, task.args, tsk])
+        exec();
+    })
+    .finally(() => {c--})
   }
 
   function init() {
     pool = workerpool.pool({
-      maxWorkers: cpus().length
+      onCreateWorker() {
+        console.log('event create')
+        exec()
+        return {}
+      },
+      onTerminateWorker() { 
+        console.log('event terminate')
+        exec() 
+      },
+      // maxWorkers: cpus().length
+      maxWorkers: 5,
+      maxQueueSize: 0
     });
-    maxWorkers = cpus().length
+    // maxWorkers = cpus().length
+    maxWorkers = 1
   }
 
   return {
@@ -152,7 +184,12 @@ const TaskQueue = (io: IO) => {
     maxWorkers: () => maxWorkers,
     workerStats: () => pool.stats(),
     taskQueue: () => queue,
-    tasksInProcess: () => TIP
+    tasksInProcess: () => TIP,
+    c: () => {
+      console.log(_Qlock.locked)
+      console.log(_Plock.locked)
+      console.log(exec_lock.locked)
+    }
   }
 }
 

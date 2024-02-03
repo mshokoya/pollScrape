@@ -14,7 +14,9 @@ export const accountRoutes = (app: Express) => {
   app.post('/account', async (req, res) => {
     console.log('addAccount')
 
-    console.log(taskQueue.workerStats())
+    // console.log(taskQueue.workerStats())
+    console.log(taskQueue.c())
+    // console.log(taskQueue.tasksInProcess())
 
     // if (!req.body.account) throw new Error('please provide account')
 
