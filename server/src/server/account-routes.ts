@@ -14,45 +14,41 @@ export const accountRoutes = (app: Express) => {
   app.post('/account', async (req, res) => {
     console.log('addAccount')
 
-    // console.log(taskQueue.workerStats())
-    console.log(taskQueue.c())
-    // console.log(taskQueue.tasksInProcess())
+    if (!req.body.account) throw new Error('please provide account')
 
-    // if (!req.body.account) throw new Error('please provide account')
+    const email = req.body.email;
+    const password = req.body.password;
+    const recoveryEmail = req.body.recoveryEmail;
 
-    // const email = req.body.email;
-    // const password = req.body.password;
-    // const recoveryEmail = req.body.recoveryEmail;
-
-    // if (!email || !password) {
-    //   throw new Error('invalid request params')
-    // }
+    if (!email || !password) {
+      throw new Error('invalid request params')
+    }
 
     try {
-      // if (!scraper.browser()) {
-      //   await scraper.launchBrowser()
-      // }
+      if (!scraper.browser()) {
+        await scraper.launchBrowser()
+      }
 
-      // const domain = getDomain(email);
+      const domain = getDomain(email);
 
-      // const account: Partial<IAccount> = {email, password, domain}
-      // if (recoveryEmail) account.recoveryEmail = recoveryEmail
+      const account: Partial<IAccount> = {email, password, domain}
+      if (recoveryEmail) account.recoveryEmail = recoveryEmail
 
-      // await signupForApollo(account)
+      await signupForApollo(account)
 
-      // const cookie = await getBrowserCookies()
+      const cookie = await getBrowserCookies()
 
-      // const save = await addAccountToDB({
-      //   email, 
-      //   password, 
-      //   domain, 
-      //   cookie: JSON.stringify(cookie),
-      //   recoveryEmail
-      // })
+      const save = await addAccountToDB({
+        email, 
+        password, 
+        domain, 
+        cookie: JSON.stringify(cookie),
+        recoveryEmail
+      })
   
-      // if (save !== null) throw new Error("Failed to add account, account already exists");
+      if (save !== null) throw new Error("Failed to add account, account already exists");
   
-      // await scraper.close()
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       if (scraper.browser()) await scraper.close()

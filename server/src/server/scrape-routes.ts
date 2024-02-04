@@ -6,6 +6,7 @@ import { scraper } from '../scraper/scraper';
 import { isNumber } from '../helpers';
 import { taskQueue } from '../task_queue';
 import { generateSlug } from 'random-word-slugs';
+import { mailbox } from '../mailbox';
 
 
 export const scrapeRoutes = (app: Express) => {
@@ -14,66 +15,27 @@ export const scrapeRoutes = (app: Express) => {
   app.post('/scrape', async (req, res) => {
     console.log('scrape')
 
-    await taskQueue.enqueue({
-      id: generateSlug(), 
-      action: () => {
-          return new Promise((res) => {
-            let counter = 0
-            console.log('Counting to 5')
-            const l = setInterval(() => {
-              if (counter === 5) {
-                res(null)
-                clearInterval(l)
-              }
-              console.log(`ID is = 1  ... Counter at ${counter}`)
-              counter++
-            }, 500)
-          })
-      },
-      args: {a: 1, b:2}
+    
+
+    await mailbox.newConnection({
+      auth: {
+        user: 'mikeydee0161@gmail.com',
+        pass: 'mannyman17'
+      }
     })
 
-    taskQueue.enqueue({
-      id: generateSlug(), 
-      action: () => {
-        return new Promise((res, rej) => {
-          let counter = 0
-          console.log('Counting to 5')
-          const l = setInterval(() => {
-            if (counter === 5) {
-              clearInterval(l)
-              res(null)
-            }
-            console.log(`ID is = 2 ... Counter at ${counter}`)
-            counter++
-          }, 500)
-        })
-      },
-      args: {a: 1, b:2}
-    })
+    await mailbox.watchForNewMail('mikeydee0161@gmail.com', () => {})
 
-    // taskQueue.enqueue({
-    //   id: generateSlug(), 
-    //   action: () => {
-    //     return new Promise((res, rej) => {
-    //       let counter = 0
-    //       console.log('Counting to 5')
-    //       const l = setInterval(() => {
-    //         if (counter === 5) {
-    //           clearInterval(l)
-    //           res(null)
-    //         }
-    //         console.log(`ID is = 3 ... Counter at ${counter}`)
-    //         counter++
-    //       }, 2000)
-    //     })
-    //   },
-    //   args: {a: 1, b:2}
-    // })
+    await mailbox.getAllMail('mikeydee0161@gmail.com')
+
+    
 
 
-    // console.log(taskQueue.tasksInProcess())
-    // console.log(taskQueue.workerStats())
+
+
+
+
+
 
     // let start: number = req.body.start;
     // let end: number = req.body.end;
@@ -83,7 +45,7 @@ export const scrapeRoutes = (app: Express) => {
     // let pageToStartScrapingFrom: number;
     // const url = req.body.url;
 
-    try {
+    // try {
     //   // (FIX) test if works
     //   if ( 
     //     (!start || !end || !isNumber(start) || !isNumber(end) || start > end) &&
@@ -127,10 +89,67 @@ export const scrapeRoutes = (app: Express) => {
 
     //   await scraper.close()
       res.json({ok: true, message: null, data: null});
-    } catch (err: any) {
-      await scraper.close()
-      res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
-    }
+  //   } catch (err: any) {
+  //     await scraper.close()
+  //     res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
+  //   }
   });
 
 }
+
+// await taskQueue.enqueue({
+//   id: generateSlug(), 
+//   action: () => {
+//       return new Promise((res) => {
+//         let counter = 0
+//         console.log('Counting to 5')
+//         const l = setInterval(() => {
+//           if (counter === 5) {
+//             res(null)
+//             clearInterval(l)
+//           }
+//           console.log(`ID is = 1  ... Counter at ${counter}`)
+//           counter++
+//         }, 500)
+//       })
+//   },
+//   args: {a: 1, b:2}
+// })
+
+// taskQueue.enqueue({
+//   id: generateSlug(), 
+//   action: () => {
+//     return new Promise((res, rej) => {
+//       let counter = 0
+//       console.log('Counting to 5')
+//       const l = setInterval(() => {
+//         if (counter === 5) {
+//           clearInterval(l)
+//           res(null)
+//         }
+//         console.log(`ID is = 2 ... Counter at ${counter}`)
+//         counter++
+//       }, 500)
+//     })
+//   },
+//   args: {a: 1, b:2}
+// })
+
+// taskQueue.enqueue({
+//   id: generateSlug(), 
+//   action: () => {
+//     return new Promise((res, rej) => {
+//       let counter = 0
+//       console.log('Counting to 5')
+//       const l = setInterval(() => {
+//         if (counter === 5) {
+//           clearInterval(l)
+//           res(null)
+//         }
+//         console.log(`ID is = 3 ... Counter at ${counter}`)
+//         counter++
+//       }, 2000)
+//     })
+//   },
+//   args: {a: 1, b:2}
+// })

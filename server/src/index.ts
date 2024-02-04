@@ -10,6 +10,7 @@ import { metadataRoutes } from './server/metadata-route';
 import { scrapeRoutes } from './server/scrape-routes';
 import { initTaskQueue } from './task_queue';
 import { initSocketIO } from './websockets';
+import { initMailBox } from './mailbox';
 
 
 const app = express();
@@ -46,6 +47,9 @@ mongoose.connect('mongodb://localhost:27017/apollo')
 
     initTaskQueue(io)
     console.log('taskQueue started')
+
+    initMailBox()
+    console.log('mailbox started')
 
     server.listen(port, () => {
       console.log(`connected to server on port ${port}`)
