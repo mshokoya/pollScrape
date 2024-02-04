@@ -20,16 +20,19 @@ export const scrapeRoutes = (app: Express) => {
     await mailbox.newConnection({
       auth: {
         user: 'mikeydee0161@gmail.com',
-        pass: 'mannyman17'
+        pass: 'mannyman19'
       }
+    })
+    .then(() => {
+      console.log('connected')
     })
 
     await mailbox.watchForNewMail('mikeydee0161@gmail.com', () => {})
+      .then(() => {
+        console.log('watching')
+      })
 
     await mailbox.getAllMail('mikeydee0161@gmail.com')
-
-    
-
 
 
 

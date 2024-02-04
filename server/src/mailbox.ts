@@ -2,6 +2,12 @@ import { Mutex } from 'async-mutex';
 import { getDomain } from './helpers';
 // import IMAP, { ImapConfig } from 'imap-mailbox';
 import { FetchMessageObject, ImapFlow, ImapFlowOptions } from 'imapflow';
+import cs from '../client_secret.json';
+// @ts-ignore
+import xoauth2 from 'xoauth2';
+
+// https://stackoverflow.com/questions/71964854/how-to-connect-to-gmail-using-node-js-imapflow
+// https://ei.docs.wso2.com/en/latest/micro-integrator/references/connectors/gmail-connector/configuring-gmail-api/
 
 // const config = {
 //   host: 'imap.server.domain',
@@ -73,14 +79,55 @@ const Mailbox = () => {
   const newConnection = async (opts: Partial<ImapFlowOptions>) => {
     // check if if conn does not already exist
 
+    // console.log({
+    //   ...opts, 
+    //   port: opts.port || 993,
+    //   secure: false,
+    //   host: opts.host || gd(opts.auth!.user)
+    // } )
+
     if (!opts.auth || !opts.auth.user) throw new Error('failed to login, please provide email')
-    if (!opts.auth || !opts.auth.pass) throw new Error('failed to login, please provide password')
+    if (!opts.auth.pass) throw new Error('failed to login, please provide password')
+    if (getDomainFull(opts.auth.user).includes('gmail')) {
+      const {installed: {client_id, client_secret}} = cs;
+
+      let xoauth2gen = xoauth2.createXOAuth2Generator({
+        user: opts.auth.user, // the email address
+        clientId: client_id,
+        clientSecret: client_secret,
+        refreshToken: '---',
+      })
+
+      // SMTP/IMAP - https://github.com/andris9/xoauth2/blob/168af721b39bcccf8fa380809c426abe8f9092ab/README.md?plain=1#L71
+      const token = await xoauth2gen.getToken((err: unknown, token: string) => {
+        if(err) {
+          console.log(err);
+          return null
+        }
+        return token;
+      });
+
+      // // HTTP
+      // const token = await xoauth2gen.getToken(function(err, token, accessToken){
+      //   if(err){
+      //       return console.log(err);
+      //   }
+      //   console.log("Authorization: Bearer " + accessToken);
+      // });
+
+      if (!token) throw new Error('Failed to get gmail token')
+
+        opts.auth!.accessToken = token
+      }
+      
+    
 
     const client = new ImapFlow({
       ...opts, 
       port: opts.port || 993,
       secure: true,
-      host: opts.host || gd(opts.auth!.user)
+      host: opts.host || getDomainFull(opts.auth!.user),
+ 
     } as ImapFlowOptions)
 
     try {
@@ -154,7 +201,7 @@ export const initMailBox = () => {
 }
 
 
-const gd = (email: string) => {
+const getDomainFull = (email: string) => {
   return email.split('@')[1]
 }
 
