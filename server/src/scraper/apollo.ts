@@ -245,7 +245,8 @@ export const upgradeApolloAccount = async (): Promise<void> => {
   // }
 }
 
-export const createApolloAccount = async (account: IAccount) => {
+export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
+  if (!account.email) throw new Error('failed to login, credentials missing');
   await scraper.restartBrowser()
 
   const page = scraper.page() as Page

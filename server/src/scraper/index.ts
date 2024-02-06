@@ -7,9 +7,9 @@ import {
 } from "../database/util";
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { IAccount } from '../database/models/accounts';
+import { AccountModel, IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../database';
-import { apolloDefaultLogin, apolloGetCreditsInfo, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
+import { apolloConfirmAccount, apolloDefaultLogin, apolloDefaultSignup, apolloGetCreditsInfo, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 import { MBEventArgs, mailbox } from '../mailbox';
@@ -93,7 +93,7 @@ export const signupForApollo = async (account: Partial<IAccount>) => {
       await apolloGmailSignup(account)
       break
     default:
-      await apolloDefaultLogin(account)
+      await apolloDefaultSignup(account)
       break;
   }
 }
@@ -170,14 +170,17 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) =
       .replace('\n', '')
       .replace('\r', '')
 
-    await apolloConfirmAccount(l)
-    const cookies = await getBrowserCookies()
-    await updateAccount({domainEmail: mail.envelope.to[0].address}, {cookie: JSON.stringify(cookies)})
+    const account = await AccountModel.findOne({email: authEmail}).lean();
+    if (!account) throw new Error('Failed to find account (new mail)');
+
+    await apolloConfirmAccount(l, account);
+    const cookies = await getBrowserCookies();
+    await updateAccount({domainEmail: mail.envelope.to[0].address}, {cookie: JSON.stringify(cookies)});
     fail = false
     break;
   }
   
-  if (fail) throw new Error('failed to signup, account verification failed')
+  if (fail) throw new Error('failed to signup, account verification failed');
 }
 
 
