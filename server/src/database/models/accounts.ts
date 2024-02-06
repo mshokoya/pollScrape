@@ -10,6 +10,8 @@ export type IAccount = {
   email: string
   password: string
   cookie: string
+  firstname: string
+  lastname: string
   proxy: string
   domainEmail: string
   lastUsed: Date
@@ -31,6 +33,8 @@ const accountSchema = new Schema<IAccount>({
   isSuspended: { type: Boolean, default: false },
   loginType: {type: String, default: "default"}, // (FIX) remove and switch with domain
   domainEmail: { type: String, default: "" },
+  firstname: { type: String, default: "" },
+  lastname: { type: String, default: "" },
   email: { type: String, default: "" },
   password: { type: String, default: "" },
   cookie: { type: String, default: "" },

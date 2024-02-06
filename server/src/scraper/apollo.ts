@@ -72,7 +72,7 @@ export const apolloDefaultLogin = async (account: Partial<IAccount>) => {
   const incorrectLoginSelector = '[class="zp_nFR11"]'
   const emptyFieldsSelector = '[class="error-label zp_HeV9x"]'
   const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
-  const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'
+  const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'  // once click on 'access email'
   const page = scraper.page() as Page
 
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
@@ -185,6 +185,7 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   };
 }
 
+// (FIX) ???
 export const upgradeApolloAccount = async (): Promise<void> => {
   const page = scraper.page() as Page
 
@@ -244,7 +245,6 @@ export const upgradeApolloAccount = async (): Promise<void> => {
   // }
 }
 
-
 export const createApolloAccount = async () => {
   await scraper.restartBrowser()
 
@@ -281,5 +281,78 @@ export const createApolloAccount = async () => {
   if (!signupButton) throw new Error('failed to find signup button')
   await signupButton.click()
 
+  // re-route to https://www.apollo.io/sign-up/success
+  // input disappears (wait till it does not exist)   // MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq
+
   // signup error selector p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]
+}
+
+export const apolloConfirmAccount = async (confirmationURL: string) => {
+  await scraper.visit(confirmationURL)
+
+  // once clicked it leads you here 
+  // https://app.apollo.io/#/claim?token=1yLHdLGSyP1GJPbwcOrV1A&set_name=true
+
+  // full name field
+  // input[class="zp_bWS5y zp_J0MYa"][name="name"][id="claim-name"]
+
+  // password field
+  // input[class="zp_bWS5y zp_J0MYa"][name="password"][id="new-password"]
+
+  // retype password field (disabled)
+  // input[class="zp_bWS5y zp_J0MYa zp_bWH9b"][name="confirmPassword"][id="o27d34b45-fe18-42d5-a678-e9ab525a2357-input"][type="password"] 
+
+  // retype password field (enabled)
+  // input[class="zp_bWS5y zp_J0MYa"][name="confirmPassword"][id="o27d34b45-fe18-42d5-a678-e9ab525a2357-input"][type="password"] 
+
+  // invalid field
+    // div[class="zp_pbSCI"]
+    // e.g error // Password must be at least 10 characters.
+    // e.g Email and/or password don't match with any of our records.
+
+  // ===============================================================
+        // redirect page
+
+  // ================================================================
+  // routed to    https://app.apollo.io/#/join-team    (if multiple accounts with domain)
+
+  // start new team
+  // button[class="zp-button zp_zUY3r zp_MCSwB zp_OztAP zp_LUHm0"][type="button"]
+
+  // join team
+  // button[class="zp-button zp_zUY3r zp_OztAP zp_wlMPY"][type="button"]
+
+ // ================================================================
+        // https://app.apollo.io/#/onboarding-hub/welcome/video
+
+    // click to continue
+    // button[class="zp_kxUTD"]
+  // ================================================================
+      // https://app.apollo.io/#/onboarding-hub/welcome/landing
+
+      // click to skip
+  // button[class="zp-button zp_zUY3r zp_MCSwB"]
+
+  // ================================================================
+            // https://app.apollo.io/#/onboarding-hub/queue
+      
+      // CONFIRMATION COMPLETE
+
+  // ================================================================
+          // put in search param to click button and remove popups
+
+          // clicked table element
+          // div[class="zp_bns67 zp_veHM9"] > button[type="button"][class="zp-button zp_zUY3r"]    //look for 2, one always exists on dom
+                  // OR
+          // button[class="zp-button zp_zUY3r"][1]
+
+                  // THEN wait for 
+          // button[class="zp-button zp_zUY3r zp_MCSwB zp_iNK2i"][type="button"]
+
+                  // THEN click
+          // i[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]
+
+
+  // ================================================================ 
+  return {}
 }
