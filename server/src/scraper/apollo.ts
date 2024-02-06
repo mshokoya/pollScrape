@@ -245,41 +245,33 @@ export const upgradeApolloAccount = async (): Promise<void> => {
   // }
 }
 
-export const createApolloAccount = async () => {
+export const createApolloAccount = async (account: IAccount) => {
   await scraper.restartBrowser()
 
-  const apollo = scraper.page() as Page
+  const page = scraper.page() as Page
 
-  const tempMail = await scraper.browser()?.newPage()
-  if (!tempMail) throw new Error('failed access email service, please try again')
-  
-  await tempMail.goto('temp-mail.org')
-  await tempMail.bringToFront(); 
+  await page.goto('www.apollo.io/sign-up')
+  await page.bringToFront();
 
-  const emailSelector = await tempMail.waitForSelector('input[class="emailbox-input opentip"]', {visible: true, timeout: 10000}).catch(() => null);
-  if (!emailSelector) throw new Error('failed to fine email, please try again')
-
-  const email = await tempMail.evaluate(() => {
-    const e = document.querySelector('input[class="emailbox-input opentip"]')
-    //@ts-ignore
-    return e ? e.innerText : null
-  }) as string | null
-  if (!email) throw new Error('faied to get email, please try again');
-
-  await apollo?.goto('www.apollo.io/sign-up')
-  await apollo.bringToFront();
-
-  const input = await apollo?.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000}).catch(() => null)
+  const input = await page.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!input) throw new Error('failed to register for apollo');
-  await input.type(email)
+  await input.type(account.email)
   
-  const tsCheckbox = await apollo.$('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]')
+  const tsCheckbox = await page.$('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]')
   if (!tsCheckbox) throw new Error('failed to find T&S checkbox')
   await tsCheckbox.click()
 
-  const signupButton = await apollo.$('button[class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation mui-style-1t8qqg8"]')
+  const signupButton = await page.$('button[class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation mui-style-1t8qqg8"]').catch(() => null)
   if (!signupButton) throw new Error('failed to find signup button')
   await signupButton.click()
+
+  delay(3000)
+
+  const inputError = await page.$('p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]').catch(() => null)
+  if (inputError) throw new Error('Failed to signup, error in email')
+
+  if (!page.url().includes('/sign-up/success')) throw new Error('Failed to signup, signup was unsuccessful')
+
 
   // re-route to https://www.apollo.io/sign-up/success
   // input disappears (wait till it does not exist)   // MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq
@@ -287,8 +279,72 @@ export const createApolloAccount = async () => {
   // signup error selector p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]
 }
 
-export const apolloConfirmAccount = async (confirmationURL: string) => {
+export const apolloConfirmAccount = async (confirmationURL: string, account: IAccount) => {
+  const page = scraper.page() as Page
   await scraper.visit(confirmationURL)
+
+  const nameField = await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="name"]', {visible: true, timeout: 10000}).catch(() => null)
+  if (!nameField) throw new Error('Failed to find full name field')
+  await nameField.type(account.firstname + " " + account.lastname)
+
+  const passwordField = await page.$('input[class="zp_bWS5y zp_J0MYa"][name="password"]')
+  if (!passwordField) throw new Error('Failed to find password field')
+  await passwordField.type(account.password)
+
+  const confirmPasswordField = await page.$('input[class="zp_bWS5y zp_J0MYa zp_bWH9b"][name="confirmPassword"]')
+  if (!confirmPasswordField) throw new Error('Failed to find confirm password field')
+  await confirmPasswordField.type(account.password)
+
+  // ===== (FIX) fack... find submit button & click =====
+  
+  let counter = 0
+  while (counter <= 5) {
+
+    const onboardingButton = await page.$('[class="zp-button zp_zUY3r zp_OztAP zp_lshSd"]').catch(() => null) //on lead search page (this selected is used by el by default)
+    const apolloSkipButton = await page.$('[class="zp-button zp_zUY3r zp_MCSwB"]').catch(() => null)
+    const newTeamButton = await page.$('button[class="zp-button zp_zUY3r zp_MCSwB zp_OztAP zp_LUHm0"][type="button"]').catch(() => null)
+    const close = await page.$('[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]').catch(() => null)
+    const url = page.url();
+
+    if (newTeamButton) {
+      await newTeamButton.click({delay: 1000})
+      counter = 0
+
+    } else if (onboardingButton) {
+      await onboardingButton.click({delay:1000})
+      counter = 0
+
+    } else if (apolloSkipButton) {
+      await apolloSkipButton.click({delay:1000})
+      counter = 0
+
+    } else if (close) {
+      await close.click({delay:1000})
+      counter = 0
+
+    } else if (url.includes('signup-success')) {
+      await scraper.visit('https://app.apollo.io/')
+      counter = 0
+      
+    } else if (
+      url.includes('app.apollo.io/#/onboarding-hub/queue') ||
+      url.includes('app.apollo.io/#/control-center') ||
+      url.includes('app.apollo.io/#/sequences') ||
+      url.includes('app.apollo.io/#/conversations') ||
+      url.includes('app.apollo.io/#/opportunities') ||
+      url.includes('app.apollo.io/#/enrichment-status') ||
+      url.includes('app.apollo.io/#/settings')
+    ) {
+      break
+
+    } else if (url.includes('message=not_registered')) {
+      throw new Error('failed to signup')
+    } else {
+      counter++
+    }
+
+    await delay(3000)
+  }
 
   // once clicked it leads you here 
   // https://app.apollo.io/#/claim?token=1yLHdLGSyP1GJPbwcOrV1A&set_name=true
@@ -309,6 +365,7 @@ export const apolloConfirmAccount = async (confirmationURL: string) => {
     // div[class="zp_pbSCI"]
     // e.g error // Password must be at least 10 characters.
     // e.g Email and/or password don't match with any of our records.
+
 
   // ===============================================================
         // redirect page
@@ -354,5 +411,4 @@ export const apolloConfirmAccount = async (confirmationURL: string) => {
 
 
   // ================================================================ 
-  return {}
 }
