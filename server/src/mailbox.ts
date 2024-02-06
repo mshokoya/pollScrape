@@ -19,15 +19,16 @@ import { FetchMessageObject, ImapFlow, ImapFlowOptions } from 'imapflow';
 type C = {
   conn: ImapFlow,
   email: string,
-  t: NodeJS.Timeout
+  t?: NodeJS.Timeout
 }
 
-type MBEventArgs = {
-  email: string
+export type MBEventArgs = {
+  authEmail: string
   path: string
   count: string
   prevCount: string
 }
+
 
 // (FIX) create and store connection in array and add timeout to auto close conn & remove conn from array
 const Mailbox = () => {
@@ -51,19 +52,20 @@ const Mailbox = () => {
   }
 
   const getLatestMessage = async (email: string) => {
-    const conn = await getConnection(email)
+    const conn = conns.find((c) => c.email = email)
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
-    let lastMsg = await conn.fetchOne('*', {uid: true, envelope: true, source: true, flags: true, headers: true, bodyStructure: true,})
-    console.log(lastMsg)
+      if (!conn) throw new Error('Failed to get mailbox, please reconnect')
+        // return await newConnection(opts, cb)
+    return await conn.conn.fetchOne('*', {uid: true, envelope: true, source: true, flags: true, headers: true, bodyStructure: true,})
   }
 
-  const watchMailbox = async (email: string, cb: (data: MBEventArgs) => void) => {
-    // const conn = await getConnection(email)
-    const conn = conns.find((mb) => mb.email === email)
-    if (!conn) throw new Error('failed to watch mailbox, conneection not found')
-    clearTimeout(conn.t)
-    conn.conn.on('exists', (data) => cb({...data, email}))
-  }
+  // const watchMailbox = async (email: string, cb: (data: MBEventArgs) => void) => {
+  //   // const conn = await getConnection(email)
+  //   const conn = conns.find((mb) => mb.email === email)
+  //   if (!conn) throw new Error('failed to watch mailbox, conneection not found')
+  //   clearTimeout(conn.t)
+  //   conn.conn.on('exists', async (data) => { await cb({...data, email}) } )
+  // }
 
   const stopWatchingMailbox = (email: string, cb: (data: MBEventArgs) => void) => {
     const conn = conns.find((mb) => mb.email === email)
@@ -84,7 +86,7 @@ const Mailbox = () => {
     conns.forEach((c) => { mailbox.push(c) })
   }
 
-  const newConnection = async (opts: ImapFlowOptions) => {
+  const newConnection = async (opts: ImapFlowOptions, eventCallback: (data: MBEventArgs) => void) => {
     // check if if conn does not already exist
 
     if (!opts.auth.user) throw new Error('failed to login, please provide email')
@@ -100,13 +102,23 @@ const Mailbox = () => {
     try {
       return await client.connect()
         .then(async () => {
-          await client.mailboxOpen(['INBOX', 'JUNK'])
-          mailbox.push(opts)
+          await client.mailboxOpen(['INBOX'])
+
+          // might not be needed
+          const idx = mailbox.findIndex((o) => o.auth.user === opts.auth.user)
+          idx === -1 
+            ? mailbox.push(opts)
+            : mailbox.splice(idx,1, opts)
+
           conns.push({
             conn: client,
             email: opts.auth.user,
-            t: _newSession(opts.auth.user),
           })
+
+          client.on('exists', async (data: Omit<MBEventArgs, 'email'>) => { 
+            await eventCallback({...data, authEmail: opts.auth.user}) 
+          })
+
           return client
         })
     } catch (err: any) {
@@ -114,18 +126,17 @@ const Mailbox = () => {
     }
   }
 
-  const getConnection = async (email: string) => {
+  const getConnection = async (email: string, cb?: (data: MBEventArgs) => void) => {
     return await C_lock.runExclusive(async () => {
       const conn = conns.find((c) => c.email = email)
-      if (!conn) {
+      if (!conn && cb) {
         const opts = mailbox.find((mb) => mb.auth.user === email)
         if (!opts) throw new Error('Failed to get mailbox, connection not recognised')
-        return await newConnection(opts)
-      } else {
-        clearTimeout(conn.t)
-        const ns = _newSession(email);
-        conn.t = ns;
+        return await newConnection(opts, cb)
+      } else if (conn) {
         return conn.conn
+      } else {
+        throw new Error('failed to establish a connection to mailbox, please try reconnecting')
       }
     })
   }
@@ -136,7 +147,7 @@ const Mailbox = () => {
         .finally(() => {
           clearTimeout(nt)
         })
-    }, 120000) // 1min
+    }, 1.8e+7) // 1min
 
     return nt
   }
@@ -155,7 +166,6 @@ const Mailbox = () => {
     getConnection,
     storeConnections,
     logout,
-    watchMailbox,
     deleteMail,
     getAllMail,
     stopWatchingMailbox,

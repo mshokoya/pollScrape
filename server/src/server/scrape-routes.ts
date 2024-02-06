@@ -1,31 +1,25 @@
 import { Express } from 'express';
 import { startScrapingApollo } from '../scraper';
-import { initMeta } from '../database';
+import { initMeta, updateAccount } from '../database';
 import { IMetaData, MetadataModel } from '../database/models/metadata';
 import { scraper } from '../scraper/scraper';
-import { isNumber } from '../helpers';
+import { getDomain, isNumber } from '../helpers';
 import { taskQueue } from '../task_queue';
 import { generateSlug } from 'random-word-slugs';
 import { mailbox } from '../mailbox';
+import { ImapFlowOptions } from 'imapflow';
+import { getBrowserCookies } from '../scraper/util';
+import { AccountModel } from '../database/models/accounts';
 
 
 export const scrapeRoutes = (app: Express) => {
 
   // (FIX) test this function and make sure it works correctly
   app.post('/scrape', async (req, res) => {
-    console.log('scrape')
 
+    res.json({ok: true, message: null, data: null});
 
-
-  
-
-  // await mailbox.getAllMail('mikeydee0161@gmail.com')
-
-
-
-
-
-
+    // console.log('scrape')
 
     // let start: number = req.body.start;
     // let end: number = req.body.end;
@@ -78,11 +72,11 @@ export const scrapeRoutes = (app: Express) => {
     //   }
 
     //   await scraper.close()
-      res.json({ok: true, message: null, data: null});
-  //   } catch (err: any) {
-  //     await scraper.close()
-  //     res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
-  //   }
+    //   res.json({ok: true, message: null, data: null});
+    // } catch (err: any) {
+    //   await scraper.close()
+    //   res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
+    // }
   });
 
 }

@@ -11,6 +11,7 @@ export type IAccount = {
   password: string
   cookie: string
   proxy: string
+  domainEmail: string
   lastUsed: Date
   recoveryEmail: string
   emailCreditsUsed: number
@@ -25,14 +26,15 @@ export type IAccount = {
 
 const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
-  accountType: { type: String, default: "n/a" }, // free or premuim
-  trialTime: { type: String, default: "n/a" }, // should be trial end date & time
+  accountType: { type: String, default: "free" }, // free or premuim
+  trialTime: { type: String, default: "" }, // should be trial end date & time
   isSuspended: { type: Boolean, default: false },
-  loginType: {type: String, default: "default"},
+  loginType: {type: String, default: "default"}, // (FIX) remove and switch with domain
+  domainEmail: { type: String, default: "" },
   email: { type: String, default: "" },
   password: { type: String, default: "" },
   cookie: { type: String, default: "" },
-  proxy: { type: String, default: "http://000.000.000.000:0000" },
+  proxy: { type: String, default: "" },
   recoveryEmail: { type: String, default: "" },
   emailCreditsUsed: { type: Number, default: -1 },
   emailCreditsLimit: { type: Number, default: -1 },

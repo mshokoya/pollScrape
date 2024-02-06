@@ -127,7 +127,7 @@ export const logIntoApolloThenVisit = async (account: IAccount, url: string) => 
       if (page.url().includes('/#/login')) {
         await logIntoApollo(account);
         const cookies = await getBrowserCookies();
-        await updateAccount(account._id, {cookie: JSON.stringify(cookies)});
+        await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)});
         await scraper.visit(url)
       }
     })

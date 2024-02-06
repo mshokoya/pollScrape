@@ -8,10 +8,11 @@ import {
 import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { IAccount } from '../database/models/accounts';
-import { getAllApolloAccounts, saveScrapeToDB } from '../database';
+import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../database';
 import { apolloDefaultLogin, apolloGetCreditsInfo, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
+import { MBEventArgs, mailbox } from '../mailbox';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -143,6 +144,40 @@ export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
   
   await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/credits/current')
   return await apolloGetCreditsInfo()
+}
+
+export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) => {
+  if (count < prevCount) return;
+
+  const mail = await mailbox.getLatestMessage(authEmail);
+
+  if (
+    !mail.envelope.from[0].address!.includes('apollo') && 
+    !mail.envelope.from[0].name?.includes('apollo')
+  ) { 
+    throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
+  }
+
+  const message = mail.source.toString()
+  
+  const al1 = message.match(/(?<=\*Activate Your Account\*\n<)(\S|\n)+(?=>)/)
+  const al2 = message.match(/(?<=Or paste this link into your browser:\n)(\S|\n)+(?=\n<)/)
+
+  let fail = true 
+  for (let link in [al1, al2]) {
+    if (!link) continue;
+    const l = link[0]
+      .replace('\n', '')
+      .replace('\r', '')
+
+    await apolloConfirmAccount(l)
+    const cookies = await getBrowserCookies()
+    await updateAccount({domainEmail: mail.envelope.to[0].address}, {cookie: JSON.stringify(cookies)})
+    fail = false
+    break;
+  }
+  
+  if (fail) throw new Error('failed to signup, account verification failed')
 }
 
 

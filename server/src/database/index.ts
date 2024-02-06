@@ -17,9 +17,9 @@ export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccou
   return newAcc
 }
 
-export const updateAccount = async (_id: string, data: Partial<IAccount>): Promise<IAccount> => {
+export const updateAccount = async (filter: Record<string, any>, data: Partial<IAccount>): Promise<IAccount> => {
   const account = await AccountModel.findOneAndUpdate(
-    {_id},
+    filter,
     { $set : data },
     { new: true }
   ).lean() as IAccount;

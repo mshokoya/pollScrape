@@ -121,7 +121,7 @@ export const setupApolloForScraping = async (account: IAccount) => {
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
     logIntoApollo(account)
     const cookies = await getBrowserCookies()
-    const updatedAccount = await updateAccount(account._id, {cookie: JSON.stringify(cookies)})
+    const updatedAccount = await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)})
     if (!updatedAccount) throw new Error('Failed to save cookies')
   } 
 }
