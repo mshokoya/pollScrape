@@ -22,38 +22,25 @@ export const accountRoutes = (app: Express) => {
       const email = req.body.email;
       const password = req.body.password;
       const recoveryEmail = req.body.recoveryEmail;
+      const domainEmail = req.body.domainEmail || email ;
+      const domain = getDomain(domainEmail);
 
       if (!email || !password) {
         throw new Error('invalid request params')
       }
-      // (FIX) may not be required (e.g zoho mail or mail.com)
-      if (
-        !['gmail', 'outlook'].includes(getDomain(email)) &&
-        !req.body.domainEmail
-      ) {
-        throw new Error('Failed to create account, email provided domain email')
-      }
-
-      const domain = getDomain(email);
-
+    
       const account: Partial<IAccount> = {
-        domain: domain,
-        domainEmail: req.body.domainEmail,
-        email: email,
-        password: password,
+        domain,
+        domainEmail,
+        email,
+        password,
+        recoveryEmail: recoveryEmail || undefined
       }
 
-      if (recoveryEmail) account.recoveryEmail = recoveryEmail
+      const accountExists = !['gmail', 'outlook', 'hotmail'].includes(domainEmail)
+        ? await AccountModel.findOne({domainEmail: domainEmail}).lean()
+        : await AccountModel.findOne({email: email}).lean();
 
-      // (FIX) make it work with taskqueue
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
-
-      const accountExistFilter: Record<string, string>[] = [{email}];
-      if (req.body.domainEmail) accountExistFilter.push({domainEmail: req.body.domainEmail});
-      
-      const accountExists = await AccountModel.findOne({'$or': accountExistFilter });
       if (accountExists) throw new Error('Failed to create new account, account already exists')
 
       // (FIX) indicate that account exists on db but not verified via email or apollo
@@ -69,13 +56,16 @@ export const accountRoutes = (app: Express) => {
       newMailEvent
       )
 
+      // (FIX) make it work with taskqueue
+      if (!scraper.browser()) await scraper.launchBrowser()
+
       await signupForApollo(account)
 
       const cookie = await getBrowserCookies()
 
       await updateAccount({email}, {cookie: JSON.stringify(cookie)})
   
-      await scraper.close()
+      // await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       if (scraper.browser()) await scraper.close()

@@ -13,6 +13,7 @@ export type IAccount = {
   accountType: string
   trialTime: Date | string
   isSuspended: boolean
+  domainEmail: string
   email: string
   password: string
   cookie: string
@@ -25,14 +26,15 @@ export type IAccount = {
 // https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
 
 export const AccountField = () => {
-  const [input, setInput] = useState({email: '', password: '', recovery: ''});
+  const [input, setInput] = useState({email: '', password: '', recoveryEmail: '', domainEmail: ''});
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   
-  const [accounts, setAccounts] = useState<IAccount[]>(accountMockData)
+  const [accounts, setAccounts] = useState<IAccount[]>([])
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
       .then(data => setAccounts(data.data))
+      .catch(() => setAccounts(accountMockData))
   }, [])
 
   // (FIX) email verification + get domain to determine login type
@@ -107,6 +109,7 @@ export const AccountField = () => {
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <div className='mb-2'>
           <form onSubmit={handleSubmit}>
+
             <div className='mb-3'>
               <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
               <input required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
@@ -118,8 +121,13 @@ export const AccountField = () => {
             </div>
 
             <div className='mb-3'>
-              <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">RecoveryEmail:</label>
-              <input type="text" id="recovery" value={input.recovery} onChange={ e => {setInput(p => ({...p, recovery: e.target.value}))}}/>
+              <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Domain Email:</label>
+              <input type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+            </div>
+
+            <div className='mb-3'>
+              <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
+              <input type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
             </div>
 
             <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>

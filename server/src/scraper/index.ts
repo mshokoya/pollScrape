@@ -98,6 +98,7 @@ export const signupForApollo = async (account: Partial<IAccount>) => {
   }
 }
 
+// (FIX) create manual login for custom domain
 export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.domain) {
     throw new Error('login details not provided')
@@ -110,6 +111,8 @@ export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
       break;
     case 'gmail':
       await visitGmailLoginAuthPortal(true)
+      break
+    default:
       break
   }
 }
@@ -150,10 +153,26 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) =
   if (count < prevCount) return;
 
   const mail = await mailbox.getLatestMessage(authEmail);
+  const fromAddress = mail.envelope.from[0].address!
+  const fromName = mail.envelope.from[0].name!
+  const toAddress = mail.envelope.to[0].address
+
+  console.log(`
+  
+  
+  EEYYAA
+
+  from address: ${fromAddress}
+  from name ${fromName}
+  
+  To address ${toAddress}
+  
+  
+  `)
 
   if (
-    !mail.envelope.from[0].address!.includes('apollo') && 
-    !mail.envelope.from[0].name?.includes('apollo')
+    !fromAddress.includes('apollo') && 
+    !fromName.includes('apollo')
   ) { 
     throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
   }
@@ -175,7 +194,7 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) =
 
     await apolloConfirmAccount(l, account);
     const cookies = await getBrowserCookies();
-    await updateAccount({domainEmail: mail.envelope.to[0].address}, {cookie: JSON.stringify(cookies)});
+    await updateAccount({domainEmail: toAddress}, {cookie: JSON.stringify(cookies)});
     fail = false
     break;
   }

@@ -246,17 +246,17 @@ export const upgradeApolloAccount = async (): Promise<void> => {
 }
 
 export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
-  if (!account.email) throw new Error('failed to login, credentials missing');
+  if (!account.domainEmail) throw new Error('failed to login, credentials missing');
   await scraper.restartBrowser()
 
   const page = scraper.page() as Page
 
-  await page.goto('www.apollo.io/sign-up')
+  await page.goto('https://www.apollo.io/sign-up')
   await page.bringToFront();
 
   const input = await page.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!input) throw new Error('failed to register for apollo');
-  await input.type(account.email)
+  await input.type(account.domainEmail)
   
   const tsCheckbox = await page.$('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]')
   if (!tsCheckbox) throw new Error('failed to find T&S checkbox')
@@ -282,6 +282,18 @@ export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
 
 export const apolloConfirmAccount = async (confirmationURL: string, account: IAccount) => {
   const page = scraper.page() as Page
+
+  console.log(`
+  
+  
+  CONFIRM ACC
+
+  conf url: ${confirmationURL}
+
+  
+  
+  `)
+
   await scraper.visit(confirmationURL)
 
   const nameField = await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="name"]', {visible: true, timeout: 10000}).catch(() => null)

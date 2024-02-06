@@ -37,10 +37,10 @@ export const proxyMockData = [
 ]
 
 export const accountMockData = [
-  {_id: '12345', domain: 'domain', accountType: 'free', trialTime: `${new Date('') || 'n/a'}`, isSuspended: false, email: 'msefdsadsadefsdfsdfssadswdaedasdsasada@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-  {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
-  {_id: '12345', domain: 'domain', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
-  {_id: '54321', domain: 'domain2', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
+  {_id: '12345', domain: 'domain', recoveryEmail: '', domainEmail: 'mike@customdomain.com', accountType: 'free', trialTime: `${new Date('') || 'n/a'}`, isSuspended: false, email: 'msefdsadsadefsdfsdfssadswdaedasdsasada@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+  {_id: '54321', domain: 'domain2', recoveryEmail: '', domainEmail: 'mike@customdomain.com', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()},
+  {_id: '12345', domain: 'domain', recoveryEmail: '', domainEmail: 'mike@customdomain.com', accountType: 'free', trialTime: new Date(), isSuspended: false, email: 'ms@h.co.uk', password: 'pass', cookie: 'dasdasdas', proxy: 'dsaasd', lastUsed: new Date()},
+  {_id: '54321', domain: 'domain2', recoveryEmail: '', domainEmail: 'mike@customdomain.com', accountType: 'prem', trialTime: new Date(), isSuspended: false, email: 'ms22@h.co.uk', password: 'pass2', cookie: 'dasdasdas22', proxy: 'dsaasd222', lastUsed: new Date()}
 ]
 
 export const metaMockData = [

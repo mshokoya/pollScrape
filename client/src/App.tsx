@@ -1,6 +1,3 @@
-
-import { ProxyField } from './components/ProxyField';
-import { AccountField } from './components/AccountField';
 import { RecordField } from './components/RecordField';
 import { ScrapeField } from './components/ScrapeField';
 import { Sidebar } from './components/Sidebar';
@@ -20,7 +17,6 @@ function App() {
         <div className='flex flex-auto space-x-4'>
           {/* RECORDS */}
           <div className='flex flex-col basis-full'>
-            {/* <h2 className='text-[2rem] mb-3'>RECORDS</h2> */}
             <RecordField />
           </div>
         </div>
