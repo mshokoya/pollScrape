@@ -247,12 +247,10 @@ export const upgradeApolloAccount = async (): Promise<void> => {
 
 export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
   if (!account.domainEmail) throw new Error('failed to login, credentials missing');
-  await scraper.restartBrowser()
 
   const page = scraper.page() as Page
 
   await page.goto('https://www.apollo.io/sign-up')
-  await page.bringToFront();
 
   const input = await page.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!input) throw new Error('failed to register for apollo');
@@ -262,17 +260,16 @@ export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
   if (!tsCheckbox) throw new Error('failed to find T&S checkbox')
   await tsCheckbox.click()
 
-  const signupButton = await page.$('button[class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation MuiButton-root MuiButton-contained MuiButton-containedBlack MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-disableElevation mui-style-1t8qqg8"]').catch(() => null)
+  const signupButton = await page.$('[class="MuiBox-root mui-style-1tu59u4"]').catch(() => null)
   if (!signupButton) throw new Error('failed to find signup button')
   await signupButton.click()
 
-  delay(3000)
+  delay(2000)
 
-  const inputError = await page.$('p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]').catch(() => null)
+  const inputError = await page.$('p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1ccelp7"]').catch(() => null)
   if (inputError) throw new Error('Failed to signup, error in email')
 
-  if (!page.url().includes('/sign-up/success')) throw new Error('Failed to signup, signup was unsuccessful')
-
+  await page.waitForNavigation({timeout: 5000})
 
   // re-route to https://www.apollo.io/sign-up/success
   // input disappears (wait till it does not exist)   // MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq
@@ -283,35 +280,52 @@ export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
 export const apolloConfirmAccount = async (confirmationURL: string, account: IAccount) => {
   const page = scraper.page() as Page
 
+  await scraper.visit(confirmationURL)
+
   console.log(`
   
   
-  CONFIRM ACC
+  vals
 
-  conf url: ${confirmationURL}
-
+  ${account.password}
+  ${account.apolloPassword}
+  
   
   
   `)
 
-  await scraper.visit(confirmationURL)
-
   const nameField = await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="name"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!nameField) throw new Error('Failed to find full name field')
-  await nameField.type(account.firstname + " " + account.lastname)
+  await nameField.type(account.password)
+    .catch(() => {})
 
   const passwordField = await page.$('input[class="zp_bWS5y zp_J0MYa"][name="password"]')
   if (!passwordField) throw new Error('Failed to find password field')
-  await passwordField.type(account.password)
+  await passwordField.type(account.apolloPassword)
+    .catch(() => {})
 
-  const confirmPasswordField = await page.$('input[class="zp_bWS5y zp_J0MYa zp_bWH9b"][name="confirmPassword"]')
+  const confirmPasswordField = await page.$('input[class="zp_bWS5y zp_J0MYa"][name="confirmPassword"]')
   if (!confirmPasswordField) throw new Error('Failed to find confirm password field')
-  await confirmPasswordField.type(account.password)
+  await confirmPasswordField.type(account.apolloPassword)
+    .catch(() => {})
 
-  // ===== (FIX) fack... find submit button & click =====
+    delay(10000)
+
+  const submitButton = await page.$('button[class="zp-button zp_zUY3r zp_aVzf8"]')
+  if (!submitButton) throw new Error('Failed to find confirm password field')
+  await submitButton.click()
+
+  await page.waitForNavigation()
   
   let counter = 0
   while (counter <= 5) {
+
+    console.log(`
+    
+    IN THE LOOP
+    
+    
+    `)
 
     const onboardingButton = await page.$('[class="zp-button zp_zUY3r zp_OztAP zp_lshSd"]').catch(() => null) //on lead search page (this selected is used by el by default)
     const apolloSkipButton = await page.$('[class="zp-button zp_zUY3r zp_MCSwB"]').catch(() => null)
@@ -346,7 +360,8 @@ export const apolloConfirmAccount = async (confirmationURL: string, account: IAc
       url.includes('app.apollo.io/#/conversations') ||
       url.includes('app.apollo.io/#/opportunities') ||
       url.includes('app.apollo.io/#/enrichment-status') ||
-      url.includes('app.apollo.io/#/settings')
+      url.includes('app.apollo.io/#/settings') ||
+      url.includes('app.apollo.io/?utm_campaign=Transactional')
     ) {
       break
 
@@ -356,7 +371,7 @@ export const apolloConfirmAccount = async (confirmationURL: string, account: IAc
       counter++
     }
 
-    await delay(3000)
+    await delay(5000)
   }
 
   // once clicked it leads you here 

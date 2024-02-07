@@ -22,6 +22,7 @@ export type IAccount = {
   renewalStartDate: number | Date
   renewalEndDate: number | Date
   trialDaysLeft: number
+  apolloPassword: string
 }
 
 
@@ -38,6 +39,7 @@ const accountSchema = new Schema<IAccount>({
   email: { type: String, default: "" },
   password: { type: String, default: "" },
   cookie: { type: String, default: "" },
+  apolloPassword: { type: String, default: "" },
   proxy: { type: String, default: "" },
   recoveryEmail: { type: String, default: "" },
   emailCreditsUsed: { type: Number, default: -1 },

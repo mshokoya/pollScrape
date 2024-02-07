@@ -9,6 +9,7 @@ import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';
 import { ImapFlowOptions } from 'imapflow';
 import { mailbox } from '../mailbox';
+import generator from 'generate-password';
 
 export const accountRoutes = (app: Express) => {
 
@@ -34,7 +35,11 @@ export const accountRoutes = (app: Express) => {
         domainEmail,
         email,
         password,
-        recoveryEmail: recoveryEmail || undefined
+        recoveryEmail: recoveryEmail || undefined,
+        apolloPassword: generator.generate({
+          length: 15,
+          numbers: true
+        }) || 'wearetheworld1233'
       }
 
       const accountExists = !['gmail', 'outlook', 'hotmail'].includes(domainEmail)
@@ -43,8 +48,7 @@ export const accountRoutes = (app: Express) => {
 
       if (accountExists) throw new Error('Failed to create new account, account already exists')
 
-      // (FIX) indicate that account exists on db but not verified via email or apollo
-      await AccountModel.create(account);
+
   
       // (FIX) better error handling (show user correct error)
       await mailbox.newConnection({
@@ -60,6 +64,9 @@ export const accountRoutes = (app: Express) => {
       if (!scraper.browser()) await scraper.launchBrowser()
 
       await signupForApollo(account)
+
+      // (FIX) indicate that account exists on db but not verified via email or apollo
+      await AccountModel.create(account);      
 
       const cookie = await getBrowserCookies()
 

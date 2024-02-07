@@ -56,7 +56,8 @@ const Mailbox = () => {
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
       if (!conn) throw new Error('Failed to get mailbox, please reconnect')
         // return await newConnection(opts, cb)
-    return await conn.conn.fetchOne('*', {uid: true, envelope: true, source: true, flags: true, headers: true, bodyStructure: true,})
+    // {uid: true, envelope: true, source: true, headers: true, bodyStructure: true,}
+    return await conn.conn.fetchOne('*', {envelope: true, source: true})
   }
 
   // const watchMailbox = async (email: string, cb: (data: MBEventArgs) => void) => {

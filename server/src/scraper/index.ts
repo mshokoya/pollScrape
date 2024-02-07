@@ -13,6 +13,7 @@ import { apolloConfirmAccount, apolloDefaultLogin, apolloDefaultSignup, apolloGe
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 import { MBEventArgs, mailbox } from '../mailbox';
+import { simpleParser } from 'mailparser';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -157,19 +158,6 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) =
   const fromName = mail.envelope.from[0].name!
   const toAddress = mail.envelope.to[0].address
 
-  console.log(`
-  
-  
-  EEYYAA
-
-  from address: ${fromAddress}
-  from name ${fromName}
-  
-  To address ${toAddress}
-  
-  
-  `)
-
   if (
     !fromAddress.includes('apollo') && 
     !fromName.includes('apollo')
@@ -177,29 +165,27 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) =
     throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
   }
 
-  const message = mail.source.toString()
+  const message = Buffer.from(mail.source);
+  const parsedData = await simpleParser(message);
   
-  const al1 = message.match(/(?<=\*Activate Your Account\*\n<)(\S|\n)+(?=>)/)
-  const al2 = message.match(/(?<=Or paste this link into your browser:\n)(\S|\n)+(?=\n<)/)
+  const al1 = parsedData.text?.match(/(?<=Activate Your Account \( )[\S|\n]+/g)
+  const al2 = parsedData.text?.match(/(?<=Or paste this link into your browser: )[\S|\n]+(?= \()/g)
 
-  let fail = true 
-  for (let link in [al1, al2]) {
+  for (let link of [al1, al2]) {
     if (!link) continue;
     const l = link[0]
       .replace('\n', '')
       .replace('\r', '')
 
-    const account = await AccountModel.findOne({email: authEmail}).lean();
+    const account = await AccountModel.findOne({domainEmail: toAddress?.trim()}).lean();
     if (!account) throw new Error('Failed to find account (new mail)');
 
     await apolloConfirmAccount(l, account);
     const cookies = await getBrowserCookies();
-    await updateAccount({domainEmail: toAddress}, {cookie: JSON.stringify(cookies)});
-    fail = false
+    await updateAccount({domainEmail: toAddress?.trim()}, {cookie: JSON.stringify(cookies)});
+
     break;
-  }
-  
-  if (fail) throw new Error('failed to signup, account verification failed');
+  } 
 }
 
 
