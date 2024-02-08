@@ -10,6 +10,8 @@ import { taskQueue } from '../task_queue';
 import { ImapFlowOptions } from 'imapflow';
 import { mailbox } from '../mailbox';
 import generator from 'generate-password';
+import { generateSlug } from 'random-word-slugs';
+// import {createApolloAccountRoute} from '../wf.js'
 
 export const accountRoutes = (app: Express) => {
 
@@ -18,7 +20,7 @@ export const accountRoutes = (app: Express) => {
   app.post('/account', async (req, res) => {
     console.log('addAccount')
 
-    try {
+    try{
       // if (!req.body.account) throw new Error('please provide account')
       const email = req.body.email;
       const password = req.body.password;
@@ -42,22 +44,29 @@ export const accountRoutes = (app: Express) => {
         }) || 'wearetheworld1233'
       }
 
-      const accountExists = !['gmail', 'outlook', 'hotmail'].includes(domainEmail)
-        ? await AccountModel.findOne({domainEmail: domainEmail}).lean()
-        : await AccountModel.findOne({email: email}).lean();
+      const accountExists = !['gmail', 'outlook', 'hotmail'].includes(account.domainEmail)
+            ? await AccountModel.findOne({domainEmail: account.domainEmail}).lean()
+            : await AccountModel.findOne({email: account.email}).lean();
 
       if (accountExists) throw new Error('Failed to create new account, account already exists')
 
-
-  
       // (FIX) better error handling (show user correct error)
       await mailbox.newConnection({
         auth: {
-          user: email,
-          pass: password
+          user: account.email,
+          pass: account.password
         }
       } as ImapFlowOptions, 
-      newMailEvent
+      newMailEvent // check if this works
+        .then(async () => {
+          console.log(`
+          
+            THE CALLBACK WORKS
+          
+          `)
+          const cookie = await getBrowserCookies()
+          await updateAccount({email: account.email}, {cookie: JSON.stringify(cookie)})
+        })
       )
 
       // (FIX) make it work with taskqueue
@@ -66,16 +75,9 @@ export const accountRoutes = (app: Express) => {
       await signupForApollo(account)
 
       // (FIX) indicate that account exists on db but not verified via email or apollo
-      await AccountModel.create(account);      
-
-      const cookie = await getBrowserCookies()
-
-      await updateAccount({email}, {cookie: JSON.stringify(cookie)})
-  
-      // await scraper.close()
-      res.json({ok: true, message: null, data: null});
+      await AccountModel.create(account);
     } catch (err: any) {
-      if (scraper.browser()) await scraper.close()
+      // if (scraper.browser()) await scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })
@@ -285,3 +287,73 @@ export const accountRoutes = (app: Express) => {
     } 
   })
 }
+
+
+
+
+
+    // try {
+    //   // if (!req.body.account) throw new Error('please provide account')
+    //   const email = req.body.email;
+    //   const password = req.body.password;
+    //   const recoveryEmail = req.body.recoveryEmail;
+    //   const domainEmail = req.body.domainEmail || email ;
+    //   const domain = getDomain(domainEmail);
+
+    //   if (!email || !password) {
+    //     throw new Error('invalid request params')
+    //   }
+    
+    //   const account: Partial<IAccount> = {
+    //     domain,
+    //     domainEmail,
+    //     email,
+    //     password,
+    //     recoveryEmail: recoveryEmail || undefined,
+    //     apolloPassword: generator.generate({
+    //       length: 15,
+    //       numbers: true
+    //     }) || 'wearetheworld1233'
+    //   }
+
+    //   taskQueue.enqueue({
+    //     id: generateSlug(),
+    //     action: async (account: IAccount) => {
+
+    //       console.log(AccountModel)
+
+    //       const accountExists = !['gmail', 'outlook', 'hotmail'].includes(account.domainEmail)
+    //         ? await AccountModel.findOne({domainEmail: account.domainEmail}).lean()
+    //         : await AccountModel.findOne({email: account.email}).lean();
+
+    //       if (accountExists) throw new Error('Failed to create new account, account already exists')
+
+    //       // (FIX) better error handling (show user correct error)
+    //       await mailbox.newConnection({
+    //         auth: {
+    //           user: account.email,
+    //           pass: account.password
+    //         }
+    //       } as ImapFlowOptions, 
+    //       newMailEvent
+    //         .then(async () => {
+    //           console.log(`
+              
+    //             THE CALLBACK WORKS
+              
+    //           `)
+    //           const cookie = await getBrowserCookies()
+    //           await updateAccount({email: account.email}, {cookie: JSON.stringify(cookie)})
+    //         })
+    //       )
+  
+    //       // (FIX) make it work with taskqueue
+    //       if (!scraper.browser()) await scraper.launchBrowser()
+  
+    //       await signupForApollo(account)
+  
+    //       // (FIX) indicate that account exists on db but not verified via email or apollo
+    //       await AccountModel.create(account);
+    //     },
+    //     args: account as IAccount
+    //   })

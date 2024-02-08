@@ -87,7 +87,7 @@ const Mailbox = () => {
     conns.forEach((c) => { mailbox.push(c) })
   }
 
-  const newConnection = async (opts: ImapFlowOptions, eventCallback: (data: MBEventArgs) => void) => {
+  const newConnection = async (opts: ImapFlowOptions, eventCallback: (data: MBEventArgs) => Promise<void>) => {
     // check if if conn does not already exist
 
     if (!opts.auth.user) throw new Error('failed to login, please provide email')
@@ -127,7 +127,7 @@ const Mailbox = () => {
     }
   }
 
-  const getConnection = async (email: string, cb?: (data: MBEventArgs) => void) => {
+  const getConnection = async (email: string, cb?: (data: MBEventArgs) => Promise<void>) => {
     return await C_lock.runExclusive(async () => {
       const conn = conns.find((c) => c.email = email)
       if (!conn && cb) {

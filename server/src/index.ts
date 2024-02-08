@@ -39,7 +39,7 @@ app.use((err: any, _req: any, res: any, next: any) => {
 });
 
 mongoose.connect('mongodb://localhost:27017/apollo')
-  .then(() => {
+  .then(async () => {
     console.log('mongoose started')
     
     const io = initSocketIO(server)
@@ -48,7 +48,7 @@ mongoose.connect('mongodb://localhost:27017/apollo')
     initTaskQueue(io)
     console.log('taskQueue started')
 
-    initMailBox()
+    await initMailBox()
     console.log('mailbox started')
 
     server.listen(port, () => {

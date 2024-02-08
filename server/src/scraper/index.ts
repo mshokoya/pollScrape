@@ -150,7 +150,7 @@ export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
   return await apolloGetCreditsInfo()
 }
 
-export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs) => {
+export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
   if (count < prevCount) return;
 
   const mail = await mailbox.getLatestMessage(authEmail);

@@ -5,7 +5,7 @@ import { Mutex } from 'async-mutex'
 
 type QueueItem<T = Record<string, any> | undefined> = {
   id: string, 
-  action: (a:T) => any,
+  action: (a:T) => Promise<any>,
   args?: T
 }
 
