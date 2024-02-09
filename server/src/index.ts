@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -11,6 +12,7 @@ import { scrapeRoutes } from './server/scrape-routes';
 import { initTaskQueue } from './task_queue';
 import { initSocketIO } from './websockets';
 import { initMailBox } from './mailbox';
+import { initForwarder } from './forwarder';
 
 
 const app = express();
@@ -40,19 +42,22 @@ app.use((err: any, _req: any, res: any, next: any) => {
 
 mongoose.connect('mongodb://localhost:27017/apollo')
   .then(async () => {
-    console.log('mongoose started')
+    console.log('Mongoose started')
     
     const io = initSocketIO(server)
-    console.log('socketIO started')
+    console.log('SocketIO started')
 
     initTaskQueue(io)
-    console.log('taskQueue started')
+    console.log('TaskQueue started')
+
+    initForwarder()
+    console.log('Forwarder started')
 
     await initMailBox()
-    console.log('mailbox started')
+    console.log('Mailbox started')
 
     server.listen(port, () => {
-      console.log(`connected to server on port ${port}`)
+      console.log(`Connected to server on port ${port}`)
     });
     
   });

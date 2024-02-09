@@ -11,9 +11,64 @@ import { ImapFlowOptions } from 'imapflow';
 import { mailbox } from '../mailbox';
 import generator from 'generate-password';
 import { generateSlug } from 'random-word-slugs';
-// import {createApolloAccountRoute} from '../wf.js'
+import { DomainModel } from '../database/models/domain';
+import { forwarder } from '../forwarder';
 
 export const accountRoutes = (app: Express) => {
+  // (NEW)
+  app.post('/account/domain', async (req, res) => {
+    console.log('Add new domain')
+
+    try {
+      const email =  req.body.email || 'testemail@test.com' // (FIX) get account email from somewhere
+      const domain = req.body.domain;
+      if (!domain) throw new Error('Failed to add domain, valid domain not provided');
+
+      const doesExist = await DomainModel.findOne({domain});
+      if (doesExist) throw new Error('domain already exists')
+
+      const isOK = await forwarder.addDomain(domain, email);
+      if (!isOK) throw new Error('failed to save domain in forwarder');
+
+      const newDomain = await DomainModel.create({domain, email})
+
+      res.json({ok: true, message: null, data: newDomain});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
+    }
+  })
+
+  // (NEW)
+  app.get('/account/domain/verify/:domain', async (req, res) => {
+    try {
+      const domain = req.params.domain
+      if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
+      const isVerified = await forwarder.verifyDomain(domain)
+
+      // (FIX) could be a problem
+      if (isVerified) {
+        const deleteCount = await DomainModel.deleteOne({domain})
+        if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
+      }
+
+      res.json({ok: true, message: null, data: isVerified});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
+    }
+  })
+
+  app.delete('/account/domain/verify/:domain', async (req, res) => {
+    try{
+      const domain = req.params.domain
+      if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
+      const isVerified = await forwarder.deleteDomain(domain)
+
+      res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
+
+    }
+  })
 
   // (FIX) test it works with db
   // (FIX) allow account overwrite. in  addAccountToDB use upsert
@@ -41,12 +96,12 @@ export const accountRoutes = (app: Express) => {
         apolloPassword: generator.generate({
           length: 15,
           numbers: true
-        }) || 'wearetheworld1233'
+        }) || 'wearetheworld123'
       }
 
-      const accountExists = !['gmail', 'outlook', 'hotmail'].includes(account.domainEmail)
-            ? await AccountModel.findOne({domainEmail: account.domainEmail}).lean()
-            : await AccountModel.findOne({email: account.email}).lean();
+      const accountExists = !['gmail', 'outlook', 'hotmail'].includes(domainEmail)
+            ? await AccountModel.findOne({domainEmail}).lean()
+            : await AccountModel.findOne({email}).lean();
 
       if (accountExists) throw new Error('Failed to create new account, account already exists')
 
@@ -76,6 +131,8 @@ export const accountRoutes = (app: Express) => {
 
       // (FIX) indicate that account exists on db but not verified via email or apollo
       await AccountModel.create(account);
+
+      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       // if (scraper.browser()) await scraper.close()
       res.json({ok: false, message: err.message, data: err});
