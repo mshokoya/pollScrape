@@ -12,6 +12,7 @@ export const fetchData = async <T>(url: string, method: string, data?: any): Pro
     method,
     headers: {
       "Content-Type": "application/json",
+      'Accept-Encoding': 'gzip'
     },
     body: JSON.stringify(data),
   }).then(res => res.json())

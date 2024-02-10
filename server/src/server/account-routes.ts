@@ -20,19 +20,19 @@ export const accountRoutes = (app: Express) => {
     console.log('Add new domain')
 
     try {
-      const email =  req.body.email || 'testemail@test.com' // (FIX) get account email from somewhere
+      const email =  req.body.email || 'testemail@tessa.com' // (FIX) get account email from somewhere
       const domain = req.body.domain;
       if (!domain) throw new Error('Failed to add domain, valid domain not provided');
 
-      const doesExist = await DomainModel.findOne({domain});
+      const doesExist = await DomainModel.findOne({domain}).lean();
       if (doesExist) throw new Error('domain already exists')
 
       const isOK = await forwarder.addDomain(domain, email);
       if (!isOK) throw new Error('failed to save domain in forwarder');
 
-      const newDomain = await DomainModel.create({domain, email})
+      const newDomain = await DomainModel.create({domain, authEmail: email})
 
-      res.json({ok: true, message: null, data: newDomain});
+      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }
@@ -40,33 +40,50 @@ export const accountRoutes = (app: Express) => {
 
   // (NEW)
   app.get('/account/domain/verify/:domain', async (req, res) => {
+    console.log('verify domain')
     try {
       const domain = req.params.domain
       if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
-      const isVerified = await forwarder.verifyDomain(domain)
 
-      // (FIX) could be a problem
-      if (isVerified) {
-        const deleteCount = await DomainModel.deleteOne({domain})
-        if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
-      }
+      const verifyRes = await forwarder.verifyDomain(domain)
 
-      res.json({ok: true, message: null, data: isVerified});
+      res.send({ok: true, message: null, data: verifyRes});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }
   })
 
-  app.delete('/account/domain/verify/:domain', async (req, res) => {
+  app.delete('/account/domain/:domain', async (req, res) => {
+    console.log('delete domain')
     try{
       const domain = req.params.domain
-      if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
-      const isVerified = await forwarder.deleteDomain(domain)
+      if (!domain) throw new Error('Failed to delete doamin, valid domain not provided')
+
+      console.log(domain)
+
+      // const isVerified = await forwarder.deleteDomain(domain)
+
+      // // (FIX) could be a problem
+      // if (isVerified) {
+      //   const deleteCount = await DomainModel.deleteOne({domain})
+      //   if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
+      // }
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
 
+    }
+  })
+
+  app.get('/account/domain', async (req, res) => {
+    console.log('get domains')
+    try{
+      const domains = await DomainModel.find({}).lean()
+
+      res.json({ok: true, message: null, data: domains});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
     }
   })
 

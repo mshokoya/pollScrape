@@ -110,24 +110,31 @@ export const AccountField = () => {
         <div className='mb-2'>
           <form onSubmit={handleSubmit}>
 
-            <div className='mb-3'>
-              <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
-              <input required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
-            </div>
+            <div className='flex basis-1/2 gap-5'>
+              <div>
+                <div className='mb-3'>
+                  <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
+                  <input required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
+                </div>
 
-            <div className='mb-3'>
-              <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
-              <input required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
-            </div>
+                <div className='mb-3'>
+                  <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
+                  <input required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
+                </div>
+              </div>
+            
+            <div>
+              <div className='mb-3'>
+                <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Domain Email:</label>
+                <input type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+              </div>
 
-            <div className='mb-3'>
-              <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Domain Email:</label>
-              <input type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+              <div className='mb-3'>
+                <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
+                <input type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
+              </div>
             </div>
-
-            <div className='mb-3'>
-              <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
-              <input type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
+            
             </div>
 
             <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>
