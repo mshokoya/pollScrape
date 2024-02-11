@@ -47,7 +47,7 @@ export const accountRoutes = (app: Express) => {
 
       const verifyRes = await forwarder.verifyDomain(domain)
 
-      res.send({ok: true, message: null, data: verifyRes});
+      res.send({ok: true, message: verifyRes.message, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }
