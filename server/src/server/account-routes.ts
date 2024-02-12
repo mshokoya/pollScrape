@@ -59,15 +59,13 @@ export const accountRoutes = (app: Express) => {
       const domain = req.params.domain
       if (!domain) throw new Error('Failed to delete doamin, valid domain not provided')
 
-      console.log(domain)
+      const isVerified = await forwarder.deleteDomain(domain)
 
-      // const isVerified = await forwarder.deleteDomain(domain)
-
-      // // (FIX) could be a problem
-      // if (isVerified) {
-      //   const deleteCount = await DomainModel.deleteOne({domain})
-      //   if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
-      // }
+      // (FIX) could be a problem
+      if (isVerified) {
+        const deleteCount = await DomainModel.deleteOne({domain})
+        if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
+      }
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {

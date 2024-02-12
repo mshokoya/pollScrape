@@ -28,3 +28,44 @@ input, select {
 .rowhide {
   visibility: hidden;
 }
+
+.el-ok:hover {
+  background-color: rgba(0, 199, 0, 0.5);
+}
+
+.el-no:hover {
+  background-color: rgba(255, 0, 0, 0.5);
+}
+
+
+.fieldBlink {
+  animation: fieldBlinkMe .7s linear infinite;
+}
+
+.blink {
+  animation: blinkMe 1s linear infinite;
+}
+
+@keyframes blinkMe {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fieldBlinkMe {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(251, 191, 36, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}

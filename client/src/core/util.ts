@@ -17,3 +17,5 @@ export const fetchData = async <T>(url: string, method: string, data?: any): Pro
     body: JSON.stringify(data),
   }).then(res => res.json())
 }
+
+export const blinkCSS = (reqInProces: boolean = false) => `${reqInProces ? 'blink text-cyan-600' : ''}`
