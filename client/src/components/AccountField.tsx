@@ -37,16 +37,6 @@ export const AccountField = () => {
       .catch(() => setAccounts(accountMockData))
   }, [])
 
-  // (FIX) email verification + get domain to determine login type
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    await fetchData('/account', 'POST', input)
-      .then((d) => {
-        console.log('account post')
-        console.log(d)
-      })
-  }
-
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
@@ -65,6 +55,16 @@ export const AccountField = () => {
         e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
         break;
     }
+  }
+
+  // (FIX) email verification + get domain to determine login type
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    await fetchData('/account', 'POST', input)
+      .then((d) => {
+        console.log('account post')
+        console.log(d)
+      })
   }
 
   const handleGetLoginCookie = () => {
