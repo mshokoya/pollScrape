@@ -37,15 +37,9 @@ input, select {
   background-color: rgba(255, 0, 0, 0.5);
 }
 
-
-.fieldBlink {
-  animation: fieldBlinkMe .7s linear infinite;
-}
-
 .blink {
   animation: blinkMe 1s linear infinite;
 }
-
 @keyframes blinkMe {
   0% {
     opacity: 0;
@@ -58,12 +52,45 @@ input, select {
   }
 }
 
+.fieldBlink {
+  animation: fieldBlinkMe .7s linear infinite;
+}
 @keyframes fieldBlinkMe {
   0% {
     background-color: transparent;
   }
   50% {
     background-color: rgba(251, 191, 36, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.resOK {
+  animation: fieldBlinkOK .5s linear infinite;
+}
+@keyframes fieldBlinkOK {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(0, 199, 0, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.resFail {
+  animation: fieldBlinkFAIL .5s linear infinite;
+}
+@keyframes fieldBlinkFAIL {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(255, 0, 0, 0.5);
   }
   100% {
     background-color: transparent;

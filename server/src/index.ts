@@ -13,6 +13,7 @@ import { initTaskQueue } from './task_queue';
 import { initSocketIO } from './websockets';
 import { initMailBox } from './mailbox';
 import { initForwarder } from './forwarder';
+import { domainRoutes } from './server/domain-route';
 
 
 const app = express();
@@ -26,6 +27,7 @@ const port = 4000;
 app.use(cors());
 app.use(bodyParser.json());
 
+domainRoutes(app);
 metadataRoutes(app);
 recordRoutes(app);
 proxyRoutes(app);

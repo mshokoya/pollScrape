@@ -18,4 +18,7 @@ export const fetchData = async <T>(url: string, method: string, data?: any): Pro
   }).then(res => res.json())
 }
 
-export const blinkCSS = (reqInProces: boolean = false) => `${reqInProces ? 'blink text-cyan-600' : ''}`
+export const blinkCSS = (
+  reqInProces: boolean = false, 
+  color: string = 'text-cyan-600'
+) => `${reqInProces ? `blink ${color}` : ''}`
