@@ -22,6 +22,7 @@
     "generate-password": "^1.7.1",
     "imap-mailbox": "^1.0.1",
     "imapflow": "^1.0.150",
+    "is-valid-domain": "^0.1.6",
     "mailparser": "^3.6.7",
     "mongoose": "^8.0.1",
     "node-worker-threads-pool": "^1.5.1",

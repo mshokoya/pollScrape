@@ -27,13 +27,12 @@ export const DomainField = () => {
     string | null
   ] | null>(null)
   const [domains, setDomains] = useState<IDomain[]>([
-    {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
+    // {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
   ])
 
   useEffect(() => {
     fetchData<IDomain[]>('/account/domain', 'GET')
       .then(data => {
-        console.log(data)
         setDomains([...domains, ...data.data])
       })
       .catch(() => {})
@@ -61,10 +60,24 @@ export const DomainField = () => {
   
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await fetchData('/domain', 'POST', input)
+    setReqInProcess([...reqInProcess, 'new'])
+    setReqType('create')
+    await fetchData<IDomain>('/domain', 'POST', input)
       .then((d) => {
-        console.log('domain post')
-        console.log(d)
+        if (d.ok) {
+          setResStatus(['ok', 'new'])
+          setDomains([...domains, d.data])
+        } else {
+          setResStatus(['fail', 'new'])
+        }
+      })
+      .catch(() => { setResStatus(['fail', 'new']) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqInProcess(reqInProcess.filter(d => d !== 'new'))
+          setReqType(null)
+          setResStatus(null)
+        }, 1500)
       })
   }
 
@@ -72,17 +85,23 @@ export const DomainField = () => {
     if (selectedDomain === null) return;
     const domainID = domains[selectedDomain]._id
     setReqInProcess([...reqInProcess, domainID])
+    setReqType('delete')
     await fetchData<IDomain>(`/domain/${domains[selectedDomain].domain}`, 'DELETE')
       .then(res => {
-        console.log(res)
         if (res.ok) {
-          const updatedDomains = domains.filter(d => d.domain !== res.data.domain);
-          setDomains(updatedDomains)
+          setResStatus(['ok', domainID])
+          setDomains(domains.filter(d => d._id !== domainID))
         } else {
-          console.log('Delete domain failed')
+          setResStatus(['fail', domainID])
         }
-      }).finally(() => {
-        setReqInProcess(reqInProcess.filter(d => d !== domainID))
+      })
+      .catch(() => { setResStatus(['fail', domainID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== domainID))
+          setResStatus(null)
+        }, 1500)
       })
   }
 
@@ -94,18 +113,19 @@ export const DomainField = () => {
     await fetchData<IDomain>(`/domain/verify/${domains[selectedDomain].domain}`, 'GET')
       .then((res) => {
         const updatedDomains = domains.map(d => d.domain === res.data.domain ? res.data : d)
-        res.data.verified
-          ? setResStatus(['ok', res.data._id])
-          : setResStatus(['fail', res.data._id])
+        setDomains( updatedDomains)
+
+        res.data && res.data.verified
+          ? setResStatus(['ok', domainID])
+          : setResStatus(['fail', domainID])
+      })
+      .catch(() => { setResStatus(['fail', domainID]) })
+      .finally(() => {
         setTimeout(() => { 
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== domainID))
           setResStatus(null)
         }, 1500)
-        setDomains(updatedDomains)
-      })
-      .catch(() => {})
-      .finally(() => {
-        setReqType(null)
-        setReqInProcess(reqInProcess.filter(d => d !== domainID))
       })
   }
 
@@ -131,10 +151,15 @@ export const DomainField = () => {
 
             <div className='mb-3'>
               <label className='mr-2 border-cyan-600 border-b-2' htmlFor="domain">Domain:</label>
-              <input required type="text" id="domain" value={input.domain} onChange={ e => {setInput(p => ({...p, domain: e.target.value}))}}/>
+              <input className={`
+                ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
+              `} 
+              required type="text" id="domain" value={input.domain} onChange={ e => {setInput(p => ({...p, domain: e.target.value}))}}/>
             </div>
 
-            <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Domain"/>
+            <input disabled={reqInProcess.includes('new')} className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Domain"/>
           
           </form>
         </div>
@@ -151,15 +176,15 @@ export const DomainField = () => {
             </thead>
             <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
               {
-                domains.length && domains.map(
+                domains.map(
                   (a, idx) => ( 
                     <>
                       <tr className={
                         `
                           ${a.verified ? 'el-ok' : 'el-no'} 
                           ${ reqInProcess.includes(a._id) ? 'fieldBlink' : '' } 
-                          ${ resStatus && resStatus[0] === 'ok' && resStatus[1].includes(a._id) ? 'resOK' : '' } 
-                          ${ resStatus && resStatus[0] === 'fail' && resStatus[1].includes(a._id) ? 'resFail' : '' } 
+                          ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes(a._id) ? 'resOK' : '' } 
+                          ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes(a._id) ? 'resFail' : '' } 
                           text-[0.8rem] text-center hover:border-cyan-600 hover:border
                         `
                         }  
@@ -168,7 +193,7 @@ export const DomainField = () => {
                       >
                         <td className='overflow-scroll truncate' data-type='extend' >{a.domain}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{a.authEmail}</td>
-                        <td className='overflow-scroll truncate' data-type='extend' >{a.verified}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.verified ? 'yes' : 'no' }</td>
                         <td className='overflow-scroll sticky bg-black right-0' data-type='opt'>
                           <button >
                             <SlOptionsVertical className='inline'/>

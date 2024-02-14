@@ -1,7 +1,8 @@
 import { Express } from 'express';
 import { DomainModel } from '../database/models/domain';
 import { forwarder } from '../forwarder';
-import { delay } from '../scraper/util';
+import isValidDomain from 'is-valid-domain'
+
 
 export const domainRoutes = (app: Express) => {
   // (NEW)
@@ -9,9 +10,11 @@ export const domainRoutes = (app: Express) => {
     console.log('Add new domain')
 
     try {
-      const email =  req.body.email || 'testemail@tessa.com' // (FIX) get account email from somewhere
+      const email =  req.body.email || 'mayo_s@hotmail.co.uk' // (FIX) get account email from somewhere
       const domain = req.body.domain;
-      if (!domain) throw new Error('Failed to add domain, valid domain not provided');
+      if (!domain) throw new Error('Failed to add domain, invalid domain');
+
+      if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain')
 
       const doesExist = await DomainModel.findOne({domain}).lean();
       if (doesExist) throw new Error('domain already exists')
@@ -37,10 +40,10 @@ export const domainRoutes = (app: Express) => {
       const verifyRes = await forwarder.verifyDomain(domain)
 
       const newDomain = !verifyRes.ok
-        ? await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: verifyRes.message || ''}}, {new: true})
+        ? await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: verifyRes.message || '', verified: false}}, {new: true})
         : await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: verifyRes.message, MXRecords: true, TXTRecords: true, verified: true}}, {new: true})
 
-      res.json({ok: true, message: null, data: newDomain});
+      res.json({ok: verifyRes.ok, message: null, data: newDomain});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }
@@ -52,15 +55,15 @@ export const domainRoutes = (app: Express) => {
       const domain = req.params.domain
       if (!domain) throw new Error('Failed to delete doamin, valid domain not provided')
 
-      const isVerified = await forwarder.deleteDomain(domain)
+      const delRes = await forwarder.deleteDomain(domain)
 
       // (FIX) could be a problem
-      if (isVerified) {
+      if (delRes.ok) {
         const deleteCount = await DomainModel.deleteOne({domain})
         if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
       }
 
-      res.json({ok: true, message: null, data: null});
+      res.json({ok: delRes.ok, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
 

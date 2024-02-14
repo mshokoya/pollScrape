@@ -25,6 +25,9 @@ export const DomainPopup = ({setPopup, domain, verifyDomain, deleteDomain, reqIn
     switch(h) {
       case 'delete':
         await deleteDomain()
+          .then(() => {
+            handleClose()
+          })
         break
       case 'verify':
         await verifyDomain()
@@ -41,7 +44,7 @@ export const DomainPopup = ({setPopup, domain, verifyDomain, deleteDomain, reqIn
 
         <div className='text-center border-b-2 border-cyan-600 mb-2'>
           <h1>
-            <span className='text-cyan-600'>{domain.domain}</span> Settings
+            <span className='text-cyan-600'>{domain.domain || ''}</span> Settings
           </h1>
         </div>
 

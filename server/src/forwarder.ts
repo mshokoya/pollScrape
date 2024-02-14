@@ -1,6 +1,6 @@
 import superagent from 'superagent';
 
-type CreateDomain = {
+type Domain = {
   retention_days: number,
   has_regex: boolean,
   has_catchall: boolean,
@@ -35,6 +35,8 @@ type CreateDomainRes = {
 
 
 type VerifyDomainRes = {ok: boolean, message: string}
+
+type DeleteDomainRes = {ok: boolean, message: string | null, data: Domain | null}
 
 export const Forwarder = () => {
   const Authorization =  `Basic ${Buffer.from(`${process.env.FMTOKEN}:`).toString('base64')}`;
@@ -82,30 +84,14 @@ export const Forwarder = () => {
     return res
   }
 
-  const deleteDomain = async (domain: string) => {
+  const deleteDomain = async (domain: string): Promise<DeleteDomainRes> => {
     const res = await superagent
       .delete(`${process.env.FMDURI!}/${domain}`)
       .set({Authorization})
+      .then( r => ({ok: r.ok, message: null, data: r.body}) )
+      .catch( () => ({ok: false, message: null, data: null}) )
 
-    console.log(`
-    
-    ${res.ok}
-    
-    
-
-
-    ${res.body}
-    
-    
-    
-
-
-    ${res}
-    
-    
-    `)
-
-    return res.ok
+    return res
   }
 
   return {
