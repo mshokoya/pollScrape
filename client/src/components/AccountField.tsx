@@ -104,11 +104,11 @@ export const AccountField = () => {
     const accountID = accounts[selectedAcc]._id
     setReqInProcess([...reqInProcess, accountID])
     setReqType('check')
-    await fetchData<IAccount>('/account/check/:id', 'GET')
+    await fetchData<IAccount>(`/account/check/${accountID}`, 'GET')
       .then(data => {
         if (data.ok) {
-          const updateAccs = accounts.map(acc => ( acc._id === data.data._id ? data.data : acc ));
           setResStatus(['ok', accountID])
+          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           setAccounts(updateAccs)
         } else {
           setResStatus(['fail', accountID])
@@ -136,8 +136,10 @@ export const AccountField = () => {
 
 
   const PopupComp = () => selectedAcc
-      ? <AccountPopup 
+      ? <AccountPopup
+          req={reqType}
           setPopup={setSelectedAcc}
+          checkAccount={checkAccount}
           reqInProcess={reqInProcess} 
           setReqInProcess={setReqInProcess}
           login={login} 
