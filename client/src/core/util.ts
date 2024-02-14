@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+export type ResStatus = [('ok' | 'fail' | null ), (string | null)] | null
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }

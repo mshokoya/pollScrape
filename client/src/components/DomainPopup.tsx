@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
-import { blinkCSS } from "../core/util";
+import { ReqType, blinkCSS } from "../core/util";
 import { IDomain } from "./DomainField";
 import { Spin } from "./util";
 
@@ -13,8 +13,6 @@ type Props = {
   setReqInProcess?: Dispatch<SetStateAction<string[]>>
   req: ReqType | string | null
 }
-
-type ReqType = 'delete' | 'verify'
 
 export const DomainPopup = ({setPopup, domain, verifyDomain, deleteDomain, reqInProcess, req}: Props) => {
   // const [req, setReq] = useState<ReqType>()

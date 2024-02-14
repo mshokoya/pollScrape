@@ -1,5 +1,5 @@
 import { FormEvent, MouseEvent, useEffect, useState } from "react"
-import {fetchData} from '../core/util';
+import {ResStatus, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { DomainPopup } from "./DomainPopup";
@@ -21,11 +21,7 @@ export const DomainField = () => {
   const [selectedDomain, setSelectedDomain] = useState<number | null>(0)
   const [reqInProcess, setReqInProcess] = useState<string[]>([])
   const [reqType, setReqType] = useState<string | null>(null)
-  const [resStatus, setResStatus] = useState<
-  [
-    'ok' | 'fail' | null, 
-    string | null
-  ] | null>(null)
+  const [resStatus, setResStatus] = useState<ResStatus>(null)
   const [domains, setDomains] = useState<IDomain[]>([
     // {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
   ])

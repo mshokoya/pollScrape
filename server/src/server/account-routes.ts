@@ -15,76 +15,6 @@ import { DomainModel } from '../database/models/domain';
 import { forwarder } from '../forwarder';
 
 export const accountRoutes = (app: Express) => {
-  // (NEW)
-  app.post('/account/domain', async (req, res) => {
-    console.log('Add new domain')
-
-    try {
-      const email =  req.body.email || 'testemail@tessa.com' // (FIX) get account email from somewhere
-      const domain = req.body.domain;
-      if (!domain) throw new Error('Failed to add domain, valid domain not provided');
-
-      const doesExist = await DomainModel.findOne({domain}).lean();
-      if (doesExist) throw new Error('domain already exists')
-
-      const isOK = await forwarder.addDomain(domain, email);
-      if (!isOK) throw new Error('failed to save domain in forwarder');
-
-      const newDomain = await DomainModel.create({domain, authEmail: email})
-
-      res.json({ok: true, message: null, data: null});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: err});
-    }
-  })
-
-  // (NEW)
-  app.get('/account/domain/verify/:domain', async (req, res) => {
-    console.log('verify domain')
-    try {
-      const domain = req.params.domain
-      if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
-
-      const verifyRes = await forwarder.verifyDomain(domain)
-
-      res.send({ok: true, message: verifyRes.message, data: null});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: err});
-    }
-  })
-
-  app.delete('/account/domain/:domain', async (req, res) => {
-    console.log('delete domain')
-    try{
-      const domain = req.params.domain
-      if (!domain) throw new Error('Failed to delete doamin, valid domain not provided')
-
-      const isVerified = await forwarder.deleteDomain(domain)
-
-      // (FIX) could be a problem
-      if (isVerified) {
-        const deleteCount = await DomainModel.deleteOne({domain})
-        if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
-      }
-
-      res.json({ok: true, message: null, data: null});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: err});
-
-    }
-  })
-
-  app.get('/account/domain', async (req, res) => {
-    console.log('get domains')
-    try{
-      const domains = await DomainModel.find({}).lean()
-
-      res.json({ok: true, message: null, data: domains});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: err});
-    }
-  })
-
   // (FIX) test it works with db
   // (FIX) allow account overwrite. in  addAccountToDB use upsert
   app.post('/account', async (req, res) => {
@@ -98,9 +28,8 @@ export const accountRoutes = (app: Express) => {
       const domainEmail = req.body.domainEmail || email ;
       const domain = getDomain(domainEmail);
 
-      if (!email || !password) {
-        throw new Error('invalid request params')
-      }
+      if (!email || !password) throw new Error('invalid request params')
+  
     
       const account: Partial<IAccount> = {
         domain,
@@ -128,15 +57,15 @@ export const accountRoutes = (app: Express) => {
         }
       } as ImapFlowOptions, 
       newMailEvent // check if this works
-        .then(async () => {
-          console.log(`
+        // .then(async () => {
+        //   console.log(`
           
-            THE CALLBACK WORKS
+        //     THE CALLBACK WORKS
           
-          `)
-          const cookie = await getBrowserCookies()
-          await updateAccount({email: account.email}, {cookie: JSON.stringify(cookie)})
-        })
+        //   `)
+        //   const cookie = await getBrowserCookies()
+        //   await updateAccount({email: account.email}, {cookie: JSON.stringify(cookie)})
+        // })
       )
 
       // (FIX) make it work with taskqueue

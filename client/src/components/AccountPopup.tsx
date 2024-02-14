@@ -1,97 +1,77 @@
-import { fetchData } from "../core/util";
+import { ReqType, blinkCSS, fetchData } from "../core/util";
 import { Dispatch, FormEvent, SetStateAction, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IAccount } from "./AccountField";
 
+type ReqType = 'check' | 'login' | 'update' | 'manualLogin' | 'verify' | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
+
 type Props = {
-  getLoginCookie: () => void
+  login: () => Promise<void>
+  checkAccount: () => Promise<void>
+  updateAccount: () => Promise<void>
+  manualLogin: () => Promise<void>
+  verifyAccount: () => Promise<void>
+  upgradeAccount: () => Promise<void>
+  manualUpgradeAccount: () => Promise<void>
+  deleteAccount: () => Promise<void>
+  clearMines: () => Promise<void>
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
+  reqInProcess: string[]
+  setReqInProcess?: Dispatch<SetStateAction<string[]>>
+  req:  string | null
 }
 
-export const AccountPopup = ({setPopup, getLoginCookie, account}: Props) => {
-  const [reqInProcess, setReqInProcess] = useState(false)
-  const [input, setInput] = useState({email: account.email, password: account.password, recovery: account.recoveryEmail});
+export const AccountPopup = ( props : Props) => {
 
-  const handleClose = () => {
-    setPopup(null)
-  }
+  const [input, setInput] = useState({email: props.account.email, password: props.account.password, recovery: props.account.recoveryEmail});
 
-  const checkAccount = async () => {
-    setReqInProcess(true)
-    await fetchData(`/account/check/${account._id}`, 'GET')
-      .then(() => {})
-      .catch(() => {})
-      .finally(() => {
-        setReqInProcess(false)
-      })
-  }
+  const handleClose = () => props.setPopup(null)
 
-  const handleUpdate = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    await fetchData('/account', 'PUT', input)
-      .then((d) => {
-        console.log('account post')
-        console.log(d)
-      })
-  }
-
-  const manualLogin = async () => {
-    setReqInProcess(true)
-    await fetchData(`/account/login/m/${account._id}`, 'GET')
-      .then(() => {})
-      .catch(() => {})
-      .finally(() => {
-        setReqInProcess(false)
-      })
-  }
-
-  const verifyAccount = async () => {
-    setReqInProcess(true)
-    await fetchData(`/account/verify/${account._id}`, 'GET')
-      .then(() => {})
-      .catch(() => {})
-      .finally(() => {
-        setReqInProcess(false)
-      })
-  }
-
-  const upgradeAccount = async () => {
-    setReqInProcess(true)
-    await  fetchData(`/account/upgrade/a/${account._id}`, 'GET')
-      .then(() => {})
-      .catch(() => {})
-      .finally(() => {
-        setReqInProcess(false)
-      })
-  }
-
-  const MupgradeAccount = async () => {
-    setReqInProcess(true)
-    await  fetchData(`/account/upgrade/m/${account._id}`, 'GET')
-      .then(() => {})
-      .catch(() => {})
-      .finally(() => {
-        setReqInProcess(false)
-      })
-  }
-
-  const clearMines = async () => {
-    setReqInProcess(true)
-    await  fetchData(`/account/mines/${account._id}`, 'GET')
-      .then(() => {})
-      .catch(() => {})
-      .finally(() => {
-        setReqInProcess(false)
-      })
+  const handleRequest = async (h: ReqType) => {
+    switch(h) {
+      case 'login':
+        await props.login()
+        break
+      case 'check':
+        await props.checkAccount()
+        break
+      case 'update':
+        await props.updateAccount()
+        break
+      case 'manualLogin':
+        await props.manualLogin()
+        break
+      case 'verify':
+        await props.verifyAccount()
+        break
+      case 'manualUpgrade':
+        await props.checkAccount()
+        break
+      case 'upgrade':
+        await props.upgradeAccount()
+        break
+      case 'mines':
+        await props.clearMines()
+        break
+      case 'delete':
+        await props.clearMines()
+        break
+    }
   }
 
   return (
     <div className="flex items-center justify-center fixed top-0 left-0 right-0 bottom-0 z-10" style={{background: "rgba(0,0,0,.70)"}} onClick={handleClose}>
-      <div className="relative w-[30%] h-[30%] z-20 border-cyan-600 border-2 bg-black" onClick={e => e.stopPropagation()}>
+      <div className="relative w-[30%] h-[30%] z-20 border-cyan-600 border-2 bg-black flex flex-col" onClick={e => e.stopPropagation()}>
         <IoMdClose className='absolute top-0 right-0 bg-cyan-600' onClick={handleClose}/>
 
-        {/* (FIX) reqInProcess on in onclick func */}
+        <div className='text-center border-b-2 border-cyan-600 mb-2'>
+          <h1>
+            <span className='text-cyan-600'>{props.account.domainEmail || ''}</span> Settings
+          </h1>
+        </div>
+
+        {/* (FIX) reqInProcess on in onclick func
         <div>
           <form onSubmit={handleUpdate}>
             <div className='mb-3'>
@@ -111,38 +91,62 @@ export const AccountPopup = ({setPopup, getLoginCookie, account}: Props) => {
 
             <input className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit" value="Add Account"/>
           </form>
+        </div> */}
+
+        <div>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)}
+            className={blinkCSS(props.req === 'login')}
+            onClick={() => {handleRequest('login')}} >Login to Account</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={getLoginCookie}>Login to Account</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)}
+            className={blinkCSS(props.req === 'check')}
+            onClick={() => {handleRequest('check')}}>Check Account</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={checkAccount}>Check Account</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)} 
+            className={blinkCSS(props.req === 'update')}
+            onClick={() => {handleRequest('update')}}>Update Account</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={manualLogin}>Login Manually</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)} 
+            className={blinkCSS(props.req === 'verify')}
+            onClick={() => {handleRequest('verify')}}>Verify Account</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={verifyAccount}>Verify Account</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)}
+            className={blinkCSS(props.req === 'upgrade')}
+            onClick={() => {handleRequest('upgrade')}}>upgrade Account</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={upgradeAccount}>upgrade Account</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)}
+            className={blinkCSS(props.req === 'manualUpgrade')}
+            onClick={() => {handleRequest('manualUpgrade')}}>manually upgrade Account</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={MupgradeAccount}>manually upgrade Account</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)} 
+            className={blinkCSS(props.req === 'mines')}
+            onClick={() => {handleRequest('mines')}}>Clear Mines</button>
         </div>
 
         <div>
-          <button disabled={reqInProcess} onClick={clearMines}>Clear Mines</button>
-        </div>
-
-        <div>
-          <button disabled={reqInProcess}>Delete</button>
+          <button 
+            disabled={props.reqInProcess.includes(props.account._id)}
+            className={blinkCSS(props.req === 'delete')}
+            onClick={() => {handleRequest('delete')}}>Delete</button>
         </div>
 
       </div>

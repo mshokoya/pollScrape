@@ -1,26 +1,35 @@
 import { FormEvent, MouseEvent, useEffect, useState } from "react"
-import {fetchData} from '../core/util';
+import {ResStatus, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
-import { accountMockData } from "../core/mockdata";
-
-
 
 export type IAccount = {
   _id: string
   domain: string
   accountType: string
-  trialTime: Date | string
+  trialTime: string
   isSuspended: boolean
-  domainEmail: string
+  loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
   cookie: string
+  firstname: string
+  lastname: string
   proxy: string
+  domainEmail: string
   lastUsed: Date
-  recoveryEmail: string;
+  recoveryEmail: string
+  emailCreditsUsed: number
+  emailCreditsLimit: number
+  renewalDateTime: number | Date
+  renewalStartDate: number | Date
+  renewalEndDate: number | Date
+  trialDaysLeft: number
+  apolloPassword: string
 }
+
+
 
 // https://jsfiddle.net/mfwYS/
 // https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
@@ -28,13 +37,15 @@ export type IAccount = {
 export const AccountField = () => {
   const [input, setInput] = useState({email: '', password: '', recoveryEmail: '', domainEmail: ''});
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
-  
+  const [reqInProcess, setReqInProcess] = useState<string[]>([])
+  const [reqType, setReqType] = useState<string | null>(null)
+  const [resStatus, setResStatus] = useState<ResStatus>(null)
   const [accounts, setAccounts] = useState<IAccount[]>([])
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
       .then(data => setAccounts(data.data))
-      .catch(() => setAccounts(accountMockData))
+      .catch(() => {})
   }, [])
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -67,28 +78,54 @@ export const AccountField = () => {
       })
   }
 
-  const handleGetLoginCookie = () => {
-    if (!selectedAcc) return ;
-    fetchData<IAccount>('/account/cookies', 'POST', {account: accounts[selectedAcc]})
+  const login = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('login')
+    await fetchData<IAccount>(`account/login/a/${accountID}`, 'GET')
+      .then(data => {
+        data.ok
+          ? setResStatus(['ok', accountID])
+          : setResStatus(['fail', accountID])
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
+  }
+
+  const checkAccount = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('check')
+    await fetchData<IAccount>('/account/check/:id', 'GET')
       .then(data => {
         if (data.ok) {
-          const updateAccs = accounts.map(
-            acc => (
-            acc._id === data.data._id
-              ? data.data
-              : acc
-            )
-          );
-
+          const updateAccs = accounts.map(acc => ( acc._id === data.data._id ? data.data : acc ));
+          setResStatus(['ok', accountID])
           setAccounts(updateAccs)
         } else {
-          console.log('handleGetLoginCookie fetchdata failed')
+          setResStatus(['fail', accountID])
         }
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
       })
   }
 
   const upgradeAccounts = async () => {
-    await  fetchData(`/account/upgrade`, 'GET')
+    await  fetchData(`/account/login/a/`, 'GET')
       .then(() => {})
       .catch(() => {})
   }
@@ -99,7 +136,13 @@ export const AccountField = () => {
 
 
   const PopupComp = () => selectedAcc
-      ? <AccountPopup setPopup={setSelectedAcc} getLoginCookie={handleGetLoginCookie} account={accounts[selectedAcc]} />
+      ? <AccountPopup 
+          setPopup={setSelectedAcc}
+          reqInProcess={reqInProcess} 
+          setReqInProcess={setReqInProcess}
+          login={login} 
+          account={accounts[selectedAcc]} 
+        />
       : null;
 
   return (
@@ -148,8 +191,9 @@ export const AccountField = () => {
           <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
             <thead className='sticky top-0 bg-black'>
               <tr>
+                <th>Domain Email</th>
+                <th>Auth Email</th>
                 <th>Trial</th>
-                <th>Email</th>
                 <th>Password</th>
                 <th>Type</th>
                 <th>TT</th>
@@ -162,8 +206,9 @@ export const AccountField = () => {
                   (a, idx) => ( 
                     <>
                       <tr className='text-[0.8rem] text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
+                      <td className='overflow-scroll truncate' data-type='extend' >{a.domainEmail}</td>
+                      <td className='overflow-scroll truncate' data-type='extend' >{a.email}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>
-                        <td className='overflow-scroll truncate' data-type='extend' >{a.email}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{a.password}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{a.accountType}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>
@@ -192,7 +237,7 @@ export const AccountField = () => {
                           <td className="px-2">{a.accountType}</td>
                         </tr>
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Domain:</th>
+                          <th className="whitespace-nowrap px-2">Domain Email:</th>
                           <td className="px-2">{a.domain}</td>
                         </tr>
 
