@@ -99,6 +99,27 @@ export const AccountField = () => {
       })
   }
 
+  const manualLogin = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('manualLogin')
+    await fetchData<IAccount>(`/account/login/m/${accountID}`, 'GET')
+      .then(data => {
+        data.ok
+          ? setResStatus(['ok', accountID])
+          : setResStatus(['fail', accountID])
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
+  }
+
   const checkAccount = async () => {
     if (!selectedAcc) return;
     const accountID = accounts[selectedAcc]._id
@@ -149,6 +170,8 @@ export const AccountField = () => {
       })
   }
 
+ 
+
   const upgradeAccounts = async () => {
     await  fetchData(`/account/login/a/`, 'GET')
       .then(() => {})
@@ -163,6 +186,7 @@ export const AccountField = () => {
   const PopupComp = () => selectedAcc
       ? <AccountPopup
           req={reqType}
+          manualLogin={manualLogin}
           updateAccount={updateAccount}
           setPopup={setSelectedAcc}
           checkAccount={checkAccount}
