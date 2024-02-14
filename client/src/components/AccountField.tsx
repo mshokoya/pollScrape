@@ -201,6 +201,31 @@ export const AccountField = () => {
       })
   }
 
+  const clearMines = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('mines')
+    await fetchData<IAccount>(`/account/demine/${accountID}`, 'GET')
+      .then(data => {
+        if (data.ok) {
+          setResStatus(['ok', accountID])
+          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
+          setAccounts(updateAccs)
+        } else {
+          setResStatus(['fail', accountID])
+        }
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
+  }
+
   const fmtDate = (n: any) => n.toDateString
       ? n.toDateString()
       : n;
@@ -216,6 +241,7 @@ export const AccountField = () => {
           reqInProcess={reqInProcess} 
           setReqInProcess={setReqInProcess}
           login={login}
+          clearMines={clearMines}
           manualUpgradeAccount={manualUpgradeAccount}
           account={accounts[selectedAcc]} 
         />
