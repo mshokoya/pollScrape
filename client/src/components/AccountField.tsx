@@ -124,6 +124,31 @@ export const AccountField = () => {
       })
   }
 
+  const updateAccount = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('update')
+    await fetchData<IAccount>(`/account/${accountID}`, 'PUT')
+      .then(data => {
+        if (data.ok) {
+          setResStatus(['ok', accountID])
+          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
+          setAccounts(updateAccs)
+        } else {
+          setResStatus(['fail', accountID])
+        }
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
+  }
+
   const upgradeAccounts = async () => {
     await  fetchData(`/account/login/a/`, 'GET')
       .then(() => {})
@@ -138,6 +163,7 @@ export const AccountField = () => {
   const PopupComp = () => selectedAcc
       ? <AccountPopup
           req={reqType}
+          updateAccount={updateAccount}
           setPopup={setSelectedAcc}
           checkAccount={checkAccount}
           reqInProcess={reqInProcess} 
