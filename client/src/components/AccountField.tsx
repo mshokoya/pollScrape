@@ -145,12 +145,12 @@ export const AccountField = () => {
       })
   }
 
-  const updateAccount = async () => {
+  const updateAccount = async (acc: Partial<IAccount>) => {
     if (!selectedAcc) return;
     const accountID = accounts[selectedAcc]._id
     setReqInProcess([...reqInProcess, accountID])
     setReqType('update')
-    await fetchData<IAccount>(`/account/${accountID}`, 'PUT')
+    await fetchData<IAccount>(`/account/${accountID}`, 'PUT', acc)
       .then(data => {
         if (data.ok) {
           setResStatus(['ok', accountID])
@@ -170,12 +170,35 @@ export const AccountField = () => {
       })
   }
 
- 
-
   const upgradeAccounts = async () => {
     await  fetchData(`/account/login/a/`, 'GET')
       .then(() => {})
       .catch(() => {})
+  }
+
+  const manualUpgradeAccount = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('manualUpgrade')
+    await fetchData<IAccount>(`/account/upgrade/m/${accountID}`, 'GET')
+      .then(data => {
+        if (data.ok) {
+          setResStatus(['ok', accountID])
+          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
+          setAccounts(updateAccs)
+        } else {
+          setResStatus(['fail', accountID])
+        }
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
   }
 
   const fmtDate = (n: any) => n.toDateString
@@ -192,7 +215,8 @@ export const AccountField = () => {
           checkAccount={checkAccount}
           reqInProcess={reqInProcess} 
           setReqInProcess={setReqInProcess}
-          login={login} 
+          login={login}
+          manualUpgradeAccount={manualUpgradeAccount}
           account={accounts[selectedAcc]} 
         />
       : null;

@@ -3,14 +3,13 @@ import { Dispatch, FormEvent, SetStateAction, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IAccount } from "./AccountField";
 
-type ReqType = 'check' | 'login' | 'update' | 'manualLogin' | 'verify' | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
+type ReqType = 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
 
 type Props = {
   login: () => Promise<void>
   checkAccount: () => Promise<void>
-  updateAccount: () => Promise<void>
+  updateAccount: (acc: Partial<IAccount>) => Promise<void>
   manualLogin: () => Promise<void>
-  verifyAccount: () => Promise<void>
   upgradeAccount: () => Promise<void>
   manualUpgradeAccount: () => Promise<void>
   deleteAccount: () => Promise<void>
@@ -24,7 +23,7 @@ type Props = {
 
 export const AccountPopup = ( props : Props) => {
 
-  const [input, setInput] = useState({email: props.account.email, password: props.account.password, recovery: props.account.recoveryEmail});
+  const [input, setInput] = useState<Partial<IAccount>>({email: props.account.email, password: props.account.password, recoveryEmail: props.account.recoveryEmail});
 
   const handleClose = () => props.setPopup(null)
 
@@ -37,13 +36,10 @@ export const AccountPopup = ( props : Props) => {
         await props.checkAccount()
         break
       case 'update':
-        await props.updateAccount()
+        await props.updateAccount(input)
         break
       case 'manualLogin':
         await props.manualLogin()
-        break
-      case 'verify':
-        await props.verifyAccount()
         break
       case 'manualUpgrade':
         await props.checkAccount()
@@ -112,13 +108,6 @@ export const AccountPopup = ( props : Props) => {
             disabled={props.reqInProcess.includes(props.account._id)} 
             className={blinkCSS(props.req === 'update')}
             onClick={() => {handleRequest('update')}}>Update Account</button>
-        </div>
-
-        <div>
-          <button 
-            disabled={props.reqInProcess.includes(props.account._id)} 
-            className={blinkCSS(props.req === 'verify')}
-            onClick={() => {handleRequest('verify')}}>Verify Account</button>
         </div>
 
         <div>
