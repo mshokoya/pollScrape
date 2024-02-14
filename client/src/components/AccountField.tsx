@@ -170,10 +170,29 @@ export const AccountField = () => {
       })
   }
 
-  const upgradeAccounts = async () => {
-    await  fetchData(`/account/login/a/`, 'GET')
-      .then(() => {})
+  const upgradeAccount = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('update')
+    await  fetchData<IAccount>(`/account/upgrade/a/${accountID}`, 'GET')
+      .then( data => {
+        if (data.ok) {
+          setResStatus(['ok', accountID])
+          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
+          setAccounts(updateAccs)
+        } else {
+          setResStatus(['fail', accountID])
+        }
+      })
       .catch(() => {})
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
   }
 
   const manualUpgradeAccount = async () => {
@@ -226,6 +245,27 @@ export const AccountField = () => {
       })
   }
 
+  const deleteAccount = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('mines')
+    await fetchData<IAccount>(`/account/${accountID}`, 'DELETE')
+      .then(data => {
+        data.ok
+          ? setResStatus(['ok', accountID])
+          : setResStatus(['fail', accountID])
+      })
+      .catch(() => { setResStatus(['fail', accountID]) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
+  }
+
   const fmtDate = (n: any) => n.toDateString
       ? n.toDateString()
       : n;
@@ -241,6 +281,7 @@ export const AccountField = () => {
           reqInProcess={reqInProcess} 
           setReqInProcess={setReqInProcess}
           login={login}
+          deleteAccount={deleteAccount}
           clearMines={clearMines}
           manualUpgradeAccount={manualUpgradeAccount}
           account={accounts[selectedAcc]} 
