@@ -172,7 +172,7 @@ export const accountRoutes = (app: Express) => {
     }
   })
 
-  app.get('account/login/a/:id', async (req, res) => {
+  app.get('/account/login/a/:id', async (req, res) => {
     console.log('login automatically')
     const accountID = req.params.id
 
@@ -239,7 +239,7 @@ export const accountRoutes = (app: Express) => {
 
   // (FIX): make it work with batch (array of ID's in body and loop throught) (use websockets to notify when one completes and on to next)
   // (FIX): logIntoApolloAndUpgradeAccount should return CreditsInfo type (page layout after upgrade is defferent)
-  app.get('account/upgrade/a/:id', async (req, res) => {
+  app.get('/account/upgrade/a/:id', async (req, res) => {
     try {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');
@@ -264,7 +264,7 @@ export const accountRoutes = (app: Express) => {
     } 
   })
 
-  app.get('account/upgrade/m/:id', async (req, res) => {
+  app.get('/account/upgrade/m/:id', async (req, res) => {
     try {
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');

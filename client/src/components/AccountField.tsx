@@ -283,6 +283,7 @@ export const AccountField = () => {
           login={login}
           deleteAccount={deleteAccount}
           clearMines={clearMines}
+          upgradeAccount={upgradeAccount}
           manualUpgradeAccount={manualUpgradeAccount}
           account={accounts[selectedAcc]} 
         />
