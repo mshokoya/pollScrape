@@ -150,7 +150,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
             meta.length && meta.map( 
               (a, idx) => ( 
                 <>
-                  <tr className='text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
+                  <tr className='text-center hover:border-cyan-600 hover:border' data-idx={idx} key={idx}>
                     <td data-type='check' data-idx={idx}>
                       {
                         metaChecked.includes(idx)
@@ -158,10 +158,10 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
                           : <MdCheckBoxOutlineBlank className='inline' />
                       }
                     </td>
-                    <td className='overflow-scroll' data-type='extend' >{a.name}</td>
-                    <td className='overflow-scroll' data-type='extend' >{a.url}</td>
-                    <td className='overflow-scroll' data-type='extend' >{a.maxPages}</td>
-                    <td className='overflow-scroll' data-type='opt'>
+                    <td className='overflow-scroll truncate' data-type='extend' >{a.name}</td>
+                    <td className='overflow-scroll truncate' data-type='extend' >{a.url}</td>
+                    <td className='overflow-scroll truncate' data-type='extend' >{a.maxPages}</td>
+                    <td className='overflow-scroll truncate' data-type='opt'>
                       <button >
                         <SlOptionsVertical className='inline'/>
                       </button>

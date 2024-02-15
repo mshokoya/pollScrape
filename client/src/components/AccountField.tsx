@@ -85,11 +85,17 @@ export const AccountField = () => {
     setReqType('login')
     await fetchData<IAccount>(`account/login/a/${accountID}`, 'GET')
       .then(data => {
+        console.log('then')
+        console.log(data)
         data.ok
           ? setResStatus(['ok', accountID])
           : setResStatus(['fail', accountID])
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch((d) => { 
+        console.log('catch')
+        console.log(d)
+        setResStatus(['fail', accountID]) 
+      })
       .finally(() => {
         setTimeout(() => {
           setReqType(null)
@@ -329,7 +335,7 @@ export const AccountField = () => {
           </form>
         </div>
 
-        <input className='text-cyan-600 border-cyan-600 border rounded p-1 mb-1' type="button" value="Upgrade All Accounts" onClick={upgradeAccounts}/>
+        {/* <input className='text-cyan-600 border-cyan-600 border rounded p-1 mb-1' type="button" value="Upgrade All Accounts" onClick={upgradeAccounts}/> */}
         
         <div className='border-cyan-600 border rounded grow overflow-auto'>
           <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
@@ -349,7 +355,15 @@ export const AccountField = () => {
                 accounts.length && accounts.map( 
                   (a, idx) => ( 
                     <>
-                      <tr className='text-[0.8rem] text-center hover:border-cyan-600 hover:border'  data-idx={idx} key={idx}>
+                      <tr className={`
+                        text-[0.8rem] text-center hover:border-cyan-600 hover:border
+                          ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'} 
+                          ${ reqInProcess.includes(a._id) ? 'fieldBlink' : '' } 
+                          ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes(a._id) ? 'resOK' : '' } 
+                          ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes(a._id) ? 'resFail' : '' } 
+                        `}  
+                        data-idx={idx} key={idx}
+                      >
                       <td className='overflow-scroll truncate' data-type='extend' >{a.domainEmail}</td>
                       <td className='overflow-scroll truncate' data-type='extend' >{a.email}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>

@@ -1,4 +1,4 @@
-import { ReqType, blinkCSS, fetchData } from "../core/util";
+import { blinkCSS, fetchData } from "../core/util";
 import { Dispatch, FormEvent, SetStateAction, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IAccount } from "./AccountField";

@@ -27,9 +27,9 @@ export const DomainField = () => {
   ])
 
   useEffect(() => {
-    fetchData<IDomain[]>('/account/domain', 'GET')
+    fetchData<IDomain[]>('/domain', 'GET')
       .then(data => {
-        setDomains([...domains, ...data.data])
+        setDomains(data.data)
       })
       .catch(() => {})
   }, [])
