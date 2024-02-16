@@ -5,7 +5,8 @@ export type IAccount = {
   domain: string
   accountType: string
   trialTime: string
-  isSuspended: boolean
+  suspended: boolean
+  verified: boolean
   loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
@@ -31,9 +32,10 @@ const accountSchema = new Schema<IAccount>({
   domain: { type: String, default: "" },
   accountType: { type: String, default: "free" }, // free or premuim
   trialTime: { type: String, default: "" }, // should be trial end date & time
-  isSuspended: { type: Boolean, default: false },
+  suspended: { type: Boolean, default: false },
   loginType: {type: String, default: "default"}, // (FIX) remove and switch with domain
   domainEmail: { type: String, default: "" },
+  verified: { type: Boolean, default: false },
   firstname: { type: String, default: "" },
   lastname: { type: String, default: "" },
   email: { type: String, default: "" },

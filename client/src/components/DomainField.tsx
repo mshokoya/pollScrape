@@ -54,7 +54,7 @@ export const DomainField = () => {
     }
   }
   
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const addDomain = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setReqInProcess([...reqInProcess, 'new'])
     setReqType('create')
@@ -143,7 +143,7 @@ export const DomainField = () => {
     <div className="flex relative grow text-xs">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <div className='mb-2'>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={addDomain}>
 
             <div className='mb-3'>
               <label className='mr-2 border-cyan-600 border-b-2' htmlFor="domain">Domain:</label>

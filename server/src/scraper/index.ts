@@ -9,11 +9,12 @@ import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../database';
-import { apolloConfirmAccount, apolloDefaultLogin, apolloDefaultSignup, apolloGetCreditsInfo, apolloStartPageScrape, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
+import { apolloConfirmAccount, apolloDefaultLogin, apolloDefaultSignup, apolloGetCreditsInfo, apolloStartPageScrape, confirmApolloAccount, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 import { MBEventArgs, mailbox } from '../mailbox';
 import { simpleParser } from 'mailparser';
+import { getApolloConfirmationLinksFromMail } from '../mailbox/apollo';
 
 const checkUserIP = async () => {
   const s = scraper;
@@ -122,7 +123,7 @@ export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
 export const logIntoApolloAndUpgradeAccount = async (account: IAccount) => {
   const page = scraper.page() as Page
 
-  await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/plans/upgrade')
+  await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/plans/upgrade')
   return await upgradeApolloAccount()
 }
 
@@ -131,10 +132,10 @@ export const logIntoApolloAndUpgradeAccount = async (account: IAccount) => {
 export const logIntoApolloAndUpgradeAccountManually = async (account: IAccount) => {
   const page = scraper.page() as Page
 
-  await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/plans/upgrade/')
+  await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/plans/upgrade/')
   const creditsInfo = await page.waitForSelector('[class="zp_EanJu]"', {visible: true}) // trial days left in top nav bar
     .then(async () => {
-      await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/credits/current')
+      await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/credits/current')
       return await apolloGetCreditsInfo()
     })
     .catch(() => null)
@@ -144,10 +145,46 @@ export const logIntoApolloAndUpgradeAccountManually = async (account: IAccount) 
 }
 
 export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
-  const page = scraper.page() as Page
   
-  await logIntoApolloThenVisit(account, 'app.apollo.io/#/settings/credits/current')
+  await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/credits/current')
   return await apolloGetCreditsInfo()
+}
+
+export const completeApolloAccountConfimation = async (account: IAccount) => {
+  const page = scraper.page() as Page
+
+  const allMail = await mailbox.getAllMail(account.email)
+
+  for (let mail of allMail) {
+    const toAddress = mail.envelope.to[0].address?.trim()
+    const fromAddress = mail.envelope.from[0].address
+    const fromName = mail.envelope.from[0].name
+    if (
+      toAddress === account.domainEmail &&
+      (
+        fromAddress?.includes('apollo') ||
+        fromName?.includes('apollo')
+      )
+    ) {
+      const links = await getApolloConfirmationLinksFromMail(mail);
+
+      // I know, i know
+      for (let link of links) {
+        await apolloConfirmAccount(link, account)
+        break
+      }
+
+      // await confirmApolloAccount(links, account)
+      const cookies = await getBrowserCookies();
+      await updateAccount({
+        domainEmail: toAddress}, 
+        {cookie: JSON.stringify(cookies)}
+      );
+      
+    } else {
+      continue
+    }
+  }
 }
 
 export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
@@ -165,22 +202,13 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs): 
     throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
   }
 
-  const message = Buffer.from(mail.source);
-  const parsedData = await simpleParser(message);
-  
-  const al1 = parsedData.text?.match(/(?<=Activate Your Account \( )[\S|\n]+/g)
-  const al2 = parsedData.text?.match(/(?<=Or paste this link into your browser: )[\S|\n]+(?= \()/g)
+  const links = await getApolloConfirmationLinksFromMail(mail);
 
-  for (let link of [al1, al2]) {
-    if (!link) continue;
-    const l = link[0]
-      .replace('\n', '')
-      .replace('\r', '')
-
+  for (let link of links) {
     const account = await AccountModel.findOne({domainEmail: toAddress?.trim()}).lean();
     if (!account) throw new Error('Failed to find account (new mail)');
 
-    await apolloConfirmAccount(l, account);
+    await apolloConfirmAccount(link, account);
     const cookies = await getBrowserCookies();
     await updateAccount({domainEmail: toAddress?.trim()}, {cookie: JSON.stringify(cookies)});
 

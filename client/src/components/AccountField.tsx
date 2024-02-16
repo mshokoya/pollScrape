@@ -29,6 +29,8 @@ export type IAccount = {
   apolloPassword: string
 }
 
+export type ReqType = 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
+
 
 
 // https://jsfiddle.net/mfwYS/
@@ -69,12 +71,26 @@ export const AccountField = () => {
   }
 
   // (FIX) email verification + get domain to determine login type
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await fetchData('/account', 'POST', input)
+    setReqInProcess([...reqInProcess, 'new'])
+    setReqType('create')
+    await fetchData<IAccount>('/account', 'POST', input)
       .then((d) => {
-        console.log('account post')
-        console.log(d)
+        if (d.ok) {
+          setResStatus(['ok', 'new'])
+          setAccounts([...accounts, d.data])
+        } else {
+          setResStatus(['fail', 'new'])
+        }
+      })
+      .catch(() => { setResStatus(['fail', 'new']) })
+      .finally(() => {
+        setTimeout(() => {
+          setReqInProcess(reqInProcess.filter(d => d !== 'new'))
+          setReqType(null)
+          setResStatus(null)
+        }, 1500)
       })
   }
 
@@ -83,7 +99,7 @@ export const AccountField = () => {
     const accountID = accounts[selectedAcc]._id
     setReqInProcess([...reqInProcess, accountID])
     setReqType('login')
-    await fetchData<IAccount>(`account/login/a/${accountID}`, 'GET')
+    await fetchData<IAccount>(`/account/login/a/${accountID}`, 'GET')
       .then(data => {
         console.log('then')
         console.log(data)
@@ -133,6 +149,8 @@ export const AccountField = () => {
     setReqType('check')
     await fetchData<IAccount>(`/account/check/${accountID}`, 'GET')
       .then(data => {
+        console.log('then')
+        console.log(data)
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
@@ -141,7 +159,12 @@ export const AccountField = () => {
           setResStatus(['fail', accountID])
         }
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch((data) => { 
+        console.log('catch')
+        console.log(data)
+        setResStatus(['fail', accountID]) 
+      
+      })
       .finally(() => {
         setTimeout(() => {
           setReqType(null)
@@ -180,9 +203,11 @@ export const AccountField = () => {
     if (!selectedAcc) return;
     const accountID = accounts[selectedAcc]._id
     setReqInProcess([...reqInProcess, accountID])
-    setReqType('update')
+    setReqType('upgrade')
     await  fetchData<IAccount>(`/account/upgrade/a/${accountID}`, 'GET')
       .then( data => {
+        console.log('then')
+        console.log(data)
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
@@ -191,7 +216,11 @@ export const AccountField = () => {
           setResStatus(['fail', accountID])
         }
       })
-      .catch(() => {})
+      .catch((data) => { 
+        console.log('catch')
+        console.log(data)
+        setResStatus(['fail', accountID]) 
+      })
       .finally(() => {
         setTimeout(() => {
           setReqType(null)
@@ -301,30 +330,49 @@ export const AccountField = () => {
     <div className="flex relative grow text-xs">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <div className='mb-2'>
-          <form onSubmit={handleSubmit}>
-
+          <form onSubmit={addAccount}>
             <div className='flex basis-1/2 gap-5'>
               <div>
                 <div className='mb-3'>
                   <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
-                  <input required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
+                  <input className={`
+                      ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                      ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                      ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
+                    `}
+                    required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
                 </div>
 
                 <div className='mb-3'>
                   <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
-                  <input required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
+                  <input className={`
+                      ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                      ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                      ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
+                    `}
+                    required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
                 </div>
               </div>
             
             <div>
               <div className='mb-3'>
                 <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Domain Email:</label>
-                <input type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+                <input className={`
+                    ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                    ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                    ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
+                  `}
+                  type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
               </div>
 
               <div className='mb-3'>
                 <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
-                <input type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
+                <input className={`
+                    ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                    ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                    ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
+                  `}
+                  type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
               </div>
             </div>
             
@@ -423,7 +471,6 @@ export const AccountField = () => {
             }
           </tbody>
         </table>
-
         </div>
       </div>
     </div>

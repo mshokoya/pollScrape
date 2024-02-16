@@ -64,3 +64,8 @@ mongoose.connect('mongodb://localhost:27017/apollo')
     
   });
 
+// apollo dialog box (if visible click x to close)
+// div[class="apolloio-css-vars-reset zp zp-modal zp_iDDtd"][rol="dialog"]
+    // div[class="zp_RB9tu zp_oSFrJ"] 
+    //    or 
+    //i[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]

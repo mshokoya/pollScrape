@@ -44,7 +44,7 @@ const Mailbox = () => {
 
     const mails: FetchMessageObject[] = []
 
-    for await (let message of conn.fetch('1:*', { envelope: true, uid: true })) {
+    for await (let message of conn.fetch('1:*', { envelope: true, source: true })) {
       mails.push(message)
     }
 

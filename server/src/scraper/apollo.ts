@@ -157,23 +157,32 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
       trialDaysLeft: trialDaysLeft ? trialDaysLeft.innerText : null
     }
   })
+  .then((d) => {
+    console.log('credit check')
+    console.log(d)
+    return d
+  })
 
   if (!creditStr) throw new Error('failed to get credit limit str')
   
   // output = '0 of 100 emails / mo'
   const credInfo = creditStr.emailCreditInfo.split(' ');
   const emailCreditsUsed = parseInt(credInfo[0]);
-  const emailCreditsLimit = parseInt(credInfo[2]);
-
+  const emailCreditsLimit = parseInt(credInfo[2].replace(',',''));
+  
   // output = 'Credits will renew: Feb 27, 2024 8:00 AM'
-  const renewalDateTime = Date.parse(creditStr.renewalDate.split(':')[1].trim())
+  const renewalDateTime =  creditStr.renewalDate
+    ? Date.parse(creditStr.renewalDate.split(':')[1].trim())
+    : null
 
+ 
   // output = 'Jan 27, 2024 - Feb 27, 2024'
   const renewalStartEnd = creditStr.renewalStartEnd.split('-')
+  
   const renewalStartDate = Date.parse(renewalStartEnd[0].trim())
   const renewalEndDate = Date.parse(renewalStartEnd[1].trim())
 
-  const trialDaysLeft = parseInt(creditStr.trialDaysLeft) || -1;
+  const trialDaysLeft = parseInt(creditStr.trialDaysLeft) || null;
 
   return {
     emailCreditsUsed,
@@ -185,64 +194,25 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   };
 }
 
-// (FIX) ???
+// (FIX) need to check if account is already upgraded first
 export const upgradeApolloAccount = async (): Promise<void> => {
   const page = scraper.page() as Page
 
-  const selector = await page.waitForSelector('div[class="zp_LXyot"]', {visible: true, timeout: 10000}).catch(() => null);
+  const selector = await page.waitForSelector('[class="zp_s6UAl"]', {visible: true, timeout: 10000}).catch(() => null);
   if (!selector) throw new Error('failed to upgrade account');
 
   const upgradeButton = await page.$$('div[class="zp_LXyot"]');
+  if (!upgradeButton.length) throw new Error("Failed to upgrade account. You've already upgraded your account before")
   await upgradeButton[1].click();
 
   const confirmUpgradeButton = await page.$('button[class="zp-button zp_zUY3r zp_eFcMr zp_OztAP zp_Bn90r"]');
   if (!confirmUpgradeButton) throw new Error('failed to upgrade, cannot find upgrade button')
-  await confirmUpgradeButton.click()
+  await confirmUpgradeButton.click();
+
+  await page.waitForNavigation({timeout:10000})
 
   // const planSelector = await page.waitForSelector('div[class="zp-card-title zp_kiN_m"]', {visible: true, timeout: 10000}).catch(() => null);
   // if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
-
-  // const planStr = await planSelector.evaluate(() => {
-  //   const e = document.querySelector('div[class="zp-card-title zp_kiN_m"]')
-  //   //@ts-ignore
-  //   return e ? e.innerText : null
-  // }) as string | null
-  // if (!planStr) throw new Error('failed to find plan')
-  // const plan = planStr.split(' ')[0];
-
-  // const trialEndSelector = await page.$('div[class="zp_SJzex"]');
-  // if (!trialEndSelector) throw new Error('failed to upgrade, cannot find trial end date');
-  // const trialEndDateStr = await trialEndSelector.evaluate(() => {
-  //   const e = document.querySelector('div[class="zp_SJzex"]')
-  //   //@ts-ignore
-  //   return e ? e.innerText : null
-  // })
-  // if (!trialEndDateStr) throw new Error('failed to find trial end date')
-  // const trialEndDate = trialEndDateStr.split(':')[1].trim();
-
-  // const creditsSelector = await page.$$('div[class="zp_SJzex"]');
-  // if (!creditsSelector) throw new Error('failed to upgrade, cannot find credits info');
-  // const creditsStr = await page.evaluate(() => {
-  //   const e = document.querySelectorAll('div[class="zp_SJzex"]')
-  //   if (!e) return null
-  //   if (e.length > 1) return null
-  //   //@ts-ignore
-  //   return e[1].innerText
-  // })
-  // if (!creditsStr) throw new Error('failed to upgrade, cannot find credits info');
-
-  // const credInfo = creditsStr.spilt(' ');
-  // const creditsUsed = credInfo[0];
-  // const creditsLimited = credInfo[2];
-
-  // return {
-  //   plan,
-  //   trialEnd: trialEndDate,
-  //   credits: {
-  //     used: creditsUsed,
-  //     limit: creditsLimited 
-  //   }
-  // }
 }
 
 export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
@@ -351,5 +321,14 @@ export const apolloConfirmAccount = async (confirmationURL: string, account: IAc
     }
 
     await delay(5000)
+  }
+}
+
+export const confirmApolloAccount = async (links: string[], account: IAccount) => {
+  if (!links.length) throw new Error('Failed to confirm account, confirmation links cannot be found')
+
+  for (let link of links) {
+    await apolloConfirmAccount(link, account)
+    break
   }
 }

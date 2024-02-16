@@ -101,7 +101,7 @@ export const accountRoutes = (app: Express) => {
       const accountID: string = req.body._id 
       if (!accountID) throw new Error('Failed to update account, invalid body')
 
-      const updatedAccount = updateAccount({_id: accountID}, req.body);
+      const updatedAccount = await updateAccount({_id: accountID}, req.body);
       if (!updateAccount) throw new Error('Failed to update account')
 
       res.json({ok: true, message: null, data: updatedAccount});
@@ -227,6 +227,7 @@ export const accountRoutes = (app: Express) => {
       }
 
       const creditsInfo = await logIntoApolloAndGetCreditsInfo(account)
+      console.log(creditsInfo)
       const updatedAccount = await updateAccount({_id: accountID}, creditsInfo);
 
       await scraper.close()
@@ -286,6 +287,29 @@ export const accountRoutes = (app: Express) => {
       await scraper.close()
       res.json({ok: false, message: err.message, data: null});
     } 
+  })
+
+  app.get('/account/verify/:id', async (req, res) => {
+    try{
+      const accountID = req.params.id
+      if (!accountID) throw new Error('Failed to check account, please provide valid id');
+
+      const account = await AccountModel.findById(accountID).lean();
+      if (!account) throw new Error('Failed to find account');
+
+      if (!scraper.browser()) {
+        await scraper.launchBrowser()
+      }
+
+      const allMail = await mailbox.getAllMail(account.email)
+
+
+    await scraper.close()
+    res.json({ok: true, message: null, data: null});
+    } catch (err: any) {
+      await scraper.close()
+      res.json({ok: false, message: err.message, data: null});
+    }
   })
 }
 
