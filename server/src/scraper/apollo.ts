@@ -323,12 +323,3 @@ export const apolloConfirmAccount = async (confirmationURL: string, account: IAc
     await delay(5000)
   }
 }
-
-export const confirmApolloAccount = async (links: string[], account: IAccount) => {
-  if (!links.length) throw new Error('Failed to confirm account, confirmation links cannot be found')
-
-  for (let link of links) {
-    await apolloConfirmAccount(link, account)
-    break
-  }
-}

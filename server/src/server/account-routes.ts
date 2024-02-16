@@ -2,7 +2,7 @@ import { Express } from 'express';
 import { addAccountToDB, updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { scraper } from '../scraper/scraper';
-import { logIntoApollo, logIntoApolloAndGetCreditsInfo, logIntoApolloAndUpgradeAccount, logIntoApolloAndUpgradeAccountManually, manuallyLogIntoApollo, newMailEvent, signupForApollo } from '../scraper';
+import { completeApolloAccountConfimation, logIntoApollo, logIntoApolloAndGetCreditsInfo, logIntoApolloAndUpgradeAccount, logIntoApolloAndUpgradeAccountManually, manuallyLogIntoApollo, newMailEvent, signupForApollo } from '../scraper';
 import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/util';
 import { getDomain } from '../helpers';
 import { apolloGetCreditsInfo } from '../scraper/apollo';
@@ -289,23 +289,23 @@ export const accountRoutes = (app: Express) => {
     } 
   })
 
-  app.get('/account/verify/:id', async (req, res) => {
+  app.get('/account/confirm/:id', async (req, res) => {
     try{
       const accountID = req.params.id
       if (!accountID) throw new Error('Failed to check account, please provide valid id');
 
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
+      if (account.verified) throw new Error('Request Failed, account is already verified')
 
       if (!scraper.browser()) {
         await scraper.launchBrowser()
       }
 
-      const allMail = await mailbox.getAllMail(account.email)
-
-
-    await scraper.close()
-    res.json({ok: true, message: null, data: null});
+      await completeApolloAccountConfimation(account)
+    
+      await scraper.close()
+      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       await scraper.close()
       res.json({ok: false, message: err.message, data: null});

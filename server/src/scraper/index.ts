@@ -9,20 +9,20 @@ import useProxy from 'puppeteer-page-proxy';
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../database';
-import { apolloConfirmAccount, apolloDefaultLogin, apolloDefaultSignup, apolloGetCreditsInfo, apolloStartPageScrape, confirmApolloAccount, goToApolloSearchUrl, setupApolloForScraping, upgradeApolloAccount } from './apollo';
+import { 
+  apolloConfirmAccount, 
+  apolloDefaultLogin, 
+  apolloDefaultSignup, 
+  apolloGetCreditsInfo, 
+  apolloStartPageScrape, 
+  goToApolloSearchUrl, 
+  setupApolloForScraping, 
+  upgradeApolloAccount 
+} from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 import { MBEventArgs, mailbox } from '../mailbox';
-import { simpleParser } from 'mailparser';
 import { getApolloConfirmationLinksFromMail } from '../mailbox/apollo';
-
-const checkUserIP = async () => {
-  const s = scraper;
-  const p = s.page();
-
-  const page = await scraper.visit('https://whatismyipaddress.com')
-  await page.waitForTimeout(5000)
-}
 
 // start apollo should use url
 // TODO
@@ -167,20 +167,16 @@ export const completeApolloAccountConfimation = async (account: IAccount) => {
       )
     ) {
       const links = await getApolloConfirmationLinksFromMail(mail);
+      if (!links.length) throw new Error('Failed to confirm apollo account, could not find confimation link')
 
-      // I know, i know
-      for (let link of links) {
-        await apolloConfirmAccount(link, account)
-        break
-      }
+      await apolloConfirmAccount(links[0], account)
 
-      // await confirmApolloAccount(links, account)
       const cookies = await getBrowserCookies();
-      await updateAccount({
-        domainEmail: toAddress}, 
-        {cookie: JSON.stringify(cookies)}
+      await updateAccount(
+        {domainEmail: toAddress}, 
+        {cookie: JSON.stringify(cookies), verified: true}
       );
-      
+      break
     } else {
       continue
     }
@@ -193,27 +189,26 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs): 
   const mail = await mailbox.getLatestMessage(authEmail);
   const fromAddress = mail.envelope.from[0].address!
   const fromName = mail.envelope.from[0].name!
-  const toAddress = mail.envelope.to[0].address
+  const toAddress = mail.envelope.to[0].address?.trim()
 
   if (
     !fromAddress.includes('apollo') && 
     !fromName.includes('apollo')
   ) { 
-    throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
+    // throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
+    return
   }
 
   const links = await getApolloConfirmationLinksFromMail(mail);
+  if (!links.length) throw new Error('Failed to confirm apollo account, could not find confimation link')
 
-  for (let link of links) {
-    const account = await AccountModel.findOne({domainEmail: toAddress?.trim()}).lean();
-    if (!account) throw new Error('Failed to find account (new mail)');
+  const account = await AccountModel.findOne({domainEmail: toAddress}).lean();
+  if (!account) throw new Error('Failed to find account (new mail)');
 
-    await apolloConfirmAccount(link, account);
-    const cookies = await getBrowserCookies();
-    await updateAccount({domainEmail: toAddress?.trim()}, {cookie: JSON.stringify(cookies)});
+  await apolloConfirmAccount(links[0], account);
+  const cookies = await getBrowserCookies();
+  await updateAccount({domainEmail: toAddress}, {cookie: JSON.stringify(cookies), verified: true});
 
-    break;
-  } 
 }
 
 
