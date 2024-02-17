@@ -69,11 +69,15 @@ export const accountRoutes = (app: Express) => {
           async (args) => {
             await apolloConfirmAccountEvent(args)
               .then(() => {
-                mailbox.relinquishConnection(args.authEmail)
+                console.log('signup complete')
               })
               .catch(() => {
                 console.log('failed to confirm apollo account')
               })
+              .finally(() => {
+                mailbox.relinquishConnection(args.authEmail)
+              })
+              
           }
         )
 
@@ -85,7 +89,7 @@ export const accountRoutes = (app: Express) => {
           domainEmail,
           email,
           password,
-          recoveryEmail: recoveryEmail || undefined,
+          recoveryEmail,
         }
         const accountExists = ['gmail', 'outlook', 'hotmail'].includes(getDomain(domainEmail))
           ? await AccountModel.findOne({email}).lean()

@@ -221,8 +221,10 @@ export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: M
     numbers: true
   });
 
+  await scraper.launchBrowser()
   await apolloConfirmAccount(links[0], account);
   const cookies = await getBrowserCookies();
+  await scraper.close()
   await updateAccount(
     {domainEmail: toAddress}, 
     {

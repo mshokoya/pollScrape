@@ -57,7 +57,7 @@ export const visitGoogle = async () => {
 export const apolloInitSignup = async () => {
   const page = scraper.page() as Page
   await scraper.visit('https://www.apollo.io/sign-up')
-    .then(async () => { await hideDom(page) })
+    .then(async () => { await hideDom() })
   
   const tsCheckbox = await page.waitForSelector('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]', {visible: true})
   if (!tsCheckbox) throw new Error('failed to find T&S checkbox')

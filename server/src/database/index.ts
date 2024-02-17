@@ -17,11 +17,11 @@ export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccou
   return newAcc
 }
 
-export const updateAccount = async (filter: Record<string, any>, data: Partial<IAccount>): Promise<IAccount> => {
+export const updateAccount = async (filter: Record<string, any>, data: Partial<IAccount>, opts?: Record<string, string>): Promise<IAccount> => {
   const account = await AccountModel.findOneAndUpdate(
     filter,
     { $set : data },
-    { new: true }
+    { new: true, ...opts }
   ).lean() as IAccount;
 
   return account
