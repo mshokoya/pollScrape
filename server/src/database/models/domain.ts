@@ -4,6 +4,7 @@ export type IDomain = {
   _id: string
   domain: string
   authEmail: string
+  authPassword: string
   verified: boolean
   MXRecords: boolean,
   TXTRecords: boolean,
@@ -15,6 +16,7 @@ export type IDomain = {
 const domainSchema = new Schema<IDomain>({
   domain: { type: String, default: "" },
   authEmail: { type: String, default: "" },
+  authPassword: { type: String, default: "" },
   verified: {type: Boolean, default: false},
   MXRecords: {type: Boolean, default: false},
   TXTRecords: {type: Boolean, default: false},

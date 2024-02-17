@@ -21,6 +21,7 @@ type C = {
   conn: ImapFlow,
   email: string,
   t?: NodeJS.Timeout
+  u: number
 }
 
 export type MBEventArgs = {
@@ -31,6 +32,7 @@ export type MBEventArgs = {
 }
 
 
+// (FIX) what is connection is started without event then later on events are needed
 // (FIX) create and store connection in array and add timeout to auto close conn & remove conn from array
 const Mailbox = () => {
   const C_lock = new Mutex();
@@ -64,12 +66,6 @@ const Mailbox = () => {
     return await conn.fetchOne('*', {envelope: true, source: true})
   }
 
-  const stopWatchingMailbox = (email: string, cb: (data: MBEventArgs) => void) => {
-    const conn = conns.find((mb) => mb.email === email)
-    if (!conn) throw new Error('failed to stop watching mailbox, conneection not found')
-    conn.t = _newSession(email)
-    conn.conn.removeListener('exists', cb)
-  }
 
   const logout = async (email: string) => {
     _closeSession(email)
@@ -79,12 +75,11 @@ const Mailbox = () => {
     return conns
   }
 
-  const storeConnections = async (conns: ImapFlowOptions[]) => {
-    conns.forEach((c) => { mailbox.push(c) })
+  const storeConnections = async (opts: ImapFlowOptions[]) => {
+    opts.forEach((c) => { mailbox.push(c) })
   }
 
   const newConnection = async (opts: ImapFlowOptions, eventCallback?: (data: MBEventArgs) => Promise<void>) => {
-    // check if if conn does not already exist
 
     if (!opts.auth.user) throw new Error('failed to login, please provide email')
     if (!opts.auth.pass) throw new Error('failed to login, please provide password')
@@ -110,6 +105,7 @@ const Mailbox = () => {
           conns.push({
             conn: client,
             email: opts.auth.user,
+            u: 1
           })
 
           if (eventCallback) {
@@ -117,7 +113,7 @@ const Mailbox = () => {
               await eventCallback({...data, authEmail: opts.auth.user}) 
             })
           }
-          
+
           return client
         })
     } catch (err: any) {
@@ -127,29 +123,29 @@ const Mailbox = () => {
 
   const getConnection = async (authDeets: ImapFlowOptions, cb?: (data: MBEventArgs) => Promise<void>) => {
     return await C_lock.runExclusive(async () => {
-
       const opt = mailbox.find((mb) => mb.auth.user === authDeets.auth.user)
       if (!opt) mailbox.push(authDeets)
-
       const conn = conns.find((c) => c.email = authDeets.auth.user)
-
       if (!conn) {
         return await newConnection(authDeets, cb)
       } else{
+        conn.u++
         return conn.conn
       }
     })
   }
 
-  const _newSession = (email: string) => {
-    const nt = setTimeout(async () => {
-      await _closeSession(email)
-        .finally(() => {
-          clearTimeout(nt)
-        })
-    }, 1.8e+7) // 1min
-
-    return nt
+  // (FIX) check if works
+  const relinquishConnection = async (email: string) => {
+    await C_lock.runExclusive(async () => {
+      const mailboxConnection = conns.find((c) => c.email = email)
+      if (!mailboxConnection) return
+      if (mailboxConnection.u === 1) {
+        _closeSession(email)
+      } else {
+        mailboxConnection.u--
+      }
+    })
   }
 
   const _closeSession = async (email: string) => {
@@ -166,10 +162,9 @@ const Mailbox = () => {
     getConnection,
     storeConnections,
     logout,
-    deleteMail,
     getAllMail,
-    stopWatchingMailbox,
-    getLatestMessage
+    getLatestMessage,
+    relinquishConnection
   }
 }
 

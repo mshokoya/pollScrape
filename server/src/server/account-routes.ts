@@ -2,7 +2,16 @@ import { Express } from 'express';
 import { addAccountToDB, updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { scraper } from '../scraper/scraper';
-import { completeApolloAccountConfimation, logIntoApollo, logIntoApolloAndGetCreditsInfo, logIntoApolloAndUpgradeAccount, logIntoApolloAndUpgradeAccountManually, manuallyLogIntoApollo, newMailEvent, signupForApollo } from '../scraper';
+import { 
+  apolloConfirmAccountEvent, 
+  completeApolloAccountConfimation, 
+  logIntoApollo, 
+  logIntoApolloAndGetCreditsInfo, 
+  logIntoApolloAndUpgradeAccount, 
+  logIntoApolloAndUpgradeAccountManually, 
+  manuallyLogIntoApollo, 
+  signupForApollo 
+} from '../scraper';
 import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/util';
 import { getDomain } from '../helpers';
 import { apolloGetCreditsInfo } from '../scraper/apollo';
@@ -21,54 +30,82 @@ export const accountRoutes = (app: Express) => {
     console.log('addAccount')
 
     try{
+      const selectedDomain = req.body.selectedDomain
       const addType = req.body.addType
       const email = req.body.email;
       const password = req.body.password;
       const recoveryEmail = req.body.recoveryEmail;
       const domainEmail = req.body.domainEmail || email ;
       const domain = getDomain(domainEmail);
+      let account: Partial<IAccount>;
 
-      if (!email || !password || !addType) throw new Error('invalid request params')
-  
-      const account: Partial<IAccount> = {
-        domain,
-        domainEmail,
-        email,
-        password,
-        recoveryEmail: recoveryEmail || undefined,
-        apolloPassword: generator.generate({
-          length: 15,
-          numbers: true
-        })
+      if (!addType) throw new Error('Failed to add account, invalid request params')
+
+      if (addType === 'domain') {
+        if (!selectedDomain) throw new Error('Failed to add account, domain not provided')
+        const d = await DomainModel.findOne({domain: selectedDomain}).lean()
+        if (!d) throw new Error('Failed to add account, domain could not be found')
+      
+        account = {
+          // (FIX) make sure it does not try to use domain email that already exists
+          domainEmail: `${generateSlug(3)}@${selectedDomain}`,
+          domain: selectedDomain,
+          email: d.authEmail,
+          password: d.authPassword,
+          apolloPassword: generator.generate({
+            length: 15,
+            numbers: true
+          })
+        }
+
+        // (FIX) better error handling (show user correct error)
+        await mailbox.getConnection({
+          auth: {
+            user: account.email,
+            pass: account.password
+          }
+        } as ImapFlowOptions
+        , 
+          async (args) => {
+            await apolloConfirmAccountEvent(args)
+              .then(() => {
+                mailbox.relinquishConnection(args.authEmail)
+              })
+              .catch(() => {
+                console.log('failed to confirm apollo account')
+              })
+          }
+        )
+
+      } else {
+        if (!email || !password) throw new Error('invalid request params')
+
+        account = {
+          domain,
+          domainEmail,
+          email,
+          password,
+          recoveryEmail: recoveryEmail || undefined,
+        }
+        const accountExists = ['gmail', 'outlook', 'hotmail'].includes(getDomain(domainEmail))
+          ? await AccountModel.findOne({email}).lean()
+          : await AccountModel.findOne({domainEmail}).lean()
+
+        if (accountExists) throw new Error('Failed to create new account, account already exists')
       }
 
-      const accountExists = !['gmail', 'outlook', 'hotmail'].includes(domainEmail)
-            ? await AccountModel.findOne({domainEmail}).lean()
-            : await AccountModel.findOne({email}).lean();
-
-      if (accountExists) throw new Error('Failed to create new account, account already exists')
-
-      // (FIX) better error handling (show user correct error)
-      await mailbox.newConnection({
-        auth: {
-          user: account.email,
-          pass: account.password
-        }
-      } as ImapFlowOptions, 
-      newMailEvent 
-      )
-
       // (FIX) make it work with taskqueue
-      if (!scraper.browser()) await scraper.launchBrowser()
+      await scraper.launchBrowser()
 
       await signupForApollo(account)
 
       // (FIX) indicate that account exists on db but not verified via email or apollo
       await AccountModel.create(account);
 
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
-      // if (scraper.browser()) await scraper.close()
+      await scraper.close()
       res.json({ok: false, message: err.message, data: err});
     }
   })
@@ -113,9 +150,9 @@ export const accountRoutes = (app: Express) => {
       if (!account) throw new Error("Failed to start demining, couldn't find account")
       if (account.domain === 'default') throw new Error('Failed to start manual login, invalid email')
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
+      
+      await scraper.launchBrowser()
+      
     
       await manuallyLogIntoApollo(account)
       await waitForNavigationTo('/settings/account', 'settings page')
@@ -140,9 +177,9 @@ export const accountRoutes = (app: Express) => {
     try{
       if (!accountID) throw new Error('Failed to start demining, invalid request body');
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
+      
+      await scraper.launchBrowser()
+      
 
       const account = await AccountModel.findById(accountID)
       if (!account) throw new Error("Failed to start demining, couldn't find account")
@@ -169,9 +206,7 @@ export const accountRoutes = (app: Express) => {
     try {
       if (!accountID) throw new Error('Failed to login, invalid id')
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
+      await scraper.launchBrowser()
 
       const account = await AccountModel.findById(accountID).lean()
       if (!account) throw new Error('Failed to login, cannot find account')
@@ -180,10 +215,10 @@ export const accountRoutes = (app: Express) => {
       const cookies = await getBrowserCookies()
       await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
 
-      await scraper.close();
+      await scraper.close()
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
-      await scraper.close();
+      await scraper.close()
       res.json({ok: false, message: err.message, data: null});
     }
 
@@ -212,9 +247,9 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
+      
+      await scraper.launchBrowser()
+      
 
       const creditsInfo = await logIntoApolloAndGetCreditsInfo(account)
       console.log(creditsInfo)
@@ -238,9 +273,9 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
+      
+      await scraper.launchBrowser()
+      
 
 
       await logIntoApolloAndUpgradeAccount(account)
@@ -263,9 +298,9 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
+      
+      await scraper.launchBrowser()
+      
 
       await logIntoApolloAndUpgradeAccountManually(account)
       const creditsInfo = await logIntoApolloAndGetCreditsInfo(account)
@@ -288,10 +323,8 @@ export const accountRoutes = (app: Express) => {
       if (!account) throw new Error('Failed to find account');
       if (account.verified) throw new Error('Request Failed, account is already verified')
 
-      if (!scraper.browser()) {
-        await scraper.launchBrowser()
-      }
-
+      await scraper.launchBrowser()
+      
       const newAccount = await completeApolloAccountConfimation(account);
       if (!newAccount) throw new Error('Failed to confirm account, could not complete the process')
     

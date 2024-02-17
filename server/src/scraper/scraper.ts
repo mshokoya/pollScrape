@@ -15,13 +15,17 @@ puppeteer.use(StealthUserAgent({
 puppeteer.use(AdBlockerPlugin({ blockTrackers: true }))
 
 export const scraper = (() => {
+  let u: number = 0;
   let browser: Browser | null = null;
   let page: Page | null = null;
   
   return {
     launchBrowser: async () => {
-      browser = await puppeteer.launch({headless:false})
-      page = await browser.newPage()
+      if (!browser) {
+        browser = await puppeteer.launch({headless:false})
+        page = await browser.newPage()
+      }
+      u++
     },
     restartBrowser: async (): Promise<void> => {
       if (browser !== null) await browser.close();
@@ -33,9 +37,12 @@ export const scraper = (() => {
       return page!;
     },
     close: async () => {
-      await browser?.close();
-      browser = null;
-      page = null;
+      if (u === 1) {
+        await browser?.close();
+        browser = null;
+        page = null;
+      } 
+      if (u > 0) u--; // make sure never in minus
     },
     page: () => page,
     browser: () => browser,

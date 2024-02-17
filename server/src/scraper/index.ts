@@ -194,7 +194,7 @@ export const completeApolloAccountConfimation = async (account: IAccount) => {
   }
 }
 
-export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
+export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
   if (count < prevCount) return;
 
   const mail = await mailbox.getLatestMessage(authEmail);
