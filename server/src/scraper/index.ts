@@ -21,8 +21,9 @@ import {
 } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
-import { MBEventArgs, mailbox } from '../mailbox';
+import { MBEventArgs, accountToMailbox, mailbox } from '../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../mailbox/apollo';
+import passwordGenerator  from 'generate-password';
 
 // start apollo should use url
 // TODO
@@ -145,15 +146,16 @@ export const logIntoApolloAndUpgradeAccountManually = async (account: IAccount) 
 }
 
 export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
-  
   await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/credits/current')
   return await apolloGetCreditsInfo()
 }
 
 export const completeApolloAccountConfimation = async (account: IAccount) => {
-  const page = scraper.page() as Page
+  // const page = scraper.page() as Page
 
+  await mailbox.getConnection(accountToMailbox(account))
   const allMail = await mailbox.getAllMail(account.email)
+
 
   for (let mail of allMail) {
     const toAddress = mail.envelope.to[0].address?.trim()
@@ -169,14 +171,23 @@ export const completeApolloAccountConfimation = async (account: IAccount) => {
       const links = await getApolloConfirmationLinksFromMail(mail);
       if (!links.length) throw new Error('Failed to confirm apollo account, could not find confimation link')
 
+      account.apolloPassword = passwordGenerator.generate({
+        length: 20,
+        numbers: true
+      });
+
       await apolloConfirmAccount(links[0], account)
 
       const cookies = await getBrowserCookies();
-      await updateAccount(
+      const newAccount = await updateAccount(
         {domainEmail: toAddress}, 
-        {cookie: JSON.stringify(cookies), verified: true}
+        {
+          cookie: JSON.stringify(cookies), 
+          verified: true, 
+          apolloPassword: account.apolloPassword
+        }
       );
-      break
+      return newAccount
     } else {
       continue
     }
@@ -205,9 +216,21 @@ export const newMailEvent = async ({authEmail, count, prevCount}: MBEventArgs): 
   const account = await AccountModel.findOne({domainEmail: toAddress}).lean();
   if (!account) throw new Error('Failed to find account (new mail)');
 
+  account.apolloPassword = passwordGenerator.generate({
+    length: 20,
+    numbers: true
+  });
+
   await apolloConfirmAccount(links[0], account);
   const cookies = await getBrowserCookies();
-  await updateAccount({domainEmail: toAddress}, {cookie: JSON.stringify(cookies), verified: true});
+  await updateAccount(
+    {domainEmail: toAddress}, 
+    {
+      cookie: JSON.stringify(cookies), 
+      verified: true,
+      apolloPassword: account.apolloPassword
+    }
+  );
 
 }
 

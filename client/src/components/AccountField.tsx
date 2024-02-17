@@ -1,15 +1,17 @@
-import { FormEvent, MouseEvent, useEffect, useState } from "react"
+import { Dispatch, FormEvent, MouseEvent, SetStateAction, useEffect, useState } from "react"
 import {ResStatus, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
+import { IDomain } from "./DomainField";
 
 export type IAccount = {
   _id: string
   domain: string
   accountType: string
   trialTime: string
-  isSuspended: boolean
+  suspended: boolean
+  verified: boolean
   loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
@@ -29,7 +31,7 @@ export type IAccount = {
   apolloPassword: string
 }
 
-export type ReqType = 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
+export type ReqType = 'confirm' | 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
 
 
 
@@ -37,17 +39,21 @@ export type ReqType = 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpg
 // https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
 
 export const AccountField = () => {
-  const [input, setInput] = useState({email: '', password: '', recoveryEmail: '', domainEmail: ''});
+  const [input, setInput] = useState<Partial<IAccount>>({email: '', password: '', recoveryEmail: '', domainEmail: ''});
   const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
   const [reqInProcess, setReqInProcess] = useState<string[]>([])
   const [reqType, setReqType] = useState<string | null>(null)
   const [resStatus, setResStatus] = useState<ResStatus>(null)
   const [accounts, setAccounts] = useState<IAccount[]>([])
+  const [addType, setAddType] = useState<'domain' | 'email'>('email')
+  const [selectedDomain, setSelectedDomain] = useState<string>('')
+  const [domains, setDomains] = useState<IDomain[]>([])
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
       .then(data => setAccounts(data.data))
       .catch(() => {})
+    getDomainList()
   }, [])
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -70,12 +76,21 @@ export const AccountField = () => {
     }
   }
 
+  const getDomainList = async () => {
+    await fetchData<IDomain[]>('/domain', 'GET')
+    .then(data => {
+      setDomains(data.data)
+    })
+    .catch(() => {})
+  }
+
   // (FIX) email verification + get domain to determine login type
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
     setReqInProcess([...reqInProcess, 'new'])
     setReqType('create')
-    await fetchData<IAccount>('/account', 'POST', input)
+    await fetchData<IAccount>('/account', 'POST', {...input, addType, selectedDomain})
       .then((d) => {
         if (d.ok) {
           setResStatus(['ok', 'new'])
@@ -101,17 +116,11 @@ export const AccountField = () => {
     setReqType('login')
     await fetchData<IAccount>(`/account/login/a/${accountID}`, 'GET')
       .then(data => {
-        console.log('then')
-        console.log(data)
         data.ok
           ? setResStatus(['ok', accountID])
           : setResStatus(['fail', accountID])
       })
-      .catch((d) => { 
-        console.log('catch')
-        console.log(d)
-        setResStatus(['fail', accountID]) 
-      })
+      .catch(() => { setResStatus(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
           setReqType(null)
@@ -149,8 +158,6 @@ export const AccountField = () => {
     setReqType('check')
     await fetchData<IAccount>(`/account/check/${accountID}`, 'GET')
       .then(data => {
-        console.log('then')
-        console.log(data)
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
@@ -159,12 +166,7 @@ export const AccountField = () => {
           setResStatus(['fail', accountID])
         }
       })
-      .catch((data) => { 
-        console.log('catch')
-        console.log(data)
-        setResStatus(['fail', accountID]) 
-      
-      })
+      .catch(() => { setResStatus(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
           setReqType(null)
@@ -206,8 +208,6 @@ export const AccountField = () => {
     setReqType('upgrade')
     await  fetchData<IAccount>(`/account/upgrade/a/${accountID}`, 'GET')
       .then( data => {
-        console.log('then')
-        console.log(data)
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
@@ -216,11 +216,7 @@ export const AccountField = () => {
           setResStatus(['fail', accountID])
         }
       })
-      .catch((data) => { 
-        console.log('catch')
-        console.log(data)
-        setResStatus(['fail', accountID]) 
-      })
+      .catch(() => { setResStatus(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
           setReqType(null)
@@ -279,6 +275,38 @@ export const AccountField = () => {
         }, 1500)
       })
   }
+  
+  const confirmAccount = async () => {
+    if (!selectedAcc) return;
+    const accountID = accounts[selectedAcc]._id
+    setReqInProcess([...reqInProcess, accountID])
+    setReqType('confirm')
+    await fetchData<IAccount>(`/account/confirm/${accountID}`, 'GET')
+      .then(data => {
+        console.log('pass')
+        console.log(data)
+        if (data.ok) {
+          setResStatus(['ok', accountID])
+          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
+          setAccounts(updateAccs)
+        } else {
+          setResStatus(['fail', accountID])
+        }
+      })
+      .catch((el) => { 
+        console.log('fail')
+        console.log(el)
+        setResStatus(['fail', accountID]) 
+      
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setReqType(null)
+          setReqInProcess(reqInProcess.filter(d => d !== accountID))
+          setResStatus(null)
+        }, 1500)
+      })
+  }
 
   const deleteAccount = async () => {
     if (!selectedAcc) return;
@@ -320,71 +348,55 @@ export const AccountField = () => {
           clearMines={clearMines}
           upgradeAccount={upgradeAccount}
           manualUpgradeAccount={manualUpgradeAccount}
-          account={accounts[selectedAcc]} 
+          account={accounts[selectedAcc]}
+          confirmAccount={confirmAccount}
         />
       : null;
+
 
   return (
     <>
     <PopupComp />
     <div className="flex relative grow text-xs">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
+        <div className='flex mt-1 mb-3 gap-3'>
+          <button 
+            className='text-cyan-600 border-cyan-600 border rounded p-1'
+            onClick={() => setAddType('email')}
+          > 
+            email
+          </button>
+
+          <button 
+            className='text-cyan-600 border-cyan-600 border rounded p-1'
+            onClick={() => setAddType('domain')}
+          > 
+            domain
+          </button>
+        </div>
+        
+
         <div className='mb-2'>
-          <form onSubmit={addAccount}>
-            <div className='flex basis-1/2 gap-5'>
-              <div>
-                <div className='mb-3'>
-                  <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
-                  <input className={`
-                      ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                      ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                      ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
-                    `}
-                    required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
-                </div>
+          {
+            addType === 'email'
+              ? <EmailForm 
+                  input={input}
+                  setInput={setInput}
+                  resStatus={resStatus}
+                  reqInProcess={reqInProcess}
+                  addAccount={addAccount}
+                />
+              : <DomainForm 
+                  domains={domains}
+                  setSelectedDomain={setSelectedDomain}
+                  resStatus={resStatus}
+                  reqInProcess={reqInProcess}
+                  addAccount={addAccount}
 
-                <div className='mb-3'>
-                  <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
-                  <input className={`
-                      ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                      ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                      ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
-                    `}
-                    required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
-                </div>
-              </div>
-            
-            <div>
-              <div className='mb-3'>
-                <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Domain Email:</label>
-                <input className={`
-                    ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                    ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                    ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
-                  `}
-                  type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
-              </div>
-
-              <div className='mb-3'>
-                <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
-                <input className={`
-                    ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                    ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                    ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
-                  `}
-                  type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
-              </div>
-            </div>
-            
-            </div>
-
-            <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>
-            
-          </form>
+                />
+          }
         </div>
 
-        {/* <input className='text-cyan-600 border-cyan-600 border rounded p-1 mb-1' type="button" value="Upgrade All Accounts" onClick={upgradeAccounts}/> */}
-        
         <div className='border-cyan-600 border rounded grow overflow-auto'>
           <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
             <thead className='sticky top-0 bg-black'>
@@ -449,7 +461,7 @@ export const AccountField = () => {
 
                         <tr className="hover:border-cyan-600 hover:border-y">
                           <th className="whitespace-nowrap px-2">Is Account Suspended:</th>
-                          <td className="px-2">{a.isSuspended}</td>
+                          <td className="px-2">{a.suspended}</td>
                         </tr>
                         <tr className="hover:border-cyan-600 hover:border-y">
                           <th className="whitespace-nowrap px-2">Cookies:</th>
@@ -475,5 +487,104 @@ export const AccountField = () => {
       </div>
     </div>
   </>
+  )
+}
+
+type EmailProps = {
+  input: Partial<IAccount>
+  setInput: Dispatch<SetStateAction<Partial<IAccount>>>
+  resStatus: ResStatus
+  reqInProcess: string[]
+  addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
+}
+
+export const EmailForm = (props: EmailProps) => {
+
+  return(
+    <form onSubmit={props.addAccount}>
+      <div className='flex basis-1/2 gap-5'>
+        <div>
+          <div className='mb-3'>
+            <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
+            <input className={`
+                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+              `}
+              required type="text" id="email" value={props.input.email} onChange={ e => {props.setInput(p => ({...p, email: e.target.value}))}}/>
+          </div>
+
+          <div className='mb-3'>
+            <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
+            <input className={`
+                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+              `}
+              required type="text" id="password" value={props.input.password} onChange={ e => {props.setInput(p => ({...p, password: e.target.value}))}}/>
+          </div>
+        </div>
+      
+        <div>
+          <div className='mb-3'>
+            <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
+            <input className={`
+                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+              `}
+              type="text" id="domain" value={props.input.domainEmail} onChange={ e => {props.setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+          </div>
+
+          <div className='mb-3'>
+            <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
+            <input className={`
+                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+              `}
+              type="text" id="recovery" value={props.input.recoveryEmail} onChange={ e => {props.setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
+          </div>
+        </div>
+      </div>
+      <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>
+    </form>
+  )
+}
+
+type DomainProps = {
+  domains: IDomain[]
+  resStatus: ResStatus
+  reqInProcess: string[]
+  addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
+  setSelectedDomain: Dispatch<SetStateAction<string>>
+}
+
+export const DomainForm = (props: DomainProps) => {
+  const [selected, setSelected] = useState('')
+
+
+  return (
+    <form onSubmit={props.addAccount}>
+      <div className='flex basis-1/2 gap-5 mt-1 mb-3'>
+      <label htmlFor="domain">Select a domain:</label>
+
+      <select 
+        id="domain"
+        onChange={e => setSelected(e.target.value)}
+        className={`
+          ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
+          ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
+          ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+        `}
+        value={selected}
+      >
+        {
+          props.domains.map((d) => <option value={d.domain}>{d.domain}</option>)
+        }
+      </select>
+      </div>
+      <input className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>
+    </form>
   )
 }

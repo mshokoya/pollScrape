@@ -13,6 +13,7 @@ type Props = {
   manualUpgradeAccount: () => Promise<void>
   deleteAccount: () => Promise<void>
   clearMines: () => Promise<void>
+  confirmAccount: () => Promise<void>
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
   reqInProcess: string[]
@@ -57,6 +58,9 @@ export const AccountPopup = ( props : Props) => {
         break
       case 'delete':
         await props.deleteAccount()
+        break
+      case 'confirm':
+        await props.confirmAccount()
         break
     }
   }
@@ -145,8 +149,15 @@ export const MainFields = (props: MProps) => {
       <div>
         <button 
           disabled={props.reqInProcess.includes(props.account._id)}
+          className={blinkCSS(props.req === 'confirm')}
+          onClick={() => {props.handleRequest('confirm')}}>Confirm Account</button>
+      </div>
+
+      <div>
+        <button 
+          disabled={props.reqInProcess.includes(props.account._id)}
           className={blinkCSS(props.req === 'delete')}
-          onClick={() => {props.handleRequest('delete')}}>Delete</button>
+          onClick={() => {props.handleRequest('delete')}}>Delete Account</button>
       </div>
     </>
   )
@@ -186,6 +197,11 @@ export const UpdateFields = ({input, setInput, handleRequest, resetFields, setPa
         </div>
 
         <div className='mb-3'>
+          <label className='mr-2 border-cyan-600 border-b-2' htmlFor="domain">Domain Email:</label>
+          <input type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+        </div>
+
+        <div className='mb-3'>
           <label className='mr-2 border-cyan-600 border-b-2' htmlFor="recovery">RecoveryEmail:</label>
           <input type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
         </div>
@@ -200,3 +216,11 @@ export const UpdateFields = ({input, setInput, handleRequest, resetFields, setPa
     </>
   )
 }
+
+// export type IAccount = {
+//   email: string
+//   password: string
+//   domainEmail: string
+//   recoveryEmail: string
+//   apolloPassword: string
+// }

@@ -21,16 +21,15 @@ export const accountRoutes = (app: Express) => {
     console.log('addAccount')
 
     try{
-      // if (!req.body.account) throw new Error('please provide account')
+      const addType = req.body.addType
       const email = req.body.email;
       const password = req.body.password;
       const recoveryEmail = req.body.recoveryEmail;
       const domainEmail = req.body.domainEmail || email ;
       const domain = getDomain(domainEmail);
 
-      if (!email || !password) throw new Error('invalid request params')
+      if (!email || !password || !addType) throw new Error('invalid request params')
   
-    
       const account: Partial<IAccount> = {
         domain,
         domainEmail,
@@ -40,7 +39,7 @@ export const accountRoutes = (app: Express) => {
         apolloPassword: generator.generate({
           length: 15,
           numbers: true
-        }) || 'wearetheworld123'
+        })
       }
 
       const accountExists = !['gmail', 'outlook', 'hotmail'].includes(domainEmail)
@@ -56,16 +55,7 @@ export const accountRoutes = (app: Express) => {
           pass: account.password
         }
       } as ImapFlowOptions, 
-      newMailEvent // check if this works
-        // .then(async () => {
-        //   console.log(`
-          
-        //     THE CALLBACK WORKS
-          
-        //   `)
-        //   const cookie = await getBrowserCookies()
-        //   await updateAccount({email: account.email}, {cookie: JSON.stringify(cookie)})
-        // })
+      newMailEvent 
       )
 
       // (FIX) make it work with taskqueue
@@ -302,10 +292,11 @@ export const accountRoutes = (app: Express) => {
         await scraper.launchBrowser()
       }
 
-      await completeApolloAccountConfimation(account)
+      const newAccount = await completeApolloAccountConfimation(account);
+      if (!newAccount) throw new Error('Failed to confirm account, could not complete the process')
     
       await scraper.close()
-      res.json({ok: true, message: null, data: null});
+      res.json({ok: true, message: null, data: newAccount});
     } catch (err: any) {
       await scraper.close()
       res.json({ok: false, message: err.message, data: null});

@@ -33,7 +33,7 @@ export const scraper = (() => {
       return page!;
     },
     close: async () => {
-      await browser!.close();
+      await browser?.close();
       browser = null;
       page = null;
     },

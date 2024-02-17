@@ -2,6 +2,7 @@ import { Mutex } from 'async-mutex';
 import { getDomain } from './helpers';
 // import IMAP, { ImapConfig } from 'imap-mailbox';
 import { FetchMessageObject, ImapFlow, ImapFlowOptions } from 'imapflow';
+import { IAccount } from './database/models/accounts';
 
 // https://dev.to/qaproengineer/extracting-links-from-gmail-emails-using-nodejsimap-and-puppeteer-dec
 
@@ -38,9 +39,10 @@ const Mailbox = () => {
 
 
   const getAllMail = async (email: string) => {
-    const opts = mailbox.find((mb) => mb.auth.user === email )
-    if (!opts) throw new Error('Failed to get mailbox, connection not recognised')
-    const conn = await getConnection(email);
+    const opts = mailbox.find((mb) => mb.auth.user === email );
+    if (!opts) throw new Error('Failed to get mailbox, connection not recognised');
+
+    const conn = await getConnection(opts);
 
     const mails: FetchMessageObject[] = []
 
@@ -52,11 +54,14 @@ const Mailbox = () => {
   }
 
   const getLatestMessage = async (email: string) => {
-    const conn = conns.find((c) => c.email = email)
+    const opts = mailbox.find((mb) => mb.auth.user === email );
+    if (!opts) throw new Error('Failed to get mailbox, connection not recognised');
+
+    const conn = await getConnection(opts);
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
-      if (!conn) throw new Error('Failed to get mailbox, please reconnect')
+      // if (!conn) throw new Error('Failed to get mailbox, please reconnect')
       
-    return await conn.conn.fetchOne('*', {envelope: true, source: true})
+    return await conn.fetchOne('*', {envelope: true, source: true})
   }
 
   const stopWatchingMailbox = (email: string, cb: (data: MBEventArgs) => void) => {
@@ -78,7 +83,7 @@ const Mailbox = () => {
     conns.forEach((c) => { mailbox.push(c) })
   }
 
-  const newConnection = async (opts: ImapFlowOptions, eventCallback: (data: MBEventArgs) => Promise<void>) => {
+  const newConnection = async (opts: ImapFlowOptions, eventCallback?: (data: MBEventArgs) => Promise<void>) => {
     // check if if conn does not already exist
 
     if (!opts.auth.user) throw new Error('failed to login, please provide email')
@@ -107,10 +112,12 @@ const Mailbox = () => {
             email: opts.auth.user,
           })
 
-          client.on('exists', async (data: Omit<MBEventArgs, 'email'>) => { 
-            await eventCallback({...data, authEmail: opts.auth.user}) 
-          })
-
+          if (eventCallback) {
+            client.on('exists', async (data: Omit<MBEventArgs, 'email'>) => { 
+              await eventCallback({...data, authEmail: opts.auth.user}) 
+            })
+          }
+          
           return client
         })
     } catch (err: any) {
@@ -118,17 +125,18 @@ const Mailbox = () => {
     }
   }
 
-  const getConnection = async (email: string, cb?: (data: MBEventArgs) => Promise<void>) => {
+  const getConnection = async (authDeets: ImapFlowOptions, cb?: (data: MBEventArgs) => Promise<void>) => {
     return await C_lock.runExclusive(async () => {
-      const conn = conns.find((c) => c.email = email)
-      if (!conn && cb) {
-        const opts = mailbox.find((mb) => mb.auth.user === email)
-        if (!opts) throw new Error('Failed to get mailbox, connection not recognised')
-        return await newConnection(opts, cb)
-      } else if (conn) {
+
+      const opt = mailbox.find((mb) => mb.auth.user === authDeets.auth.user)
+      if (!opt) mailbox.push(authDeets)
+
+      const conn = conns.find((c) => c.email = authDeets.auth.user)
+
+      if (!conn) {
+        return await newConnection(authDeets, cb)
+      } else{
         return conn.conn
-      } else {
-        throw new Error('failed to establish a connection to mailbox, please try reconnecting')
       }
     })
   }
@@ -164,6 +172,24 @@ const Mailbox = () => {
     getLatestMessage
   }
 }
+
+export const accountToMailbox = (account: IAccount): ImapFlowOptions => {
+  return {
+    auth: {
+      user: account.email,
+      pass: account.password
+    },
+    port: 993,
+    secure: true,
+    host: findIMAP(account.email),
+  }
+}
+
+// auth: {
+//   user: string;
+//   pass?: string;
+//   accessToken?: string;
+// }
 
 const findIMAP = (email: string) => {
   switch(getDomain(email)) {
