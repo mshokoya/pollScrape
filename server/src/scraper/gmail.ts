@@ -128,7 +128,7 @@ const gmailAuth = async (browserCTX: BrowserContext, account: Partial<IAccount>)
       counter = 0
 
     } else if (url.includes('signup-success')) {
-      await browserCTX.page.goto('https://app.apollo.io/')
+      await page.goto('https://app.apollo.io/')
       counter = 0
       
     } else if (

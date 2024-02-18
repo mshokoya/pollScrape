@@ -3,7 +3,7 @@ import { updateAccount } from "../database";
 import { IAccount } from "../database/models/accounts";
 import { IRecord } from "../database/models/records";
 import { apolloDoc } from "./dom/scrapeData";
-import { BrowserContext, newScraper } from "./scraper";
+import { BrowserContext } from "./scraper";
 import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
@@ -242,7 +242,7 @@ export const apolloDefaultSignup = async ({page}: BrowserContext, account: Parti
 export const apolloConfirmAccount = async (browserCTX: BrowserContext, confirmationURL: string, account: IAccount) => {
   const page = browserCTX.page
 
-  await newScraper.visit(page, confirmationURL)
+  await page.goto(confirmationURL)
 
   const nameField = await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="name"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!nameField) throw new Error('Failed to find full name field')
@@ -292,7 +292,7 @@ export const apolloConfirmAccount = async (browserCTX: BrowserContext, confirmat
       counter = 0
 
     } else if (url.includes('signup-success')) {
-      await browserCTX.page.goto('https://app.apollo.io/')
+      await page.goto('https://app.apollo.io/')
       counter = 0
       
     } else if (

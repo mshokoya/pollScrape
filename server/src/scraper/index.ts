@@ -1,4 +1,4 @@
-import {BrowserContext, newScraper, scraper} from './scraper';
+import {BrowserContext, scraper} from './scraper';
 import {
   getBrowserCookies, logIntoApolloThenVisit
 } from './util'
@@ -6,7 +6,6 @@ import {
   selectAccForScrapingFILO, selectProxy
 } from "../database/util";
 import useProxy from 'puppeteer-page-proxy';
-import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { AccountModel, IAccount } from '../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../database';
 import { 
@@ -43,7 +42,7 @@ export const startScrapingApollo = async (browserCTX: BrowserContext, metaID: st
   if (usingProxy) {
     proxy =  await selectProxy(account, allAccounts);
     if (!proxy) throw new Error(`failed to use proxy`);
-    const page = scraper.page() as Page;
+    const page = browserCTX.page;
     await useProxy(page, proxy);
   }
 
@@ -118,7 +117,6 @@ export const manuallyLogIntoApollo = async (browserCTX: BrowserContext, account:
 
 // (FIX) make sure not already upgraded
 export const logIntoApolloAndUpgradeAccount = async (browserCTX: BrowserContext, account: IAccount) => {
-
   await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade')
   return await upgradeApolloAccount(browserCTX)
 }
@@ -126,7 +124,7 @@ export const logIntoApolloAndUpgradeAccount = async (browserCTX: BrowserContext,
 // (FIX) make sure not already upgraded
 // (FIX) hide dom after upgrade so scraping credits process is hidden
 export const logIntoApolloAndUpgradeAccountManually = async (browserCTX: BrowserContext, account: IAccount) => {
-  const page = scraper.page() as Page
+  const page = browserCTX.page
 
   await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade/')
   const creditsInfo = await page.waitForSelector('[class="zp_EanJu]"', {visible: true}) // trial days left in top nav bar
@@ -215,10 +213,10 @@ export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: M
     numbers: true
   });
 
-  const browserCTX = await newScraper.newBrowser(false)
+  const browserCTX = await scraper.newBrowser(false)
   await apolloConfirmAccount(browserCTX, links[0], account);
   const cookies = await getBrowserCookies(browserCTX);
-  await newScraper.close(browserCTX)
+  await scraper.close(browserCTX)
   await updateAccount(
     {domainEmail: toAddress}, 
     {

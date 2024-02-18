@@ -1,3 +1,5 @@
+import generator from 'generate-password';
+
 export function shuffleArray<T>(array: T[]): T[] {
   let currentIndex = array.length,  randomIndex;
 
@@ -27,3 +29,4 @@ export const getDomain = (email: string) => {
   return domain;
 }
 
+export const generateID = (length: number = 15) => generator.generate({length, numbers: true})

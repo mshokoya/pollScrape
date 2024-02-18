@@ -7,7 +7,6 @@
 // input[class="btn btn-block btn-primary"]
 
 import { BrowserContext, apolloInitSignup, scraper } from "./scraper";
-import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { delay, hideDom, waitForNavHideDom } from "./util";
 import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../database/models/accounts";
@@ -96,7 +95,7 @@ const outlookAuth = async ({page}: BrowserContext, account: Partial<IAccount>) =
       counter = 0
 
     } else if (url.includes('signup-success')) {
-      await scraper.visit('https://app.apollo.io/')
+      await page.goto('https://app.apollo.io/')
       counter = 0
 
     } else if (
