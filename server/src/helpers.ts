@@ -26,3 +26,4 @@ export const getDomain = (email: string) => {
 
   return domain;
 }
+

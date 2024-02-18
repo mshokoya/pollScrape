@@ -3,10 +3,12 @@ import workerpool, { Pool } from 'workerpool';
 import {cpus} from 'os';
 import { Mutex } from 'async-mutex'
 
-type QueueItem<T = Record<string, any> | undefined> = {
+type TaskAction = (a: Record<string, any>) => Promise<void>
+
+type QueueItem= {
   id: string, 
-  action: (a:T) => Promise<any>,
-  args?: T
+  action: TaskAction,
+  args?: Record<string, any>
 }
 
 // TIP = TASK IN PROCESS
@@ -26,15 +28,20 @@ const TaskQueue = (io: IO) => {
   const TIP: TIP_Item[] = []
   let pool: Pool;
 
-  const enqueue = async (item: QueueItem) => {
+  const enqueue = async <T = Record<string, any> >(
+    id: string, 
+    action: (a: T) => Promise<void>,
+    args: T
+  ) => {
     return _Qlock.runExclusive(() => {
-      queue.push(item)
+      // @ts-ignore
+      queue.push({id, action, args})
     }).finally(() => {
       exec()
     })
   }
 
-  const dequeue = async (): Promise<QueueItem<Record<string, any> | undefined> | undefined> => {
+  const dequeue = async (): Promise<QueueItem | undefined> => {
     return _Qlock.runExclusive(() => {
       return queue.shift();
     })
