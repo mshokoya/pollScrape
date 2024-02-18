@@ -3,7 +3,7 @@ import { updateAccount } from "../database";
 import { IAccount } from "../database/models/accounts";
 import { IRecord } from "../database/models/records";
 import { apolloDoc } from "./dom/scrapeData";
-import { scraper } from "./scraper";
+import { BrowserContext, newScraper } from "./scraper";
 import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
@@ -19,10 +19,10 @@ type Upgrade = {
 type CreditsInfo = {
   emailCreditsUsed: number
   emailCreditsLimit: number
-  renewalDateTime: number
+  renewalDateTime?: number
   renewalStartDate: number
   renewalEndDate: number
-  trialDaysLeft: number
+  trialDaysLeft?: number
 };
 
 // (WARN) this is for automation page update
@@ -39,49 +39,50 @@ export const apolloUpdatePageQueryString = (url: string) => {
   return myURL.href;
 }
 
-export const visitApollo = async () => {
-  const page = await scraper.visit("https://app.apollo.io");
+export const visitApollo = async (browserCTX: BrowserContext) => {
+  const page = browserCTX.page
+  await page.goto("https://app.apollo.io");
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
 }
 
-export const visitApolloLoginPage = async (hideApolloDom: boolean = false) => {
-  const page = await scraper.visit('https://app.apollo.io/#/login')
+export const visitApolloLoginPage = async (browserCTX: BrowserContext, hideApolloDom: boolean = false) => {
+  await browserCTX.page.goto('https://app.apollo.io/#/login')
     .then(async (page) => { 
-      if (hideApolloDom) await waitForNavHideDom() 
+      if (hideApolloDom) await waitForNavHideDom(browserCTX) 
       return page
     })
   // await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true, timeout: 10000 });
 }
 
-export const goToApolloSearchUrl = async (apolloSearchURL: string) => {
-  const page = await scraper.visit(apolloSearchURL);
+export const goToApolloSearchUrl = async ({page}: BrowserContext, apolloSearchURL: string) => {
+  await page.goto(apolloSearchURL);
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
-export const apolloStartPageScrape = async () => {
-  const page = scraper.page() as Page
+export const apolloStartPageScrape = async ({page}: BrowserContext) => {
   const data = (await apolloDoc(page) as unknown) as IRecord[];
   return data;
 }
 
 
 
-export const apolloDefaultLogin = async (account: Partial<IAccount>) => {
+export const apolloDefaultLogin = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
   const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
   const incorrectLoginSelector = '[class="zp_nFR11"]'
   const emptyFieldsSelector = '[class="error-label zp_HeV9x"]'
   const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
   const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'  // once click on 'access email'
-  const page = scraper.page() as Page
 
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
+
+  const page = browserCTX.page
   
   if (!page.url().includes(apolloLoggedOutURLSubstr)) {
-    await visitApolloLoginPage()
+    await visitApolloLoginPage(browserCTX)
   }
 
-  const submitButton = await page?.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
+  const submitButton = await page.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
   const login = await page?.$$(loginInputFieldSelector)
 
   if (!login || !submitButton) throw new Error('failed to login');
@@ -110,25 +111,24 @@ export const apolloDefaultLogin = async (account: Partial<IAccount>) => {
   }
 }
 
-export const setupApolloForScraping = async (account: IAccount) => {
-  await injectCookies(account.cookie)
-  await visitApollo();
+export const setupApolloForScraping = async (browserCTX: BrowserContext, account: IAccount) => {
+  await injectCookies(browserCTX, account.cookie)
+  await visitApollo(browserCTX);
 
-  const page = scraper.page() as Page;
+  const page = browserCTX.page as Page;
   const pageUrl = page.url();
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    logIntoApollo(account)
-    const cookies = await getBrowserCookies()
+    logIntoApollo(browserCTX, account)
+    const cookies = await getBrowserCookies(browserCTX)
     const updatedAccount = await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)})
     if (!updatedAccount) throw new Error('Failed to save cookies')
   } 
 }
 
 // (FIX) test to make sure it works (test all possibilities)
-export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
-  const page = scraper.page() as Page
+export const apolloGetCreditsInfo = async ({page}: BrowserContext): Promise<CreditsInfo> => {
 
   const creditSelector = await page.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!creditSelector) throw new Error('failed to get credit limit')
@@ -157,11 +157,6 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
       trialDaysLeft: trialDaysLeft ? trialDaysLeft.innerText : null
     }
   })
-  .then((d) => {
-    console.log('credit check')
-    console.log(d)
-    return d
-  })
 
   if (!creditStr) throw new Error('failed to get credit limit str')
   
@@ -173,16 +168,16 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
   // output = 'Credits will renew: Feb 27, 2024 8:00 AM'
   const renewalDateTime =  creditStr.renewalDate
     ? Date.parse(creditStr.renewalDate.split(':')[1].trim())
-    : null
+    : undefined
 
- 
+
   // output = 'Jan 27, 2024 - Feb 27, 2024'
   const renewalStartEnd = creditStr.renewalStartEnd.split('-')
   
   const renewalStartDate = Date.parse(renewalStartEnd[0].trim())
   const renewalEndDate = Date.parse(renewalStartEnd[1].trim())
 
-  const trialDaysLeft = parseInt(creditStr.trialDaysLeft) || null;
+  const trialDaysLeft = parseInt(creditStr.trialDaysLeft) || undefined;
 
   return {
     emailCreditsUsed,
@@ -195,8 +190,7 @@ export const apolloGetCreditsInfo = async (): Promise<CreditsInfo> => {
 }
 
 // (FIX) need to check if account is already upgraded first
-export const upgradeApolloAccount = async (): Promise<void> => {
-  const page = scraper.page() as Page
+export const upgradeApolloAccount = async ({page}: BrowserContext): Promise<void> => {
 
   const selector = await page.waitForSelector('[class="zp_s6UAl"]', {visible: true, timeout: 10000}).catch(() => null);
   if (!selector) throw new Error('failed to upgrade account');
@@ -215,10 +209,8 @@ export const upgradeApolloAccount = async (): Promise<void> => {
   // if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
 }
 
-export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
+export const apolloDefaultSignup = async ({page}: BrowserContext, account: Partial<IAccount>) => {
   if (!account.domainEmail) throw new Error('failed to login, credentials missing');
-
-  const page = scraper.page() as Page
 
   await page.goto('https://www.apollo.io/sign-up')
 
@@ -247,10 +239,10 @@ export const apolloDefaultSignup = async (account: Partial<IAccount>) => {
   // signup error selector p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]
 }
 
-export const apolloConfirmAccount = async (confirmationURL: string, account: IAccount) => {
-  const page = scraper.page() as Page
+export const apolloConfirmAccount = async (browserCTX: BrowserContext, confirmationURL: string, account: IAccount) => {
+  const page = browserCTX.page
 
-  await scraper.visit(confirmationURL)
+  await newScraper.visit(page, confirmationURL)
 
   const nameField = await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="name"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!nameField) throw new Error('Failed to find full name field')
@@ -300,7 +292,7 @@ export const apolloConfirmAccount = async (confirmationURL: string, account: IAc
       counter = 0
 
     } else if (url.includes('signup-success')) {
-      await scraper.visit('https://app.apollo.io/')
+      await browserCTX.page.goto('https://app.apollo.io/')
       counter = 0
       
     } else if (

@@ -1,5 +1,5 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { scraper, visitGoogle } from "./scraper"
+import { BrowserContext, visitGoogle } from "./scraper"
 import { logIntoApollo } from '.';
 import { updateAccount } from '../database';
 import { IAccount } from '../database/models/accounts';
@@ -16,7 +16,7 @@ export const apolloPeopleURLSubstr = "/people"
 export const apolloTableRowSelector = ".zp_RFed0"
 
 
-export const setBrowserCookies = async (page: Page, cookies: string) => {
+export const setBrowserCookies = async ({page}: BrowserContext, cookies: string) => {
   const items = JSON.parse(cookies)
     .map( (cookie: Record<string, string>) => {
       const item = Object.assign({}, cookie);
@@ -42,21 +42,25 @@ export const setBrowserCookies = async (page: Page, cookies: string) => {
   }
 };
 
-export const getBrowserCookies = async (): Promise<string[]> => {
-  const client = await scraper.page()!.target().createCDPSession();
-  const { cookies } = await client.send('Network.getAllCookies');
-
+export const getBrowserCookies = async ({page}: BrowserContext): Promise<string[]> => {
+  const cookies = await page.cookies();
   return (cookies as unknown) as string[];
 };
 
-export const waitForNavigationTo = (location: string, dest?: string) => new Promise<boolean>((resolve, _reject) => {
-    const pg = scraper.page() as Page
-    
+// export const getBrowserCookies = async (): Promise<string[]> => {
+//   const client = await scraper.page()!.target().createCDPSession();
+//   const { cookies } = await client.send('Network.getAllCookies');
+
+//   return (cookies as unknown) as string[];
+// };
+
+export const waitForNavigationTo = (browserCTX: BrowserContext, location: string, dest?: string) => new Promise<boolean>((resolve, _reject) => {
     const browser_check = setInterval(async () => {
-      if ( pg.url().includes(location) ) {
+      if ( browserCTX.page.url().includes(location) ) {
         clearInterval(browser_check);
         resolve(true);
-      } else if ( (await scraper.browser()!.pages()).length === 0) {
+        // @ts-ignore
+      } else if ( (await browserCTX.context.pages()).length === 0) {
         clearInterval(browser_check);
         throw new Error(`browser closed before reaching ${dest ? dest : 'destined route'}`)
       }
@@ -70,17 +74,14 @@ export const delay = (time: number) => {
   });
 }
 
-export const injectCookies = async (cookies?: string) => {
-  const page = scraper.page() as Page;
-
-  await visitGoogle();
+export const injectCookies = async (browserCTX: BrowserContext, cookies?: string) => {
+  await visitGoogle(browserCTX);
   if (cookies) {
-    await setBrowserCookies(page, cookies); // needs work (cookest from string to array)
+    await setBrowserCookies(browserCTX, cookies); // needs work (cookest from string to array)
   }
 }
 
-export const hideDom = async () => {
-  const page = scraper.page() as Page;
+export const hideDom = async ({page}: BrowserContext) => {
   await page.evaluate(() => {
     const ol = document.createElement('div')
     ol.className = 'zombie-s'
@@ -92,7 +93,7 @@ export const hideDom = async () => {
   })
 }
 
-export const visibleDom = async (page: Page) => {
+export const visibleDom = async ({page}: BrowserContext) => {
   await page.evaluate(() => {
     const element = document.querySelector('[class="zombie-s"]');
     if (!element) return;
@@ -100,9 +101,7 @@ export const visibleDom = async (page: Page) => {
   })
 }
 
-export const waitForNavHideDom = async () => {
-  const page = scraper.page() as Page;
-  
+export const waitForNavHideDom = async ({page}: BrowserContext) => {
   await page.waitForNavigation({waitUntil: 'domcontentloaded'})
     .then(async () => {
       await page.evaluate(() => {
@@ -118,17 +117,17 @@ export const waitForNavHideDom = async () => {
 }
 
 
-export const logIntoApolloThenVisit = async (account: IAccount, url: string) => {
-  const page = scraper.page() as Page
-  await scraper.visit(url)
+export const logIntoApolloThenVisit = async (browserCTX: BrowserContext, account: IAccount, url: string) => {
+  const page = browserCTX.page as Page
+  await page.goto(url)
 
   await page.waitForNavigation({timeout:10000})
     .then(async () => {
       if (page.url().includes('/#/login')) {
-        await logIntoApollo(account);
-        const cookies = await getBrowserCookies();
+        await logIntoApollo(browserCTX, account);
+        const cookies = await getBrowserCookies(browserCTX);
         await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)});
-        await scraper.visit(url)
+        await browserCTX.page.goto(url)
       }
     })
 }

@@ -1,4 +1,4 @@
-import {scraper} from './scraper';
+import {BrowserContext, newScraper, scraper} from './scraper';
 import {
   getBrowserCookies, logIntoApolloThenVisit
 } from './util'
@@ -28,10 +28,8 @@ import passwordGenerator  from 'generate-password';
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (metaID: string, url: string, usingProxy: boolean) => {
+export const startScrapingApollo = async (browserCTX: BrowserContext, metaID: string, url: string, usingProxy: boolean) => {
   let proxy: string | null = null;
-
-  await scraper.restartBrowser()
 
   const allAccounts = await getAllApolloAccounts()
 
@@ -49,40 +47,38 @@ export const startScrapingApollo = async (metaID: string, url: string, usingProx
     await useProxy(page, proxy);
   }
 
-  await setupApolloForScraping(account);
-  await goToApolloSearchUrl(url);
+  await setupApolloForScraping(browserCTX, account);
+  await goToApolloSearchUrl(browserCTX, url);
 
-  const data = await apolloStartPageScrape(); // edit
-  const cookies = await getBrowserCookies();
+  const data = await apolloStartPageScrape(browserCTX); // edit
+  const cookies = await getBrowserCookies(browserCTX);
 
   await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy);
-
-  await scraper.close();
 }
 
 // (FIX) FINISH
-export const logIntoApollo = async (account: Partial<IAccount>) => {
+export const logIntoApollo = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.loginType) {
     throw new Error('login details not provided')
   }
 
   switch (account.loginType) {
     case 'default':
-      await apolloDefaultLogin(account)
+      await apolloDefaultLogin(browserCTX, account)
       break;
     case 'outlook':
-      await apolloOutlookLogin(account)
+      await apolloOutlookLogin(browserCTX, account)
       break;
     case 'gmail':
-      await apolloGmailLogin(account)
+      await apolloGmailLogin(browserCTX, account)
       break
     default:
-      await apolloDefaultLogin(account)
+      await apolloDefaultLogin(browserCTX, account)
       break;
   }
 }
 
-export const signupForApollo = async (account: Partial<IAccount>) => {
+export const signupForApollo = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.domain) {
     throw new Error('login details not provided')
   }
@@ -90,19 +86,19 @@ export const signupForApollo = async (account: Partial<IAccount>) => {
   switch (account.domain) {
     case 'hotmail':
     case 'outlook':
-      await apolloOutlookSignup(account)
+      await apolloOutlookSignup(browserCTX, account)
       break;
     case 'gmail':
-      await apolloGmailSignup(account)
+      await apolloGmailSignup(browserCTX, account)
       break
     default:
-      await apolloDefaultSignup(account)
+      await apolloDefaultSignup(browserCTX, account)
       break;
   }
 }
 
 // (FIX) create manual login for custom domain
-export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
+export const manuallyLogIntoApollo = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.domain) {
     throw new Error('login details not provided')
   }
@@ -110,10 +106,10 @@ export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
   switch (account.domain) {
     case 'hotmail':
     case 'outlook':
-      await visitOutlookLoginAuthPortal(true)
+      await visitOutlookLoginAuthPortal(browserCTX, true)
       break;
     case 'gmail':
-      await visitGmailLoginAuthPortal(true)
+      await visitGmailLoginAuthPortal(browserCTX, true)
       break
     default:
       break
@@ -121,23 +117,22 @@ export const manuallyLogIntoApollo = async (account: Partial<IAccount>) => {
 }
 
 // (FIX) make sure not already upgraded
-export const logIntoApolloAndUpgradeAccount = async (account: IAccount) => {
-  const page = scraper.page() as Page
+export const logIntoApolloAndUpgradeAccount = async (browserCTX: BrowserContext, account: IAccount) => {
 
-  await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/plans/upgrade')
-  return await upgradeApolloAccount()
+  await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade')
+  return await upgradeApolloAccount(browserCTX)
 }
 
 // (FIX) make sure not already upgraded
 // (FIX) hide dom after upgrade so scraping credits process is hidden
-export const logIntoApolloAndUpgradeAccountManually = async (account: IAccount) => {
+export const logIntoApolloAndUpgradeAccountManually = async (browserCTX: BrowserContext, account: IAccount) => {
   const page = scraper.page() as Page
 
-  await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/plans/upgrade/')
+  await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade/')
   const creditsInfo = await page.waitForSelector('[class="zp_EanJu]"', {visible: true}) // trial days left in top nav bar
     .then(async () => {
-      await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/credits/current')
-      return await apolloGetCreditsInfo()
+      await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
+      return await apolloGetCreditsInfo(browserCTX)
     })
     .catch(() => null)
     if (!creditsInfo) throw new Error("Please check account, upgrade might've failed")
@@ -145,13 +140,12 @@ export const logIntoApolloAndUpgradeAccountManually = async (account: IAccount) 
     return creditsInfo
 }
 
-export const logIntoApolloAndGetCreditsInfo = async (account: IAccount) => {
-  await logIntoApolloThenVisit(account, 'https://app.apollo.io/#/settings/credits/current')
-  return await apolloGetCreditsInfo()
+export const logIntoApolloAndGetCreditsInfo = async (browserCTX: BrowserContext,account: IAccount) => {
+  await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
+  return await apolloGetCreditsInfo(browserCTX)
 }
 
-export const completeApolloAccountConfimation = async (account: IAccount) => {
-  // const page = scraper.page() as Page
+export const completeApolloAccountConfimation = async (browserCTX: BrowserContext, account: IAccount) => {
 
   await mailbox.getConnection(accountToMailbox(account))
   const allMail = await mailbox.getAllMail(account.email)
@@ -176,9 +170,9 @@ export const completeApolloAccountConfimation = async (account: IAccount) => {
         numbers: true
       });
 
-      await apolloConfirmAccount(links[0], account)
+      await apolloConfirmAccount(browserCTX, links[0], account)
 
-      const cookies = await getBrowserCookies();
+      const cookies = await getBrowserCookies(browserCTX);
       const newAccount = await updateAccount(
         {domainEmail: toAddress}, 
         {
@@ -221,10 +215,10 @@ export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: M
     numbers: true
   });
 
-  await scraper.launchBrowser()
-  await apolloConfirmAccount(links[0], account);
-  const cookies = await getBrowserCookies();
-  await scraper.close()
+  const browserCTX = await newScraper.newBrowser(false)
+  await apolloConfirmAccount(browserCTX, links[0], account);
+  const cookies = await getBrowserCookies(browserCTX);
+  await newScraper.close(browserCTX)
   await updateAccount(
     {domainEmail: toAddress}, 
     {

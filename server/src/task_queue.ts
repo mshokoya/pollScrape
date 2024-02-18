@@ -1,7 +1,8 @@
 import { Server as IO, Socket } from 'socket.io';
-import workerpool, { Pool } from 'workerpool';
+// import workerpool, { Pool } from 'workerpool';
 import {cpus} from 'os';
 import { Mutex } from 'async-mutex'
+import AbortablePromise from "promise-abortable";
 
 type TaskAction = (a: Record<string, any>) => Promise<void>
 
@@ -12,7 +13,7 @@ type QueueItem= {
 }
 
 // TIP = TASK IN PROCESS
-type TIP_Item = [id: string, args: Record<string, any> | undefined, workerpool.Promise<unknown>] 
+type TIP_Item = [id: string, args: Record<string, any> | undefined, AbortablePromise<unknown>] 
 
 // https://dev.to/bleedingcode/increase-node-js-performance-with-libuv-thread-pool-5h10
 
@@ -24,14 +25,14 @@ const TaskQueue = (io: IO) => {
   const _Plock = new Mutex();
   const exec_lock = new Mutex();
   let maxWorkers: number;
-  const queue: QueueItem[] = [];
-  const TIP: TIP_Item[] = []
-  let pool: Pool;
+  let queue: QueueItem[] = [];
+  let TIP: TIP_Item[] = []
+  // let pool;
 
   const enqueue = async <T = Record<string, any> >(
     id: string, 
     action: (a: T) => Promise<void>,
-    args: T
+    args?: T
   ) => {
     return _Qlock.runExclusive(() => {
       // @ts-ignore
@@ -49,9 +50,7 @@ const TaskQueue = (io: IO) => {
 
   const remove = async (id: string) => {
     return _Qlock.runExclusive(() => {
-      const taskIdx = queue.findIndex(task => task.id === id);
-      if (taskIdx === -1) return null
-      return queue.splice(taskIdx, 1)[0]
+      queue = queue.filter(task => task.id !== id);
     })
   }
 
@@ -65,9 +64,7 @@ const TaskQueue = (io: IO) => {
 
   const _TIP_Dequeue = async (id: string) => { 
     return _Plock.runExclusive(() => {
-      const taskIdx = TIP.findIndex(task => task[0] === id);
-      if (taskIdx < 0) null;
-      return TIP.splice(taskIdx, 1)[0]
+      TIP = TIP.filter(task => task[0] !== id);
     })
   }
 
@@ -75,8 +72,7 @@ const TaskQueue = (io: IO) => {
     return _Plock.runExclusive(async () => {
       const process = TIP.find(p => p[0] === id)
       if (!process) return null;
-      return await process[2]
-        .cancel()
+      return await process[2].abort()
     }).finally(() => {
       exec()
     })
@@ -95,10 +91,16 @@ const TaskQueue = (io: IO) => {
   const exec = async () => {
     try {
       await exec_lock.acquire()
-      if (pool.stats().activeTasks >= maxWorkers) return;
+      if (TIP.length >= maxWorkers) return;
       const task = await dequeue();
       if (!task) return;
-      const tsk = pool.exec(task.action, [task.args])
+
+      // const tsk = pool.exec(task.action, [task.args || {}])
+
+      const tsk = new AbortablePromise(async (resolve, reject, signal) => {
+        signal.onabort = reject;
+        await task.action(task.args || {})
+      })
         .then(async () => {
           // io.emit('task-complete', task.id)
           _TIP_Dequeue(task.id)
@@ -109,21 +111,15 @@ const TaskQueue = (io: IO) => {
           _TIP_Dequeue(task.id)
           exec()
         })
+
         _TIP_Enqueue([task.id, task.args, tsk])
     } finally {
+      
       exec_lock.release()
     }
   }
 
   function init() {
-    pool = workerpool.pool({
-      onCreateWorker() {
-        exec()
-        return {}
-      },
-      maxWorkers: cpus().length,
-      maxQueueSize: 0
-    });
     maxWorkers = Math.round(cpus().length / 2)
   }
 
@@ -134,7 +130,7 @@ const TaskQueue = (io: IO) => {
     init,
     setMaxWorkers,
     maxWorkers: () => maxWorkers,
-    workerStats: () => pool.stats(),
+    workerStats: () => {},
     taskQueue: () => queue,
     tasksInProcess: () => TIP,
     c: () => {

@@ -1,12 +1,11 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
-import { apolloInitSignup, scraper } from './scraper';
+import { BrowserContext, apolloInitSignup } from './scraper';
 import { IAccount } from '../database/models/accounts';
 import { visitApolloLoginPage } from './apollo';
-import { query } from 'express';
-import { delay, hideDom, waitForNavHideDom } from './util';
+import { delay, waitForNavHideDom } from './util';
 
-const verifyGmail = async (recoverEmail: string) => {
-  const page = scraper.page() as Page;
+const verifyGmail = async (browserCTX: BrowserContext, recoverEmail: string) => {
+  const page = browserCTX.page;
 
   const verificationMethods = await page.waitForSelector('div[class="vxx8jf"]', {visible: true, timeout: 5000})
     .then(async () => {
@@ -51,23 +50,23 @@ const verifyGmail = async (recoverEmail: string) => {
   await newButton.click()
 }
 
-export const visitGmailLoginAuthPortal = async (hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
-  const page = scraper.page() as Page
+export const visitGmailLoginAuthPortal = async (browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
+  const page = browserCTX.page as Page
 
-  await visitApolloLoginPage(hideApolloDom);
+  await visitApolloLoginPage(browserCTX, hideApolloDom);
 
   const gmailLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD"]')
   if (!gmailLoginButton) throw new Error('failed to login, could not find google login button')
   await gmailLoginButton.click({delay: 1000})
     .then(async () => { 
-      if (hidePortalDom) await waitForNavHideDom() 
+      if (hidePortalDom) await waitForNavHideDom(browserCTX) 
     })
 }
 
-const gmailAuth = async (account: Partial<IAccount>) => {
+const gmailAuth = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
 
-  const page = scraper.page() as Page;
+  const page = browserCTX.page;
 
   const emailField = await page.waitForSelector('input[class="whsOnd zHQkBf"][type="email"]', { visible: true, timeout: 10000 });
   if (!emailField) throw new Error('failed to login, could not input email');
@@ -107,7 +106,7 @@ const gmailAuth = async (account: Partial<IAccount>) => {
         throw new Error('failed to login, gmail requires recapcha auth')
       }
       if (!account.recoveryEmail) { throw new Error('failed to login, recover email not provided')}
-      await verifyGmail(account.recoveryEmail)
+      await verifyGmail(browserCTX, account.recoveryEmail)
       counter = 0
 
     } else if (heading && heading.includes('Sign in')) {
@@ -129,7 +128,7 @@ const gmailAuth = async (account: Partial<IAccount>) => {
       counter = 0
 
     } else if (url.includes('signup-success')) {
-      await scraper.visit('https://app.apollo.io/')
+      await browserCTX.page.goto('https://app.apollo.io/')
       counter = 0
       
     } else if (
@@ -154,28 +153,28 @@ const gmailAuth = async (account: Partial<IAccount>) => {
 }
 
 // (FIX) complete func
-export const apolloGmailLogin = async (account: Partial<IAccount>) => {
-  const page = scraper.page() as Page
+export const apolloGmailLogin = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+  const page = browserCTX.page
 
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
 
-  await visitGmailLoginAuthPortal()
+  await visitGmailLoginAuthPortal(browserCTX)
 
-  await gmailAuth(account);
+  await gmailAuth(browserCTX, account);
 }
 
-export const apolloGmailSignup = async (account: Partial<IAccount>) => {
+export const apolloGmailSignup = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
   
-  const page = scraper.page() as Page
+  const page = browserCTX.page
 
-  await apolloInitSignup()
+  await apolloInitSignup(browserCTX)
   
   const gmailSignupButton = await page.$('button[id="google-oauth-button"]')
   if (!gmailSignupButton) throw new Error('failed to signup, could not find gmail signup button')
   await gmailSignupButton.click({delay: 1000})
 
 
-  await gmailAuth(account);
+  await gmailAuth(browserCTX, account);
 }
 

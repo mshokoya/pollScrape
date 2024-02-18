@@ -6,30 +6,28 @@
 // inital login first time ---- final step button
 // input[class="btn btn-block btn-primary"]
 
-import { apolloInitSignup, scraper } from "./scraper";
+import { BrowserContext, apolloInitSignup, scraper } from "./scraper";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { delay, hideDom, waitForNavHideDom } from "./util";
 import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../database/models/accounts";
 
 
-export const visitOutlookLoginAuthPortal = async (hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
-  const page = scraper.page() as Page
+export const visitOutlookLoginAuthPortal = async (browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
+  const page = browserCTX.page
   
-  await visitApolloLoginPage(hideApolloDom);
+  await visitApolloLoginPage(browserCTX, hideApolloDom);
 
   const microsoftLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD zp_bW01P"]')
   if (!microsoftLoginButton) throw new Error('failed to login, could not find microsoft login button')
   await microsoftLoginButton.click({delay: 1000})
     .then(async () => { 
-      if (hidePortalDom) await waitForNavHideDom() 
+      if (hidePortalDom) await waitForNavHideDom(browserCTX) 
     })
 }
 
-const outlookAuth = async (account: Partial<IAccount>) => {
+const outlookAuth = async ({page}: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  
-  const page = scraper.page() as Page;
 
   const emailInputField = await page.$('[class="form-control ltr_override input ext-input text-box ext-text-box"]')
   if (!emailInputField) throw new Error('failed to login, could not input email');
@@ -118,22 +116,22 @@ const outlookAuth = async (account: Partial<IAccount>) => {
   }
 }
 
-export const apolloOutlookLogin = async (account: Partial<IAccount>, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
+export const apolloOutlookLogin = async (browserCTX: BrowserContext, account: Partial<IAccount>, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  await visitOutlookLoginAuthPortal(hideApolloDom, hidePortalDom)
-  await outlookAuth(account as IAccount)
+  await visitOutlookLoginAuthPortal(browserCTX, hideApolloDom, hidePortalDom)
+  await outlookAuth(browserCTX, account as IAccount)
 }
 
-export const apolloOutlookSignup = async (account: Partial<IAccount>) => {
+export const apolloOutlookSignup = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
   
-  const page = scraper.page() as Page
+  const page = browserCTX.page
   
-  await apolloInitSignup()
+  await apolloInitSignup(browserCTX)
 
   const microsoftSignupButton = await page.$('button[id="microsoft-oauth-button"]')
   if (!microsoftSignupButton) throw new Error('failed to signup, could not find microsoft signup button')
   await microsoftSignupButton.click({delay: 1000})
 
-  await outlookAuth(account)
+  await outlookAuth(browserCTX, account)
 }
