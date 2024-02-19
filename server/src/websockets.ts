@@ -1,19 +1,28 @@
 import {Server as IO}  from 'socket.io';
 
+type SocketResponse<T = Record<string, any>> = {
+  id: string
+  type: string
+  message: string
+  data: T
+  ok: boolean
+}
+
 export const SocketIO = (server: any) => {
   const io = new IO(server);
 
   io.on('connection', (socket) => {
     console.log('A user connected');
-    //an event listener is set up for when a client disconnects.
+
     socket.on('disconnect', () => {
       console.log('A user disconnected');
     });
-  
   });
 
   return io
 }
+
+export const socketResponse = <T>(args: SocketResponse) => {}
 
 export let io: IO;
 

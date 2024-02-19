@@ -30,3 +30,11 @@ export const getDomain = (email: string) => {
 }
 
 export const generateID = (length: number = 15) => generator.generate({length, numbers: true})
+
+export class AppError extends Error {
+  constructor(protected ioID: string, message: string) {
+    super(message);
+    this.name = "AppError";
+    this.ioID = ioID
+  }
+}

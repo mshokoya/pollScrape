@@ -23,6 +23,8 @@ import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from '
 import { MBEventArgs, accountToMailbox, mailbox } from '../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
+import { io } from '../websockets';
+import { AppError } from '../helpers';
 
 // start apollo should use url
 // TODO
@@ -77,9 +79,9 @@ export const logIntoApollo = async (browserCTX: BrowserContext, account: Partial
   }
 }
 
-export const signupForApollo = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const signupForApollo = async (ioID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.domain) {
-    throw new Error('login details not provided')
+    throw new AppError(ioID, 'login details not provided')
   }
 
   switch (account.domain) {

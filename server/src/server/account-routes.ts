@@ -20,6 +20,7 @@ import { ImapFlowOptions } from 'imapflow';
 import { mailbox } from '../mailbox';
 import { generateSlug } from 'random-word-slugs';
 import { DomainModel } from '../database/models/domain';
+import { io } from '../websockets';
 
 export const accountRoutes = (app: Express) => {
   // (FIX) test it works with db
@@ -97,7 +98,8 @@ export const accountRoutes = (app: Express) => {
       await taskQueue.enqueue(
         generateID(),
         async ({account}) => {
-          // (FIX) make it work with taskqueue
+          const ioArgs =  { ok: true, type: 'addAccount', message: 'adding new account', data: { email:account.email, id: account._id, domainEmail: account.domainEmail} }
+          io.emit('addAccount', ioArgs )
           const browserCTX = await scraper.newBrowser(false)
           await signupForApollo(browserCTX, account)
           // (FIX) indicate that account exists on db but not verified via email or apollo

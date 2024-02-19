@@ -39,14 +39,14 @@ export const scraper = (() => {
       if (headless) {
         if (!headlessBrowser) { headlessBrowser = await puppeteer.launch({headless:true}) }
         context = await headlessBrowser.createIncognitoBrowserContext()
-        page = await context.newPage()
         l.type = 'headless'
       } else {
         if (!browser) { browser = await puppeteer.launch({headless:false}) }
         context = await browser.createIncognitoBrowserContext()
-        page = await context.newPage()
         l.type = 'head'
       }
+
+      page = await context.newPage()
 
       l.id = generate({length: 15, numbers: true})
       l.context = context

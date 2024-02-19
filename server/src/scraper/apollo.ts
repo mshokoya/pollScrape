@@ -92,7 +92,7 @@ export const apolloDefaultLogin = async (browserCTX: BrowserContext, account: Pa
 
   await submitButton?.click()
   // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
-
+  
   await delay(2000)
 
   const incorrectLogin = await page.$(incorrectLoginSelector)
