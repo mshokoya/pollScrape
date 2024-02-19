@@ -1,9 +1,10 @@
 import { Dispatch, FormEvent, MouseEvent, SetStateAction, useEffect, useState } from "react"
-import {ResStatus, fetchData} from '../core/util';
+import {ResStatus, appState$, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
+import { useSelector } from "@legendapp/state/react";
 
 export type IAccount = {
   _id: string
@@ -44,16 +45,17 @@ export const AccountField = () => {
   const [reqInProcess, setReqInProcess] = useState<string[]>([])
   const [reqType, setReqType] = useState<string | null>(null)
   const [resStatus, setResStatus] = useState<ResStatus>(null)
-  const [accounts, setAccounts] = useState<IAccount[]>([])
+  // const [accounts, setAccounts] = useState<IAccount[]>([])
   const [addType, setAddType] = useState<'domain' | 'email'>('email')
   const [selectedDomain, setSelectedDomain] = useState<string>('')
-  const [domains, setDomains] = useState<IDomain[]>([])
+  const accounts = useSelector(appState$.accounts) as IAccount[]
+  const domains = useSelector(appState$.domains) as IDomain[]
+  
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
-      .then(data => setAccounts(data.data))
+      .then(data => appState$.accounts.set(data.data))
       .catch(() => {})
-    getDomainList()
   }, [])
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -76,14 +78,6 @@ export const AccountField = () => {
     }
   }
 
-  const getDomainList = async () => {
-    await fetchData<IDomain[]>('/domain', 'GET')
-    .then(data => {
-      setDomains(data.data)
-    })
-    .catch(() => {})
-  }
-
   // (FIX) email verification + get domain to determine login type
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -94,7 +88,7 @@ export const AccountField = () => {
       .then((d) => {
         if (d.ok) {
           setResStatus(['ok', 'new'])
-          setAccounts([...accounts, d.data])
+          appState$.accounts.set((acc) => [...acc, d.data])
         } else {
           setResStatus(['fail', 'new'])
         }
@@ -161,7 +155,7 @@ export const AccountField = () => {
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          setAccounts(updateAccs)
+          appState$.accounts.set(updateAccs)
         } else {
           setResStatus(['fail', accountID])
         }
@@ -186,7 +180,7 @@ export const AccountField = () => {
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          setAccounts(updateAccs)
+          appState$.accounts.set(updateAccs)
         } else {
           setResStatus(['fail', accountID])
         }
@@ -211,7 +205,7 @@ export const AccountField = () => {
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          setAccounts(updateAccs)
+          appState$.accounts.set(updateAccs)
         } else {
           setResStatus(['fail', accountID])
         }
@@ -236,7 +230,7 @@ export const AccountField = () => {
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          setAccounts(updateAccs)
+          appState$.accounts.set(updateAccs)
         } else {
           setResStatus(['fail', accountID])
         }
@@ -261,7 +255,7 @@ export const AccountField = () => {
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          setAccounts(updateAccs)
+          appState$.accounts.set(updateAccs)
         } else {
           setResStatus(['fail', accountID])
         }
@@ -288,7 +282,7 @@ export const AccountField = () => {
         if (data.ok) {
           setResStatus(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          setAccounts(updateAccs)
+          appState$.accounts.set(updateAccs)
         } else {
           setResStatus(['fail', accountID])
         }
@@ -308,11 +302,12 @@ export const AccountField = () => {
       })
   }
 
+  // (FIX) complete func
   const deleteAccount = async () => {
     if (!selectedAcc) return;
     const accountID = accounts[selectedAcc]._id
     setReqInProcess([...reqInProcess, accountID])
-    setReqType('mines')
+    setReqType('delete')
     await fetchData<IAccount>(`/account/${accountID}`, 'DELETE')
       .then(data => {
         data.ok

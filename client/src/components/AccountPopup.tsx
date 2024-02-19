@@ -1,7 +1,9 @@
 import { blinkCSS } from "../core/util";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IAccount, ReqType } from "./AccountField";
+import { useObservable } from "@legendapp/state/react";
+import { Observable, batch } from "@legendapp/state";
 
 
 type Props = {
@@ -23,15 +25,11 @@ type Props = {
 
 type Page = 'main' | 'update'
 
+type State = {input: IAccount, page: Page}
 
 export const AccountPopup = ( props : Props) => {
-// {email: props.account.email, password: props.account.password, recoveryEmail: props.account.recoveryEmail}
-  const [input, setInput] = useState<Partial<IAccount>>({...props.account});
-  const [page, setPage] = useState<Page>('main')
-
+  const obs = useObservable<State>({ input: {...props.account}, page: 'main'})
   const handleClose = () => props.setPopup(null)
-
-  const resetFields = () => setInput({...props.account})
 
   const handleRequest = async (h: ReqType) => {
     switch(h) {
@@ -42,7 +40,7 @@ export const AccountPopup = ( props : Props) => {
         await props.checkAccount()
         break
       case 'update':
-        await props.updateAccount(input)
+        await props.updateAccount(obs.input.get())
         break
       case 'manualLogin':
         await props.manualLogin()
@@ -69,19 +67,22 @@ export const AccountPopup = ( props : Props) => {
     <div className="flex items-center justify-center fixed top-0 left-0 right-0 bottom-0 z-10" style={{background: "rgba(0,0,0,.70)"}} onClick={handleClose}>
       <div className="relative w-[30%] h-[30%] z-20 border-cyan-600 border-2 bg-black flex flex-col" onClick={e => e.stopPropagation()}>
         <IoMdClose className='absolute top-0 right-0 bg-cyan-600' onClick={handleClose}/>
+        <div className='text-center border-b-2 border-cyan-600 mb-2'>
+          <h1>
+            <span className='text-cyan-600'>{props.account.domainEmail || ''}</span> Settings
+          </h1>
+        </div>
         {
-          page === 'update'
+          obs.page.get() === 'update'
             ? <UpdateFields 
-                input={input}
-                setInput={setInput}
                 handleRequest={handleRequest}
-                setPage={setPage}
-                resetFields={resetFields}
+                obs={obs}
+                account={props.account}
               />
             : <MainFields 
                 {...props} 
                 handleRequest={handleRequest} 
-                setPage={setPage}
+                obs={obs}
               /> 
         }
       </div>
@@ -91,19 +92,13 @@ export const AccountPopup = ( props : Props) => {
 
 type MProps = {
   handleRequest: (a: ReqType) => Promise<void>
-  setPage: Dispatch<SetStateAction<Page>>
+  obs: Observable<State>
 } & Props 
 
 export const MainFields = (props: MProps) => {
 
   return (
     <>
-      <div className='text-center border-b-2 border-cyan-600 mb-2'>
-        <h1>
-          <span className='text-cyan-600'>{props.account.domainEmail || ''}</span> Settings
-        </h1>
-      </div>
-
       <div>
         <button 
           disabled={props.reqInProcess.includes(props.account._id)}
@@ -122,7 +117,7 @@ export const MainFields = (props: MProps) => {
         <button 
           disabled={props.reqInProcess.includes(props.account._id)} 
           className={blinkCSS(props.req === 'update')}
-          onClick={() => {props.setPage('update')}}>Update Account</button>
+          onClick={() => {props.obs.page.set('update')}}>Update Account</button>
       </div>
 
       <div>
@@ -168,18 +163,18 @@ export const MainFields = (props: MProps) => {
 // ===============================================
 
 type UFProps = {
-  input: Partial<IAccount>
-  setInput: Dispatch<SetStateAction<Partial<IAccount>>>
-  setPage: Dispatch<SetStateAction<Page>>
   handleRequest: (input: ReqType) => Promise<void>
-  resetFields: () => void
+  obs: Observable<State>
+  account: IAccount
 }
 
-export const UpdateFields = ({input, setInput, handleRequest, resetFields, setPage}: UFProps) => {
+export const UpdateFields = ({obs, handleRequest, account}: UFProps) => {
 
   const backToMain = () => {
-    resetFields()
-    setPage('main')
+    batch(() => {
+      obs.input.set(account)
+      obs.page.set('main')
+    })
   }
 
   return (
@@ -188,39 +183,31 @@ export const UpdateFields = ({input, setInput, handleRequest, resetFields, setPa
       <form onSubmit={() => {handleRequest('update')}}>
         <div className='mb-3'>
           <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
-          <input required type="text" id="email" value={input.email} onChange={ e => {setInput(p => ({...p, email: e.target.value}))}}/>
+          <input required type="text" id="email" value={obs.input.email.get()} onChange={ e => {obs.input.set(p => ({...p, email: e.target.value}))}}/>
         </div>
 
         <div className='mb-3'>
           <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
-          <input required type="text" id="password" value={input.password} onChange={ e => {setInput(p => ({...p, password: e.target.value}))}}/>
+          <input required type="text" id="password" value={obs.input.password.get()} onChange={ e => {obs.input.set(p => ({...p, password: e.target.value}))}}/>
         </div>
 
         <div className='mb-3'>
           <label className='mr-2 border-cyan-600 border-b-2' htmlFor="domain">Domain Email:</label>
-          <input type="text" id="domain" value={input.domainEmail} onChange={ e => {setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+          <input type="text" id="domain" value={obs.input.domainEmail.get()} onChange={ e => {obs.input.set(p => ({...p, domainEmail: e.target.value}))}}/>
         </div>
 
         <div className='mb-3'>
           <label className='mr-2 border-cyan-600 border-b-2' htmlFor="recovery">RecoveryEmail:</label>
-          <input type="text" id="recovery" value={input.recoveryEmail} onChange={ e => {setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
+          <input type="text" id="recovery" value={obs.input.recoveryEmail.get()} onChange={ e => {obs.input.set(p => ({...p, recoveryEmail: e.target.value}))}}/>
         </div>
 
         <input className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3' type="submit" value="Update Account"/>
         <button 
           type='button'
           className='text-cyan-600 border-cyan-600 border rounded p-1 mt-3'
-          onClick={resetFields}
+          onClick={() => { obs.input.set(account) }}
         >Reset fields</button>
       </form>
     </>
   )
 }
-
-// export type IAccount = {
-//   email: string
-//   password: string
-//   domainEmail: string
-//   recoveryEmail: string
-//   apolloPassword: string
-// }

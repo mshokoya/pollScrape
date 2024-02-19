@@ -1,7 +1,20 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { observable } from "@legendapp/state";
+import { IAccount } from "@/components/AccountField";
+import { IDomain } from "@/components/DomainField";
+import { IProxy } from "@/components/ProxyField";
+import { IMetaData, IRecord } from "@/components/RecordField";
 
 export type ResStatus = [('ok' | 'fail' | null ), (string | null)] | null
+
+type AppState = {
+  accounts: IAccount[]
+  domains: IDomain[]
+  proxies: IProxy[]
+  metas: IMetaData[]
+  records: IRecord[]
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -24,3 +37,11 @@ export const blinkCSS = (
   reqInProces: boolean = false, 
   color: string = 'text-cyan-600'
 ) => `${reqInProces ? `blink ${color}` : ''}`
+
+export const appState$ = observable<AppState>({
+  accounts: [],
+  domains: [],
+  proxies: [],
+  metas: [],
+  records: [],
+});
