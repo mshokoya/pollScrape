@@ -117,14 +117,14 @@ export const waitForNavHideDom = async ({page}: BrowserContext) => {
 }
 
 
-export const logIntoApolloThenVisit = async (browserCTX: BrowserContext, account: IAccount, url: string) => {
+export const logIntoApolloThenVisit = async (taskID: string, browserCTX: BrowserContext, account: IAccount, url: string) => {
   const page = browserCTX.page as Page
   await page.goto(url)
 
   await page.waitForNavigation({timeout:10000})
     .then(async () => {
       if (page.url().includes('/#/login')) {
-        await logIntoApollo(browserCTX, account);
+        await logIntoApollo(taskID, browserCTX, account);
         const cookies = await getBrowserCookies(browserCTX);
         await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)});
         await browserCTX.page.goto(url)

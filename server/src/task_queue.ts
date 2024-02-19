@@ -3,12 +3,16 @@ import { Server as IO, Socket } from 'socket.io';
 import {cpus} from 'os';
 import { Mutex } from 'async-mutex'
 import AbortablePromise from "promise-abortable";
+import { generateID } from './helpers';
 
-type TaskAction = (a: Record<string, any>) => Promise<void>
 
-type QueueItem= {
-  id: string, 
-  action: TaskAction,
+
+type QueueItem = {
+  id: string,
+  taskType: string,
+  desc: string,
+  metadata: Record<string, string | number>
+  action: () => Promise<void>,
   args?: Record<string, any>
 }
 
@@ -30,13 +34,16 @@ const TaskQueue = (io: IO) => {
   // let pool;
 
   const enqueue = async <T = Record<string, any> >(
-    id: string, 
+    id = generateID(),
+    taskType: string,
+    desc: string,
+    metadata: {},
     action: (a: T) => Promise<void>,
     args?: T
   ) => {
     return _Qlock.runExclusive(() => {
       // @ts-ignore
-      queue.push({id, action, args})
+      queue.push({id, action, args, taskType, desc, metadata})
     }).finally(() => {
       exec()
     })
@@ -99,7 +106,7 @@ const TaskQueue = (io: IO) => {
 
       const tsk = new AbortablePromise(async (resolve, reject, signal) => {
         signal.onabort = reject;
-        await task.action(task.args || {})
+        await task.action()
       })
         .then(async () => {
           // io.emit('task-complete', task.id)

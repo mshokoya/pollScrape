@@ -4,7 +4,7 @@ import { IAccount } from '../database/models/accounts';
 import { visitApolloLoginPage } from './apollo';
 import { delay, waitForNavHideDom } from './util';
 
-const verifyGmail = async (browserCTX: BrowserContext, recoverEmail: string) => {
+const verifyGmail = async (taskID: string, browserCTX: BrowserContext, recoverEmail: string) => {
   const page = browserCTX.page;
 
   const verificationMethods = await page.waitForSelector('div[class="vxx8jf"]', {visible: true, timeout: 5000})
@@ -50,10 +50,10 @@ const verifyGmail = async (browserCTX: BrowserContext, recoverEmail: string) => 
   await newButton.click()
 }
 
-export const visitGmailLoginAuthPortal = async (browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
+export const visitGmailLoginAuthPortal = async (taskID: string, browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   const page = browserCTX.page as Page
 
-  await visitApolloLoginPage(browserCTX, hideApolloDom);
+  await visitApolloLoginPage(taskID, browserCTX, hideApolloDom);
 
   const gmailLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD"]')
   if (!gmailLoginButton) throw new Error('failed to login, could not find google login button')
@@ -63,7 +63,7 @@ export const visitGmailLoginAuthPortal = async (browserCTX: BrowserContext, hide
     })
 }
 
-const gmailAuth = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+const gmailAuth = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
 
   const page = browserCTX.page;
@@ -106,7 +106,7 @@ const gmailAuth = async (browserCTX: BrowserContext, account: Partial<IAccount>)
         throw new Error('failed to login, gmail requires recapcha auth')
       }
       if (!account.recoveryEmail) { throw new Error('failed to login, recover email not provided')}
-      await verifyGmail(browserCTX, account.recoveryEmail)
+      await verifyGmail(taskID, browserCTX, account.recoveryEmail)
       counter = 0
 
     } else if (heading && heading.includes('Sign in')) {
@@ -153,17 +153,17 @@ const gmailAuth = async (browserCTX: BrowserContext, account: Partial<IAccount>)
 }
 
 // (FIX) complete func
-export const apolloGmailLogin = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const apolloGmailLogin = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   const page = browserCTX.page
 
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
 
-  await visitGmailLoginAuthPortal(browserCTX)
+  await visitGmailLoginAuthPortal(taskID, browserCTX)
 
-  await gmailAuth(browserCTX, account);
+  await gmailAuth(taskID, browserCTX, account);
 }
 
-export const apolloGmailSignup = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const apolloGmailSignup = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
   
   const page = browserCTX.page
@@ -175,6 +175,6 @@ export const apolloGmailSignup = async (browserCTX: BrowserContext, account: Par
   await gmailSignupButton.click({delay: 1000})
 
 
-  await gmailAuth(browserCTX, account);
+  await gmailAuth(taskID, browserCTX, account);
 }
 

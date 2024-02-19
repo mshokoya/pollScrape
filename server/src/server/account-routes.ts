@@ -37,6 +37,7 @@ export const accountRoutes = (app: Express) => {
       const domainEmail = req.body.domainEmail || email ;
       const domain = getDomain(domainEmail);
       let account: Partial<IAccount>;
+      const taskID = generateID()
 
       if (!addType) throw new Error('Failed to add account, invalid request params')
 
@@ -63,7 +64,7 @@ export const accountRoutes = (app: Express) => {
         } as ImapFlowOptions
         , 
           async (args) => {
-            await apolloConfirmAccountEvent(args)
+            await apolloConfirmAccountEvent(taskID, args)
               .then(() => {
                 console.log('signup complete')
               })
@@ -95,20 +96,20 @@ export const accountRoutes = (app: Express) => {
         if (accountExists) throw new Error('Failed to create new account, account already exists')
       }
 
+      
       await taskQueue.enqueue(
-        generateID(),
-        async ({account}) => {
-          const ioArgs =  { ok: true, type: 'addAccount', message: 'adding new account', data: { email:account.email, id: account._id, domainEmail: account.domainEmail} }
-          io.emit('addAccount', ioArgs )
+        taskID,
+        'addAccount',
+        `adding ${account.domainEmail}`,
+        {domainEmail: account.domainEmail},
+        async () => {
           const browserCTX = await scraper.newBrowser(false)
-          await signupForApollo(browserCTX, account)
+          await signupForApollo(taskID, browserCTX, account)
           // (FIX) indicate that account exists on db but not verified via email or apollo
           await AccountModel.create(account);
           await scraper.close(browserCTX)
-        },
-        {account}
+        }
       )
-
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
@@ -154,19 +155,22 @@ export const accountRoutes = (app: Express) => {
       if (!account) throw new Error("Failed to start demining, couldn't find account")
       if (account.domain === 'default') throw new Error('Failed to start manual login, invalid email')
 
+      const taskID = generateID()
       await taskQueue.enqueue(
-        generateID(),
-        async ({accountID, account}) => {
+        taskID,
+        'loginAccount',
+        `Login into ${account.domainEmail}`,
+        {accountID},
+        async () => {
           const browserCTX = await scraper.newBrowser(false)
-          await manuallyLogIntoApollo(browserCTX, account)
+          await manuallyLogIntoApollo(taskID, browserCTX, account)
           await waitForNavigationTo(browserCTX, '/settings/account', 'settings page')
             .then(async () => {
               const cookies = await getBrowserCookies(browserCTX)
               return await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
             })
           await scraper.close(browserCTX)
-        },
-        {accountID, account}
+        }
       )
 
       res.json({ok: true, message: null, data: null});
@@ -184,11 +188,15 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID)
       if (!account) throw new Error("Failed to start demining, couldn't find account")
 
+      const taskID = generateID()
       await taskQueue.enqueue(
-        generateID(),
-        async ({accountID, account}) => {
+        taskID,
+        'demineAccount',
+        `Demine ${account.domainEmail} popups`,
+        {accountID},
+        async () => {
           const browserCTX = await scraper.newBrowser(false)
-          await logIntoApollo(browserCTX, account)
+          await logIntoApollo(taskID, browserCTX, account)
           const updatedAccount = await waitForNavigationTo(browserCTX, 'settings/account')
             .then(async () => {
               const cookies = await getBrowserCookies(browserCTX)
@@ -196,8 +204,7 @@ export const accountRoutes = (app: Express) => {
             })
     
           await scraper.close(browserCTX)
-        },
-        {accountID, account}
+        }
       )
 
       res.json({ok: true, message: null, data: null});
@@ -214,19 +221,20 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean()
       if (!account) throw new Error('Failed to login, cannot find account')
 
-
+      const taskID = generateID()
       taskQueue.enqueue(
-        generateID(),
-        async ({accountID, account}) => {
+        taskID,
+        'loginAccount',
+        `Logging into ${account.domainEmail} apollo account`,
+        {accountID},
+        async () => {
           const browserCTX = await scraper.newBrowser(false)
-          await logIntoApollo(browserCTX, account)
+          await logIntoApollo(taskID, browserCTX, account)
           const cookies = await getBrowserCookies(browserCTX)
           await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
           await scraper.close(browserCTX)
-        },
-        {accountID, account}
+        }
       )
-
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
@@ -256,16 +264,19 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
+      const taskID = generateID()
       taskQueue.enqueue(
-        generateID(),
-        async ({accountID, account}) => {
+        taskID,
+        'checkAccount',
+        `Getting information on ${account.domainEmail} credits`,
+        {accountID},
+        async () => {
           const browserCTX = await scraper.newBrowser(false)
-          const creditsInfo = await logIntoApolloAndGetCreditsInfo(browserCTX, account)
+          const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
           console.log(creditsInfo)
           const updatedAccount = await updateAccount({_id: accountID}, creditsInfo);
           await scraper.close(browserCTX)
-        },
-        {accountID, account}
+        }
       )
 
       res.json({ok: true, message: null, data: null});
@@ -284,16 +295,19 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
+      const taskID = generateID()
       taskQueue.enqueue(
-        generateID(),
-        async ({accountID, account}) => {
+        taskID,
+        'upgradeAccount',
+        `Upgrading ${account.domainEmail} automatically`,
+        {accountID},
+        async () => {
           const browserCTX = await scraper.newBrowser(false)
-          await logIntoApolloAndUpgradeAccount(browserCTX, account)
-          const creditsInfo = await logIntoApolloAndGetCreditsInfo(browserCTX, account)
+          await logIntoApolloAndUpgradeAccount(taskID, browserCTX, account)
+          const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
           const updatedAccount = await updateAccount({_id: accountID}, creditsInfo); // (FIX)
           await scraper.close(browserCTX)
-        },
-        {accountID, account}
+        }
       )
 
       res.json({ok: true, message: null, data: null});
@@ -311,12 +325,16 @@ export const accountRoutes = (app: Express) => {
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
 
+      const taskID = generateID()
       taskQueue.enqueue(
-        generateID(),
+        taskID,
+        'upgradeManual',
+        `Upgrading ${account.domainEmail} manually`,
+        {accountID},
         async ({accountID, account}) => {
           const browserCTX = await scraper.newBrowser(false)
-          await logIntoApolloAndUpgradeAccountManually(browserCTX, account)
-          const creditsInfo = await logIntoApolloAndGetCreditsInfo(browserCTX, account)
+          await logIntoApolloAndUpgradeAccountManually(taskID, browserCTX, account)
+          const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
           const updatedAccount = await updateAccount({_id: accountID}, creditsInfo); // (FIX)
           await scraper.close(browserCTX)
         },
@@ -338,15 +356,18 @@ export const accountRoutes = (app: Express) => {
       if (!account) throw new Error('Failed to find account');
       if (account.verified) throw new Error('Request Failed, account is already verified');
 
+      const taskID = generateID()
       taskQueue.enqueue(
-        generateID(),
-        async ({account}) => {
+        taskID,
+        'confirmAccount',
+        `confirming account ${account.domainEmail}`,
+        {accountID},
+        async () => {
           const browserCTX  = await scraper.newBrowser(false)
-          const newAccount = await completeApolloAccountConfimation(browserCTX, account);
+          const newAccount = await completeApolloAccountConfimation(taskID, browserCTX, account);
           if (!newAccount) throw new Error('Failed to confirm account, could not complete the process')
           await scraper.close(browserCTX)
-        },
-        {account}
+        }
       )
 
       res.json({ok: true, message: null, data: null});

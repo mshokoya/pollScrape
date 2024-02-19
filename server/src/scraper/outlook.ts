@@ -12,10 +12,10 @@ import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../database/models/accounts";
 
 
-export const visitOutlookLoginAuthPortal = async (browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
+export const visitOutlookLoginAuthPortal = async (taskID: string, browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   const page = browserCTX.page
   
-  await visitApolloLoginPage(browserCTX, hideApolloDom);
+  await visitApolloLoginPage(taskID, browserCTX, hideApolloDom);
 
   const microsoftLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD zp_bW01P"]')
   if (!microsoftLoginButton) throw new Error('failed to login, could not find microsoft login button')
@@ -25,7 +25,7 @@ export const visitOutlookLoginAuthPortal = async (browserCTX: BrowserContext, hi
     })
 }
 
-const outlookAuth = async ({page}: BrowserContext, account: Partial<IAccount>) => {
+const outlookAuth = async (taskID: string, {page}: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
 
   const emailInputField = await page.$('[class="form-control ltr_override input ext-input text-box ext-text-box"]')
@@ -115,13 +115,13 @@ const outlookAuth = async ({page}: BrowserContext, account: Partial<IAccount>) =
   }
 }
 
-export const apolloOutlookLogin = async (browserCTX: BrowserContext, account: Partial<IAccount>, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
+export const apolloOutlookLogin = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
-  await visitOutlookLoginAuthPortal(browserCTX, hideApolloDom, hidePortalDom)
-  await outlookAuth(browserCTX, account as IAccount)
+  await visitOutlookLoginAuthPortal(taskID, browserCTX, hideApolloDom, hidePortalDom)
+  await outlookAuth(taskID, browserCTX, account as IAccount)
 }
 
-export const apolloOutlookSignup = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const apolloOutlookSignup = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password) throw new Error('failed to login, credentials missing');
   
   const page = browserCTX.page

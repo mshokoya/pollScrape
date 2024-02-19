@@ -23,13 +23,11 @@ import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from '
 import { MBEventArgs, accountToMailbox, mailbox } from '../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
-import { io } from '../websockets';
-import { AppError } from '../helpers';
 
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (browserCTX: BrowserContext, metaID: string, url: string, usingProxy: boolean) => {
+export const startScrapingApollo = async (taskID: string, browserCTX: BrowserContext, metaID: string, url: string, usingProxy: boolean) => {
   let proxy: string | null = null;
 
   const allAccounts = await getAllApolloAccounts()
@@ -48,58 +46,56 @@ export const startScrapingApollo = async (browserCTX: BrowserContext, metaID: st
     await useProxy(page, proxy);
   }
 
-  await setupApolloForScraping(browserCTX, account);
-  await goToApolloSearchUrl(browserCTX, url);
+  await setupApolloForScraping(taskID, browserCTX, account);
+  await goToApolloSearchUrl(taskID, browserCTX, url);
 
-  const data = await apolloStartPageScrape(browserCTX); // edit
+  const data = await apolloStartPageScrape(taskID, browserCTX); // edit
   const cookies = await getBrowserCookies(browserCTX);
 
   await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy);
 }
 
 // (FIX) FINISH
-export const logIntoApollo = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const logIntoApollo = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.loginType) {
     throw new Error('login details not provided')
   }
 
   switch (account.loginType) {
     case 'default':
-      await apolloDefaultLogin(browserCTX, account)
+      await apolloDefaultLogin(taskID, browserCTX, account)
       break;
     case 'outlook':
-      await apolloOutlookLogin(browserCTX, account)
+      await apolloOutlookLogin(taskID, browserCTX, account)
       break;
     case 'gmail':
-      await apolloGmailLogin(browserCTX, account)
+      await apolloGmailLogin(taskID, browserCTX, account)
       break
     default:
-      await apolloDefaultLogin(browserCTX, account)
+      await apolloDefaultLogin(taskID, browserCTX, account)
       break;
   }
 }
 
-export const signupForApollo = async (ioID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
-  if (!account.email || !account.password || !account.domain) {
-    throw new AppError(ioID, 'login details not provided')
-  }
+export const signupForApollo = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
+  if (!account.email || !account.password || !account.domain) throw new Error('login details not provided')
 
   switch (account.domain) {
     case 'hotmail':
     case 'outlook':
-      await apolloOutlookSignup(browserCTX, account)
+      await apolloOutlookSignup(taskID, browserCTX, account)
       break;
     case 'gmail':
-      await apolloGmailSignup(browserCTX, account)
+      await apolloGmailSignup(taskID, browserCTX, account)
       break
     default:
-      await apolloDefaultSignup(browserCTX, account)
+      await apolloDefaultSignup(taskID, browserCTX, account)
       break;
   }
 }
 
 // (FIX) create manual login for custom domain
-export const manuallyLogIntoApollo = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const manuallyLogIntoApollo = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   if (!account.email || !account.password || !account.domain) {
     throw new Error('login details not provided')
   }
@@ -107,10 +103,10 @@ export const manuallyLogIntoApollo = async (browserCTX: BrowserContext, account:
   switch (account.domain) {
     case 'hotmail':
     case 'outlook':
-      await visitOutlookLoginAuthPortal(browserCTX, true)
+      await visitOutlookLoginAuthPortal(taskID, browserCTX, true)
       break;
     case 'gmail':
-      await visitGmailLoginAuthPortal(browserCTX, true)
+      await visitGmailLoginAuthPortal(taskID, browserCTX, true)
       break
     default:
       break
@@ -118,21 +114,21 @@ export const manuallyLogIntoApollo = async (browserCTX: BrowserContext, account:
 }
 
 // (FIX) make sure not already upgraded
-export const logIntoApolloAndUpgradeAccount = async (browserCTX: BrowserContext, account: IAccount) => {
-  await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade')
-  return await upgradeApolloAccount(browserCTX)
+export const logIntoApolloAndUpgradeAccount = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
+  await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade')
+  return await upgradeApolloAccount(taskID, browserCTX)
 }
 
 // (FIX) make sure not already upgraded
 // (FIX) hide dom after upgrade so scraping credits process is hidden
-export const logIntoApolloAndUpgradeAccountManually = async (browserCTX: BrowserContext, account: IAccount) => {
+export const logIntoApolloAndUpgradeAccountManually = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
   const page = browserCTX.page
 
-  await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade/')
+  await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade/')
   const creditsInfo = await page.waitForSelector('[class="zp_EanJu]"', {visible: true}) // trial days left in top nav bar
     .then(async () => {
-      await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
-      return await apolloGetCreditsInfo(browserCTX)
+      await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
+      return await apolloGetCreditsInfo(taskID, browserCTX)
     })
     .catch(() => null)
     if (!creditsInfo) throw new Error("Please check account, upgrade might've failed")
@@ -140,16 +136,14 @@ export const logIntoApolloAndUpgradeAccountManually = async (browserCTX: Browser
     return creditsInfo
 }
 
-export const logIntoApolloAndGetCreditsInfo = async (browserCTX: BrowserContext,account: IAccount) => {
-  await logIntoApolloThenVisit(browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
-  return await apolloGetCreditsInfo(browserCTX)
+export const logIntoApolloAndGetCreditsInfo = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
+  await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
+  return await apolloGetCreditsInfo(taskID, browserCTX)
 }
 
-export const completeApolloAccountConfimation = async (browserCTX: BrowserContext, account: IAccount) => {
-
+export const completeApolloAccountConfimation = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
   await mailbox.getConnection(accountToMailbox(account))
   const allMail = await mailbox.getAllMail(account.email)
-
 
   for (let mail of allMail) {
     const toAddress = mail.envelope.to[0].address?.trim()
@@ -170,7 +164,7 @@ export const completeApolloAccountConfimation = async (browserCTX: BrowserContex
         numbers: true
       });
 
-      await apolloConfirmAccount(browserCTX, links[0], account)
+      await apolloConfirmAccount(taskID, browserCTX, links[0], account)
 
       const cookies = await getBrowserCookies(browserCTX);
       const newAccount = await updateAccount(
@@ -188,7 +182,7 @@ export const completeApolloAccountConfimation = async (browserCTX: BrowserContex
   }
 }
 
-export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
+export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
   if (count < prevCount) return;
 
   const mail = await mailbox.getLatestMessage(authEmail);
@@ -216,7 +210,7 @@ export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: M
   });
 
   const browserCTX = await scraper.newBrowser(false)
-  await apolloConfirmAccount(browserCTX, links[0], account);
+  await apolloConfirmAccount(taskID, browserCTX, links[0], account);
   const cookies = await getBrowserCookies(browserCTX);
   await scraper.close(browserCTX)
   await updateAccount(
@@ -227,7 +221,6 @@ export const apolloConfirmAccountEvent = async ({authEmail, count, prevCount}: M
       apolloPassword: account.apolloPassword
     }
   );
-
 }
 
 

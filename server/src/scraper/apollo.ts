@@ -39,13 +39,13 @@ export const apolloUpdatePageQueryString = (url: string) => {
   return myURL.href;
 }
 
-export const visitApollo = async (browserCTX: BrowserContext) => {
+export const visitApollo = async (taskID: string, browserCTX: BrowserContext) => {
   const page = browserCTX.page
   await page.goto("https://app.apollo.io");
   await page.waitForSelector(".zp_bWS5y, .zp_J0MYa", { visible: true });
 }
 
-export const visitApolloLoginPage = async (browserCTX: BrowserContext, hideApolloDom: boolean = false) => {
+export const visitApolloLoginPage = async (taskID: string, browserCTX: BrowserContext, hideApolloDom: boolean = false) => {
   await browserCTX.page.goto('https://app.apollo.io/#/login')
     .then(async (page) => { 
       if (hideApolloDom) await waitForNavHideDom(browserCTX) 
@@ -54,19 +54,19 @@ export const visitApolloLoginPage = async (browserCTX: BrowserContext, hideApoll
   // await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="email"]', { visible: true, timeout: 10000 });
 }
 
-export const goToApolloSearchUrl = async ({page}: BrowserContext, apolloSearchURL: string) => {
+export const goToApolloSearchUrl = async (taskID: string, {page}: BrowserContext, apolloSearchURL: string) => {
   await page.goto(apolloSearchURL);
   await page.waitForSelector(apolloTableRowSelector, { visible: true });
 }
 
-export const apolloStartPageScrape = async ({page}: BrowserContext) => {
+export const apolloStartPageScrape = async (taskID: string, {page}: BrowserContext) => {
   const data = (await apolloDoc(page) as unknown) as IRecord[];
   return data;
 }
 
 
 
-export const apolloDefaultLogin = async (browserCTX: BrowserContext, account: Partial<IAccount>) => {
+export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
   const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
   const incorrectLoginSelector = '[class="zp_nFR11"]'
@@ -79,7 +79,7 @@ export const apolloDefaultLogin = async (browserCTX: BrowserContext, account: Pa
   const page = browserCTX.page
   
   if (!page.url().includes(apolloLoggedOutURLSubstr)) {
-    await visitApolloLoginPage(browserCTX)
+    await visitApolloLoginPage(taskID, browserCTX)
   }
 
   const submitButton = await page.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
@@ -111,16 +111,16 @@ export const apolloDefaultLogin = async (browserCTX: BrowserContext, account: Pa
   }
 }
 
-export const setupApolloForScraping = async (browserCTX: BrowserContext, account: IAccount) => {
+export const setupApolloForScraping = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
   await injectCookies(browserCTX, account.cookie)
-  await visitApollo(browserCTX);
+  await visitApollo(taskID, browserCTX);
 
   const page = browserCTX.page as Page;
   const pageUrl = page.url();
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    logIntoApollo(browserCTX, account)
+    logIntoApollo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
     const updatedAccount = await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)})
     if (!updatedAccount) throw new Error('Failed to save cookies')
@@ -128,7 +128,7 @@ export const setupApolloForScraping = async (browserCTX: BrowserContext, account
 }
 
 // (FIX) test to make sure it works (test all possibilities)
-export const apolloGetCreditsInfo = async ({page}: BrowserContext): Promise<CreditsInfo> => {
+export const apolloGetCreditsInfo = async (taskID:string, {page}: BrowserContext): Promise<CreditsInfo> => {
 
   const creditSelector = await page.waitForSelector('div[class="zp_ajv0U"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!creditSelector) throw new Error('failed to get credit limit')
@@ -190,7 +190,7 @@ export const apolloGetCreditsInfo = async ({page}: BrowserContext): Promise<Cred
 }
 
 // (FIX) need to check if account is already upgraded first
-export const upgradeApolloAccount = async ({page}: BrowserContext): Promise<void> => {
+export const upgradeApolloAccount = async (taskID: string, {page}: BrowserContext): Promise<void> => {
 
   const selector = await page.waitForSelector('[class="zp_s6UAl"]', {visible: true, timeout: 10000}).catch(() => null);
   if (!selector) throw new Error('failed to upgrade account');
@@ -209,7 +209,7 @@ export const upgradeApolloAccount = async ({page}: BrowserContext): Promise<void
   // if (!planSelector) throw new Error('failed to upgrade, cannot find plan type');
 }
 
-export const apolloDefaultSignup = async ({page}: BrowserContext, account: Partial<IAccount>) => {
+export const apolloDefaultSignup = async (taskID: string, {page}: BrowserContext, account: Partial<IAccount>) => {
   if (!account.domainEmail) throw new Error('failed to login, credentials missing');
 
   await page.goto('https://www.apollo.io/sign-up')
@@ -239,7 +239,7 @@ export const apolloDefaultSignup = async ({page}: BrowserContext, account: Parti
   // signup error selector p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1gvdvzz"]
 }
 
-export const apolloConfirmAccount = async (browserCTX: BrowserContext, confirmationURL: string, account: IAccount) => {
+export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserContext, confirmationURL: string, account: IAccount) => {
   const page = browserCTX.page
 
   await page.goto(confirmationURL)

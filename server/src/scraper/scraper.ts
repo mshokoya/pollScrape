@@ -94,47 +94,6 @@ export const scraper = (() => {
   }
 })()
 
-// export const scraper = (() => {
-//   let u: number = 0;
-//   let browser: Browser | null = null;
-//   let page: Page | null = null;
-  
-//   return {
-//     newBrowser: async () => {
-//       if (!browser) {
-//         browser = await puppeteer.launch({headless:false})
-//         page = await browser.newPage()
-//       }
-//     },
-//     launchBrowser: async () => {
-//       if (!browser) {
-//         browser = await puppeteer.launch({headless:false})
-//         page = await browser.newPage()
-//       }
-//       u++
-//     },
-//     restartBrowser: async (): Promise<void> => {
-//       if (browser !== null) await browser.close();
-//       browser = await puppeteer.launch();
-//       page = await browser.newPage();
-//     },
-//     visit: async (url: string): Promise<Page> => {
-//       await page!.goto(url);
-//       return page!;
-//     },
-//     close: async () => {
-//       if (u === 1) {
-//         await browser?.close();
-//         browser = null;
-//         page = null;
-//       } 
-//       if (u > 0) u--; // make sure never in minus
-//     },
-//     page: () => page,
-//     browser: () => browser,
-//   }
-// })()
-
 export const visitGoogle = async ({page}: BrowserContext) => {
   await page.goto("https://www.google.com/");
   await page.waitForSelector(".RNNXgb", { visible: true });
