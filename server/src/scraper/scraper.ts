@@ -6,6 +6,8 @@ import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import { hideDom } from './util';
 import { generate } from 'generate-password';
 import { Mutex } from 'async-mutex';
+import { AppError } from '../helpers';
+import { io } from '../websockets';
 
 export type BrowserContext = {
   id: string
@@ -96,14 +98,15 @@ export const scraper = (() => {
 
 export const visitGoogle = async ({page}: BrowserContext) => {
   await page.goto("https://www.google.com/");
-  await page.waitForSelector(".RNNXgb", { visible: true });
+  await page.waitForSelector(".RNNXgb", { visible: true })
 }
 
-export const apolloInitSignup = async (browserCTX: BrowserContext) => {
+export const apolloInitSignup = async (taskID: string, browserCTX: BrowserContext) => {
   await browserCTX.page.goto('https://www.apollo.io/sign-up')
     .then(async () => { await hideDom(browserCTX) })
   
   const tsCheckbox = await browserCTX.page.waitForSelector('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]', {visible: true})
-  if (!tsCheckbox) throw new Error('failed to find T&S checkbox')
+  if (!tsCheckbox) throw new AppError(taskID,'failed to find T&S checkbox')
   await tsCheckbox.click()
+    .then(() => { io.emit('apollo', {taskID, message: "click on apollo terms & services checkbox", ok: true}) });
 }

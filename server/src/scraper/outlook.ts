@@ -144,7 +144,7 @@ export const apolloOutlookSignup = async (taskID: string, browserCTX: BrowserCon
   
   const page = browserCTX.page
   
-  await apolloInitSignup(browserCTX)
+  await apolloInitSignup(taskID, browserCTX)
     .then(() => { io.emit('apollo', {taskID, message: "prepared browser for signup", ok: true}) });
 
   const microsoftSignupButton = await page.$('button[id="microsoft-oauth-button"]')
