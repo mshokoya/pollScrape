@@ -6,7 +6,7 @@ import { IDomain } from "@/components/DomainField";
 import { IProxy } from "@/components/ProxyField";
 import { IMetaData, IRecord } from "@/components/RecordField";
 
-export type ResStatus = [('ok' | 'fail' | null ), (string | null)] | null
+export type ResStatus = [string, id:string] | null
 
 type AppState = {
   accounts: IAccount[]

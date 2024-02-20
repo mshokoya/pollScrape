@@ -3,6 +3,7 @@ import { BrowserContext, visitGoogle } from "./scraper"
 import { logIntoApollo } from '.';
 import { updateAccount } from '../database';
 import { IAccount } from '../database/models/accounts';
+import { io } from '../websockets';
 
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist
@@ -124,7 +125,8 @@ export const logIntoApolloThenVisit = async (taskID: string, browserCTX: Browser
   await page.waitForNavigation({timeout:10000})
     .then(async () => {
       if (page.url().includes('/#/login')) {
-        await logIntoApollo(taskID, browserCTX, account);
+        await logIntoApollo(taskID, browserCTX, account)
+          .then(() => { io.emit('apollo', {taskID, message: 'Logged into apollo', ok: true}) })
         const cookies = await getBrowserCookies(browserCTX);
         await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)});
         await browserCTX.page.goto(url)

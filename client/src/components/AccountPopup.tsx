@@ -18,8 +18,7 @@ type Props = {
   confirmAccount: () => Promise<void>
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
-  reqInProcess: string[]
-  setReqInProcess?: Dispatch<SetStateAction<string[]>>
+  reqInProcess: Observable<string[]>
   req:  string | null
 }
 
@@ -101,56 +100,56 @@ export const MainFields = (props: MProps) => {
     <>
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)}
+          disabled={props.reqInProcess.get().includes(props.account._id)}
           className={blinkCSS(props.req === 'login')}
           onClick={() => {props.handleRequest('login')}} >Login to Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)}
+          disabled={props.reqInProcess.get().includes(props.account._id)}
           className={blinkCSS(props.req === 'check')}
           onClick={() => {props.handleRequest('check')}}>Check Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)} 
+          disabled={props.reqInProcess.get().includes(props.account._id)} 
           className={blinkCSS(props.req === 'update')}
           onClick={() => {props.obs.page.set('update')}}>Update Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)}
+          disabled={props.reqInProcess.get().includes(props.account._id)}
           className={blinkCSS(props.req === 'upgrade')}
           onClick={() => {props.handleRequest('upgrade')}}>upgrade Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)}
+          disabled={props.reqInProcess.get().includes(props.account._id)}
           className={blinkCSS(props.req === 'manualUpgrade')}
           onClick={() => {props.handleRequest('manualUpgrade')}}>manually upgrade Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)} 
+          disabled={props.reqInProcess.get().includes(props.account._id)} 
           className={blinkCSS(props.req === 'mines')}
           onClick={() => {props.handleRequest('mines')}}>Clear Mines</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)}
+          disabled={props.reqInProcess.get().includes(props.account._id)}
           className={blinkCSS(props.req === 'confirm')}
           onClick={() => {props.handleRequest('confirm')}}>Confirm Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.includes(props.account._id)}
+          disabled={props.reqInProcess.get().includes(props.account._id)}
           className={blinkCSS(props.req === 'delete')}
           onClick={() => {props.handleRequest('delete')}}>Delete Account</button>
       </div>

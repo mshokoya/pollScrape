@@ -4,7 +4,8 @@ import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
-import { useSelector } from "@legendapp/state/react";
+import { observer, useObservable, useSelector } from "@legendapp/state/react";
+import { Observable } from "@legendapp/state";
 
 export type IAccount = {
   _id: string
@@ -34,22 +35,32 @@ export type IAccount = {
 
 export type ReqType = 'confirm' | 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
 
+export type State = {
+  input: Partial<IAccount>
+    selectedAcc: number | null
+    reqInProcess: string[],
+    reqType: string | null
+    resStatus: ResStatus
+    addType: 'domain' | 'email'
+    selectedDomain: string | null
+}
 
 
 // https://jsfiddle.net/mfwYS/
 // https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
 
-export const AccountField = () => {
-  const [input, setInput] = useState<Partial<IAccount>>({email: '', password: '', recoveryEmail: '', domainEmail: ''});
-  const [selectedAcc, setSelectedAcc] = useState<number | null>(null)
-  const [reqInProcess, setReqInProcess] = useState<string[]>([])
-  const [reqType, setReqType] = useState<string | null>(null)
-  const [resStatus, setResStatus] = useState<ResStatus>(null)
-  // const [accounts, setAccounts] = useState<IAccount[]>([])
-  const [addType, setAddType] = useState<'domain' | 'email'>('email')
-  const [selectedDomain, setSelectedDomain] = useState<string>('')
+export const AccountField = observer(() => {
   const accounts = useSelector(appState$.accounts) as IAccount[]
   const domains = useSelector(appState$.domains) as IDomain[]
+  const s = useObservable<State>({
+    input: {email: '', password: '', recoveryEmail: '', domainEmail: ''},
+    selectedAcc: null,
+    reqInProcess: [],
+    reqType: null,
+    resStatus: null,
+    addType: 'email',
+    selectedDomain: null,
+  })
   
 
   useEffect(() => {
@@ -67,7 +78,7 @@ export const AccountField = () => {
       case 'opt':
         //@ts-ignore
         const accIdx = e.target.closest('tr').dataset.idx;
-        setSelectedAcc(accIdx)
+        s.selectedAcc.set(accIdx)
         break;
       case 'extend':
         //@ts-ignore
@@ -81,245 +92,272 @@ export const AccountField = () => {
   // (FIX) email verification + get domain to determine login type
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
-    setReqInProcess([...reqInProcess, 'new'])
-    setReqType('create')
-    await fetchData<IAccount>('/account', 'POST', {...input, addType, selectedDomain})
+    const reqInProcess = s.reqInProcess.get()
+    s.reqInProcess.set([...reqInProcess, 'new'])
+    s.reqType.set('create')
+    await fetchData<IAccount>('/account', 'POST', {...s.input.get(), addType: s.addType.get(), selectedDomain: s.selectedDomain.get()})
       .then((d) => {
         if (d.ok) {
-          setResStatus(['ok', 'new'])
+          s.resStatus.set(['ok', 'new'])
           appState$.accounts.set((acc) => [...acc, d.data])
         } else {
-          setResStatus(['fail', 'new'])
+          s.resStatus.set(['fail', 'new'])
         }
       })
-      .catch(() => { setResStatus(['fail', 'new']) })
+      .catch(() => { s.resStatus.set(['fail', 'new']) })
       .finally(() => {
         setTimeout(() => {
-          setReqInProcess(reqInProcess.filter(d => d !== 'new'))
-          setReqType(null)
-          setResStatus(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== 'new'))
+          s.reqType.set(null)
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const login = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('login')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('login')
     await fetchData<IAccount>(`/account/login/a/${accountID}`, 'GET')
       .then(data => {
         data.ok
-          ? setResStatus(['ok', accountID])
-          : setResStatus(['fail', accountID])
+          ? s.resStatus.set(['ok', accountID])
+          : s.resStatus.set(['fail', accountID])
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const manualLogin = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('manualLogin')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('manualLogin')
     await fetchData<IAccount>(`/account/login/m/${accountID}`, 'GET')
       .then(data => {
         data.ok
-          ? setResStatus(['ok', accountID])
-          : setResStatus(['fail', accountID])
+          ? s.resStatus.set(['ok', accountID])
+          : s.resStatus.set(['fail', accountID])
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const checkAccount = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('check')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('check')
     await fetchData<IAccount>(`/account/check/${accountID}`, 'GET')
       .then(data => {
         if (data.ok) {
-          setResStatus(['ok', accountID])
+          s.resStatus.set(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           appState$.accounts.set(updateAccs)
         } else {
-          setResStatus(['fail', accountID])
+          s.resStatus.set(['fail', accountID])
         }
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const updateAccount = async (acc: Partial<IAccount>) => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('update')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('update')
     await fetchData<IAccount>(`/account/${accountID}`, 'PUT', acc)
       .then(data => {
         if (data.ok) {
-          setResStatus(['ok', accountID])
+          s.resStatus.set(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           appState$.accounts.set(updateAccs)
         } else {
-          setResStatus(['fail', accountID])
+          s.resStatus.set(['fail', accountID])
         }
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const upgradeAccount = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('upgrade')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('upgrade')
     await  fetchData<IAccount>(`/account/upgrade/a/${accountID}`, 'GET')
       .then( data => {
         if (data.ok) {
-          setResStatus(['ok', accountID])
+          s.resStatus.set(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           appState$.accounts.set(updateAccs)
         } else {
-          setResStatus(['fail', accountID])
+          s.resStatus.set(['fail', accountID])
         }
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const manualUpgradeAccount = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('manualUpgrade')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('manualUpgrade')
     await fetchData<IAccount>(`/account/upgrade/m/${accountID}`, 'GET')
       .then(data => {
         if (data.ok) {
-          setResStatus(['ok', accountID])
+          s.resStatus.set(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           appState$.accounts.set(updateAccs)
         } else {
-          setResStatus(['fail', accountID])
+          s.resStatus.set(['fail', accountID])
         }
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   const clearMines = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('mines')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('mines')
     await fetchData<IAccount>(`/account/demine/${accountID}`, 'GET')
       .then(data => {
         if (data.ok) {
-          setResStatus(['ok', accountID])
+          s.resStatus.set(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           appState$.accounts.set(updateAccs)
         } else {
-          setResStatus(['fail', accountID])
+          s.resStatus.set(['fail', accountID])
         }
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
   
   const confirmAccount = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('confirm')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('confirm')
     await fetchData<IAccount>(`/account/confirm/${accountID}`, 'GET')
       .then(data => {
         console.log('pass')
         console.log(data)
         if (data.ok) {
-          setResStatus(['ok', accountID])
+          s.resStatus.set(['ok', accountID])
           const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
           appState$.accounts.set(updateAccs)
         } else {
-          setResStatus(['fail', accountID])
+          s.resStatus.set(['fail', accountID])
         }
       })
       .catch((el) => { 
         console.log('fail')
         console.log(el)
-        setResStatus(['fail', accountID]) 
+        s.resStatus.set(['fail', accountID]) 
       
       })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
 
   // (FIX) complete func
   const deleteAccount = async () => {
+    const selectedAcc = s.selectedAcc.get()
+    const reqInProcess = s.reqInProcess.get()
     if (!selectedAcc) return;
+
     const accountID = accounts[selectedAcc]._id
-    setReqInProcess([...reqInProcess, accountID])
-    setReqType('delete')
+    s.reqInProcess.set([...reqInProcess, accountID])
+    s.reqType.set('delete')
     await fetchData<IAccount>(`/account/${accountID}`, 'DELETE')
       .then(data => {
         data.ok
-          ? setResStatus(['ok', accountID])
-          : setResStatus(['fail', accountID])
+          ? s.resStatus.set(['ok', accountID])
+          : s.resStatus.set(['fail', accountID])
       })
-      .catch(() => { setResStatus(['fail', accountID]) })
+      .catch(() => { s.resStatus.set(['fail', accountID]) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== accountID))
-          setResStatus(null)
+          s.reqType.set(null)
+          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
+          s.resStatus.set(null)
         }, 1500)
       })
   }
@@ -329,21 +367,22 @@ export const AccountField = () => {
       : n;
 
 
-  const PopupComp = () => selectedAcc
+  const setPopup = (v: any) => {s.selectedAcc.set(v)}
+
+  const PopupComp = () => s.selectedAcc.get()
       ? <AccountPopup
-          req={reqType}
+          req={s.reqType.peek()}
           manualLogin={manualLogin}
           updateAccount={updateAccount}
-          setPopup={setSelectedAcc}
+          setPopup={setPopup}
           checkAccount={checkAccount}
-          reqInProcess={reqInProcess} 
-          setReqInProcess={setReqInProcess}
+          reqInProcess={s.reqInProcess} 
           login={login}
           deleteAccount={deleteAccount}
           clearMines={clearMines}
           upgradeAccount={upgradeAccount}
           manualUpgradeAccount={manualUpgradeAccount}
-          account={accounts[selectedAcc]}
+          account={accounts[s.selectedAcc.peek()]}
           confirmAccount={confirmAccount}
         />
       : null;
@@ -357,14 +396,14 @@ export const AccountField = () => {
         <div className='flex mt-1 mb-3 gap-3'>
           <button 
             className='text-cyan-600 border-cyan-600 border rounded p-1'
-            onClick={() => setAddType('email')}
+            onClick={() => s.addType.set('email')}
           > 
             email
           </button>
 
           <button 
             className='text-cyan-600 border-cyan-600 border rounded p-1'
-            onClick={() => setAddType('domain')}
+            onClick={() => s.addType.set('domain')}
           > 
             domain
           </button>
@@ -373,19 +412,18 @@ export const AccountField = () => {
 
         <div className='mb-2'>
           {
-            addType === 'email'
+            s.addType.get() === 'email'
               ? <EmailForm 
-                  input={input}
-                  setInput={setInput}
-                  resStatus={resStatus}
-                  reqInProcess={reqInProcess}
+                  input={s.input}
+                  resStatus={s.resStatus.get()}
+                  reqInProcess={s.reqInProcess.get()}
                   addAccount={addAccount}
                 />
               : <DomainForm 
                   domains={domains}
-                  setSelectedDomain={setSelectedDomain}
-                  resStatus={resStatus}
-                  reqInProcess={reqInProcess}
+                  selectedDomain={s.selectedDomain}
+                  resStatus={s.resStatus.get()}
+                  reqInProcess={s.reqInProcess.get()}
                   addAccount={addAccount}
 
                 />
@@ -410,12 +448,13 @@ export const AccountField = () => {
                 accounts.length && accounts.map( 
                   (a, idx) => ( 
                     <>
-                      <tr className={`
+                      <tr 
+                      className={`
                         text-[0.8rem] text-center hover:border-cyan-600 hover:border
                           ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'} 
-                          ${ reqInProcess.includes(a._id) ? 'fieldBlink' : '' } 
-                          ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes(a._id) ? 'resOK' : '' } 
-                          ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes(a._id) ? 'resFail' : '' } 
+                          ${ s.reqInProcess.includes(a._id) ? 'fieldBlink' : '' } 
+                          ${ s.resStatus.get() && s.resStatus[0].get() === 'ok' && s.resStatus[1].get().includes(a._id) ? 'resOK' : '' } 
+                          ${ s.resStatus.get() && s.resStatus[0].get() === 'fail' && s.resStatus[1].get().includes(a._id) ? 'resFail' : '' } 
                         `}  
                         data-idx={idx} key={idx}
                       >
@@ -483,11 +522,10 @@ export const AccountField = () => {
     </div>
   </>
   )
-}
+})
 
 type EmailProps = {
-  input: Partial<IAccount>
-  setInput: Dispatch<SetStateAction<Partial<IAccount>>>
+  input: Observable<Partial<IAccount>>
   resStatus: ResStatus
   reqInProcess: string[]
   addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
@@ -503,20 +541,20 @@ export const EmailForm = (props: EmailProps) => {
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
             <input className={`
                 ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
               `}
-              required type="text" id="email" value={props.input.email} onChange={ e => {props.setInput(p => ({...p, email: e.target.value}))}}/>
+              required type="text" id="email" value={props.input.email.get()} onChange={ e => {props.input.set(p => ({...p, email: e.target.value}))}}/>
           </div>
 
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
             <input className={`
                 ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
               `}
-              required type="text" id="password" value={props.input.password} onChange={ e => {props.setInput(p => ({...p, password: e.target.value}))}}/>
+              required type="text" id="password" value={props.input.password.get()} onChange={ e => {props.input.set(p => ({...p, password: e.target.value}))}}/>
           </div>
         </div>
       
@@ -525,20 +563,20 @@ export const EmailForm = (props: EmailProps) => {
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
             <input className={`
                 ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
               `}
-              type="text" id="domain" value={props.input.domainEmail} onChange={ e => {props.setInput(p => ({...p, domainEmail: e.target.value}))}}/>
+              type="text" id="domain" value={props.input.domainEmail.get()} onChange={ e => {props.input.set(p => ({...p, domainEmail: e.target.value}))}}/>
           </div>
 
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
             <input className={`
                 ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
+                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
               `}
-              type="text" id="recovery" value={props.input.recoveryEmail} onChange={ e => {props.setInput(p => ({...p, recoveryEmail: e.target.value}))}}/>
+              type="text" id="recovery" value={props.input.recoveryEmail.get()} onChange={ e => {props.input.set(p => ({...p, recoveryEmail: e.target.value}))}}/>
           </div>
         </div>
       </div>
@@ -552,7 +590,7 @@ type DomainProps = {
   resStatus: ResStatus
   reqInProcess: string[]
   addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
-  setSelectedDomain: Dispatch<SetStateAction<string>>
+  selectedDomain: Observable<string | null>
 }
 
 export const DomainForm = (props: DomainProps) => {
@@ -569,8 +607,8 @@ export const DomainForm = (props: DomainProps) => {
         onChange={e => setSelected(e.target.value)}
         className={`
           ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-          ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1]!.includes('new') ? 'resOK' : '' } 
-          ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1]!.includes('new') ? 'resFail' : '' }
+          ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
+          ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
         `}
         value={selected}
       >

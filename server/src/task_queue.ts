@@ -24,7 +24,7 @@ type TIP_Item = [id: string, args: Record<string, any> | undefined, AbortablePro
 // (FIX) remember to test TIP cancelation
 // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
 // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
-const TaskQueue = (io: IO) => {
+const TaskQueue = () => {
   const _Qlock = new Mutex();
   const _Plock = new Mutex();
   const exec_lock = new Mutex();
@@ -140,12 +140,6 @@ const TaskQueue = (io: IO) => {
     workerStats: () => {},
     taskQueue: () => queue,
     tasksInProcess: () => TIP,
-    c: () => {
-      console.log('TIP')
-      console.log(TIP)
-      console.log('queue')
-      console.log(queue)
-    }
   }
 }
 
