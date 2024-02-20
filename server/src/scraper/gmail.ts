@@ -84,7 +84,7 @@ const gmailAuth = async (taskID: string, browserCTX: BrowserContext, account: Pa
   const nextButton1 = await page.$('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]');
   if (!nextButton1) throw new AppError(taskID, 'failed to login, could not find next button to progress to password page');
   await nextButton1.click({delay: 1000})
-    .then(() => { io.emit('apollo', {taskID, message: "clicked the next button", ok: true}) });;
+    .then(() => { io.emit('apollo', {taskID, message: "clicked the next button", ok: true}) });
 
   let counter = 0
   while (counter <= 5) {
@@ -110,7 +110,7 @@ const gmailAuth = async (taskID: string, browserCTX: BrowserContext, account: Pa
         const nextButton = await page.$('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]');
       if (!nextButton) throw new AppError(taskID, 'failed to login, could not find next button to progress to password page');
       await nextButton.click({delay: 1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked on next button", ok: true}) });;
+        .then(() => { io.emit('apollo', {taskID, message: "clicked on next button", ok: true}) });
       counter = 0
 
     } else if (heading && heading.includes('Verify')) {
@@ -180,7 +180,7 @@ export const apolloGmailLogin = async (taskID: string, browserCTX: BrowserContex
     .then(() => { io.emit('apollo', {taskID, message: "navigated to gmail auth portal", ok: true}) });
 
   await gmailAuth(taskID, browserCTX, account)
-    .then(() => { io.emit('apollo', {taskID, message: "prepared browser for login", ok: true}) });;
+    .then(() => { io.emit('apollo', {taskID, message: "prepared browser for login", ok: true}) });
 }
 
 export const apolloGmailSignup = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
@@ -198,6 +198,6 @@ export const apolloGmailSignup = async (taskID: string, browserCTX: BrowserConte
     .then(() => { io.emit('apollo', {taskID, message: "navigated to gmail auth portal", ok: true}) });
 
   await gmailAuth(taskID, browserCTX, account)
-    .then(() => { io.emit('apollo', {taskID, message: "completed gmail auth for signup", ok: true}) });;
+    .then(() => { io.emit('apollo', {taskID, message: "completed gmail auth for signup", ok: true}) });
 }
 

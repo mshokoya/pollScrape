@@ -41,7 +41,7 @@ const outlookAuth = async (taskID: string, {page}: BrowserContext, account: Part
   const nextButton1 = await page.$('[class="win-button button_primary button ext-button primary ext-primary"]');
   if (!nextButton1) throw new AppError(taskID, 'failed to login, could not find next button to progress to password page');
   await nextButton1.click({delay: 1000})
-    .then(() => { io.emit('apollo', {taskID, message: "clicked the next button", ok: true}) });;
+    .then(() => { io.emit('apollo', {taskID, message: "clicked the next button", ok: true}) });
 
   // await delay(3000)
 
