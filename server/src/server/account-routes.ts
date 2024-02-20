@@ -13,7 +13,7 @@ import {
   signupForApollo 
 } from '../scraper';
 import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/util';
-import { generateID, getDomain } from '../helpers';
+import { AppError, generateID, getDomain } from '../helpers';
 import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';
 import { ImapFlowOptions } from 'imapflow';
@@ -285,7 +285,6 @@ export const accountRoutes = (app: Express) => {
           const browserCTX = await scraper.newBrowser(false)
           try {
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-            console.log(creditsInfo)
             const updatedAccount = await updateAccount({_id: accountID}, creditsInfo);
           } finally {
             await scraper.close(browserCTX)
@@ -398,7 +397,7 @@ export const accountRoutes = (app: Express) => {
           const browserCTX  = await scraper.newBrowser(false)
           try {
             const newAccount = await completeApolloAccountConfimation(taskID, browserCTX, account);
-            if (!newAccount) throw new Error('Failed to confirm account, could not complete the process')
+            if (!newAccount) throw new AppError(taskID, 'Failed to confirm account, could not complete the process')
           } finally {
             await scraper.close(browserCTX)
           }
