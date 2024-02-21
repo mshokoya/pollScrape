@@ -7,6 +7,7 @@ import { IProxy } from "@/components/ProxyField";
 import { IMetaData, IRecord } from "@/components/RecordField";
 
 export type ResStatus = [string, id:string] | null
+export type TaskStatus = 'queue' | 'processing' | 'timeout' | 'complete'
 
 type AppState = {
   accounts: IAccount[]
@@ -15,6 +16,8 @@ type AppState = {
   metas: IMetaData[]
   records: IRecord[]
 }
+
+export type TaskInProcess<T> = { [id: string]: {taskID: string, status: TaskStatus, type: T}[] }
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -45,3 +48,11 @@ export const appState$ = observable<AppState>({
   metas: [],
   records: [],
 });
+
+export const getCompletedTaskKey = <T>(reqInProcessList: TaskInProcess<T>, taskID: string): [string, number] => {
+  for (const [k, v] of Object.entries(reqInProcessList)) {
+    const completedTaskIdx = v.findIndex(_ => _.taskID === taskID)
+    if (completedTaskIdx > -1) return [k, completedTaskIdx]
+  }
+  return ['', -1]
+}

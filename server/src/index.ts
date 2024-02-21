@@ -42,7 +42,7 @@ app.use((err: any, _req: any, res: any, next: any) => {
   res.render('error', { error: err });
 });
 
-mongoose.connect('mongodb://localhost:27017/apollo')
+mongoose.connect(process.env.MONGOURI!)
   .then(async () => {
     console.log('Mongoose started')
     

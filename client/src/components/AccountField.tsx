@@ -1,11 +1,12 @@
-import { Dispatch, FormEvent, MouseEvent, SetStateAction, useEffect, useState } from "react"
-import {ResStatus, appState$, fetchData} from '../core/util';
+import { FormEvent, MouseEvent, useEffect, useState } from "react"
+import {ResStatus, TaskInProcess, TaskStatus, appState$, fetchData, getCompletedTaskKey} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
 import { observer, useObservable, useSelector } from "@legendapp/state/react";
-import { Observable } from "@legendapp/state";
+import { Observable, batch } from "@legendapp/state";
+import { IOResponse, io } from "../core/io";
 
 export type IAccount = {
   _id: string
@@ -38,13 +39,12 @@ export type ReqType = 'confirm' | 'check' | 'login' | 'update' | 'manualLogin'  
 export type State = {
   input: Partial<IAccount>
     selectedAcc: number | null
-    reqInProcess: string[],
+    reqInProcess: TaskInProcess<ReqType>
     reqType: string | null
-    resStatus: ResStatus
+    resStatus: {[id: string]: boolean},
     addType: 'domain' | 'email'
     selectedDomain: string | null
 }
-
 
 // https://jsfiddle.net/mfwYS/
 // https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
@@ -55,11 +55,45 @@ export const AccountField = observer(() => {
   const s = useObservable<State>({
     input: {email: '', password: '', recoveryEmail: '', domainEmail: ''},
     selectedAcc: null,
-    reqInProcess: [],
+    reqInProcess: {},  // reqInProcess: [],
     reqType: null,
-    resStatus: null,
+    resStatus: {},
     addType: 'email',
     selectedDomain: null,
+  })
+
+  io.on('apollo', function (msg: IOResponse) {
+    const [accountID, idx] = getCompletedTaskKey(s.reqInProcess.peek(), msg.taskID)
+    if (!accountID || !idx) return;
+
+    if (msg.ok !== null && msg.ok !== undefined) {
+      switch (msg.ok) {
+        case false:
+          s.resStatus[accountID].set(false)
+          break
+        case true:
+          s.resStatus[accountID].set(true)
+          break
+      }
+      setTimeout(() => {
+        batch(() => {      
+          if (accountID) s.reqInProcess[accountID][idx].delete()
+          s.resStatus[accountID].delete()
+        })
+      }, 1500)
+
+    } else if (msg.data.accountID) {
+      // s.reqInProcess[accountID].push()
+      s.reqInProcess[accountID].peek()
+        ? s.reqInProcess[accountID].push()
+        : s.reqInProcess[accountID].set([
+          {
+            taskID: msg.taskID, 
+            type: msg.type! as ReqType, 
+            status: msg.status as TaskStatus
+          }
+        ])
+    }
   })
   
 
