@@ -34,7 +34,7 @@ export type IAccount = {
   apolloPassword: string
 }
 
-export type ReqType = 'confirm' | 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete'
+export type ReqType = 'confirm' | 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete' | 'new'
 
 export type State = {
   input: Partial<IAccount>
@@ -67,14 +67,12 @@ export const AccountField = observer(() => {
     if (!accountID || !idx) return;
 
     if (msg.ok !== null && msg.ok !== undefined) {
-      switch (msg.ok) {
-        case false:
-          s.resStatus[accountID].set(false)
-          break
-        case true:
-          s.resStatus[accountID].set(true)
-          break
-      }
+      msg.ok
+        ? s.resStatus[accountID].set(true)
+        : s.resStatus[accountID].set(false)
+
+      handleIOResponse(msg as IOResponse<IAccount>)
+
       setTimeout(() => {
         batch(() => {      
           if (accountID) s.reqInProcess[accountID][idx].delete()
@@ -82,7 +80,7 @@ export const AccountField = observer(() => {
         })
       }, 1500)
 
-    } else if (msg.data.accountID) {
+    } else if (msg.data.accountID ) {
       // s.reqInProcess[accountID].push()
       s.reqInProcess[accountID].peek()
         ? s.reqInProcess[accountID].push()
@@ -95,7 +93,6 @@ export const AccountField = observer(() => {
         ])
     }
   })
-  
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
@@ -123,277 +120,104 @@ export const AccountField = observer(() => {
     }
   }
 
+  const handleIOResponse = (msg: IOResponse<IAccount>) => {
+    switch (msg.type) {
+      // case 'login'
+      // case 'delete':
+      case 'new':
+        if(msg.ok) appState$.accounts.push(msg.data)
+        break;
+      case 'confirm':
+      case 'mines':
+      case 'manualUpgrade':
+      case 'update':
+      case 'upgrade':
+      case 'check':
+        if (msg.ok) {
+          appState$.accounts.set(
+            (a1) => a1.map(a2 => a2._id === msg.data._id ? msg.data : a2 )
+          )
+        }
+        break
+    }
+  }
+
   // (FIX) email verification + get domain to determine login type
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const reqInProcess = s.reqInProcess.get()
-    s.reqInProcess.set([...reqInProcess, 'new'])
-    s.reqType.set('create')
-    await fetchData<IAccount>('/account', 'POST', {...s.input.get(), addType: s.addType.get(), selectedDomain: s.selectedDomain.get()})
-      .then((d) => {
-        if (d.ok) {
-          s.resStatus.set(['ok', 'new'])
-          appState$.accounts.set((acc) => [...acc, d.data])
-        } else {
-          s.resStatus.set(['fail', 'new'])
-        }
-      })
-      .catch(() => { s.resStatus.set(['fail', 'new']) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqInProcess.set(reqInProcess.filter(d => d !== 'new'))
-          s.reqType.set(null)
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData<IAccount>('/account', 'POST', {...s.input.peek(), addType: s.addType.peek(), selectedDomain: s.selectedDomain.peek()})
   }
 
   const login = async () => {
-    const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
+    // s.reqType.set('login')
+    const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('login')
-    await fetchData<IAccount>(`/account/login/a/${accountID}`, 'GET')
-      .then(data => {
-        data.ok
-          ? s.resStatus.set(['ok', accountID])
-          : s.resStatus.set(['fail', accountID])
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/login/a/${accountID}`, 'GET')
   }
 
   const manualLogin = async () => {
-    const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
+    // s.reqType.set('manualLogin')
+    const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('manualLogin')
-    await fetchData<IAccount>(`/account/login/m/${accountID}`, 'GET')
-      .then(data => {
-        data.ok
-          ? s.resStatus.set(['ok', accountID])
-          : s.resStatus.set(['fail', accountID])
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/login/m/${accountID}`, 'GET')
   }
 
   const checkAccount = async () => {
-    const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
+    // s.reqType.set('check')
+    const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('check')
-    await fetchData<IAccount>(`/account/check/${accountID}`, 'GET')
-      .then(data => {
-        if (data.ok) {
-          s.resStatus.set(['ok', accountID])
-          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          appState$.accounts.set(updateAccs)
-        } else {
-          s.resStatus.set(['fail', accountID])
-        }
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/check/${accountID}`, 'GET')
   }
 
   const updateAccount = async (acc: Partial<IAccount>) => {
+    // s.reqType.set('update')
     const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('update')
-    await fetchData<IAccount>(`/account/${accountID}`, 'PUT', acc)
-      .then(data => {
-        if (data.ok) {
-          s.resStatus.set(['ok', accountID])
-          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          appState$.accounts.set(updateAccs)
-        } else {
-          s.resStatus.set(['fail', accountID])
-        }
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/${accountID}`, 'PUT', acc)
   }
 
   const upgradeAccount = async () => {
+    // s.reqType.set('upgrade')
     const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('upgrade')
-    await  fetchData<IAccount>(`/account/upgrade/a/${accountID}`, 'GET')
-      .then( data => {
-        if (data.ok) {
-          s.resStatus.set(['ok', accountID])
-          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          appState$.accounts.set(updateAccs)
-        } else {
-          s.resStatus.set(['fail', accountID])
-        }
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await  fetchData(`/account/upgrade/a/${accountID}`, 'GET')
   }
 
   const manualUpgradeAccount = async () => {
+    // s.reqType.set('manualUpgrade')
     const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('manualUpgrade')
-    await fetchData<IAccount>(`/account/upgrade/m/${accountID}`, 'GET')
-      .then(data => {
-        if (data.ok) {
-          s.resStatus.set(['ok', accountID])
-          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          appState$.accounts.set(updateAccs)
-        } else {
-          s.resStatus.set(['fail', accountID])
-        }
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/upgrade/m/${accountID}`, 'GET')
   }
 
   const clearMines = async () => {
+    // s.reqType.set('mines')
     const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('mines')
-    await fetchData<IAccount>(`/account/demine/${accountID}`, 'GET')
-      .then(data => {
-        if (data.ok) {
-          s.resStatus.set(['ok', accountID])
-          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          appState$.accounts.set(updateAccs)
-        } else {
-          s.resStatus.set(['fail', accountID])
-        }
-      })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/demine/${accountID}`, 'GET')
   }
   
   const confirmAccount = async () => {
+    // s.reqType.set('confirm')
     const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('confirm')
-    await fetchData<IAccount>(`/account/confirm/${accountID}`, 'GET')
-      .then(data => {
-        console.log('pass')
-        console.log(data)
-        if (data.ok) {
-          s.resStatus.set(['ok', accountID])
-          const updateAccs = accounts.map(acc => acc._id === data.data._id ? data.data : acc );
-          appState$.accounts.set(updateAccs)
-        } else {
-          s.resStatus.set(['fail', accountID])
-        }
-      })
-      .catch((el) => { 
-        console.log('fail')
-        console.log(el)
-        s.resStatus.set(['fail', accountID]) 
-      
-      })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
-      })
+    await fetchData(`/account/confirm/${accountID}`, 'GET')
   }
 
   // (FIX) complete func
   const deleteAccount = async () => {
+    // s.reqType.set('delete')
     const selectedAcc = s.selectedAcc.get()
-    const reqInProcess = s.reqInProcess.get()
-    if (!selectedAcc) return;
-
     const accountID = accounts[selectedAcc]._id
-    s.reqInProcess.set([...reqInProcess, accountID])
-    s.reqType.set('delete')
     await fetchData<IAccount>(`/account/${accountID}`, 'DELETE')
-      .then(data => {
-        data.ok
-          ? s.resStatus.set(['ok', accountID])
-          : s.resStatus.set(['fail', accountID])
+      .then((data) => {
+        
+
       })
-      .catch(() => { s.resStatus.set(['fail', accountID]) })
-      .finally(() => {
-        setTimeout(() => {
-          s.reqType.set(null)
-          s.reqInProcess.set(reqInProcess.filter(d => d !== accountID))
-          s.resStatus.set(null)
-        }, 1500)
+      .catch(() => {
+
       })
+
   }
 
   const fmtDate = (n: any) => n.toDateString
