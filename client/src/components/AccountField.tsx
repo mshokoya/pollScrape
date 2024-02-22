@@ -1,11 +1,11 @@
-import { FormEvent, MouseEvent, useEffect, useState } from "react"
-import {ResStatus, TaskInProcess, TaskStatus, appState$, fetchData, getCompletedTaskKey} from '../core/util';
+import { FormEvent, MouseEvent, ReactText, useEffect, useState } from "react"
+import {ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess, TaskStatus, appState$, fetchData, getCompletedTaskKey} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
 import { observer, useObservable, useSelector } from "@legendapp/state/react";
-import { Observable, batch } from "@legendapp/state";
+import { Observable, ObservableObject, batch } from "@legendapp/state";
 import { IOResponse, io } from "../core/io";
 
 export type IAccount = {
@@ -41,7 +41,7 @@ export type State = {
     selectedAcc: number | null
     reqInProcess: TaskInProcess<ReqType>
     reqType: string | null
-    resStatus: {[id: string]: boolean},
+    resStatus: ResStatus,
     addType: 'domain' | 'email'
     selectedDomain: string | null
 }
@@ -61,37 +61,31 @@ export const AccountField = observer(() => {
     addType: 'email',
     selectedDomain: null,
   })
+  const taskHelper = TaskHelpers(s.reqInProcess)
+  const resStatusHelper = ResStatusHelpers(s.resStatus)
 
   io.on('apollo', function (msg: IOResponse) {
-    const [accountID, idx] = getCompletedTaskKey(s.reqInProcess.peek(), msg.taskID)
-    if (!accountID || !idx) return;
+    const [accountID, idx, task] = taskHelper.getTaskByTaskID(msg.taskID)
+    if (!accountID || !idx || !task) return;
 
-    if (msg.ok !== null && msg.ok !== undefined) {
+    if (msg.data.accountID) {
+      taskHelper.add(accountID, {taskID: msg.taskID,type: msg.type! as ReqType, status: msg.status as TaskStatus
+      })
+
+    } else if (msg.ok !== null && msg.ok !== undefined) {
       msg.ok
-        ? s.resStatus[accountID].set(true)
-        : s.resStatus[accountID].set(false)
+        ? resStatusHelper.add(accountID, [task.type, 'ok'])
+        : resStatusHelper.add(accountID, [task.type, 'fail'])
 
-      handleIOResponse(msg as IOResponse<IAccount>)
+      handleIOResponse(msg as IOResponse<IAccount, ReqType>)
 
       setTimeout(() => {
-        batch(() => {      
-          if (accountID) s.reqInProcess[accountID][idx].delete()
-          s.resStatus[accountID].delete()
+        batch(() => {
+          taskHelper.deleteTaskByIDX(accountID, idx)
+          resStatusHelper.delete(accountID, task.type)
         })
       }, 1500)
-
-    } else if (msg.data.accountID ) {
-      // s.reqInProcess[accountID].push()
-      s.reqInProcess[accountID].peek()
-        ? s.reqInProcess[accountID].push()
-        : s.reqInProcess[accountID].set([
-          {
-            taskID: msg.taskID, 
-            type: msg.type! as ReqType, 
-            status: msg.status as TaskStatus
-          }
-        ])
-    }
+    } 
   })
 
   useEffect(() => {
@@ -120,7 +114,7 @@ export const AccountField = observer(() => {
     }
   }
 
-  const handleIOResponse = (msg: IOResponse<IAccount>) => {
+  const handleIOResponse = (msg: IOResponse<IAccount, ReqType>) => {
     switch (msg.type) {
       // case 'login'
       // case 'delete':
@@ -146,6 +140,31 @@ export const AccountField = observer(() => {
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await fetchData<IAccount>('/account', 'POST', {...s.input.peek(), addType: s.addType.peek(), selectedDomain: s.selectedDomain.peek()})
+
+
+    taskHelper.add('new', {status: 'processing', type: 'new'})
+    
+    await fetchData<IAccount>('/account', 'POST', {...s.input.peek(), addType: s.addType.peek(), selectedDomain: s.selectedDomain.peek()})
+      .then((data) => {
+        if (data.ok) {
+          resStatusHelper.add(accountID, ['update', 'ok'])
+          appState$.accounts.set(a1 => a1.map(a2 => a2._id === accountID ? data.data : a2))
+        } else {
+          resStatusHelper.add(accountID, ['update', 'fail'])
+        }
+      })
+      .catch(() => { resStatusHelper.add(accountID, ['update', 'fail']) })
+      .finally(() => {
+        setTimeout(() => {
+          batch(() => {
+            taskHelper.deleteTaskByReqType(accountID, 'update')
+            resStatusHelper.delete(accountID, 'update')
+          })
+        }, 1500)
+      })
+
+
+
   }
 
   const login = async () => {
@@ -173,7 +192,28 @@ export const AccountField = observer(() => {
     // s.reqType.set('update')
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc]._id
-    await fetchData(`/account/${accountID}`, 'PUT', acc)
+    if (!taskHelper.isEntityPiplineEmpty(accountID)) return;
+
+    taskHelper.add(accountID, {status: 'processing', type: 'update'})
+    
+    await fetchData<IAccount>(`/account/${accountID}`, 'PUT', acc)
+      .then((data) => {
+        if (data.ok) {
+          resStatusHelper.add(accountID, ['update', 'ok'])
+          appState$.accounts.set(a1 => a1.map(a2 => a2._id === accountID ? data.data : a2))
+        } else {
+          resStatusHelper.add(accountID, ['update', 'fail'])
+        }
+      })
+      .catch(() => { resStatusHelper.add(accountID, ['update', 'fail']) })
+      .finally(() => {
+        setTimeout(() => {
+          batch(() => {
+            taskHelper.deleteTaskByReqType(accountID, 'update')
+            resStatusHelper.delete(accountID, 'update')
+          })
+        }, 1500)
+      })
   }
 
   const upgradeAccount = async () => {
@@ -196,7 +236,7 @@ export const AccountField = observer(() => {
     const accountID = accounts[selectedAcc]._id
     await fetchData(`/account/demine/${accountID}`, 'GET')
   }
-  
+
   const confirmAccount = async () => {
     // s.reqType.set('confirm')
     const selectedAcc = s.selectedAcc.get()
@@ -204,26 +244,37 @@ export const AccountField = observer(() => {
     await fetchData(`/account/confirm/${accountID}`, 'GET')
   }
 
-  // (FIX) complete func
+  // (FIX) complete func (dont delete, just archive)
   const deleteAccount = async () => {
-    // s.reqType.set('delete')
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc]._id
+    if (!taskHelper.isEntityPiplineEmpty(accountID)) return;
+
+    taskHelper.add(accountID, {status: 'processing', type: 'delete'})
+
     await fetchData<IAccount>(`/account/${accountID}`, 'DELETE')
       .then((data) => {
-        
-
+        batch(() => {
+          data.ok
+            ? resStatusHelper.add(accountID, ['delete', 'ok'])
+            : resStatusHelper.add(accountID, ['delete', 'fail'])
+          appState$.accounts.set(a1 => a1.filter( a2 => a2._id !== accountID))
+        })
       })
-      .catch(() => {
-
+      .catch(() => { resStatusHelper.add(accountID, ['delete', 'fail']) })
+      .finally(() => {
+        setTimeout(() => {
+          batch(() => {
+            taskHelper.deleteTaskByReqType(accountID, 'delete')
+            resStatusHelper.delete(accountID, 'delete')
+          })
+        }, 1500)
       })
-
   }
 
   const fmtDate = (n: any) => n.toDateString
       ? n.toDateString()
       : n;
-
 
   const setPopup = (v: any) => {s.selectedAcc.set(v)}
 
@@ -234,7 +285,7 @@ export const AccountField = observer(() => {
           updateAccount={updateAccount}
           setPopup={setPopup}
           checkAccount={checkAccount}
-          reqInProcess={s.reqInProcess} 
+          reqInProcess={s.reqInProcess}
           login={login}
           deleteAccount={deleteAccount}
           clearMines={clearMines}
@@ -242,6 +293,7 @@ export const AccountField = observer(() => {
           manualUpgradeAccount={manualUpgradeAccount}
           account={accounts[s.selectedAcc.peek()]}
           confirmAccount={confirmAccount}
+          taskHelper={taskHelper}
         />
       : null;
 
@@ -252,38 +304,37 @@ export const AccountField = observer(() => {
     <div className="flex relative grow text-xs">
       <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
         <div className='flex mt-1 mb-3 gap-3'>
-          <button 
+          <button
             className='text-cyan-600 border-cyan-600 border rounded p-1'
             onClick={() => s.addType.set('email')}
-          > 
+          >
             email
           </button>
 
-          <button 
+          <button
             className='text-cyan-600 border-cyan-600 border rounded p-1'
             onClick={() => s.addType.set('domain')}
-          > 
+          >
             domain
           </button>
         </div>
-        
+
 
         <div className='mb-2'>
           {
             s.addType.get() === 'email'
-              ? <EmailForm 
+              ? <EmailForm
                   input={s.input}
-                  resStatus={s.resStatus.get()}
-                  reqInProcess={s.reqInProcess.get()}
                   addAccount={addAccount}
+                  taskHelper={taskHelper}
+                  resStatusHelper={resStatusHelper}
                 />
-              : <DomainForm 
+              : <DomainForm
                   domains={domains}
-                  selectedDomain={s.selectedDomain}
-                  resStatus={s.resStatus.get()}
-                  reqInProcess={s.reqInProcess.get()}
                   addAccount={addAccount}
-
+                  taskHelper={taskHelper}
+                  resStatusHelper={resStatusHelper}
+                  selectedDomain={s.selectedDomain}
                 />
           }
         </div>
@@ -303,17 +354,17 @@ export const AccountField = observer(() => {
             </thead>
             <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
               {
-                accounts.length && accounts.map( 
-                  (a, idx) => ( 
+                accounts.length && accounts.map(
+                  (a, idx) => (
                     <>
-                      <tr 
+                      <tr
                       className={`
                         text-[0.8rem] text-center hover:border-cyan-600 hover:border
-                          ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'} 
-                          ${ s.reqInProcess.includes(a._id) ? 'fieldBlink' : '' } 
-                          ${ s.resStatus.get() && s.resStatus[0].get() === 'ok' && s.resStatus[1].get().includes(a._id) ? 'resOK' : '' } 
-                          ${ s.resStatus.get() && s.resStatus[0].get() === 'fail' && s.resStatus[1].get().includes(a._id) ? 'resFail' : '' } 
-                        `}  
+                          ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'}
+                          ${ taskHelper.getEntityTasks(a._id).length ? 'fieldBlink' : '' }
+                          ${ resStatusHelper.getByID(a._id, 0)[1] === 'ok' ? 'resOK' : '' }
+                          ${ resStatusHelper.getByID(a._id, 0)[1] === 'fail' ? 'resFail' : '' }
+                        `}
                         data-idx={idx} key={idx}
                       >
                       <td className='overflow-scroll truncate' data-type='extend' >{a.domainEmail}</td>
@@ -384,9 +435,9 @@ export const AccountField = observer(() => {
 
 type EmailProps = {
   input: Observable<Partial<IAccount>>
-  resStatus: ResStatus
-  reqInProcess: string[]
   addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
+  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
+  resStatusHelper: ReturnType<typeof ResStatusHelpers>
 }
 
 export const EmailForm = (props: EmailProps) => {
@@ -398,9 +449,9 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
             <input className={`
-                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
+                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
               required type="text" id="email" value={props.input.email.get()} onChange={ e => {props.input.set(p => ({...p, email: e.target.value}))}}/>
           </div>
@@ -408,21 +459,21 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
             <input className={`
-                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
+                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
               required type="text" id="password" value={props.input.password.get()} onChange={ e => {props.input.set(p => ({...p, password: e.target.value}))}}/>
           </div>
         </div>
-      
+
         <div>
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
             <input className={`
-                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
+                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
               type="text" id="domain" value={props.input.domainEmail.get()} onChange={ e => {props.input.set(p => ({...p, domainEmail: e.target.value}))}}/>
           </div>
@@ -430,9 +481,9 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
             <input className={`
-                ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
-                ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
+                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
+                ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
               type="text" id="recovery" value={props.input.recoveryEmail.get()} onChange={ e => {props.input.set(p => ({...p, recoveryEmail: e.target.value}))}}/>
           </div>
@@ -445,10 +496,10 @@ export const EmailForm = (props: EmailProps) => {
 
 type DomainProps = {
   domains: IDomain[]
-  resStatus: ResStatus
-  reqInProcess: string[]
   addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
-  selectedDomain: Observable<string | null>
+  selectedDomain: ObservableObject<string>
+  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
+  resStatusHelper: ReturnType<typeof ResStatusHelpers>
 }
 
 export const DomainForm = (props: DomainProps) => {
@@ -460,13 +511,13 @@ export const DomainForm = (props: DomainProps) => {
       <div className='flex basis-1/2 gap-5 mt-1 mb-3'>
       <label htmlFor="domain">Select a domain:</label>
 
-      <select 
+      <select
         id="domain"
         onChange={e => setSelected(e.target.value)}
         className={`
-          ${ props.reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-          ${ props.resStatus && props.resStatus[0] === 'ok' && props.resStatus[1].includes('new') ? 'resOK' : '' } 
-          ${ props.resStatus && props.resStatus[0] === 'fail' && props.resStatus[1].includes('new') ? 'resFail' : '' }
+          ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+          ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
+          ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
         `}
         value={selected}
       >

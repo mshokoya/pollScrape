@@ -1,9 +1,9 @@
-import { blinkCSS } from "../core/util";
+import { TaskHelpers, TaskInProcess, blinkCSS } from "../core/util";
 import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IAccount, ReqType } from "./AccountField";
 import { useObservable } from "@legendapp/state/react";
-import { Observable, batch } from "@legendapp/state";
+import { Observable, ObservableObject, batch } from "@legendapp/state";
 
 
 type Props = {
@@ -18,8 +18,9 @@ type Props = {
   confirmAccount: () => Promise<void>
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
-  reqInProcess: Observable<string[]>
+  reqInProcess: ObservableObject<TaskInProcess<ReqType>>
   req:  string | null
+  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
 }
 
 type Page = 'main' | 'update'
@@ -91,7 +92,7 @@ export const AccountPopup = ( props : Props) => {
 
 type MProps = {
   handleRequest: (a: ReqType) => Promise<void>
-  obs: Observable<State>
+  obs: ObservableObject<TaskInProcess<ReqType>>
 } & Props 
 
 export const MainFields = (props: MProps) => {
