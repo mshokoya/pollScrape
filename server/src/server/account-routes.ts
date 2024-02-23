@@ -107,6 +107,7 @@ export const accountRoutes = (app: Express) => {
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            
             await signupForApollo(taskID, browserCTX, account)
             // (FIX) indicate that account exists on db but not verified via email or apollo
             await AccountModel.create(account);
@@ -410,7 +411,7 @@ export const accountRoutes = (app: Express) => {
             'apollo', 
             { 
               taskID, 
-              type: 'confirm', 
+              taskType: 'confirm', 
               message: `confirming account ${account.domainEmail}`, 
               data: {accountID}
             }

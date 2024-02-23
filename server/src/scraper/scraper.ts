@@ -72,56 +72,34 @@ export const scraper = (() => {
   }
 
   const close = async (context: BrowserContext) => {
-      let l: BrowserContext[];
-
-
       await context.page.close()
-        .then(() => {
-          console.log('CLOSE PAGE');
-        })
-
       await context.context.close()
-        .then(() => {
-            console.log('CLOSE CONTEXT PAGE');
-        })
 
-      context.type === 'headless'
-        ? l = headlessContextList
-        : l = contextList;
-
-      if (l.length === 1) {
-        if (context.type === 'headless') {
-          l = []
-          
+      if (context.type === 'headless') {
+        if (headlessContextList.length === 1) {
           await headlessBrowser?.close()
-            .then(() => { 
-              console.log('we close headless');
-              headlessBrowser = null
-            })
-        } else {
-          l = l.filter(bc => bc.id !== context.id)
-          await browser?.close()
-            .then(() => {
-              console.log('we close head');
-              browser = null
-            })
+          .catch(() => {})
+          .finally(() => { 
+            headlessBrowser = null 
+            headlessContextList = []
+          })
+        }
+        else {
+          headlessContextList = headlessContextList.filter(c => c.id !== context.id)
         }
       } else {
-        console.log('head close')
-        //@ts-ignore
-        await context.context.close()
-          .then(() => {
-            console.log('we close')
+        if (contextList.length === 1) {
+          await browser?.close()
+          .catch(() => {})
+          .finally(() => { 
+            browser = null 
+            contextList = []
           })
-          .catch(() => {
-            console.log('close fail')
-          })
+        }
+        else {
+          contextList = contextList.filter(c => c.id !== context.id)
+        }
       }
-
-      console.log('close lggg')
-  
-      // to make happen after all async calls are complete (synchronousity) (may not work)
-      await l.filter(c => c.id !== context.id) 
   }
 
   return {

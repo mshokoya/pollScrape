@@ -8,7 +8,7 @@ export type ResStatus<T> = {[entityID: string]: Status<T>[]}
 
 export type TaskStatus = 'queue' | 'processing' | 'timeout'
 
-export type Task<T> = {taskID?: string, type: T} // type === reqType
+export type Task<T> = {taskID?: string, type: T, status: TaskStatus} // type === reqType
 export type TaskInProcess<T> = { [id: string]: Task<T>[] }
 
 export function cn(...inputs: ClassValue[]) {
@@ -78,7 +78,7 @@ export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete()} 
     else if (tip && idx > -1 && tip.length === 1 ) { taskInProcess[entityID].delete() }
   },
-  add: (id: string, task: Task<T> | Omit<Task<T>, 'taskID'>) => {
+  add: (id: string, task: Task<T>) => {
     const tip = taskInProcess[id].peek()
     tip && tip.length
       ? taskInProcess[id].push(task)
@@ -86,6 +86,11 @@ export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>>
   },
   findTaskByTaskID: (id:string, taskID: string) => taskInProcess[id].peek().find(t1 => t1.taskID === taskID),
   findTaskByReqType: (id:string, reqType: string) => taskInProcess[id].peek().find(t1 => t1.type === reqType),
+  updateTask: (entityID: string, taskID: string, vals: Partial<Task<T>>) => {
+    const idx = taskInProcess[entityID].peek().findIndex(t => t.taskID === taskID)
+    const tip = taskInProcess[entityID].peek().find(t => t.taskID === taskID)
+    if (idx !== -1 && tip) taskInProcess[entityID][idx].set({...tip, ...vals})
+  }
 })
 
 export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>) => ({

@@ -1,9 +1,8 @@
-import { TaskHelpers } from "../core/util";
 import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
 import { useObservable } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
-import { AccountReqType, IAccount } from "@/core/state/apollo";
+import { AccountReqType, IAccount, stateHelper } from "../core/state/apollo";
 
 
 type Props = {
@@ -19,7 +18,6 @@ type Props = {
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
   req:  string | null
-  taskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
 }
 
 type Page = 'main' | 'update'
@@ -92,7 +90,6 @@ export const AccountPopup = ( props : Props) => {
 type MProps = {
   handleRequest: (a: AccountReqType) => Promise<void>
   obs: ObservableObject<State>
-  taskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
   account: IAccount
 } & Props 
 
@@ -114,7 +111,7 @@ export const MainFields = (props: MProps) => {
 
       <div>
         <button 
-          disabled={props.taskHelper.doesEntityHaveRIP(props.account._id)}
+          disabled={stateHelper.doesEntityHaveRIP(props.account._id)}
           // className={blinkCSS(props.req === 'update')}
           onClick={() => {props.obs.page.set('update')}}>Update Account</button>
       </div>
@@ -145,7 +142,7 @@ export const MainFields = (props: MProps) => {
 
       <div>
         <button 
-          disabled={!props.taskHelper.isEntityPiplineEmpty(props.account._id)}
+          disabled={!stateHelper.isEntityPiplineEmpty(props.account._id)}
           // className={blinkCSS(props.req === 'delete')}
           onClick={() => {props.handleRequest('delete')}}>Delete Account</button>
       </div>

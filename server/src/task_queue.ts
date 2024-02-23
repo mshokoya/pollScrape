@@ -14,7 +14,7 @@ type QueueItem = {
   taskType: string,
   desc: string,
   metadata: Record<string, string | number>
-  action: () => Promise<void>,
+  action: () => Promise<any>,
   args?: Record<string, any>
 }
 
@@ -48,7 +48,7 @@ const TaskQueue = () => {
       // @ts-ignore
       queue.push({id, action, args, taskGroup, taskType, desc, metadata})
     }).then(() => {
-      io.emit('taskQueue', {desc: 'new task added to queue', taskType: 'append',  metadata: {taskID: id, taskGroup, taskType, metadata}})
+      io.emit('taskQueue', {desc: 'new task added to queue', status: 'queue', taskType: 'append',  metadata: {taskID: id, taskGroup, taskType, metadata}})
     }).finally(() => { exec() })
   }
 
@@ -64,7 +64,7 @@ const TaskQueue = () => {
 
   const remove = async (id: string) => {
     return _Qlock.runExclusive(() => {
-      queue = queue.filter(task => task.id !== id);
+      queue.filter(task => task.id !== id);
     }).then(() => {
       io.emit('taskQueue', {desc: 'deleting task from queue', taskType: 'remove',  metadata: {taskID: id}})
     })
@@ -74,7 +74,7 @@ const TaskQueue = () => {
     return _Plock.runExclusive(() => {
       TIP.push(item)
     }).then(() => {
-      io.emit('processQueue', {desc: 'new task added to processing queue', taskType: 'append',  metadata: {taskID: item[0]}})
+      io.emit('processQueue', {desc: 'new task added to processing queue', status: 'processing', taskType: 'append',  metadata: {taskID: item[0]}})
     }).finally(() => { exec() })
   }
 
