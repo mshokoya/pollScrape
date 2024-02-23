@@ -8,7 +8,7 @@ export type ResStatus<T> = {[entityID: string]: Status<T>[]}
 
 export type TaskStatus = 'queue' | 'processing' | 'timeout'
 
-export type Task<T> = {taskID?: string, status: TaskStatus, type: T} // type === reqType
+export type Task<T> = {taskID?: string, type: T} // type === reqType
 export type TaskInProcess<T> = { [id: string]: Task<T>[] }
 
 export function cn(...inputs: ClassValue[]) {
