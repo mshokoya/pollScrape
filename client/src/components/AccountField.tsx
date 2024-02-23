@@ -1,5 +1,5 @@
-import { FormEvent, MouseEvent, ReactText, useEffect, useState } from "react"
-import {ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess, TaskStatus, appState$, fetchData, getCompletedTaskKey} from '../core/util';
+import { FormEvent, MouseEvent, useEffect, useState } from "react"
+import {ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess, TaskStatus, appState$, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
@@ -65,6 +65,7 @@ export const AccountField = observer(() => {
   const resStatusHelper = ResStatusHelpers(s.resStatus)
 
   io.on('apollo', function (msg: IOResponse) {
+    console.log(msg)
     const [accountID, idx, task] = taskHelper.getTaskByTaskID(msg.taskID)
     if (!accountID || !idx || !task) return;
 
@@ -140,31 +141,6 @@ export const AccountField = observer(() => {
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await fetchData<IAccount>('/account', 'POST', {...s.input.peek(), addType: s.addType.peek(), selectedDomain: s.selectedDomain.peek()})
-
-
-    taskHelper.add('new', {status: 'processing', type: 'new'})
-    
-    await fetchData<IAccount>('/account', 'POST', {...s.input.peek(), addType: s.addType.peek(), selectedDomain: s.selectedDomain.peek()})
-      .then((data) => {
-        if (data.ok) {
-          resStatusHelper.add(accountID, ['update', 'ok'])
-          appState$.accounts.set(a1 => a1.map(a2 => a2._id === accountID ? data.data : a2))
-        } else {
-          resStatusHelper.add(accountID, ['update', 'fail'])
-        }
-      })
-      .catch(() => { resStatusHelper.add(accountID, ['update', 'fail']) })
-      .finally(() => {
-        setTimeout(() => {
-          batch(() => {
-            taskHelper.deleteTaskByReqType(accountID, 'update')
-            resStatusHelper.delete(accountID, 'update')
-          })
-        }, 1500)
-      })
-
-
-
   }
 
   const login = async () => {
@@ -285,7 +261,6 @@ export const AccountField = observer(() => {
           updateAccount={updateAccount}
           setPopup={setPopup}
           checkAccount={checkAccount}
-          reqInProcess={s.reqInProcess}
           login={login}
           deleteAccount={deleteAccount}
           clearMines={clearMines}
@@ -449,7 +424,7 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="email">Email:</label>
             <input className={`
-                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.taskHelper.getTaskByReqType('new')[0] ? 'fieldBlink' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
@@ -459,7 +434,7 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2' htmlFor="password">Password:</label>
             <input className={`
-                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.taskHelper.getTaskByReqType('new')[0] ? 'fieldBlink' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
@@ -471,7 +446,7 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
             <input className={`
-                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.taskHelper.getTaskByReqType('new')[0] ? 'fieldBlink' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
@@ -481,7 +456,7 @@ export const EmailForm = (props: EmailProps) => {
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
             <input className={`
-                ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+                ${ props.taskHelper.getTaskByReqType('new')[0] ? 'fieldBlink' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
                 ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
               `}
@@ -515,7 +490,7 @@ export const DomainForm = (props: DomainProps) => {
         id="domain"
         onChange={e => setSelected(e.target.value)}
         className={`
-          ${ props.taskHelper.getEntityTasks('new').length ? 'fieldBlink' : '' }
+          ${ props.taskHelper.getTaskByReqType('new').length ? 'fieldBlink' : '' }
           ${ props.resStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
           ${ props.resStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
         `}

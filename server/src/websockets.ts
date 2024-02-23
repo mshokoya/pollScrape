@@ -9,7 +9,12 @@ type SocketResponse<T = Record<string, any>> = {
 }
 
 export const SocketIO = (server: any) => {
-  const io = new IO(server);
+  const io = new IO(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
+  });
 
   io.on('connection', (socket) => {
     console.log('A user connected');

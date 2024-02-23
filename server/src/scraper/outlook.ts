@@ -18,13 +18,13 @@ export const visitOutlookLoginAuthPortal = async (taskID: string, browserCTX: Br
   const page = browserCTX.page
   
   await visitApolloLoginPage(taskID, browserCTX, hideApolloDom)
-    .then(() => {  io.emit('apollo', {taskID, message: 'navigated to login page', ok: true}) })
+    .then(() => {  io.emit('apollo', {taskID, message: 'navigated to login page'}) })
 
   const microsoftLoginButton = await page.$('button[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_eFcMr zp_grScD zp_bW01P"]')
   if (!microsoftLoginButton) throw new AppError(taskID, 'failed to login, could not find microsoft login button')
   await microsoftLoginButton.click({delay: 1000})
     .then(async () => { 
-      io.emit('apollo', {taskID, message: "clicked on outlooks auth button", ok: true})
+      io.emit('apollo', {taskID, message: "clicked on outlooks auth button"})
       if (hidePortalDom) await waitForNavHideDom(browserCTX) 
     })
 }
@@ -35,13 +35,13 @@ const outlookAuth = async (taskID: string, {page}: BrowserContext, account: Part
   const emailInputField = await page.$('[class="form-control ltr_override input ext-input text-box ext-text-box"]')
   if (!emailInputField) throw new AppError(taskID, 'failed to login, could not input email');
   await emailInputField.type(account.email)
-    .then(() => { io.emit('apollo', {taskID, message: `entered ${account.email} into outlook/hotmail email field`, ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: `entered ${account.email} into outlook/hotmail email field`}) });
     
 
   const nextButton1 = await page.$('[class="win-button button_primary button ext-button primary ext-primary"]');
   if (!nextButton1) throw new AppError(taskID, 'failed to login, could not find next button to progress to password page');
   await nextButton1.click({delay: 1000})
-    .then(() => { io.emit('apollo', {taskID, message: "clicked the next button", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "clicked the next button"}) });
 
   // await delay(3000)
 
@@ -75,42 +75,42 @@ const outlookAuth = async (taskID: string, {page}: BrowserContext, account: Part
 
     } else if (nextButton) {
         await nextButton.click({delay: 1000})
-          .then(() => { io.emit('apollo', {taskID, message: "clicked the outlook 'next' button", ok: true}) });
+          .then(() => { io.emit('apollo', {taskID, message: "clicked the outlook 'next' button"}) });
         counter = 0
 
     } else if (enableAuth) {
       await enableAuth.click({delay: 1000})
-        .then(() => { io.emit('apollo', {taskID, message: "click the outlook 'enable' button", ok: true}) });
+        .then(() => { io.emit('apollo', {taskID, message: "click the outlook 'enable' button"}) });
       counter = 0
 
     } else if (updatesButton) {
       await updatesButton.click({delay: 1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked the outlook 'updates' button", ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: "clicked the outlook 'updates' button"}) })
       counter = 0
 
     }  else if (staySignedInButton) {
       await staySignedInButton.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'stay signed in' button", ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'stay signed in' button"}) })
       counter = 0
 
     } else if (onboardingButton) {
       await onboardingButton.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'continue' button on the apollo onboarding page", ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'continue' button on the apollo onboarding page"}) })
       counter = 0
 
     } else if (apolloSkipButton) {
       await apolloSkipButton.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'skip' button on the apollo dialog", ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'skip' button on the apollo dialog"}) })
       counter = 0
 
     } else if (close) {
       await close.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'close'(X) button in apollo for a popup", ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: "clicked the 'close'(X) button in apollo for a popup"}) })
       counter = 0
 
     } else if (url.includes('signup-success')) {
       await page.goto('https://app.apollo.io/')
-        .then(() => { io.emit('apollo', {taskID, message: "navigated to apollo main page after successfull signup with outlook", ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: "navigated to apollo main page after successfull signup with outlook"}) })
       counter = 0
 
     } else if (
@@ -133,10 +133,10 @@ const outlookAuth = async (taskID: string, {page}: BrowserContext, account: Part
 export const apolloOutlookLogin = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {
   if (!account.email || !account.password) throw new AppError(taskID, 'failed to login, credentials missing');
   await visitOutlookLoginAuthPortal(taskID, browserCTX, hideApolloDom, hidePortalDom)
-    .then(() => { io.emit('apollo', {taskID, message: "navigated to outlooks auth portal", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "navigated to outlooks auth portal"}) });
     
   await outlookAuth(taskID, browserCTX, account as IAccount)
-    .then(() => { io.emit('apollo', {taskID, message: "completed outlook auth login", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "completed outlook auth login"}) });
 }
 
 export const apolloOutlookSignup = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
@@ -145,13 +145,13 @@ export const apolloOutlookSignup = async (taskID: string, browserCTX: BrowserCon
   const page = browserCTX.page
   
   await apolloInitSignup(taskID, browserCTX)
-    .then(() => { io.emit('apollo', {taskID, message: "prepared browser for signup", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "prepared browser for signup"}) });
 
   const microsoftSignupButton = await page.$('button[id="microsoft-oauth-button"]')
   if (!microsoftSignupButton) throw new AppError(taskID, 'failed to signup, could not find microsoft signup button')
   await microsoftSignupButton.click({delay: 1000})
-    .then(() => { io.emit('apollo', {taskID, message: "navigated to outlook auth portal", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "navigated to outlook auth portal"}) });
 
   await outlookAuth(taskID, browserCTX, account)
-    .then(() => { io.emit('apollo', {taskID, message: "completed outlook auth signup", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "completed outlook auth signup"}) });
 }

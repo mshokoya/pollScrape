@@ -62,20 +62,41 @@ export const getCompletedTaskID = <T>(reqInProcessList: TaskInProcess<T>, taskID
 
 export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>> ) => ({
   getTaskByTaskID: (taskID: string): [entityID: string, idx: number, task?: Task<T>] => {
-    for (const [k, v] of Object.entries(taskInProcess)) {
+    for (const [k, v] of Object.entries(taskInProcess.peek())) {
       const taskIdx = v.findIndex(_ => _.taskID === taskID)
-      if (taskIdx > -1) return [k, taskIdx, v[taskIdx].peek()]
+      if (taskIdx > -1) return [k, taskIdx, v[taskIdx]]
     }
     return ['', -1, undefined]
   },
-  getEntityTasks: (entityID: string) => taskInProcess[entityID].get(),
-  isEntityPiplineEmpty: (id: string) =>  taskInProcess[id].peek() === undefined || !taskInProcess[id].peek().length,
-  doesEntityHaveTIP: (id: string) => !!taskInProcess[id].find(t1 => t1.taskID !== undefined), // background task (task in process)
-  doesEntityHaveRIP: (id: string) => !!taskInProcess[id].find(t1 => t1.taskID === undefined),  // regular request (request in process)
-  isReqTypeInProcess: (entityID: string, reqType: ReqType) => taskInProcess[entityID].find(t1 => t1.get().type === reqType),
-  deleteTaskByIDX: (id:string, index: number) => taskInProcess[id][index].delete(),
-  deleteTaskByTaskID: (id:string, taskID: string) => taskInProcess[id].set( t => t.filter((t1) => t1.taskID !== taskID) ),
-  deleteTaskByReqType: (id:string, reqType: ReqType) => taskInProcess[id].set( t => t.filter((t1) => t1.type !== reqType) ),
+  getTaskByReqType: (reqType: string): [entityID: string, idx: number, task?: Task<T>] => {
+    for (const [k, v] of Object.entries(taskInProcess.peek())) {
+      const taskIdx = v.findIndex(_ => _.type === reqType)
+      if (taskIdx > -1) return [k, taskIdx, v[taskIdx]]
+    }
+    return ['', -1, undefined]
+  },
+  getEntityTasks: (entityID: string) => taskInProcess[entityID].get() || [],
+  isEntityPiplineEmpty: (id: string) => taskInProcess[id].peek() === undefined || !taskInProcess[id].peek().length,
+  doesEntityHaveTIP: (id: string) => !!(taskInProcess[id].peek() && taskInProcess[id].peek().find(t1 => t1.taskID !== undefined)) , // background task (task in process)
+  doesEntityHaveRIP: (id: string) => !!(taskInProcess[id].peek() && taskInProcess[id].peek().find(t1 => t1.taskID === undefined)),  // regular request (request in process)
+  isReqTypeInProcess: (entityID: string, reqType: ReqType) => taskInProcess[entityID].peek().find(t1 => t1.type === reqType),
+  deleteTaskByIDX: (id:string, index: number) => {
+    const tip = taskInProcess[id].peek()
+    if (tip && tip[index] && tip.length > 1) { taskInProcess[id][index].delete()} 
+    else if ((tip && tip[index] && tip.length === 1)) { taskInProcess[id].delete() }
+  },
+  deleteTaskByTaskID: (entityID:string, taskID: string) => {
+    const tip = taskInProcess[entityID].peek()
+    const idx = tip.findIndex((t1) => t1.taskID !== taskID)
+    if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete() } 
+    else if (tip && idx > -1 && tip.length === 1 ) { taskInProcess[entityID].delete() }
+  },
+  deleteTaskByReqType: (entityID:string, reqType: ReqType) => {
+    const tip = taskInProcess[entityID].peek()
+    const idx = tip.findIndex((t1) => t1.type !== reqType)
+    if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete()} 
+    else if (tip && idx > -1 && tip.length === 1 ) { taskInProcess[entityID].delete() }
+  },
   add: (id: string, task: Task<T> | Omit<Task<T>, 'taskID'>) => {
     const tip = taskInProcess[id].peek()
     tip && tip.length
@@ -95,10 +116,12 @@ export const ResStatusHelpers = (resStatus: ObservableObject<ResStatus>) => ({
   },
   delete: (entityID: string, reqType: ReqType) => {
     const rs = resStatus[entityID].peek()
-    if (rs && rs.length) resStatus[entityID].set(rs1 => rs1.filter(rs2 => rs2[0] !== reqType))
+    rs && rs.length > 1
+        ? resStatus[entityID].set(rs1 => rs1.filter(rs2 => rs2[0] !== reqType))
+        : resStatus[entityID].delete()
   },
   getByID: (entityID: string, idx: number) => {
-    const rs = resStatus[entityID]
+    const rs = resStatus[entityID].peek()
     if (!rs || !rs.length) return ['', '']
     return idx
       ? rs[idx]

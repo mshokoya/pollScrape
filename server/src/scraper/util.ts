@@ -126,7 +126,7 @@ export const logIntoApolloThenVisit = async (taskID: string, browserCTX: Browser
     .then(async () => {
       if (page.url().includes('/#/login')) {
         await logIntoApollo(taskID, browserCTX, account)
-          .then(() => { io.emit('apollo', {taskID, message: 'Logged into apollo', ok: true}) })
+          .then(() => { io.emit('apollo', {taskID, message: 'Logged into apollo'}) })
         const cookies = await getBrowserCookies(browserCTX);
         await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)});
         await browserCTX.page.goto(url)

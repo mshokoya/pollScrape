@@ -4,11 +4,13 @@ import {cpus} from 'os';
 import { Mutex } from 'async-mutex'
 import AbortablePromise from "promise-abortable";
 import { generateID } from './helpers';
+import { io } from './websockets';
 
 
 
 type QueueItem = {
   id: string,
+  taskGroup: string,
   taskType: string,
   desc: string,
   metadata: Record<string, string | number>
@@ -35,6 +37,7 @@ const TaskQueue = () => {
 
   const enqueue = async <T = Record<string, any> >(
     id = generateID(),
+    taskGroup: string,
     taskType: string,
     desc: string,
     metadata: {},
@@ -43,35 +46,43 @@ const TaskQueue = () => {
   ) => {
     return _Qlock.runExclusive(() => {
       // @ts-ignore
-      queue.push({id, action, args, taskType, desc, metadata})
-    }).finally(() => {
-      exec()
-    })
+      queue.push({id, action, args, taskGroup, taskType, desc, metadata})
+    }).then(() => {
+      io.emit('taskQueue', {desc: 'new task added to queue', taskType: 'append',  metadata: {taskID: id, taskGroup, taskType, metadata}})
+    }).finally(() => { exec() })
   }
 
-  const dequeue = async (): Promise<QueueItem | undefined> => {
+  const dequeue = async () => {
     return _Qlock.runExclusive(() => {
       return queue.shift();
+    }).then((t) => {
+      if (!t) return
+      io.emit('taskQueue', {desc: 'moving from queue to processing', taskType: 'switch',  metadata: {taskID: t.id, taskGroup: t.taskGroup, taskType: t.taskType, metadata: t.metadata}})
+      return t
     })
   }
 
   const remove = async (id: string) => {
     return _Qlock.runExclusive(() => {
       queue = queue.filter(task => task.id !== id);
+    }).then(() => {
+      io.emit('taskQueue', {desc: 'deleting task from queue', taskType: 'remove',  metadata: {taskID: id}})
     })
   }
 
   const _TIP_Enqueue = async (item: TIP_Item) => { 
     return _Plock.runExclusive(() => {
       TIP.push(item)
-    }).finally(() => {
-      exec()
-    })
+    }).then(() => {
+      io.emit('processQueue', {desc: 'new task added to processing queue', taskType: 'append',  metadata: {taskID: item[0]}})
+    }).finally(() => { exec() })
   }
 
   const _TIP_Dequeue = async (id: string) => { 
     return _Plock.runExclusive(() => {
       TIP = TIP.filter(task => task[0] !== id);
+    }).then(() => {
+      io.emit('processQueue', {desc: 'removed completed task from queue', taskType: 'remove',  metadata: {taskID: id}})
     })
   }
 
@@ -80,7 +91,10 @@ const TaskQueue = () => {
       const process = TIP.find(p => p[0] === id)
       if (!process) return null;
       return await process[2].abort()
-    }).finally(() => {
+    }).then(() => {
+      io.emit('taskQueue', {desc: 'cancelled', taskType: 'stop',  metadata: {taskID: id}})
+    })
+    .finally(() => {
       exec()
     })
     
@@ -101,27 +115,33 @@ const TaskQueue = () => {
       if (TIP.length >= maxWorkers) return;
       const task = await dequeue();
       if (!task) return;
+      io.emit('processQueue', {desc: `starting ${task.id} processing`, taskType: 'start',  metadata: {taskID: task.id}})
 
-      // const tsk = pool.exec(task.action, [task.args || {}])
+      const taskIOArgs = {
+        taskGroup: task.taskGroup, 
+        taskID: task.id, 
+        metadata: task.metadata
+      }
 
-      const tsk = new AbortablePromise(async (resolve, reject, signal) => {
+      const tsk = new AbortablePromise((resolve, reject, signal) => {
         signal.onabort = reject;
-        await task.action()
+        task.action()
+          .then((r) => { resolve(r) })
+          .catch((err) => { reject(err) })
       })
-        .then(async () => {
-          // io.emit('task-complete', task.id)
+        .then(async (r) => {
+          io.emit(task.taskGroup, {...taskIOArgs, ok: true, metadata: r})
+        })
+        .catch(async (err) => {
+          io.emit(task.taskGroup,  {...taskIOArgs, desc: err.message, ok: true})
+        })
+        .finally(() => {
           _TIP_Dequeue(task.id)
           exec()
-        })
-        .catch(async (e) => {
-          // io.emit('task-failed', task.id)
-          _TIP_Dequeue(task.id)
-          exec()
-        })
+        }) as AbortablePromise<unknown>
 
         _TIP_Enqueue([task.id, task.args, tsk])
     } finally {
-      
       exec_lock.release()
     }
   }
@@ -145,8 +165,8 @@ const TaskQueue = () => {
 
 export let taskQueue: ReturnType<typeof TaskQueue>;
 
-export const initTaskQueue = (io: IO) => {
-  taskQueue = TaskQueue(io)
+export const initTaskQueue = () => {
+  taskQueue = TaskQueue()
   taskQueue.init()
   return taskQueue
 }

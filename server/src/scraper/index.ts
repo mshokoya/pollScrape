@@ -34,7 +34,7 @@ export const startScrapingApollo = async (taskID: string, browserCTX: BrowserCon
 
   const allAccounts = await getAllApolloAccounts()
     .then(_ => {  
-      io.emit('apollo', {taskID, message: 'obtained all accounts', ok: true}) 
+      io.emit('apollo', {taskID, message: 'obtained all accounts'}) 
       return _
     })
 
@@ -50,25 +50,25 @@ export const startScrapingApollo = async (taskID: string, browserCTX: BrowserCon
     if (!proxy) throw new AppError(taskID, `failed to use proxy`);
     const page = browserCTX.page;
     await useProxy(page, proxy)
-      .then(() => {  io.emit('apollo', {taskID, message: 'added proxy', ok: true}) });
+      .then(() => {  io.emit('apollo', {taskID, message: 'added proxy'}) });
   }
 
   await setupApolloForScraping(taskID, browserCTX, account)
-    .then(() => {  io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping', ok: true}) })
+    .then(() => {  io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
 
   await goToApolloSearchUrl(taskID, browserCTX, url)
-    .then(() => {  io.emit('apollo', {taskID, message: 'visiting apollo lead url', ok: true}) })
+    .then(() => {  io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
   const data = await apolloStartPageScrape(taskID, browserCTX) // edit
     .then(_ => {  
-      io.emit('apollo', {taskID, message: 'successfully scraped page', ok: true}) 
+      io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
       return _
     })
   
     const cookies = await getBrowserCookies(browserCTX);
 
   await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
-    .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database', ok: true}) });
+    .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
 }
 
 // (FIX) FINISH
@@ -78,19 +78,19 @@ export const logIntoApollo = async (taskID: string, browserCTX: BrowserContext, 
   switch (account.loginType) {
     case 'default':
       await apolloDefaultLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
       break;
     case 'outlook':
       await apolloOutlookLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
       break;
     case 'gmail':
       await apolloGmailLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
       break
     default:
       await apolloDefaultLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
       break;
   }
 }
@@ -102,15 +102,15 @@ export const signupForApollo = async (taskID: string, browserCTX: BrowserContext
     case 'hotmail':
     case 'outlook':
       await apolloOutlookSignup(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account'}) })
       break;
     case 'gmail':
       await apolloGmailSignup(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account'}) })
       break
     default:
       await apolloDefaultSignup(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account'}) })
       break;
   }
 }
@@ -125,11 +125,11 @@ export const manuallyLogIntoApollo = async (taskID: string, browserCTX: BrowserC
     case 'hotmail':
     case 'outlook':
       await visitOutlookLoginAuthPortal(taskID, browserCTX, true)
-        .then(() => {  io.emit('apollo', {taskID, message: 'navigated to outlook/hotmail auth portal', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'navigated to outlook/hotmail auth portal'}) })
       break;
     case 'gmail':
       await visitGmailLoginAuthPortal(taskID, browserCTX, true)
-        .then(() => {  io.emit('apollo', {taskID, message: 'navigated to gmail auth portal', ok: true}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'navigated to gmail auth portal'}) })
       break
     default:
       break
@@ -139,11 +139,11 @@ export const manuallyLogIntoApollo = async (taskID: string, browserCTX: BrowserC
 // (FIX) make sure not already upgraded
 export const logIntoApolloAndUpgradeAccount = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
   await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade')
-    .then(() => { io.emit('apollo', {taskID, message: 'navigated to the upgrade page', ok: true}) })
+    .then(() => { io.emit('apollo', {taskID, message: 'navigated to the upgrade page'}) })
 
   return await upgradeApolloAccount(taskID, browserCTX)
     .then(_ => {
-      io.emit('apollo', {taskID, message: 'upgraded account', ok: true})
+      io.emit('apollo', {taskID, message: 'upgraded account'})
       return _
     })
 }
@@ -154,16 +154,16 @@ export const logIntoApolloAndUpgradeAccountManually = async (taskID: string, bro
   const page = browserCTX.page
 
   await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/plans/upgrade/')
-    .then(() => {  io.emit('apollo', {taskID, message: 'navigated to the upgrade page', ok: true}) })
+    .then(() => {  io.emit('apollo', {taskID, message: 'navigated to the upgrade page'}) })
 
   const creditsInfo = await page.waitForSelector('[class="zp_EanJu]"', {visible: true}) // trial days left in top nav bar
     .then(async () => {
       await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
-        .then(() => { io.emit('apollo', {taskID, message: 'navigated to the credits page', ok: true}) })
+        .then(() => { io.emit('apollo', {taskID, message: 'navigated to the credits page'}) })
       
         return await apolloGetCreditsInfo(taskID, browserCTX)
         .then(_ => {
-          io.emit('apollo', { taskID, message: `obtained ${account.domainEmail} credits info`, ok: true})
+          io.emit('apollo', { taskID, message: `obtained ${account.domainEmail} credits info`})
           return _
         })
     })
@@ -175,11 +175,11 @@ export const logIntoApolloAndUpgradeAccountManually = async (taskID: string, bro
 
 export const logIntoApolloAndGetCreditsInfo = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
   await logIntoApolloThenVisit(taskID, browserCTX, account, 'https://app.apollo.io/#/settings/credits/current')
-    .then(() => io.emit('apollo', {taskID, message: 'navigated to the credits page', ok: true}));
+    .then(() => io.emit('apollo', {taskID, message: 'navigated to the credits page'}));
 
   return await apolloGetCreditsInfo(taskID, browserCTX)
     .then( _ => {
-      io.emit('apollo', {taskID, message: `successfully obtained ${account.domainEmail} credits info`, ok: true});
+      io.emit('apollo', {taskID, message: `successfully obtained ${account.domainEmail} credits info`});
       return _
     })
 }
@@ -187,11 +187,11 @@ export const logIntoApolloAndGetCreditsInfo = async (taskID: string, browserCTX:
 export const completeApolloAccountConfimation = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
   
   await mailbox.getConnection(accountToMailbox(account))
-    .then(() => io.emit('apollo', { taskID, message: 'started mailbox', ok: true}) );
+    .then(() => io.emit('apollo', { taskID, message: 'started mailbox'}) );
 
   const allMail = await mailbox.getAllMail(account.email)
     .then(_ => { 
-      io.emit('apollo', { taskID, message: 'got all mail', ok: true}); 
+      io.emit('apollo', { taskID, message: 'got all mail'}); 
       return _
     });
 
@@ -208,7 +208,7 @@ export const completeApolloAccountConfimation = async (taskID: string, browserCT
     ) {
       const links = await getApolloConfirmationLinksFromMail(mail)
         .then(_ => {
-          io.emit('apollo', { taskID, message: 'got all mail', ok: true});
+          io.emit('apollo', { taskID, message: 'got all mail'});
           return _
         });
 
@@ -220,7 +220,7 @@ export const completeApolloAccountConfimation = async (taskID: string, browserCT
       });
 
       await apolloConfirmAccount(taskID, browserCTX, links[0], account)
-        .then(() => io.emit('apollo', { taskID, message: `confirmed account ${account.domainEmail}`, ok: true}) )
+        .then(() => io.emit('apollo', { taskID, message: `confirmed account ${account.domainEmail}`}) )
 
       const cookies = await getBrowserCookies(browserCTX);
       const newAccount = await updateAccount(
@@ -238,13 +238,14 @@ export const completeApolloAccountConfimation = async (taskID: string, browserCT
   }
 }
 
+// (FIX) need to figure out how to handle io for events
 export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
   if (count < prevCount) return;
 
   try {
     const mail = await mailbox.getLatestMessage(authEmail)
       .then(_ => {
-        io.emit('apollo', { taskID, message: 'successfully obtained latest mail', ok: true})
+        io.emit('apollo', { taskID, message: 'successfully obtained latest mail'})
         return _
       });
 
@@ -262,7 +263,7 @@ export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, coun
 
     const links = await getApolloConfirmationLinksFromMail(mail)
       .then( _ => {
-        io.emit('apollo', { taskID, message: 'extracted the confirmation email', ok: true})
+        io.emit('apollo', { taskID, message: 'extracted the confirmation email'})
         return _
       });
 
@@ -278,7 +279,7 @@ export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, coun
 
     const browserCTX = await scraper.newBrowser(false)
     await apolloConfirmAccount(taskID, browserCTX, links[0], account)
-      .then(() => io.emit('apollo', { taskID, message: `confirmed ${account.domainEmail}`, ok: true }));
+      .then(() => io.emit('apollo', { taskID, message: `confirmed ${account.domainEmail}` }));
     const cookies = await getBrowserCookies(browserCTX);
     await scraper.close(browserCTX)
     await updateAccount(

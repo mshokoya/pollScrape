@@ -1,4 +1,4 @@
-import { TaskHelpers, TaskInProcess, blinkCSS } from "../core/util";
+import { TaskHelpers } from "../core/util";
 import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
 import { IAccount, ReqType } from "./AccountField";
@@ -18,7 +18,6 @@ type Props = {
   confirmAccount: () => Promise<void>
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
-  reqInProcess: ObservableObject<TaskInProcess<ReqType>>
   req:  string | null
   taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
 }
@@ -92,7 +91,9 @@ export const AccountPopup = ( props : Props) => {
 
 type MProps = {
   handleRequest: (a: ReqType) => Promise<void>
-  obs: ObservableObject<TaskInProcess<ReqType>>
+  obs: ObservableObject<State>
+  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
+  account: IAccount
 } & Props 
 
 export const MainFields = (props: MProps) => {
@@ -101,57 +102,51 @@ export const MainFields = (props: MProps) => {
     <>
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)}
-          className={blinkCSS(props.req === 'login')}
+          // className={blinkCSS(props.req === 'login')}
           onClick={() => {props.handleRequest('login')}} >Login to Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)}
-          className={blinkCSS(props.req === 'check')}
+          // className={blinkCSS(props.req === 'check')}
           onClick={() => {props.handleRequest('check')}}>Check Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)} 
-          className={blinkCSS(props.req === 'update')}
+          disabled={props.taskHelper.doesEntityHaveRIP(props.account._id)}
+          // className={blinkCSS(props.req === 'update')}
           onClick={() => {props.obs.page.set('update')}}>Update Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)}
-          className={blinkCSS(props.req === 'upgrade')}
+          // className={blinkCSS(props.req === 'upgrade')}
           onClick={() => {props.handleRequest('upgrade')}}>upgrade Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)}
-          className={blinkCSS(props.req === 'manualUpgrade')}
+          // className={blinkCSS(props.req === 'manualUpgrade')}
           onClick={() => {props.handleRequest('manualUpgrade')}}>manually upgrade Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)} 
-          className={blinkCSS(props.req === 'mines')}
+          // className={blinkCSS(props.req === 'mines')}
           onClick={() => {props.handleRequest('mines')}}>Clear Mines</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)}
-          className={blinkCSS(props.req === 'confirm')}
+          // className={blinkCSS(props.req === 'confirm')}
           onClick={() => {props.handleRequest('confirm')}}>Confirm Account</button>
       </div>
 
       <div>
         <button 
-          disabled={props.reqInProcess.get().includes(props.account._id)}
-          className={blinkCSS(props.req === 'delete')}
+          disabled={!props.taskHelper.isEntityPiplineEmpty(props.account._id)}
+          // className={blinkCSS(props.req === 'delete')}
           onClick={() => {props.handleRequest('delete')}}>Delete Account</button>
       </div>
     </>

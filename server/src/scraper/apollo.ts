@@ -200,12 +200,12 @@ export const upgradeApolloAccount = async (taskID: string, {page}: BrowserContex
   const upgradeButton = await page.$$('div[class="zp_LXyot"]');
   if (!upgradeButton.length) throw new AppError(taskID,"Failed to upgrade account. You've already upgraded your account before")
   await upgradeButton[1].click()
-    .then(() => { io.emit('apollo', {taskID, message: "click the upgrade button", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "click the upgrade button"}) });
 
   const confirmUpgradeButton = await page.$('button[class="zp-button zp_zUY3r zp_eFcMr zp_OztAP zp_Bn90r"]');
   if (!confirmUpgradeButton) throw new AppError(taskID,'failed to upgrade, cannot find upgrade button')
   await confirmUpgradeButton.click()
-    .then(() => { io.emit('apollo', {taskID, message: "click the 'confirm' button", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "click the 'confirm' button"}) });
 
   await page.waitForNavigation({timeout:10000})
 
@@ -217,23 +217,23 @@ export const apolloDefaultSignup = async (taskID: string, {page}: BrowserContext
   if (!account.domainEmail) throw new AppError(taskID,'failed to login, credentials missing');
 
   await page.goto('https://www.apollo.io/sign-up')
-    .then(() => { io.emit('apollo', {taskID, message: "navigated to the apollo signup page", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "navigated to the apollo signup page"}) });
 
   const input = await page.waitForSelector('input[class="MuiInputBase-input MuiOutlinedInput-input mui-style-1x5jdmq"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!input) throw new AppError(taskID,'failed to register for apollo');
   await input.type(account.domainEmail)
-    .then(() => { io.emit('apollo', {taskID, message: "entered email into field", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "entered email into field"}) });
   
   const tsCheckbox = await page.$('input[class="PrivateSwitchBase-input mui-style-1m9pwf3"]')
   if (!tsCheckbox) throw new AppError(taskID,'failed to find T&S checkbox')
   await tsCheckbox.click()
-    .then(() => { io.emit('apollo', {taskID, message: "checked the terms & service checkbox", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "checked the terms & service checkbox"}) });
       
 
   const signupButton = await page.$('[class="MuiBox-root mui-style-1tu59u4"]').catch(() => null)
   if (!signupButton) throw new AppError(taskID,'failed to find signup button')
   await signupButton.click()
-    .then(() => { io.emit('apollo', {taskID, message: "click the signup button", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "click the signup button"}) });
       
 
   delay(2000)
@@ -253,25 +253,25 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
   const page = browserCTX.page
 
   await page.goto(confirmationURL)
-    .then(() => { io.emit('apollo', {taskID, message: "navigated to confimation page", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "navigated to confimation page"}) });
       
 
   const nameField = await page.waitForSelector('input[class="zp_bWS5y zp_J0MYa"][name="name"]', {visible: true, timeout: 10000}).catch(() => null)
   if (!nameField) throw new AppError(taskID,'Failed to find full name field')
   await nameField.type(account.password)
-    .then(() => { io.emit('apollo', {taskID, message: "entered name into 'name' field", ok: true}) })
+    .then(() => { io.emit('apollo', {taskID, message: "entered name into 'name' field"}) })
     .catch(() => {})
 
   const passwordField = await page.$('input[class="zp_bWS5y zp_J0MYa"][name="password"]')
   if (!passwordField) throw new AppError(taskID,'Failed to find password field')
   await passwordField.type(account.apolloPassword)
-    .then(() => { io.emit('apollo', {taskID, message: "entered password into 'password' field", ok: true}) })
+    .then(() => { io.emit('apollo', {taskID, message: "entered password into 'password' field"}) })
     .catch(() => {})
 
   const confirmPasswordField = await page.$('input[class="zp_bWS5y zp_J0MYa"][name="confirmPassword"]')
   if (!confirmPasswordField) throw new AppError(taskID,'Failed to find confirm password field')
   await confirmPasswordField.type(account.apolloPassword)
-    .then(() => { io.emit('apollo', {taskID, message: "entered password in 'confirm password' field", ok: true}) })
+    .then(() => { io.emit('apollo', {taskID, message: "entered password in 'confirm password' field"}) })
     .catch(() => {})
 
     delay(10000)
@@ -279,7 +279,7 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
   const submitButton = await page.$('button[class="zp-button zp_zUY3r zp_aVzf8"]')
   if (!submitButton) throw new AppError(taskID,'Failed to find confirm password field')
   await submitButton.click()
-    .then(() => { io.emit('apollo', {taskID, message: "clicked the 'submit' button", ok: true}) });
+    .then(() => { io.emit('apollo', {taskID, message: "clicked the 'submit' button"}) });
       
 
   
@@ -294,28 +294,28 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
 
     if (newTeamButton) {
       await newTeamButton.click({delay: 1000})
-        .then(() => { io.emit('apollo', {taskID, message: "selected new team for account in apollo", ok: true}) });
+        .then(() => { io.emit('apollo', {taskID, message: "selected new team for account in apollo"}) });
       
       counter = 0
 
     } else if (onboardingButton) {
       await onboardingButton.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked 'skip' button on apollo onboarding page", ok: true}) });
+        .then(() => { io.emit('apollo', {taskID, message: "clicked 'skip' button on apollo onboarding page"}) });
       counter = 0
 
     } else if (apolloSkipButton) {
       await apolloSkipButton.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked 'skip' button on popup in apollo", ok: true}) });
+        .then(() => { io.emit('apollo', {taskID, message: "clicked 'skip' button on popup in apollo"}) });
       counter = 0
 
     } else if (close) {
       await close.click({delay:1000})
-        .then(() => { io.emit('apollo', {taskID, message: "clicked on popup close button in apollo", ok: true}) });
+        .then(() => { io.emit('apollo', {taskID, message: "clicked on popup close button in apollo"}) });
       counter = 0
 
     } else if (url.includes('signup-success')) {
       await page.goto('https://app.apollo.io/')
-        .then(() => { io.emit('apollo', {taskID, message: "navigated to apollo dashboard", ok: true}) });
+        .then(() => { io.emit('apollo', {taskID, message: "navigated to apollo dashboard"}) });
       counter = 0
       
     } else if (
