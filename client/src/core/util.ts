@@ -1,23 +1,12 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { ObservableObject, observable } from "@legendapp/state";
-import { IAccount, ReqType } from "@/components/AccountField";
-import { IDomain } from "@/components/DomainField";
-import { IProxy } from "@/components/ProxyField";
-import { IMetaData, IRecord } from "@/components/RecordField";
+import { ObservableObject } from "@legendapp/state";
 
-export type Status = [reqType: ReqType, status: 'ok'|'fail']
-export type ResStatus = {[entityID: string]: Status[]}
+
+export type Status<ReqType> = [reqType: ReqType, status: 'ok'|'fail']
+export type ResStatus<T> = {[entityID: string]: Status<T>[]}
 
 export type TaskStatus = 'queue' | 'processing' | 'timeout'
-
-type AppState = {
-  accounts: IAccount[]
-  domains: IDomain[]
-  proxies: IProxy[]
-  metas: IMetaData[]
-  records: IRecord[]
-}
 
 export type Task<T> = {taskID?: string, status: TaskStatus, type: T} // type === reqType
 export type TaskInProcess<T> = { [id: string]: Task<T>[] }
@@ -43,14 +32,6 @@ export const blinkCSS = (
   reqInProces: boolean = false, 
   color: string = 'text-cyan-600'
 ) => `${reqInProces ? `blink ${color}` : ''}`
-
-export const appState$ = observable<AppState>({
-  accounts: [],
-  domains: [],
-  proxies: [],
-  metas: [],
-  records: [],
-});
 
 export const getCompletedTaskID = <T>(reqInProcessList: TaskInProcess<T>, taskID: string): [string, number] => {
   for (const [k, v] of Object.entries(reqInProcessList)) {
@@ -79,7 +60,7 @@ export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>>
   isEntityPiplineEmpty: (id: string) => taskInProcess[id].peek() === undefined || !taskInProcess[id].peek().length,
   doesEntityHaveTIP: (id: string) => !!(taskInProcess[id].peek() && taskInProcess[id].peek().find(t1 => t1.taskID !== undefined)) , // background task (task in process)
   doesEntityHaveRIP: (id: string) => !!(taskInProcess[id].peek() && taskInProcess[id].peek().find(t1 => t1.taskID === undefined)),  // regular request (request in process)
-  isReqTypeInProcess: (entityID: string, reqType: ReqType) => taskInProcess[entityID].peek().find(t1 => t1.type === reqType),
+  isReqTypeInProcess: (entityID: string, reqType: T) => taskInProcess[entityID].peek().find(t1 => t1.type === reqType),
   deleteTaskByIDX: (id:string, index: number) => {
     const tip = taskInProcess[id].peek()
     if (tip && tip[index] && tip.length > 1) { taskInProcess[id][index].delete()} 
@@ -91,7 +72,7 @@ export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete() } 
     else if (tip && idx > -1 && tip.length === 1 ) { taskInProcess[entityID].delete() }
   },
-  deleteTaskByReqType: (entityID:string, reqType: ReqType) => {
+  deleteTaskByReqType: (entityID:string, reqType: T) => {
     const tip = taskInProcess[entityID].peek()
     const idx = tip.findIndex((t1) => t1.type !== reqType)
     if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete()} 
@@ -107,14 +88,14 @@ export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>>
   findTaskByReqType: (id:string, reqType: string) => taskInProcess[id].peek().find(t1 => t1.type === reqType),
 })
 
-export const ResStatusHelpers = (resStatus: ObservableObject<ResStatus>) => ({
-  add: (entityID: string, req: Status) => {
+export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>) => ({
+  add: (entityID: string, req: Status<RT>) => {
     const rs = resStatus[entityID].peek()
     rs && rs.length 
       ? resStatus[entityID].push(req)
       : resStatus[entityID].set([req])
   },
-  delete: (entityID: string, reqType: ReqType) => {
+  delete: (entityID: string, reqType: RT) => {
     const rs = resStatus[entityID].peek()
     rs && rs.length > 1
         ? resStatus[entityID].set(rs1 => rs1.filter(rs2 => rs2[0] !== reqType))

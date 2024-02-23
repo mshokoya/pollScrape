@@ -1,93 +1,20 @@
 import { FormEvent, MouseEvent, useEffect, useState } from "react"
-import {ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess, TaskStatus, appState$, fetchData} from '../core/util';
+import { ResStatusHelpers, TaskHelpers, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
-import { observer, useObservable, useSelector } from "@legendapp/state/react";
+import { observer, useSelector } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
-import { IOResponse, io } from "../core/io";
+import { accountState, taskHelper, resStatusHelper, IAccount, AccountReqType } from "../core/state/apollo";
+import { appState$ } from "@/core/state";
 
-export type IAccount = {
-  _id: string
-  domain: string
-  accountType: string
-  trialTime: string
-  suspended: boolean
-  verified: boolean
-  loginType: 'default' | 'gmail' | 'outlook'
-  email: string
-  password: string
-  cookie: string
-  firstname: string
-  lastname: string
-  proxy: string
-  domainEmail: string
-  lastUsed: Date
-  recoveryEmail: string
-  emailCreditsUsed: number
-  emailCreditsLimit: number
-  renewalDateTime: number | Date
-  renewalStartDate: number | Date
-  renewalEndDate: number | Date
-  trialDaysLeft: number
-  apolloPassword: string
-}
-
-export type ReqType = 'confirm' | 'check' | 'login' | 'update' | 'manualLogin'  | 'manualUpgrade' | 'mines' | 'upgrade' | 'delete' | 'new'
-
-export type State = {
-  input: Partial<IAccount>
-    selectedAcc: number | null
-    reqInProcess: TaskInProcess<ReqType>
-    reqType: string | null
-    resStatus: ResStatus,
-    addType: 'domain' | 'email'
-    selectedDomain: string | null
-}
-
-// https://jsfiddle.net/mfwYS/
-// https://medium.com/@stephenbunch/how-to-make-a-scrollable-container-with-dynamic-height-using-flexbox-5914a26ae336
 
 export const AccountField = observer(() => {
   const accounts = useSelector(appState$.accounts) as IAccount[]
   const domains = useSelector(appState$.domains) as IDomain[]
-  const s = useObservable<State>({
-    input: {email: '', password: '', recoveryEmail: '', domainEmail: ''},
-    selectedAcc: null,
-    reqInProcess: {},  // reqInProcess: [],
-    reqType: null,
-    resStatus: {},
-    addType: 'email',
-    selectedDomain: null,
-  })
-  const taskHelper = TaskHelpers(s.reqInProcess)
-  const resStatusHelper = ResStatusHelpers(s.resStatus)
 
-  io.on('apollo', function (msg: IOResponse) {
-    console.log(msg)
-    const [accountID, idx, task] = taskHelper.getTaskByTaskID(msg.taskID)
-    if (!accountID || !idx || !task) return;
-
-    if (msg.data.accountID) {
-      taskHelper.add(accountID, {taskID: msg.taskID,type: msg.type! as ReqType, status: msg.status as TaskStatus
-      })
-
-    } else if (msg.ok !== null && msg.ok !== undefined) {
-      msg.ok
-        ? resStatusHelper.add(accountID, [task.type, 'ok'])
-        : resStatusHelper.add(accountID, [task.type, 'fail'])
-
-      handleIOResponse(msg as IOResponse<IAccount, ReqType>)
-
-      setTimeout(() => {
-        batch(() => {
-          taskHelper.deleteTaskByIDX(accountID, idx)
-          resStatusHelper.delete(accountID, task.type)
-        })
-      }, 1500)
-    } 
-  })
+  const s = accountState
 
   useEffect(() => {
     fetchData<IAccount[]>('/account', 'GET')
@@ -112,28 +39,6 @@ export const AccountField = observer(() => {
         //@ts-ignore
         e.target.closest('tr').nextSibling.firstElementChild?.classList.toggle('hidden')
         break;
-    }
-  }
-
-  const handleIOResponse = (msg: IOResponse<IAccount, ReqType>) => {
-    switch (msg.type) {
-      // case 'login'
-      // case 'delete':
-      case 'new':
-        if(msg.ok) appState$.accounts.push(msg.data)
-        break;
-      case 'confirm':
-      case 'mines':
-      case 'manualUpgrade':
-      case 'update':
-      case 'upgrade':
-      case 'check':
-        if (msg.ok) {
-          appState$.accounts.set(
-            (a1) => a1.map(a2 => a2._id === msg.data._id ? msg.data : a2 )
-          )
-        }
-        break
     }
   }
 
@@ -411,8 +316,8 @@ export const AccountField = observer(() => {
 type EmailProps = {
   input: Observable<Partial<IAccount>>
   addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
-  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
-  resStatusHelper: ReturnType<typeof ResStatusHelpers>
+  taskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
+  resStatusHelper: ReturnType<typeof ResStatusHelpers<AccountReqType>>
 }
 
 export const EmailForm = (props: EmailProps) => {
@@ -473,8 +378,8 @@ type DomainProps = {
   domains: IDomain[]
   addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
   selectedDomain: ObservableObject<string>
-  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
-  resStatusHelper: ReturnType<typeof ResStatusHelpers>
+  taskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
+  resStatusHelper: ReturnType<typeof ResStatusHelpers<AccountReqType>>
 }
 
 export const DomainForm = (props: DomainProps) => {

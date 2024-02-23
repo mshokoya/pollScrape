@@ -1,9 +1,9 @@
 import { TaskHelpers } from "../core/util";
 import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
-import { IAccount, ReqType } from "./AccountField";
 import { useObservable } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
+import { AccountReqType, IAccount } from "@/core/state/apollo";
 
 
 type Props = {
@@ -19,7 +19,7 @@ type Props = {
   setPopup: Dispatch<SetStateAction<number | null>>
   account: IAccount
   req:  string | null
-  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
+  taskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
 }
 
 type Page = 'main' | 'update'
@@ -30,7 +30,7 @@ export const AccountPopup = ( props : Props) => {
   const obs = useObservable<State>({ input: {...props.account}, page: 'main'})
   const handleClose = () => props.setPopup(null)
 
-  const handleRequest = async (h: ReqType) => {
+  const handleRequest = async (h: AccountReqType) => {
     switch(h) {
       case 'login':
         await props.login()
@@ -90,9 +90,9 @@ export const AccountPopup = ( props : Props) => {
 }
 
 type MProps = {
-  handleRequest: (a: ReqType) => Promise<void>
+  handleRequest: (a: AccountReqType) => Promise<void>
   obs: ObservableObject<State>
-  taskHelper: ReturnType<typeof TaskHelpers<ReqType>>
+  taskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
   account: IAccount
 } & Props 
 
@@ -158,7 +158,7 @@ export const MainFields = (props: MProps) => {
 // ===============================================
 
 type UFProps = {
-  handleRequest: (input: ReqType) => Promise<void>
+  handleRequest: (input: AccountReqType) => Promise<void>
   obs: Observable<State>
   account: IAccount
 }
