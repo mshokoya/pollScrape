@@ -26,14 +26,6 @@ export const DomainField = () => {
     // {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
   ])
 
-  useEffect(() => {
-    fetchData<IDomain[]>('/domain', 'GET')
-      .then(data => {
-        setDomains(data.data)
-      })
-      .catch(() => {})
-  }, [])
-
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore

@@ -16,12 +16,6 @@ export const AccountField = observer(() => {
 
   const s = accountState
 
-  useEffect(() => {
-    fetchData<IAccount[]>('/account', 'GET')
-      .then(data => appState$.accounts.set(data.data))
-      .catch(() => {})
-  }, [])
-
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
@@ -52,7 +46,13 @@ export const AccountField = observer(() => {
     // s.reqType.set('login')
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc]._id
+    console.log('th is the login')
+    console.log(accountID)
+    console.log(stateHelper.getEntityTasks(accountID).length)
     await fetchData(`/account/login/a/${accountID}`, 'GET')
+      .then(() => {
+        console.log(stateHelper.getEntityTasks(accountID).length)
+      })
   }
 
   const manualLogin = async () => {

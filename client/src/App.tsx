@@ -1,10 +1,14 @@
 import { RecordField } from './components/RecordField';
 import { ScrapeField } from './components/ScrapeField';
 import { Sidebar } from './components/Sidebar';
+import {io} from './core/io/index.ts';
+
 
 
 
 function App() {
+
+  io
 
   return (
     <div className='flex'>

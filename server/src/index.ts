@@ -49,7 +49,7 @@ mongoose.connect(process.env.MONGOURI!)
     const io = initSocketIO(server)
     console.log('SocketIO started')
 
-    initTaskQueue(io)
+    initTaskQueue()
     console.log('TaskQueue started')
 
     initForwarder()

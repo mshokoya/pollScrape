@@ -41,7 +41,8 @@ export const getCompletedTaskID = <T>(reqInProcessList: TaskInProcess<T>, taskID
   return ['', -1]
 }
 
-export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>> ) => ({
+export function TaskHelpers <T>(taskInProcess: ObservableObject<TaskInProcess<T>> ) {
+  return {
   getTaskByTaskID: (taskID: string): [entityID: string, idx: number, task?: Task<T>] => {
     for (const [k, v] of Object.entries(taskInProcess.peek())) {
       const taskIdx = v.findIndex(_ => _.taskID === taskID)
@@ -91,7 +92,8 @@ export const TaskHelpers = <T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     const tip = taskInProcess[entityID].peek().find(t => t.taskID === taskID)
     if (idx !== -1 && tip) taskInProcess[entityID][idx].set({...tip, ...vals})
   }
-})
+  }
+}
 
 export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>) => ({
   add: (entityID: string, req: Status<RT>) => {
@@ -101,16 +103,17 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
       : resStatus[entityID].set([req])
   },
   delete: (entityID: string, reqType: RT) => {
-    const rs = resStatus[entityID].peek()
-    rs && rs.length > 1
-        ? resStatus[entityID].set(rs1 => rs1.filter(rs2 => rs2[0] !== reqType))
-        : resStatus[entityID].delete()
+    const rsl = resStatus[entityID]
+    if (rsl.peek() && rsl.peek().length > 1) {
+      const rs = rsl.find(rs1 => rs1[0].peek() === reqType)
+      if (rs) { rs.delete() }
+    } else {
+      resStatus[entityID].delete()
+    }
   },
   getByID: (entityID: string, idx: number) => {
-    const rs = resStatus[entityID].peek()
+    const rs = resStatus[entityID].get()
     if (!rs || !rs.length) return ['', '']
-    return idx
-      ? rs[idx]
-      : rs
+    return rs[idx]
   },
 })
