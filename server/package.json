@@ -40,6 +40,7 @@
     "typescript": "^5.3.3",
     "uuid": "^9.0.1",
     "workerpool": "^9.1.0",
+    "ws": "^8.16.0",
     "xoauth2": "^1.2.0"
   },
   "devDependencies": {

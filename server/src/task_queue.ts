@@ -49,7 +49,7 @@ const TaskQueue = () => {
       queue.push({id, action, args, taskGroup, taskType, message, metadata})
     }).then(() => {
       console.log('we in the then')
-      io.emit('taskQueue', {message: 'new task added to queue', status: 'queue', taskType: 'append',  metadata: {taskID: id, taskGroup, taskType, metadata}})
+      io.emit('taskQueue', {message: 'new task added to queue', status: 'enqueue', taskType: 'append',  metadata: {taskID: id, taskGroup, taskType, metadata}})
     }).finally(() => { exec() })
   }
 
@@ -58,7 +58,7 @@ const TaskQueue = () => {
       return queue.shift();
     }).then((t) => {
       if (!t) return
-      io.emit('taskQueue', {message: 'moving from queue to processing', taskType: 'switch',  metadata: {taskID: t.id, taskGroup: t.taskGroup, taskType: t.taskType, metadata: t.metadata}})
+      io.emit('taskQueue', {message: 'moving from queue to processing', taskType: 'dequeue',  metadata: {taskID: t.id, taskGroup: t.taskGroup, taskType: t.taskType, metadata: t.metadata}})
       return t
     })
   }
@@ -75,7 +75,7 @@ const TaskQueue = () => {
     return _Plock.runExclusive(() => {
       TIP.push(item)
     }).then(() => {
-      io.emit('processQueue', {message: 'new task added to processing queue', status: 'processing', taskType: 'append',  metadata: {taskID: item[0]}})
+      io.emit('processQueue', {message: 'new task added to processing queue', status: 'start', taskType: 'append',  metadata: {taskID: item[0]}})
     }).finally(() => { exec() })
   }
 
@@ -83,7 +83,7 @@ const TaskQueue = () => {
     return _Plock.runExclusive(() => {
       TIP = TIP.filter(task => task[0] !== id);
     }).then(() => {
-      io.emit('processQueue', {message: 'removed completed task from queue', taskType: 'remove',  metadata: {taskID: id}})
+      io.emit('processQueue', {message: 'removed completed task from queue', taskType: 'end',  metadata: {taskID: id}})
     })
   }
 
@@ -116,7 +116,7 @@ const TaskQueue = () => {
       if (TIP.length >= maxWorkers) return;
       const task = await dequeue();
       if (!task) return;
-      io.emit('processQueue', {message: `starting ${task.id} processing`, taskType: 'start',  metadata: {taskID: task.id}})
+      
 
       const taskIOArgs = {
         taskGroup: task.taskGroup, 
@@ -125,6 +125,7 @@ const TaskQueue = () => {
       }
 
       const tsk = new AbortablePromise((resolve, reject, signal) => {
+        io.emit('processQueue', {message: `starting ${task.id} processing`, taskType: 'processing',  metadata: {taskID: task.id}})
         signal.onabort = reject;
         task.action()
           .then((r) => { resolve(r) })

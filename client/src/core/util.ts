@@ -6,9 +6,9 @@ import { ObservableObject } from "@legendapp/state";
 export type Status<ReqType> = [reqType: ReqType, status: 'ok'|'fail']
 export type ResStatus<T> = {[entityID: string]: Status<T>[]}
 
-export type TaskStatus = 'queue' | 'processing' | 'timeout'
-
+export type TaskStatus = 'queue' | 'processing' | 'timeout' | 'passing'
 export type Task<T> = {taskID?: string, type: T, status: TaskStatus} // type === reqType
+
 export type TaskInProcess<T> = { [id: string]: Task<T>[] }
 
 export function cn(...inputs: ClassValue[]) {
@@ -16,6 +16,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export type FetchData<T = unknown> = {ok: boolean, message: string | null, data: T}
+
+export const delay = (time: number) => {
+  return new Promise(function(resolve) { 
+      setTimeout(resolve, time)
+  });
+}
 
 export const fetchData = async <T>(url: string, method: string, data?: any): Promise<FetchData<T>> => {
   return await fetch(`http://localhost:4000${url}`, {
