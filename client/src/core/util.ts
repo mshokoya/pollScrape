@@ -74,8 +74,11 @@ export function TaskHelpers <T>(taskInProcess: ObservableObject<TaskInProcess<T>
     else if ((tip && tip[index] && tip.length === 1)) { taskInProcess[id].delete() }
   },
   deleteTaskByTaskID: (entityID:string, taskID: string) => {
+    console.log('peek')
+    console.log(entityID, taskID)
+    console.log(taskInProcess[entityID].peek())
     const tip = taskInProcess[entityID].peek()
-    const idx = tip.findIndex((t1) => t1.taskID !== taskID)
+    const idx = tip.findIndex((t1) => t1.taskID === taskID)
     if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete() } 
     else if (tip && idx > -1 && tip.length === 1 ) { taskInProcess[entityID].delete() }
   },
@@ -110,10 +113,13 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
   },
   delete: (entityID: string, reqType: RT) => {
     const rsl = resStatus[entityID]
+    console.log(rsl.peek() && rsl.peek().length > 1)
     if (rsl.peek() && rsl.peek().length > 1) {
+      console.log('del if')
       const rs = rsl.find(rs1 => rs1[0].peek() === reqType)
       if (rs) { rs.delete() }
     } else {
+      console.log('del else')
       resStatus[entityID].delete()
     }
   },

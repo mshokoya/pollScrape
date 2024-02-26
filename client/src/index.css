@@ -25,6 +25,13 @@ input, select {
   height: 100vh;
 }
 
+svg {
+  display: inline;
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+}
+
 .rowhide {
   visibility: hidden;
 }
@@ -95,4 +102,18 @@ input, select {
   100% {
     background-color: transparent;
   }
+}
+
+.ghost > * { fill: #9f1239; }
+.ghost-float { animation: floating 1s infinite ease-in-out;}
+@keyframes floating {
+  50% {
+    transform: translateY(-6px)
+  }
+}
+
+.rainbow-text {
+  background-image: linear-gradient(to bottom, violet, indigo, blue, green, yellow, orange, red);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

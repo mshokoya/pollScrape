@@ -14,24 +14,20 @@ export type ApolloSocketEvent<T = Record<string, any>> = {
 
 export function handleApolloEvent(res: ApolloSocketEvent<IAccount>) {
   const [accountID, idx, task] = stateHelper.getTaskByTaskID(res.taskID)
-  if (!accountID || !idx || !task) return;
+  if (!accountID || idx === -1 || !task) return;
 
-
-  if (res.ok !== null && res.ok !== undefined) {
-    console.log('dasdklasa')
+  if (res.ok === undefined) {
+    console.log(res.message)
   } else  {
     res.ok
-    ? stateResStatusHelper.add(accountID, [task.type, 'ok'])
-    : stateResStatusHelper.add(accountID, [task.type, 'fail'])
+      ? stateResStatusHelper.add(accountID, [task.type, 'ok'])
+      : stateResStatusHelper.add(accountID, [task.type, 'fail'])
 
     processApolloEventData(task.type, res)
 
     setTimeout(() => {
-      batch(() => {
-        stateHelper.deleteTaskByTaskID(accountID, task.taskID!)
         stateResStatusHelper.delete(accountID, task.type)
-      })
-    }, 1500)
+    }, 1700)
   }
 }
 
@@ -71,7 +67,6 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
       break
     case 'remove':
       batch(() => {
-        console.log('dequeue')
         const  tsk = taskQueue.queue.find(t => t.metadata.taskID.get() === res.metadata.taskID)
         if (!tsk) return;
         const t2 = tsk.peek()
@@ -84,7 +79,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
         const tsk = taskQueue.queue.find(t => t.metadata.taskID.get() === res.metadata.taskID)
         if (!tsk) return
         tsk.status.set('passing')
-        stateHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID.peek(), {status:'passing'})
+        stateHelper.updateTask(tsk.metadata.metadata.accountID.peek(), tsk.metadata.taskID.peek(), {status:'passing'})
       })
       break
     case 'timeout':

@@ -247,11 +247,19 @@ export const accountRoutes = (app: Express) => {
         `Logging into ${account.domainEmail} apollo account`,
         {accountID},
         async () => {
+          io.emit('apollo', {taskID, message: "starting the browser"})
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            io.emit('apollo', {taskID, message: "attempting to login"})
             await logIntoApollo(taskID, browserCTX, account)
+              .then(() => { io.emit('apollo', {taskID, message: "login complete"}) })
+            
+            io.emit('apollo', {taskID, message: "attempting to update browser cookies in db"})
             const cookies = await getBrowserCookies(browserCTX)
+              .then(() => { io.emit('apollo', {taskID, message: "collected browser cookies"}) })
+            
+            io.emit('apollo', {taskID, message: "saving browser cookies in db"})
             await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
           } finally {
             await scraper.close(browserCTX)
@@ -263,7 +271,6 @@ export const accountRoutes = (app: Express) => {
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: null});
     }
-
   })
 
   app.delete('/account/:id', async (req, res) => {

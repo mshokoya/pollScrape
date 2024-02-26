@@ -78,19 +78,19 @@ export const logIntoApollo = async (taskID: string, browserCTX: BrowserContext, 
   switch (account.loginType) {
     case 'default':
       await apolloDefaultLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo via custom'}) })
       break;
     case 'outlook':
       await apolloOutlookLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo via outlook'}) })
       break;
     case 'gmail':
       await apolloGmailLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo via gmail'}) })
       break
     default:
       await apolloDefaultLogin(taskID, browserCTX, account)
-        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo'}) })
+        .then(() => {  io.emit('apollo', {taskID, message: 'successfully logged into apollo via custom'}) })
       break;
   }
 }

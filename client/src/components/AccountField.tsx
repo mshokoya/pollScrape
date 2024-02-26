@@ -46,13 +46,7 @@ export const AccountField = observer(() => {
     // s.reqType.set('login')
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc]._id
-    console.log('th is the login')
-    console.log(accountID)
-    console.log(stateHelper.getEntityTasks(accountID).length)
     await fetchData(`/account/login/a/${accountID}`, 'GET')
-      .then(() => {
-        console.log(stateHelper.getEntityTasks(accountID).length)
-      })
   }
 
   const manualLogin = async () => {
@@ -161,7 +155,7 @@ export const AccountField = observer(() => {
 
   const PopupComp = () => s.selectedAcc.get()
       ? <AccountPopup
-          req={s.reqType.peek()}
+          req={s.reqType.get()}
           manualLogin={manualLogin}
           updateAccount={updateAccount}
           setPopup={setPopup}
@@ -171,7 +165,7 @@ export const AccountField = observer(() => {
           clearMines={clearMines}
           upgradeAccount={upgradeAccount}
           manualUpgradeAccount={manualUpgradeAccount}
-          account={accounts[s.selectedAcc.peek()]}
+          account={accounts[s.selectedAcc.get()]}
           confirmAccount={confirmAccount}
         />
       : null;
@@ -238,7 +232,7 @@ export const AccountField = observer(() => {
                     <>
                       <tr
                       className={`
-                        text-[0.8rem] text-center hover:border-cyan-600 hover:border
+                          text-[0.8rem] text-center hover:border-cyan-600 hover:border
                           ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'}
                           ${ stateHelper.getEntityTasks(a._id).length ? 'fieldBlink' : '' }
                           ${ stateResStatusHelper.getByID(a._id, 0)[1] === 'ok' ? 'resOK' : '' }

@@ -82,6 +82,7 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
   
   if (!page.url().includes(apolloLoggedOutURLSubstr)) {
     await visitApolloLoginPage(taskID, browserCTX)
+      .then(() => { })
   }
 
   const submitButton = await page.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
@@ -108,7 +109,7 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
 
   await delay(2000)
 
-  if (page.url().includes('#/login')) {
+  if (page.url().includes('#/login') || page.url().includes('google.com') || page.url().includes('microsoftonline.com')) {
     throw new AppError(taskID,'failed to login, could not navigate to dashboard, please login manually and make sure login details are correct and working')
   }
 }

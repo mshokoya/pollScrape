@@ -1,12 +1,12 @@
-// import {TaskQueueSocketEvent} from './core/io/index.ts'; 
+import 'react-tooltip/dist/react-tooltip.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { enableReactTracking } from '@legendapp/state/config/enableReactTracking';
 import {connect} from "socket.io-client";
-import { TaskQueueSocketEvent, handleTaskQueueEvent } from './core/io/taskqueue.ts';
-import { handleApolloEvent, handleApolloProcessQueueEvents, handleApolloTaskQueueEvents } from './core/io/apollo.ts';
+import { handleTaskQueueEvent } from './core/io/taskqueue.ts';
+import { handleApolloEvent, handleApolloProcessQueueEvents} from './core/io/apollo.ts';
 
 enableReactTracking({
   auto: true,

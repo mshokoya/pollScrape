@@ -24,7 +24,6 @@ export const taskQueue = observable<{
 })
 
 export function handleTaskQueueEvent(res: TaskQueueSocketEvent<any>) {
-  console.log(res)
   switch (res.metadata.taskGroup){
     case 'apollo':
       handleApolloTaskQueueEvents(res)

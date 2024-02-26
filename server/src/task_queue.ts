@@ -49,7 +49,7 @@ const TaskQueue = () => {
       queue.push({id, action, args, taskGroup, taskType, message, metadata})
     }).then(() => {
       console.log('we in the then')
-      io.emit('taskQueue', {message: 'new task added to queue', status: 'enqueue', taskType: 'append',  metadata: {taskID: id, taskGroup, taskType, metadata}})
+      io.emit('taskQueue', {message: 'new task added to queue', status: 'enqueue', taskType: 'enqueue',  metadata: {taskID: id, taskGroup, taskType, metadata}})
     }).finally(() => { exec() })
   }
 
@@ -58,7 +58,7 @@ const TaskQueue = () => {
       return queue.shift();
     }).then((t) => {
       if (!t) return
-      io.emit('taskQueue', {message: 'moving from queue to processing', taskType: 'dequeue',  metadata: {taskID: t.id, taskGroup: t.taskGroup, taskType: t.taskType, metadata: t.metadata}})
+      io.emit('taskQueue', {message: 'moving from queue to processing', status: 'passing', taskType: 'dequeue',  metadata: {taskID: t.id, taskGroup: t.taskGroup, taskType: t.taskType, metadata: t.metadata}})
       return t
     })
   }
@@ -67,7 +67,7 @@ const TaskQueue = () => {
     return _Qlock.runExclusive(() => {
       queue.filter(task => task.id !== id);
     }).then(() => {
-      io.emit('taskQueue', {message: 'deleting task from queue', taskType: 'remove',  metadata: {taskID: id}})
+      io.emit('taskQueue', {message: 'deleting task from queue', status: 'removed', taskType: 'remove',  metadata: {taskID: id}})
     })
   }
 
@@ -75,7 +75,7 @@ const TaskQueue = () => {
     return _Plock.runExclusive(() => {
       TIP.push(item)
     }).then(() => {
-      io.emit('processQueue', {message: 'new task added to processing queue', status: 'start', taskType: 'append',  metadata: {taskID: item[0]}})
+      io.emit('processQueue', {message: 'new task added to processing queue', status: 'start', taskType: 'enqueue',  metadata: {taskID: item[0]}})
     }).finally(() => { exec() })
   }
 
@@ -83,7 +83,7 @@ const TaskQueue = () => {
     return _Plock.runExclusive(() => {
       TIP = TIP.filter(task => task[0] !== id);
     }).then(() => {
-      io.emit('processQueue', {message: 'removed completed task from queue', taskType: 'end',  metadata: {taskID: id}})
+      io.emit('processQueue', {message: 'removed completed task from queue', status: 'end', taskType: 'dequeue',  metadata: {taskID: id}})
     })
   }
 
@@ -93,7 +93,7 @@ const TaskQueue = () => {
       if (!process) return null;
       return await process[2].abort()
     }).then(() => {
-      io.emit('processQueue', {message: 'cancelled', taskType: 'stop',  metadata: {taskID: id}})
+      io.emit('processQueue', {message: 'cancelled', status: 'stopped', taskType: 'stop',  metadata: {taskID: id}})
     })
     .finally(() => {
       exec()
@@ -135,7 +135,7 @@ const TaskQueue = () => {
           io.emit(task.taskGroup, {...taskIOArgs, ok: true,  metadata: r})
         })
         .catch(async (err) => {
-          io.emit(task.taskGroup,  {...taskIOArgs, ok: true, message: err.message, })
+          io.emit(task.taskGroup,  {...taskIOArgs, ok: false, message: err.message})
         })
         .finally(() => {
           _TIP_Dequeue(task.id)
