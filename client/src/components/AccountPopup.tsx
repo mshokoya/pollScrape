@@ -1,6 +1,5 @@
-import { Dispatch, SetStateAction } from "react";
 import { IoMdClose } from "react-icons/io";
-import { useObservable } from "@legendapp/state/react";
+import { observer, useObservable } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
 import { AccountReqType, IAccount, stateHelper } from "../core/state/apollo";
 
@@ -15,7 +14,7 @@ type Props = {
   deleteAccount: () => Promise<void>
   clearMines: () => Promise<void>
   confirmAccount: () => Promise<void>
-  setPopup: Dispatch<SetStateAction<number | null>>
+  setPopup: (idx: number | null) => void
   account: IAccount
   req:  string | null
 }
@@ -24,7 +23,7 @@ type Page = 'main' | 'update'
 
 type State = {input: IAccount, page: Page}
 
-export const AccountPopup = ( props : Props) => {
+export const AccountPopup = observer(( props : Props) => {
   const obs = useObservable<State>({ input: {...props.account}, page: 'main'})
   const handleClose = () => props.setPopup(null)
 
@@ -85,7 +84,7 @@ export const AccountPopup = ( props : Props) => {
       </div>
     </div>
   )
-}
+})
 
 type MProps = {
   handleRequest: (a: AccountReqType) => Promise<void>
@@ -93,7 +92,7 @@ type MProps = {
   account: IAccount
 } & Props 
 
-export const MainFields = (props: MProps) => {
+export const MainFields = observer((props: MProps) => {
 
   return (
     <>
@@ -148,7 +147,7 @@ export const MainFields = (props: MProps) => {
       </div>
     </>
   )
-}
+})
 
 // ===============================================
 
@@ -158,7 +157,7 @@ type UFProps = {
   account: IAccount
 }
 
-export const UpdateFields = ({obs, handleRequest, account}: UFProps) => {
+export const UpdateFields = observer(({obs, handleRequest, account}: UFProps) => {
 
   const backToMain = () => {
     batch(() => {
@@ -200,4 +199,4 @@ export const UpdateFields = ({obs, handleRequest, account}: UFProps) => {
       </form>
     </>
   )
-}
+})

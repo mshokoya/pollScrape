@@ -1,4 +1,4 @@
-import { FormEvent, MouseEvent, useEffect, useState } from "react"
+import { FormEvent, MouseEvent, useState } from "react"
 import { ResStatusHelpers, TaskHelpers, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
@@ -151,11 +151,11 @@ export const AccountField = observer(() => {
       ? n.toDateString()
       : n;
 
-  const setPopup = (v: any) => {s.selectedAcc.set(v)}
+  const setPopup = (v: number | null) => {s.selectedAcc.set(v)}
 
   const PopupComp = () => s.selectedAcc.get()
       ? <AccountPopup
-          req={s.reqType.get()}
+          req={s.reqType.peek()}
           manualLogin={manualLogin}
           updateAccount={updateAccount}
           setPopup={setPopup}
@@ -165,7 +165,7 @@ export const AccountField = observer(() => {
           clearMines={clearMines}
           upgradeAccount={upgradeAccount}
           manualUpgradeAccount={manualUpgradeAccount}
-          account={accounts[s.selectedAcc.get()]}
+          account={accounts[s.selectedAcc.peek()]}
           confirmAccount={confirmAccount}
         />
       : null;

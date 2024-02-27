@@ -13,7 +13,7 @@ type QueueItem = {
   taskGroup: string,
   taskType: string,
   message: string,
-  metadata: Record<string, string | number>
+  metadata: Record<string, string | number> & {taskID: string}
   action: () => Promise<any>,
   args?: Record<string, any>
 }
