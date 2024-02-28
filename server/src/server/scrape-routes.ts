@@ -1,14 +1,14 @@
 import { Express } from 'express';
-import { startScrapingApollo } from '../scraper';
+import { startScrapingApollo } from '../scraper/apollo';
 import { initMeta, updateAccount } from '../database';
 import { IMetaData, MetadataModel } from '../database/models/metadata';
-import { scraper } from '../scraper/scraper';
+import { scraper } from '../scraper/apollo/scraper';
 import { getDomain, isNumber } from '../helpers';
 import { taskQueue } from '../task_queue';
 import { generateSlug } from 'random-word-slugs';
 import { mailbox } from '../mailbox';
 import { ImapFlowOptions } from 'imapflow';
-import { getBrowserCookies } from '../scraper/util';
+import { getBrowserCookies } from '../scraper/apollo/util';
 import { AccountModel } from '../database/models/accounts';
 
 

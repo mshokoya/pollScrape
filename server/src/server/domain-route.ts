@@ -14,7 +14,7 @@ export const domainRoutes = (app: Express) => {
       const domain = req.body.domain;
       if (!domain) throw new Error('Failed to add domain, invalid domain');
 
-      if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain')
+      if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain') // (FIX) find lib to do this better
 
       const doesExist = await DomainModel.findOne({domain}).lean();
       if (doesExist) throw new Error('domain already exists')
@@ -76,6 +76,16 @@ export const domainRoutes = (app: Express) => {
       const domains = await DomainModel.find({}).lean()
 
       res.json({ok: true, message: null, data: domains});
+    } catch (err: any) {
+      res.json({ok: false, message: err.message, data: err});
+    }
+  })
+
+  // (FIX) this route is used to make sure domains in DB match domain is forwarder (run on startup)
+  app.get('/domain/lineup', async (req, res) => {
+    console.log('lineup')
+    try{
+      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }

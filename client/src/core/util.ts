@@ -64,14 +64,14 @@ export function TaskHelpers <T>(taskInProcess: ObservableObject<TaskInProcess<T>
     return ['', -1, undefined]
   },
   getEntityTasks: (entityID: string) => taskInProcess[entityID].get() || [],
-  isEntityPiplineEmpty: (id: string) => taskInProcess[id].peek() === undefined || !taskInProcess[id].peek().length,
-  doesEntityHaveTIP: (id: string) => !!(taskInProcess[id].peek() && taskInProcess[id].peek().find(t1 => t1.taskID !== undefined)) , // background task (task in process)
-  doesEntityHaveRIP: (id: string) => !!(taskInProcess[id].peek() && taskInProcess[id].peek().find(t1 => t1.taskID === undefined)),  // regular request (request in process)
+  isEntityPiplineEmpty: (entityID: string) => taskInProcess[entityID].peek() === undefined || !taskInProcess[entityID].peek().length,
+  doesEntityHaveTIP: (entityID: string) => !!(taskInProcess[entityID].peek() && taskInProcess[entityID].peek().find(t1 => t1.taskID !== undefined)) , // background task (task in process)
+  doesEntityHaveRIP: (entityID: string) => !!(taskInProcess[entityID].peek() && taskInProcess[entityID].peek().find(t1 => t1.taskID === undefined)),  // regular request (request in process)
   isReqTypeInProcess: (entityID: string, reqType: T) => taskInProcess[entityID].peek().find(t1 => t1.type === reqType),
-  deleteTaskByIDX: (id:string, index: number) => {
-    const tip = taskInProcess[id].peek()
-    if (tip && tip[index] && tip.length > 1) { taskInProcess[id][index].delete()} 
-    else if ((tip && tip[index] && tip.length === 1)) { taskInProcess[id].delete() }
+  deleteTaskByIDX: (entityID:string, index: number) => {
+    const tip = taskInProcess[entityID].peek()
+    if (tip && tip[index] && tip.length > 1) { taskInProcess[entityID][index].delete()} 
+    else if ((tip && tip[index] && tip.length === 1)) { taskInProcess[entityID].delete() }
   },
   deleteTaskByTaskID: (entityID:string, taskID: string) => {
     console.log('peek')
@@ -88,14 +88,14 @@ export function TaskHelpers <T>(taskInProcess: ObservableObject<TaskInProcess<T>
     if (tip && idx > -1 && tip.length > 1 ) { taskInProcess[entityID][idx].delete()} 
     else if (tip && idx > -1 && tip.length === 1 ) { taskInProcess[entityID].delete() }
   },
-  add: (id: string, task: Task<T>) => {
-    const tip = taskInProcess[id].peek()
+  add: (entityID: string, task: Task<T>) => {
+    const tip = taskInProcess[entityID].peek()
     tip && tip.length
-      ? taskInProcess[id].push(task)
-      : taskInProcess[id].set([task])
+      ? taskInProcess[entityID].push(task)
+      : taskInProcess[entityID].set([task])
   },
-  findTaskByTaskID: (id:string, taskID: string) => taskInProcess[id].peek().find(t1 => t1.taskID === taskID),
-  findTaskByReqType: (id:string, reqType: string) => taskInProcess[id].peek().find(t1 => t1.type === reqType),
+  findTaskByTaskID: (entityID:string, taskID: string) => taskInProcess[entityID].peek().find(t1 => t1.taskID === taskID),
+  findTaskByReqType: (entityID:string, reqType: string) => taskInProcess[entityID].peek().find(t1 => t1.type === reqType),
   updateTask: (entityID: string, taskID: string, vals: Partial<Task<T>>) => {
     const idx = taskInProcess[entityID].peek().findIndex(t => t.taskID === taskID)
     const tip = taskInProcess[entityID].peek().find(t => t.taskID === taskID)

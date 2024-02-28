@@ -3,7 +3,7 @@ import { observable } from "@legendapp/state";
 import { IDomain } from "../../components/DomainField";
 import { IProxy } from "../../components/ProxyField";
 import { IMetaData, IRecord } from "../../components/RecordField";
-import { IAccount } from "./apollo";
+import { IAccount } from "./account";
 import { fetchData } from "../util";
 
 

@@ -3,6 +3,11 @@ import {ResStatus, fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { DomainPopup } from "./DomainPopup";
+import { useSelector } from "@legendapp/state/react";
+import { observable } from "@legendapp/state";
+import { domainState, domainStateHelper, domainResStatusHelper } from "@/core/state/domain";
+import { accountState } from "../core/state/account";
+import { appState$ } from "@/core/state";
 
 
 
@@ -17,14 +22,15 @@ export type IDomain = {
 }
 
 export const DomainField = () => {
-  const [input, setInput] = useState({email: '', domain: ''});
-  const [selectedDomain, setSelectedDomain] = useState<number | null>(0)
-  const [reqInProcess, setReqInProcess] = useState<string[]>([])
-  const [reqType, setReqType] = useState<string | null>(null)
-  const [resStatus, setResStatus] = useState<ResStatus>(null)
-  const [domains, setDomains] = useState<IDomain[]>([
-    // {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
-  ])
+  const s = domainState
+  // const [input, setInput] = useState({email: '', domain: ''});
+  // const [selectedDomain, setSelectedDomain] = useState<number | null>(0)
+  // const [reqInProcess, setReqInProcess] = useState<string[]>([])
+  // const [reqType, setReqType] = useState<string | null>(null)
+  // const [resStatus, setResStatus] = useState<ResStatus>(null)
+  // const [domains, setDomains] = useState<IDomain[]>([
+  //   // {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
+  // ])
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
@@ -35,7 +41,7 @@ export const DomainField = () => {
       case 'opt':
         //@ts-ignore
         const domainIdx = e.target.closest('tr').dataset.idx;
-        setSelectedDomain(domainIdx)
+        s.selectedDomain.set(domainIdx)
         break;
       case 'extend':
         //@ts-ignore
@@ -48,23 +54,21 @@ export const DomainField = () => {
   
   const addDomain = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setReqInProcess([...reqInProcess, 'new'])
-    setReqType('create')
-    await fetchData<IDomain>('/domain', 'POST', input)
+    domainStateHelper.add('domain', {type: 'create', status: 'processing'})
+    await fetchData<IDomain>('/domain', 'POST', s.input.peek())
       .then((d) => {
         if (d.ok) {
-          setResStatus(['ok', 'new'])
-          setDomains([...domains, d.data])
+          domainResStatusHelper.add('domain', ['create', 'ok'])
+          appState$.domains.push(d.data)
         } else {
-          setResStatus(['fail', 'new'])
+          domainResStatusHelper.add('domain', ['create', 'fail'])
         }
       })
-      .catch(() => { setResStatus(['fail', 'new']) })
+      .catch(() => { domainResStatusHelper.add('domain', ['create', 'fail']) })
       .finally(() => {
         setTimeout(() => {
-          setReqInProcess(reqInProcess.filter(d => d !== 'new'))
-          setReqType(null)
-          setResStatus(null)
+          domainStateHelper.deleteTaskByReqType('domain', 'create')
+          domainResStatusHelper.delete('domain', 'create')
         }, 1500)
       })
   }

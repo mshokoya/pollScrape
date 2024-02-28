@@ -1,5 +1,5 @@
 import { batch } from '@legendapp/state';
-import { AccountReqType, IAccount, stateHelper, stateResStatusHelper } from '../state/apollo.ts';
+import { AccountReqType, IAccount, stateHelper, stateResStatusHelper } from '../state/account.ts';
 import { TaskQueueSocketEvent } from './taskqueue.ts';
 import { appState$ } from '../state/index.ts';
 import { taskQueue } from './taskqueue.ts';

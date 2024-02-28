@@ -6,7 +6,7 @@ import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
 import { observer, useSelector } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
-import { accountState, stateHelper, stateResStatusHelper, IAccount, AccountReqType } from "../core/state/apollo";
+import { accountState, stateHelper, stateResStatusHelper, IAccount, AccountReqType } from "../core/state/account";
 import { appState$ } from "../core/state";
 
 
@@ -14,7 +14,7 @@ export const AccountField = observer(() => {
   const accounts = useSelector(appState$.accounts) as IAccount[]
   const domains = useSelector(appState$.domains) as IDomain[]
 
-  const s = accountState
+  const s = accountState //useSelector ?
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
@@ -36,7 +36,7 @@ export const AccountField = observer(() => {
     }
   }
 
-  // (FIX) email verification + get domain to determine login type
+  // (FIX) email verification + get domain to determine login type // also colors 
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     await fetchData<IAccount>('/account', 'POST', {...s.input.peek(), addType: s.addType.peek(), selectedDomain: s.selectedDomain.peek()})
@@ -388,7 +388,7 @@ export const DomainForm = (props: DomainProps) => {
         id="domain"
         onChange={e => setSelected(e.target.value)}
         className={`
-          ${ props.stateHelper.getTaskByReqType('new').length ? 'fieldBlink' : '' }
+          ${ props.stateHelper.getTaskByReqType('new')[0] ? 'fieldBlink' : '' }
           ${ props.stateResStatusHelper.getByID('new', 0)[1] === 'ok' ? 'resOK' : '' }
           ${ props.stateResStatusHelper.getByID('new', 0)[1] === 'fail' ? 'resFail' : '' }
         `}

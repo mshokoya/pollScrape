@@ -10,10 +10,10 @@ import { AccountModel } from "./database/models/accounts"
 import {worker} from 'workerpool';
 import { IAccount } from "./database/models/accounts";
 import { mailbox } from "./mailbox";
-import { newMailEvent, signupForApollo } from "./scraper";
-import { getBrowserCookies } from "./scraper/util";
+import { newMailEvent, signupForApollo } from "./scraper/apollo";
+import { getBrowserCookies } from "./scraper/apollo/util";
 import { updateAccount } from "./database";
-import { scraper } from "./scraper/scraper";
+import { scraper } from "./scraper/apollo/scraper";
 import {resolve} from 'path'
 
 

@@ -4,10 +4,10 @@ import {
 } from './util'
 import {
   selectAccForScrapingFILO, selectProxy
-} from "../database/util";
+} from "../../database/util";
 import useProxy from 'puppeteer-page-proxy';
-import { AccountModel, IAccount } from '../database/models/accounts';
-import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../database';
+import { AccountModel, IAccount } from '../../database/models/accounts';
+import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../../database';
 import { 
   apolloConfirmAccount, 
   apolloDefaultLogin, 
@@ -17,14 +17,14 @@ import {
   goToApolloSearchUrl, 
   setupApolloForScraping, 
   upgradeApolloAccount 
-} from './apollo';
+} from '.';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
-import { MBEventArgs, accountToMailbox, mailbox } from '../mailbox';
-import { getApolloConfirmationLinksFromMail } from '../mailbox/apollo';
+import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
+import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
-import { io } from '../websockets';
-import { AppError } from '../helpers';
+import { io } from '../../websockets';
+import { AppError } from '../../helpers';
 
 // start apollo should use url
 // TODO

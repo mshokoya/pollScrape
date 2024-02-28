@@ -1,7 +1,7 @@
 import { Express } from 'express';
 import { updateAccount } from '../database';
 import { AccountModel, IAccount } from '../database/models/accounts';
-import { scraper } from '../scraper/scraper';
+import { scraper } from '../scraper/apollo/scraper';
 import { 
   apolloConfirmAccountEvent, 
   completeApolloAccountConfimation, 
@@ -11,8 +11,8 @@ import {
   logIntoApolloAndUpgradeAccountManually, 
   manuallyLogIntoApollo, 
   signupForApollo 
-} from '../scraper';
-import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/util';
+} from '../scraper/apollo';
+import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/apollo/util';
 import { AppError, generateID, getDomain } from '../helpers';
 import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';

@@ -1,9 +1,9 @@
 import { logIntoApollo } from ".";
-import { updateAccount } from "../database";
-import { IAccount } from "../database/models/accounts";
-import { IRecord } from "../database/models/records";
-import { AppError } from "../helpers";
-import { io } from "../websockets";
+import { updateAccount } from "../../database";
+import { IAccount } from "../../database/models/accounts";
+import { IRecord } from "../../database/models/records";
+import { AppError } from "../../helpers";
+import { io } from "../../websockets";
 import { apolloDoc } from "./dom/scrapeData";
 import { BrowserContext } from "./scraper";
 import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";

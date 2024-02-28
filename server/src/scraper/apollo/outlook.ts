@@ -8,10 +8,10 @@
 
 import { BrowserContext, apolloInitSignup, scraper } from "./scraper";
 import { delay, hideDom, waitForNavHideDom } from "./util";
-import { visitApolloLoginPage } from "./apollo";
-import { IAccount } from "../database/models/accounts";
-import { io } from "../websockets";
-import { AppError } from "../helpers";
+import { visitApolloLoginPage } from ".";
+import { IAccount } from "../../database/models/accounts";
+import { io } from "../../websockets";
+import { AppError } from "../../helpers";
 
 
 export const visitOutlookLoginAuthPortal = async (taskID: string, browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {

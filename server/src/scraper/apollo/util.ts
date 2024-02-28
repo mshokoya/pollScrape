@@ -1,9 +1,9 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { BrowserContext, visitGoogle } from "./scraper"
 import { logIntoApollo } from '.';
-import { updateAccount } from '../database';
-import { IAccount } from '../database/models/accounts';
-import { io } from '../websockets';
+import { updateAccount } from '../../database';
+import { IAccount } from '../../database/models/accounts';
+import { io } from '../../websockets';
 
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist

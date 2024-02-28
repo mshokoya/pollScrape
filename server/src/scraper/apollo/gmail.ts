@@ -1,10 +1,10 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { BrowserContext, apolloInitSignup } from './scraper';
-import { IAccount } from '../database/models/accounts';
-import { visitApolloLoginPage } from './apollo';
+import { IAccount } from '../../database/models/accounts';
+import { visitApolloLoginPage } from '.';
 import { delay, waitForNavHideDom } from './util';
-import { io } from '../websockets';
-import { AppError } from '../helpers';
+import { io } from '../../websockets';
+import { AppError } from '../../helpers';
 
 const verifyGmail = async (taskID: string, browserCTX: BrowserContext, recoverEmail: string) => {
   const page = browserCTX.page;

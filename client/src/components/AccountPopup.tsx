@@ -1,7 +1,7 @@
 import { IoMdClose } from "react-icons/io";
 import { observer, useObservable } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
-import { AccountReqType, IAccount, stateHelper } from "../core/state/apollo";
+import { AccountReqType, IAccount, stateHelper } from "../core/state/account";
 
 
 type Props = {

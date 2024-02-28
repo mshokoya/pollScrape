@@ -23,6 +23,7 @@
     "socket.io-client": "^4.7.2",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
+    "thread-promises": "^1.6.3",
     "ws": "^8.16.0"
   },
   "devDependencies": {
