@@ -10,7 +10,7 @@ export const domainState = observable<State>({
   resStatus: {},
 })
 
-export const domainStateHelper = TaskHelpers(domainState.reqInProcess)
+export const domainTaskHelper = TaskHelpers(domainState.reqInProcess)
 export const domainResStatusHelper = ResStatusHelpers(domainState.resStatus)
 
 export type State = {

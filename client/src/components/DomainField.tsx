@@ -1,13 +1,11 @@
-import { FormEvent, MouseEvent, useEffect, useState } from "react"
-import {ResStatus, fetchData} from '../core/util';
+import { FormEvent, MouseEvent } from "react"
+import { fetchData} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { DomainPopup } from "./DomainPopup";
-import { useSelector } from "@legendapp/state/react";
-import { observable } from "@legendapp/state";
-import { domainState, domainStateHelper, domainResStatusHelper } from "@/core/state/domain";
-import { accountState } from "../core/state/account";
-import { appState$ } from "@/core/state";
+import { observer, useSelector } from "@legendapp/state/react";
+import { domainState, domainTaskHelper, domainResStatusHelper } from "../core/state/domain";
+import { appState$ } from "../core/state";
 
 
 
@@ -21,16 +19,9 @@ export type IDomain = {
   VerifyMessage: string
 }
 
-export const DomainField = () => {
+export const DomainField = observer(() => {
   const s = domainState
-  // const [input, setInput] = useState({email: '', domain: ''});
-  // const [selectedDomain, setSelectedDomain] = useState<number | null>(0)
-  // const [reqInProcess, setReqInProcess] = useState<string[]>([])
-  // const [reqType, setReqType] = useState<string | null>(null)
-  // const [resStatus, setResStatus] = useState<ResStatus>(null)
-  // const [domains, setDomains] = useState<IDomain[]>([
-  //   // {domain: 'tess@test.com', authEmail: 'e@g.com', verified: false, _id: 'ds', MXRecords: true, TXTRecords: true, VerifyMessage: ''}
-  // ])
+  const domains = useSelector(appState$.domains) as IDomain[]
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
@@ -54,12 +45,12 @@ export const DomainField = () => {
   
   const addDomain = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    domainStateHelper.add('domain', {type: 'create', status: 'processing'})
+    domainTaskHelper.add('domain', {type: 'create', status: 'processing'})
     await fetchData<IDomain>('/domain', 'POST', s.input.peek())
       .then((d) => {
         if (d.ok) {
           domainResStatusHelper.add('domain', ['create', 'ok'])
-          appState$.domains.push(d.data)
+          domains.push(d.data)
         } else {
           domainResStatusHelper.add('domain', ['create', 'fail'])
         }
@@ -67,69 +58,62 @@ export const DomainField = () => {
       .catch(() => { domainResStatusHelper.add('domain', ['create', 'fail']) })
       .finally(() => {
         setTimeout(() => {
-          domainStateHelper.deleteTaskByReqType('domain', 'create')
+          domainTaskHelper.deleteTaskByReqType('domain', 'create')
           domainResStatusHelper.delete('domain', 'create')
         }, 1500)
       })
   }
 
   const handleDeleteDomain = async () => {
-    if (selectedDomain === null) return;
-    const domainID = domains[selectedDomain]._id
-    setReqInProcess([...reqInProcess, domainID])
-    setReqType('delete')
-    await fetchData<IDomain>(`/domain/${domains[selectedDomain].domain}`, 'DELETE')
+    const domainID = domains[s.selectedDomain.peek()]._id
+    domainTaskHelper.add(domainID, {type: 'delete', status: 'processing'})
+    await fetchData<IDomain>(`/domain/${domainID}`, 'DELETE')
       .then(res => {
         if (res.ok) {
-          setResStatus(['ok', domainID])
-          setDomains(domains.filter(d => d._id !== domainID))
+          domainResStatusHelper.add(domainID, ['delete', 'ok'])
+          appState$.domains.find(d => d._id.peek() === domainID)?.delete()
         } else {
-          setResStatus(['fail', domainID])
+          domainResStatusHelper.add(domainID, ['delete', 'fail'])
         }
       })
-      .catch(() => { setResStatus(['fail', domainID]) })
+      .catch(() => { domainResStatusHelper.add(domainID, ['delete', 'fail']) })
       .finally(() => {
         setTimeout(() => {
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== domainID))
-          setResStatus(null)
+          domainTaskHelper.deleteTaskByReqType(domainID, 'delete')
+          domainResStatusHelper.delete(domainID, 'delete')
         }, 1500)
       })
   }
 
   const handleVerifyDomain = async () => {
-    if (selectedDomain === null) return;
-    const domainID = domains[selectedDomain]._id
-    setReqInProcess([...reqInProcess, domainID])
-    setReqType('verify')
-    await fetchData<IDomain>(`/domain/verify/${domains[selectedDomain].domain}`, 'GET')
+    const domainID = domains[s.selectedDomain.peek()]._id
+    domainTaskHelper.add(domainID, {type: 'verify', status: 'processing'})
+    await fetchData<IDomain>(`/domain/verify/${domainID}`, 'GET')
       .then((res) => {
-        const updatedDomains = domains.map(d => d.domain === res.data.domain ? res.data : d)
-        setDomains( updatedDomains)
-
-        res.data && res.data.verified
-          ? setResStatus(['ok', domainID])
-          : setResStatus(['fail', domainID])
+        if (res.ok) {
+          domainResStatusHelper.add(domainID, ['verify', 'ok'])
+          appState$.domains.find(d => d._id.peek() === domainID)?.set(res.data)
+        } else {
+          domainResStatusHelper.add(domainID, ['verify', 'fail'])
+        }
       })
-      .catch(() => { setResStatus(['fail', domainID]) })
+      .catch(() => { domainResStatusHelper.add(domainID, ['verify', 'fail']) })
       .finally(() => {
         setTimeout(() => { 
-          setReqType(null)
-          setReqInProcess(reqInProcess.filter(d => d !== domainID))
-          setResStatus(null)
+          domainTaskHelper.deleteTaskByReqType(domainID, 'verify')
+          domainResStatusHelper.delete(domainID, 'verify')
         }, 1500)
       })
   }
 
-  const PopupComp = () => selectedDomain
+  const closePopup = () => {s.selectedDomain.set(null)}
+
+  const PopupComp = () => s.selectedDomain.get()
       ? <DomainPopup
-        req={reqType}
-        setPopup={setSelectedDomain} 
-        domain={domains[selectedDomain]} 
+        domain={domains[s.selectedDomain.peek()]} 
+        closePopup={closePopup} 
         verifyDomain={handleVerifyDomain}
         deleteDomain={handleDeleteDomain}
-        reqInProcess={reqInProcess} 
-        setReqInProcess={setReqInProcess}
       />
       : null;
 
@@ -143,15 +127,17 @@ export const DomainField = () => {
 
             <div className='mb-3'>
               <label className='mr-2 border-cyan-600 border-b-2' htmlFor="domain">Domain:</label>
-              <input className={`
-                ${ reqInProcess.includes('new') ? 'fieldBlink' : '' } 
-                ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes('new') ? 'resOK' : '' } 
-                ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes('new') ? 'resFail' : '' }
-              `} 
-              required type="text" id="domain" value={input.domain} onChange={ e => {setInput(p => ({...p, domain: e.target.value}))}}/>
+              <input 
+                  className={`
+                    text-[0.8rem] text-center hover:border-cyan-600 hover:border
+                    ${ domainTaskHelper.getTaskByReqType('create')[0] ? 'fieldBlink' : '' }
+                    ${ domainResStatusHelper.getByID('domain', 0)[1] === 'ok' ? 'resOK' : '' }
+                    ${ domainResStatusHelper.getByID('domain', 0)[1] === 'fail' ? 'resFail' : '' }
+                  `}
+              required type="text" id="domain" value={s.input.domain.get()} onChange={ e => {s.input.domain.set(e.target.value)}}/>
             </div>
 
-            <input disabled={reqInProcess.includes('new')} className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Domain"/>
+            <input disabled={!!domainTaskHelper.getTaskByReqType('create')[0]} className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Domain"/>
           
           </form>
         </div>
@@ -174,9 +160,9 @@ export const DomainField = () => {
                       <tr className={
                         `
                           ${a.verified ? 'el-ok' : 'el-no'} 
-                          ${ reqInProcess.includes(a._id) ? 'fieldBlink' : '' } 
-                          ${ resStatus && resStatus[0] === 'ok' && resStatus[1]!.includes(a._id) ? 'resOK' : '' } 
-                          ${ resStatus && resStatus[0] === 'fail' && resStatus[1]!.includes(a._id) ? 'resFail' : '' } 
+                          ${ domainTaskHelper.isEntityPiplineEmpty(a._id) ? '' : 'fieldBlink' }
+                          ${ domainResStatusHelper.getByID(a._id, 0)[1] === 'ok' ? 'resOK' : '' }
+                          ${ domainResStatusHelper.getByID(a._id, 0)[1] === 'fail' ? 'resFail' : '' }
                           text-[0.8rem] text-center hover:border-cyan-600 hover:border
                         `
                         }  
@@ -220,4 +206,4 @@ export const DomainField = () => {
     </div>
   </>
   )
-}
+})
