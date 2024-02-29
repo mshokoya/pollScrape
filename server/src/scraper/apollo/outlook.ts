@@ -8,7 +8,7 @@
 
 import { BrowserContext, apolloInitSignup, scraper } from "./scraper";
 import { delay, hideDom, waitForNavHideDom } from "./util";
-import { visitApolloLoginPage } from ".";
+import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../../database/models/accounts";
 import { io } from "../../websockets";
 import { AppError } from "../../helpers";

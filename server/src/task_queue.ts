@@ -41,14 +41,13 @@ const TaskQueue = () => {
     taskType: string,
     message: string,
     metadata: {},
-    action: (a: T) => Promise<void>,
+    action: (a: T) => Promise<unknown>,
     args?: T
   ) => {
     return _Qlock.runExclusive(() => {
       // @ts-ignore
       queue.push({id, action, args, taskGroup, taskType, message, metadata})
     }).then(() => {
-      console.log('we in the then')
       io.emit('taskQueue', {message: 'new task added to queue', status: 'enqueue', taskType: 'enqueue',  metadata: {taskID: id, taskGroup, taskType, metadata}})
     }).finally(() => { exec() })
   }

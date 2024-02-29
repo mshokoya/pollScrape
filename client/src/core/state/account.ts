@@ -11,7 +11,7 @@ export const accountState = observable<State>({
   selectedDomain: null,
 })
 
-export const stateHelper = TaskHelpers(accountState.reqInProcess)
+export const accountTaskHelper = TaskHelpers(accountState.reqInProcess)
 export const stateResStatusHelper = ResStatusHelpers(accountState.resStatus)
 
 export type IAccount = {

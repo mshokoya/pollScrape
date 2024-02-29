@@ -1,5 +1,5 @@
 import { batch } from '@legendapp/state';
-import { AccountReqType, IAccount, stateHelper, stateResStatusHelper } from '../state/account.ts';
+import { AccountReqType, IAccount, accountTaskHelper, stateResStatusHelper } from '../state/account.ts';
 import { TaskQueueSocketEvent } from './taskqueue.ts';
 import { appState$ } from '../state/index.ts';
 import { taskQueue } from './taskqueue.ts';
@@ -13,7 +13,7 @@ export type ApolloSocketEvent<T = Record<string, any>> = {
 }
 
 export function handleApolloEvent(res: ApolloSocketEvent<IAccount>) {
-  const [accountID, idx, task] = stateHelper.getTaskByTaskID(res.taskID)
+  const [accountID, idx, task] = accountTaskHelper.getTaskByTaskID(res.taskID)
   if (!accountID || idx === -1 || !task) return;
 
   if (res.ok === undefined) {
@@ -58,7 +58,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
       batch(() => {
         taskQueue.queue.push(res)
         const accountID = res.metadata.metadata.accountID!
-        stateHelper.add(accountID, {
+        accountTaskHelper.add(accountID, {
           status:'queue', 
           type: res.metadata.taskType! as AccountReqType, 
           taskID: res.metadata.taskID
@@ -70,7 +70,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
         const  tsk = taskQueue.queue.find(t => t.metadata.taskID.get() === res.metadata.taskID)
         if (!tsk) return;
         const t2 = tsk.peek()
-        stateHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
+        accountTaskHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
         tsk.delete()
       })
       break
@@ -79,7 +79,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
         const tsk = taskQueue.queue.find(t => t.metadata.taskID.get() === res.metadata.taskID)
         if (!tsk) return
         tsk.status.set('passing')
-        stateHelper.updateTask(tsk.metadata.metadata.accountID.peek(), tsk.metadata.taskID.peek(), {status:'passing'})
+        accountTaskHelper.updateTask(tsk.metadata.metadata.accountID.peek(), tsk.metadata.taskID.peek(), {status:'passing'})
       })
       break
     case 'timeout':
@@ -89,7 +89,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
         taskQueue.timeout.set(q => q.filter(q => q.metadata.taskID !== tsk.metadata.taskID))
         tsk.status = 'timeout'
         taskQueue.timeout.push(tsk)
-        stateHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {status:'timeout'})
+        accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {status:'timeout'})
       })
       break
     case 'continue':
@@ -99,7 +99,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{accountID
         taskQueue.processing.set(q => q.filter(q => q.metadata.taskID !== tsk.metadata.taskID))
         tsk.status = 'processing'
         taskQueue.processing.push(tsk)
-        stateHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {status: 'processing'})
+        accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {status: 'processing'})
       })
       break
     }
@@ -114,7 +114,7 @@ export function handleApolloProcessQueueEvents (res: TaskQueueSocketEvent<{accou
         taskQueue.queue.set(q => q.filter(q => q.metadata.taskID !== tsk.metadata.taskID))
         tsk.status = 'processing'
         taskQueue.processing.push(tsk)
-        stateHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {status:'processing'})
+        accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {status:'processing'})
       })
       break
     case 'dequeue':
@@ -123,7 +123,7 @@ export function handleApolloProcessQueueEvents (res: TaskQueueSocketEvent<{accou
         const  tsk = taskQueue.processing.find(t => t.metadata.taskID.get() === res.metadata.taskID)
         if (!tsk) return;
         const t2 = tsk.peek()
-        stateHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
+        accountTaskHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
         tsk.delete()
       })
       break

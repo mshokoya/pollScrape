@@ -17,7 +17,7 @@ import {
   goToApolloSearchUrl, 
   setupApolloForScraping, 
   upgradeApolloAccount 
-} from '.';
+} from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
 import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
@@ -277,7 +277,7 @@ export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, coun
       numbers: true
     });
 
-    const browserCTX = await scraper.newBrowser(false)
+    const browserCTX = (await scraper.newBrowser(false))!
     await apolloConfirmAccount(taskID, browserCTX, links[0], account)
       .then(() => io.emit('apollo', { taskID, message: `confirmed ${account.domainEmail}` }));
     const cookies = await getBrowserCookies(browserCTX);

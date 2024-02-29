@@ -90,4 +90,8 @@ export const domainRoutes = (app: Express) => {
       res.json({ok: false, message: err.message, data: err});
     }
   })
+
+  app.get('/domain/accounts', async (req, res) => {
+    
+  })
 }

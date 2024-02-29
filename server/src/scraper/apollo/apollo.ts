@@ -76,7 +76,7 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
   const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
   const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'  // once click on 'access email'
 
-  if (!account.email || !account.password) throw new AppError(taskID,'failed to login, credentials missing');
+  if (!account.domainEmail || !account.password) throw new AppError(taskID,'failed to login, credentials missing');
 
   const page = browserCTX.page
   
@@ -90,7 +90,7 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
 
   if (!login || !submitButton) throw new AppError(taskID,'failed to login');
 
-  await login[0].type(account.email)
+  await login[0].type(account.domainEmail)
   await login[1].type(account.password)
 
   await submitButton?.click()

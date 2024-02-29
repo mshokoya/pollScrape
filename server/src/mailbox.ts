@@ -43,12 +43,11 @@ const Mailbox = () => {
   const getAllMail = async (email: string) => {
     const opts = mailbox.find((mb) => mb.auth.user === email );
     if (!opts) throw new Error('Failed to get mailbox, connection not recognised');
-
     const conn = await getConnection(opts);
 
     const mails: FetchMessageObject[] = []
 
-    for await (let message of conn.fetch('1:*', { envelope: true, source: true })) {
+    for await (let message of conn.fetch('1:*', { uid: true, envelope: true, source: true })) {
       mails.push(message)
     }
 
@@ -58,10 +57,9 @@ const Mailbox = () => {
   const getLatestMessage = async (email: string) => {
     const opts = mailbox.find((mb) => mb.auth.user === email );
     if (!opts) throw new Error('Failed to get mailbox, connection not recognised');
-
     const conn = await getConnection(opts);
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
-      // if (!conn) throw new Error('Failed to get mailbox, please reconnect')
+    // if (!conn) throw new Error('Failed to get mailbox, please reconnect')
       
     return await conn.fetchOne('*', {envelope: true, source: true})
   }
@@ -71,8 +69,20 @@ const Mailbox = () => {
     _closeSession(email)
   }
 
-  const deleteMail = () => {
-    return conns
+  const findMail = async(email: string) => {
+    const opts = mailbox.find((mb) => mb.auth.user === email );
+    if (!opts) throw new Error('failed to delete mail, connection not recognised')
+    const conn = await getConnection(opts)
+    
+    conn.fetchOne('*', )
+
+  }
+
+  const deleteMailByID = async (email: string, id: string) => {
+    const opts = mailbox.find((mb) => mb.auth.user === email );
+    if (!opts) throw new Error('failed to delete mail, connection not recognised')
+    const conn = await getConnection(opts)
+    return await conn.messageDelete(id, {uid: true})
   }
 
   const storeConnections = async (opts: ImapFlowOptions[]) => {
@@ -162,6 +172,7 @@ const Mailbox = () => {
     getConnection,
     storeConnections,
     logout,
+    deleteMail,
     getAllMail,
     getLatestMessage,
     relinquishConnection

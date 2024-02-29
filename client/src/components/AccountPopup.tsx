@@ -1,7 +1,9 @@
 import { IoMdClose } from "react-icons/io";
-import { observer, useObservable } from "@legendapp/state/react";
+import { useObservable } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
-import { AccountReqType, IAccount, stateHelper } from "../core/state/account";
+import { AccountReqType, IAccount, accountTaskHelper } from "../core/state/account";
+import { blinkCSS } from "../core/util";
+import { Spin } from "./util";
 
 
 type Props = {
@@ -23,38 +25,38 @@ type Page = 'main' | 'update'
 
 type State = {input: IAccount, page: Page}
 
-export const AccountPopup = observer(( props : Props) => {
-  const obs = useObservable<State>({ input: {...props.account}, page: 'main'})
-  const handleClose = () => props.setPopup(null)
+export const AccountPopup = ( p : Props) => {
+  const obs = useObservable<State>({ input: {...p.account}, page: 'main'})
+  const handleClose = () => p.setPopup(null)
 
   const handleRequest = async (h: AccountReqType) => {
     switch(h) {
       case 'login':
-        await props.login()
+        await p.login()
         break
       case 'check':
-        await props.checkAccount()
+        await p.checkAccount()
         break
       case 'update':
-        await props.updateAccount(obs.input.get())
+        await p.updateAccount(obs.input.get())
         break
       case 'manualLogin':
-        await props.manualLogin()
+        await p.manualLogin()
         break
       case 'manualUpgrade':
-        await props.manualUpgradeAccount()
+        await p.manualUpgradeAccount()
         break
       case 'upgrade':
-        await props.upgradeAccount()
+        await p.upgradeAccount()
         break
       case 'mines':
-        await props.clearMines()
+        await p.clearMines()
         break
       case 'delete':
-        await props.deleteAccount()
+        await p.deleteAccount()
         break
       case 'confirm':
-        await props.confirmAccount()
+        await p.confirmAccount()
         break
     }
   }
@@ -65,7 +67,7 @@ export const AccountPopup = observer(( props : Props) => {
         <IoMdClose className='absolute top-0 right-0 bg-cyan-600' onClick={handleClose}/>
         <div className='text-center border-b-2 border-cyan-600 mb-2'>
           <h1>
-            <span className='text-cyan-600'>{props.account.domainEmail || ''}</span> Settings
+            <span className='text-cyan-600'>{p.account.domainEmail || ''}</span> Settings
           </h1>
         </div>
         {
@@ -73,10 +75,10 @@ export const AccountPopup = observer(( props : Props) => {
             ? <UpdateFields 
                 handleRequest={handleRequest}
                 obs={obs}
-                account={props.account}
+                account={p.account}
               />
             : <MainFields 
-                {...props} 
+                {...p} 
                 handleRequest={handleRequest} 
                 obs={obs}
               /> 
@@ -84,72 +86,105 @@ export const AccountPopup = observer(( props : Props) => {
       </div>
     </div>
   )
-})
+}
 
 type MProps = {
   handleRequest: (a: AccountReqType) => Promise<void>
   obs: ObservableObject<State>
   account: IAccount
-} & Props 
+} & Props
 
-export const MainFields = observer((props: MProps) => {
+export const MainFields = (p: MProps) => {
+  const isLoginReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'login')
+  const isCheckReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'check')
+  const isUpdateReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'update')
+  const isManUpgradeReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'manualUpgrade')
+  const isManLoginReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'manualLogin')
+  const isUpgradeReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'upgrade')
+  const isMinesReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'mines')
+  const isDeleteReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'delete')
+  const isConfirmReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'confirm')
 
   return (
     <>
       <div>
         <button 
-          // className={blinkCSS(props.req === 'login')}
-          onClick={() => {props.handleRequest('login')}} >Login to Account</button>
+          disabled={isLoginReq}
+          className={blinkCSS(isLoginReq)}
+          onClick={() => {p.handleRequest('login')}} >Login to Account</button>
+          <Spin show={isLoginReq}/>
       </div>
 
       <div>
         <button 
-          // className={blinkCSS(props.req === 'check')}
-          onClick={() => {props.handleRequest('check')}}>Check Account</button>
+          disabled={isManLoginReq}
+          className={blinkCSS(isManLoginReq)}
+          onClick={() => {p.handleRequest('manualLogin')}} >Login to Account Manually</button>
+          <Spin show={isManLoginReq}/>
       </div>
 
       <div>
         <button 
-          disabled={stateHelper.doesEntityHaveRIP(props.account._id)}
-          // className={blinkCSS(props.req === 'update')}
-          onClick={() => {props.obs.page.set('update')}}>Update Account</button>
+          disabled={isCheckReq}
+          className={blinkCSS(isCheckReq)}
+          onClick={() => {p.handleRequest('check')}}>Check Account</button>
+          <Spin show={isCheckReq}/>
       </div>
 
       <div>
         <button 
-          // className={blinkCSS(props.req === 'upgrade')}
-          onClick={() => {props.handleRequest('upgrade')}}>upgrade Account</button>
+          disabled={isUpdateReq}
+          className={blinkCSS(isUpdateReq)}
+          onClick={() => {p.obs.page.set('update')}}>Update Account</button>
+          <Spin show={isUpdateReq}/>
       </div>
 
       <div>
         <button 
-          // className={blinkCSS(props.req === 'manualUpgrade')}
-          onClick={() => {props.handleRequest('manualUpgrade')}}>manually upgrade Account</button>
+          disabled={isUpgradeReq}
+          className={blinkCSS(isUpgradeReq)}
+          onClick={() => {p.handleRequest('upgrade')}}>upgrade Account</button>
+          <Spin show={isUpgradeReq}/>
       </div>
 
       <div>
         <button 
-          // className={blinkCSS(props.req === 'mines')}
-          onClick={() => {props.handleRequest('mines')}}>Clear Mines</button>
+          disabled={isManUpgradeReq}
+          className={blinkCSS(isManUpgradeReq)}
+          onClick={() => {p.handleRequest('manualUpgrade')}}>manually upgrade Account</button>
+          <Spin show={isManUpgradeReq}/>
       </div>
 
       <div>
         <button 
-          // className={blinkCSS(props.req === 'confirm')}
-          onClick={() => {props.handleRequest('confirm')}}>Confirm Account</button>
+          disabled={isMinesReq}
+          className={blinkCSS(isMinesReq)}
+          onClick={() => {p.handleRequest('mines')}}>Clear Mines</button>
+          <Spin show={isMinesReq}/>
       </div>
 
       <div>
         <button 
-          disabled={!stateHelper.isEntityPiplineEmpty(props.account._id)}
-          // className={blinkCSS(props.req === 'delete')}
-          onClick={() => {props.handleRequest('delete')}}>Delete Account</button>
+          disabled={isConfirmReq}
+          className={blinkCSS(isConfirmReq)}
+          onClick={() => {p.handleRequest('confirm')}}>Confirm Account</button>
+          <Spin show={isConfirmReq}/>
+      </div>
+
+      <div>
+        <button 
+          disabled={isDeleteReq}
+          className={blinkCSS(isDeleteReq)}
+          onClick={() => {p.handleRequest('delete')}}>Delete Account</button>
+          <Spin show={isDeleteReq}/>
       </div>
     </>
   )
-})
+}
+
 
 // ===============================================
+
 
 type UFProps = {
   handleRequest: (input: AccountReqType) => Promise<void>
@@ -157,7 +192,7 @@ type UFProps = {
   account: IAccount
 }
 
-export const UpdateFields = observer(({obs, handleRequest, account}: UFProps) => {
+export const UpdateFields = ({obs, handleRequest, account}: UFProps) => {
 
   const backToMain = () => {
     batch(() => {
@@ -199,4 +234,4 @@ export const UpdateFields = observer(({obs, handleRequest, account}: UFProps) =>
       </form>
     </>
   )
-})
+}

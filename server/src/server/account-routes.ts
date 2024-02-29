@@ -14,7 +14,7 @@ import {
 } from '../scraper/apollo';
 import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/apollo/util';
 import { AppError, generateID, getDomain } from '../helpers';
-import { apolloGetCreditsInfo } from '../scraper/apollo';
+// import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';
 import { ImapFlowOptions } from 'imapflow';
 import { mailbox } from '../mailbox';
@@ -96,21 +96,28 @@ export const accountRoutes = (app: Express) => {
         if (accountExists) throw new Error('Failed to create new account, account already exists')
       }
 
-      
       await taskQueue.enqueue(
         taskID,
         'apollo',
-        'addAccount',
+        'create',
         `adding ${account.domainEmail}`,
         {domainEmail: account.domainEmail},
         async () => {
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'create',
+              message: `adding ${account.domainEmail}`,
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
             
             await signupForApollo(taskID, browserCTX, account)
             // (FIX) indicate that account exists on db but not verified via email or apollo
-            await AccountModel.create(account);
+            return await AccountModel.create(account);
           } finally {
             await scraper.close(browserCTX)
           }
@@ -166,10 +173,19 @@ export const accountRoutes = (app: Express) => {
       await taskQueue.enqueue(
         taskID,
         'apollo',
-        'loginAccount',
+        'manualLogin',
         `Login into ${account.domainEmail}`,
         {accountID},
         async () => {
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'manualLogin',
+              message: `Login into ${account.domainEmail}`,
+              data: {accountID}
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
@@ -205,15 +221,25 @@ export const accountRoutes = (app: Express) => {
       await taskQueue.enqueue(
         taskID,
         'apollo',
-        'demineAccount',
+        'demine',
         `Demine ${account.domainEmail} popups`,
         {accountID},
         async () => {
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'demine',
+              message: `Demine ${account.domainEmail} popups`,
+              data: {accountID}
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             await logIntoApollo(taskID, browserCTX, account)
-            const updatedAccount = await waitForNavigationTo(browserCTX, 'settings/account')
+            await waitForNavigationTo(browserCTX, 'settings/account')
               .then(async () => {
                 const cookies = await getBrowserCookies(browserCTX)
                 return await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
@@ -243,11 +269,19 @@ export const accountRoutes = (app: Express) => {
       taskQueue.enqueue(
         taskID,
         'apollo',
-        'loginAccount',
+        'login',
         `Logging into ${account.domainEmail} apollo account`,
         {accountID},
         async () => {
-          io.emit('apollo', {taskID, message: "starting the browser"})
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'login',
+              message: `Logging into ${account.domainEmail} apollo account`,
+              data: {accountID}
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
@@ -300,15 +334,25 @@ export const accountRoutes = (app: Express) => {
       taskQueue.enqueue(
         taskID,
         'apollo',
-        'checkAccount',
+        'check',
         `Getting information on ${account.domainEmail} credits`,
         {accountID},
         async () => {
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'check',
+              message: `Getting information on ${account.domainEmail} credits`,
+              data: {accountID}
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-            const updatedAccount = await updateAccount({_id: accountID}, creditsInfo);
+            return await updateAccount({_id: accountID}, creditsInfo);
           } finally {
             await scraper.close(browserCTX)
           }
@@ -336,16 +380,26 @@ export const accountRoutes = (app: Express) => {
       taskQueue.enqueue(
         taskID,
         'apollo',
-        'upgradeAccount',
+        'upgrade',
         `Upgrading ${account.domainEmail} automatically`,
         {accountID},
         async () => {
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'upgrade',
+              message: `Upgrading ${account.domainEmail} automatically`,
+              data: {accountID}
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             await logIntoApolloAndUpgradeAccount(taskID, browserCTX, account)
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-            const updatedAccount = await updateAccount({_id: accountID}, creditsInfo); // (FIX)
+            return await updateAccount({_id: accountID}, creditsInfo); // (FIX)
           } finally {
             await scraper.close(browserCTX)
           }
@@ -372,16 +426,26 @@ export const accountRoutes = (app: Express) => {
       taskQueue.enqueue(
         taskID,
         'apollo',
-        'upgradeManual',
+        'manualUpgrade',
         `Upgrading ${account.domainEmail} manually`,
         {accountID},
         async () => {
+          io.emit(
+            'apollo', 
+            { 
+              taskID, 
+              taskType: 'manualUpgrade', 
+              message: `Upgrading ${account.domainEmail} manually`,
+              data: {accountID}
+            }
+          );
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             await logIntoApolloAndUpgradeAccountManually(taskID, browserCTX, account)
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-            const updatedAccount = await updateAccount({_id: accountID}, creditsInfo); // (FIX)
+            return await updateAccount({_id: accountID}, creditsInfo); // (FIX)
           } finally {
             await scraper.close(browserCTX)
           }
@@ -395,7 +459,7 @@ export const accountRoutes = (app: Express) => {
   })
 
   app.get('/account/confirm/:id', async (req, res) => {
-    console.log('confirmacc')
+    console.log('confirm')
     const taskID = generateID()
 
     try{
@@ -410,7 +474,7 @@ export const accountRoutes = (app: Express) => {
       taskQueue.enqueue(
         taskID,
         'apollo',
-        'confirmAccount',
+        'confirm',
         `confirming account ${account.domainEmail}`,
         {accountID},
         async () => {
@@ -423,12 +487,13 @@ export const accountRoutes = (app: Express) => {
               data: {accountID}
             }
           );
-
           const browserCTX  = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
+            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             const newAccount = await completeApolloAccountConfimation(taskID, browserCTX, account);
-            if (!newAccount) throw new AppError(taskID, 'Failed to confirm account, could not complete the process')
+            if (!newAccount) throw new AppError(taskID, 'Failed to confirm account, could not complete the process');
+            return newAccount
           } finally {
             await scraper.close(browserCTX)
           }
