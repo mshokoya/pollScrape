@@ -31,7 +31,7 @@ export type MBEventArgs = {
   prevCount: string
 }
 
-
+// (FIX) use imapflow default lock system https://github.com/leancloud/ticket/blob/1fbaf0707b6dc31962f15f710879408fddda18d2/next/api/src/support-email/services/email.ts#L95
 // (FIX) what is connection is started without event then later on events are needed
 // (FIX) create and store connection in array and add timeout to auto close conn & remove conn from array
 const Mailbox = () => {
@@ -46,11 +46,9 @@ const Mailbox = () => {
     const conn = await getConnection(opts);
 
     const mails: FetchMessageObject[] = []
-
-    for await (let message of conn.fetch('1:*', { uid: true, envelope: true, source: true })) {
+    for await (let message of conn.fetch('1:*', { uid: true, envelope: true, source: true})) {
       mails.push(message)
     }
-
     return mails
   }
 
@@ -60,8 +58,7 @@ const Mailbox = () => {
     const conn = await getConnection(opts);
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
     // if (!conn) throw new Error('Failed to get mailbox, please reconnect')
-      
-    return await conn.fetchOne('*', {envelope: true, source: true})
+    return await conn.fetchOne('*', {envelope: true, source: true, uid: true, emailId: true})
   }
 
 
@@ -69,20 +66,31 @@ const Mailbox = () => {
     _closeSession(email)
   }
 
-  const findMail = async(email: string) => {
+  const findOneMail = async(email: string, type: 'uid' | 'email', value: number) => {
     const opts = mailbox.find((mb) => mb.auth.user === email );
     if (!opts) throw new Error('failed to delete mail, connection not recognised')
     const conn = await getConnection(opts)
     
-    conn.fetchOne('*', )
-
+    let mail: FetchMessageObject | undefined;
+    for await (let message of conn.fetch('1:*', { uid: true, envelope: true, source: true })) {
+      if (
+        (type === 'uid' && message.uid === value) ||
+        (type === 'email' && message.envelope.to[0] === value)
+      ) {
+        mail = message
+        break
+      }
+    }
+    return mail
   }
 
-  const deleteMailByID = async (email: string, id: string) => {
+  const deleteMailByID = async (email: string, uid: number) => {
     const opts = mailbox.find((mb) => mb.auth.user === email );
     if (!opts) throw new Error('failed to delete mail, connection not recognised')
     const conn = await getConnection(opts)
-    return await conn.messageDelete(id, {uid: true})
+    console.log('deleteMailByID')
+    console.log(uid)
+    return await conn.messageDelete(uid.toString(), {uid: true})
   }
 
   const storeConnections = async (opts: ImapFlowOptions[]) => {
@@ -172,7 +180,8 @@ const Mailbox = () => {
     getConnection,
     storeConnections,
     logout,
-    deleteMail,
+    findOneMail,
+    deleteMailByID,
     getAllMail,
     getLatestMessage,
     relinquishConnection

@@ -6,7 +6,7 @@ export type IAccount = {
   accountType: string
   trialTime: string
   suspended: boolean
-  verified: boolean
+  verified: 'no' | 'confirm' | 'yes' // confirm = conformation email sent
   loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
@@ -35,7 +35,7 @@ const accountSchema = new Schema<IAccount>({
   suspended: { type: Boolean, default: false },
   loginType: {type: String, default: "default"}, // (FIX) remove and switch with domain
   domainEmail: { type: String, default: "" },
-  verified: { type: Boolean, default: false },
+  verified: { type: String, default: 'no' },
   firstname: { type: String, default: "" },
   lastname: { type: String, default: "" },
   email: { type: String, default: "" },

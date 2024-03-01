@@ -229,14 +229,12 @@ export const apolloDefaultSignup = async (taskID: string, {page}: BrowserContext
   if (!tsCheckbox) throw new AppError(taskID,'failed to find T&S checkbox')
   await tsCheckbox.click()
     .then(() => { io.emit('apollo', {taskID, message: "checked the terms & service checkbox"}) });
-      
 
   const signupButton = await page.$('[class="MuiBox-root mui-style-1tu59u4"]').catch(() => null)
   if (!signupButton) throw new AppError(taskID,'failed to find signup button')
   await signupButton.click()
     .then(() => { io.emit('apollo', {taskID, message: "click the signup button"}) });
       
-
   delay(2000)
 
   const inputError = await page.$('p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1ccelp7"]').catch(() => null)

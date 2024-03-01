@@ -103,14 +103,17 @@ export const signupForApollo = async (taskID: string, browserCTX: BrowserContext
     case 'outlook':
       await apolloOutlookSignup(taskID, browserCTX, account)
         .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account'}) })
+        .then(() => { updateAccount({domainEmail: account.domainEmail}, {verified: 'yes'}) })
       break;
     case 'gmail':
       await apolloGmailSignup(taskID, browserCTX, account)
         .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account'}) })
+        .then(() => { updateAccount({domainEmail: account.domainEmail}, {verified: 'yes'}) })
       break
     default:
       await apolloDefaultSignup(taskID, browserCTX, account)
         .then(() => {  io.emit('apollo', {taskID, message: 'successfully created apollo account'}) })
+        .then(() => { updateAccount({domainEmail: account.domainEmail}, {verified: 'confirm'}) })
       break;
   }
 }
@@ -227,7 +230,7 @@ export const completeApolloAccountConfimation = async (taskID: string, browserCT
         {domainEmail: toAddress}, 
         {
           cookie: JSON.stringify(cookies), 
-          verified: true, 
+          verified: 'yes', 
           apolloPassword: account.apolloPassword
         }
       );
@@ -252,6 +255,7 @@ export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, coun
     const fromAddress = mail.envelope.from[0].address!
     const fromName = mail.envelope.from[0].name!
     const toAddress = mail.envelope.to[0].address?.trim()
+    const uid = mail.uid
 
     if (
       !fromAddress.includes('apollo') && 
@@ -286,10 +290,13 @@ export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, coun
       {domainEmail: toAddress}, 
       {
         cookie: JSON.stringify(cookies), 
-        verified: true,
+        verified: 'yes',
         apolloPassword: account.apolloPassword
       }
     );
+    console.log('heeemail id')
+    console.log(mail.emailId)
+    await mailbox.deleteMailByID(authEmail, uid)
   } catch (err: any) {
     io.emit('apollo', { taskID, message: err.message, ok: false })
   }
