@@ -16,8 +16,7 @@ import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '
 import { AppError, generateID, getDomain } from '../helpers';
 // import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';
-import { ImapFlowOptions } from 'imapflow';
-import { mailbox } from '../mailbox';
+import { MailboxAuthOptions, mailbox } from '../mailbox';
 import { generateSlug } from 'random-word-slugs';
 import { DomainModel } from '../database/models/domain';
 import { io } from '../websockets';
@@ -60,8 +59,9 @@ export const accountRoutes = (app: Express) => {
           auth: {
             user: account.email,
             pass: account.password
-          }
-        } as ImapFlowOptions
+          },
+          aliasEmail: account.domainEmail
+        } as MailboxAuthOptions
         , 
           async (args) => {
             await apolloConfirmAccountEvent(taskID, args)

@@ -20,7 +20,7 @@ const metaData = new Schema<IMetaData>({
   page: { type: Number, default: 0 }, // current page 
   start: { type: Number, default: 0 },
   end: { type: Number, default: 0 },
-  scrapes: { type: [Object], default: []} // [{page: 1, id: ""}] - is use in ApolloDataModel
+  scrapes: { type: [Object], default: []} // [{page: 1, id: "", listName: ''}] - is use in ApolloDataModel
 });
 
 export const MetadataModel = model<IMetaData>('metadata', metaData);

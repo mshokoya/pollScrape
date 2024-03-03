@@ -337,3 +337,5 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
     await delay(5000)
   }
 }
+
+export const apolloScrape = () => {}

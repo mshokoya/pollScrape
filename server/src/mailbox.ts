@@ -29,14 +29,17 @@ export type MBEventArgs = {
   path: string
   count: string
   prevCount: string
+  aliasEmail?: string
 }
+
+export type MailboxAuthOptions = ImapFlowOptions & {aliasEmail?: string}
 
 // (FIX) use imapflow default lock system https://github.com/leancloud/ticket/blob/1fbaf0707b6dc31962f15f710879408fddda18d2/next/api/src/support-email/services/email.ts#L95
 // (FIX) what is connection is started without event then later on events are needed
 // (FIX) create and store connection in array and add timeout to auto close conn & remove conn from array
 const Mailbox = () => {
   const C_lock = new Mutex();
-  let mailbox: ImapFlowOptions[] = []; // get from db
+  let mailbox: MailboxAuthOptions[] = []; // get from db
   let conns: C[] = [];
 
 
@@ -58,7 +61,7 @@ const Mailbox = () => {
     const conn = await getConnection(opts);
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
     // if (!conn) throw new Error('Failed to get mailbox, please reconnect')
-    return await conn.fetchOne('*', {envelope: true, source: true, uid: true, emailId: true})
+    return await conn.fetchOne('*', {envelope: true, source: true, uid: true})
   }
 
 
@@ -93,11 +96,11 @@ const Mailbox = () => {
     return await conn.messageDelete(uid.toString(), {uid: true})
   }
 
-  const storeConnections = async (opts: ImapFlowOptions[]) => {
+  const storeConnections = async (opts: MailboxAuthOptions[]) => {
     opts.forEach((c) => { mailbox.push(c) })
   }
 
-  const newConnection = async (opts: ImapFlowOptions, eventCallback?: (data: MBEventArgs) => Promise<void>) => {
+  const newConnection = async (opts: MailboxAuthOptions, eventCallback?: (data: MBEventArgs) => Promise<void>) => {
 
     if (!opts.auth.user) throw new Error('failed to login, please provide email')
     if (!opts.auth.pass) throw new Error('failed to login, please provide password')
@@ -107,7 +110,7 @@ const Mailbox = () => {
       port: opts.port || 993,
       secure: true,
       host: opts.host || findIMAP(opts.auth.user),
-    } as ImapFlowOptions)
+    } as MailboxAuthOptions)
 
     try {
       return await client.connect()
@@ -128,7 +131,7 @@ const Mailbox = () => {
 
           if (eventCallback) {
             client.on('exists', async (data: Omit<MBEventArgs, 'email'>) => { 
-              await eventCallback({...data, authEmail: opts.auth.user}) 
+              await eventCallback({...data, authEmail: opts.auth.user, aliasEmail: opts.aliasEmail}) 
             })
           }
 
@@ -139,7 +142,7 @@ const Mailbox = () => {
     }
   }
 
-  const getConnection = async (authDeets: ImapFlowOptions, cb?: (data: MBEventArgs) => Promise<void>) => {
+  const getConnection = async (authDeets: MailboxAuthOptions, cb?: (data: MBEventArgs) => Promise<void>) => {
     return await C_lock.runExclusive(async () => {
       const opt = mailbox.find((mb) => mb.auth.user === authDeets.auth.user)
       if (!opt) mailbox.push(authDeets)
@@ -188,7 +191,7 @@ const Mailbox = () => {
   }
 }
 
-export const accountToMailbox = (account: IAccount): ImapFlowOptions => {
+export const accountToMailbox = (account: IAccount): MailboxAuthOptions => {
   return {
     auth: {
       user: account.email,

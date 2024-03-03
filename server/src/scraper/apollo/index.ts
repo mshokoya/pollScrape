@@ -242,7 +242,7 @@ export const completeApolloAccountConfimation = async (taskID: string, browserCT
 }
 
 // (FIX) need to figure out how to handle io for events
-export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
+export const apolloConfirmAccountEvent = async (taskID: string, {aliasEmail, authEmail, count, prevCount}: MBEventArgs): Promise<void> => {
   if (count < prevCount) return;
 
   try {
@@ -259,8 +259,10 @@ export const apolloConfirmAccountEvent = async (taskID: string, {authEmail, coun
 
     if (
       !fromAddress.includes('apollo') && 
-      !fromName.includes('apollo')
+      !fromName.includes('apollo') &&
+      toAddress !== aliasEmail
     ) { 
+      io.emit('apollo', { taskID, message: 'Mail Event Failed'})
       // throw new Error("Failed to signup, could'nt find apollo email (name, address)") 
       return
     }
