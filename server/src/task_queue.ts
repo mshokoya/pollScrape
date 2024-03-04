@@ -19,7 +19,7 @@ type QueueItem = {
 }
 
 // processQueue = TASK IN PROCESS
-type TIP_Item = [id: string, args: Record<string, any> | undefined, AbortablePromise<unknown>] 
+type TIP_Item = [id: string, args: Record<string, any> | undefined, AbortablePromise<unknown>, QueueItem] 
 
 // https://dev.to/bleedingcode/increase-node-js-performance-with-libuv-thread-pool-5h10
 
@@ -141,7 +141,7 @@ const TaskQueue = () => {
           exec()
         }) as AbortablePromise<unknown>
 
-        _TIP_Enqueue([task.id, task.args, tsk])
+        _TIP_Enqueue([task.id, task.args, tsk, task])
     } finally {
       exec_lock.release()
     }
