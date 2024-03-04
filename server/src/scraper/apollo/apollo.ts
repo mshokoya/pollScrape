@@ -338,4 +338,8 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
   }
 }
 
-export const apolloScrape = () => {}
+
+
+export const apolloAddLeadsToListAndScrape = (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
+  
+}

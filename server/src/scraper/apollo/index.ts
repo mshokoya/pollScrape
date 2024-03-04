@@ -304,6 +304,10 @@ export const apolloConfirmAccountEvent = async (taskID: string, {aliasEmail, aut
   }
 }
 
+export const apolloAddLeadsToListAndScrape = () => {
+  
+}
+
 
 
 // we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies

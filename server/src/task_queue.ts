@@ -18,12 +18,12 @@ type QueueItem = {
   args?: Record<string, any>
 }
 
-// TIP = TASK IN PROCESS
+// processQueue = TASK IN PROCESS
 type TIP_Item = [id: string, args: Record<string, any> | undefined, AbortablePromise<unknown>] 
 
 // https://dev.to/bleedingcode/increase-node-js-performance-with-libuv-thread-pool-5h10
 
-// (FIX) remember to test TIP cancelation
+// (FIX) remember to test processQueue cancelation
 // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
 // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
 const TaskQueue = () => {
@@ -31,8 +31,8 @@ const TaskQueue = () => {
   const _Plock = new Mutex();
   const exec_lock = new Mutex();
   let maxWorkers: number;
-  let queue: QueueItem[] = [];
-  let TIP: TIP_Item[] = []
+  let taskQueue: QueueItem[] = [];
+  let processQueue: TIP_Item[] = []
   // let pool;
 
   const enqueue = async <T = Record<string, any> >(
@@ -46,7 +46,7 @@ const TaskQueue = () => {
   ) => {
     return _Qlock.runExclusive(() => {
       // @ts-ignore
-      queue.push({id, action, args, taskGroup, taskType, message, metadata})
+      taskQueue.push({id, action, args, taskGroup, taskType, message, metadata})
     }).then(() => {
       io.emit('taskQueue', {message: 'new task added to queue', status: 'enqueue', taskType: 'enqueue',  metadata: {taskID: id, taskGroup, taskType, metadata}})
     }).finally(() => { exec() })
@@ -54,7 +54,7 @@ const TaskQueue = () => {
 
   const dequeue = async () => {
     return _Qlock.runExclusive(() => {
-      return queue.shift();
+      return taskQueue.shift();
     }).then((t) => {
       if (!t) return
       io.emit('taskQueue', {message: 'moving from queue to processing', status: 'passing', taskType: 'dequeue',  metadata: {taskID: t.id, taskGroup: t.taskGroup, taskType: t.taskType, metadata: t.metadata}})
@@ -64,7 +64,7 @@ const TaskQueue = () => {
 
   const remove = async (id: string) => {
     return _Qlock.runExclusive(() => {
-      queue.filter(task => task.id !== id);
+      taskQueue.filter(task => task.id !== id);
     }).then(() => {
       io.emit('taskQueue', {message: 'deleting task from queue', status: 'removed', taskType: 'remove',  metadata: {taskID: id}})
     })
@@ -72,7 +72,7 @@ const TaskQueue = () => {
 
   const _TIP_Enqueue = async (item: TIP_Item) => { 
     return _Plock.runExclusive(() => {
-      TIP.push(item)
+      processQueue.push(item)
     }).then(() => {
       io.emit('processQueue', {message: 'new task added to processing queue', status: 'start', taskType: 'enqueue',  metadata: {taskID: item[0]}})
     }).finally(() => { exec() })
@@ -80,7 +80,7 @@ const TaskQueue = () => {
 
   const _TIP_Dequeue = async (id: string) => { 
     return _Plock.runExclusive(() => {
-      TIP = TIP.filter(task => task[0] !== id);
+      processQueue = processQueue.filter(task => task[0] !== id);
     }).then(() => {
       io.emit('processQueue', {message: 'removed completed task from queue', status: 'end', taskType: 'dequeue',  metadata: {taskID: id}})
     })
@@ -88,7 +88,7 @@ const TaskQueue = () => {
 
   const stop = async(id: string) => {
     return _Plock.runExclusive(async () => {
-      const process = TIP.find(p => p[0] === id)
+      const process = processQueue.find(p => p[0] === id)
       if (!process) return null;
       return await process[2].abort()
     }).then(() => {
@@ -112,7 +112,7 @@ const TaskQueue = () => {
   const exec = async () => {
     try {
       await exec_lock.acquire()
-      if (TIP.length >= maxWorkers) return;
+      if (processQueue.length >= maxWorkers) return;
       const task = await dequeue();
       if (!task) return;
       
@@ -158,9 +158,8 @@ const TaskQueue = () => {
     init,
     setMaxWorkers,
     maxWorkers: () => maxWorkers,
-    workerStats: () => {},
-    taskQueue: () => queue,
-    tasksInProcess: () => TIP,
+    queues: () => ({taskQueue, processQueue}),
+    tasksInProcess: () => processQueue,
   }
 }
 
