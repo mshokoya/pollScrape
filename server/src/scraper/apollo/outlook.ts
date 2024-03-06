@@ -7,11 +7,11 @@
 // input[class="btn btn-block btn-primary"]
 
 import { BrowserContext, apolloInitSignup, scraper } from "./scraper";
-import { delay, hideDom, waitForNavHideDom } from "./util";
+import { hideDom, waitForNavHideDom } from "./util";
 import { visitApolloLoginPage } from "./apollo";
 import { IAccount } from "../../database/models/accounts";
 import { io } from "../../websockets";
-import { AppError } from "../../helpers";
+import { AppError, delay } from "../../util";
 
 
 export const visitOutlookLoginAuthPortal = async (taskID: string, browserCTX: BrowserContext, hideApolloDom: boolean = false, hidePortalDom: boolean = false) => {

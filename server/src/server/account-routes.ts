@@ -13,7 +13,7 @@ import {
   signupForApollo 
 } from '../scraper/apollo';
 import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '../scraper/apollo/util';
-import { AppError, generateID, getDomain } from '../helpers';
+import { AppError, generateID, getDomain } from '../util';
 // import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';
 import { MailboxAuthOptions, mailbox } from '../mailbox';

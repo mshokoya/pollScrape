@@ -2,11 +2,11 @@ import { logIntoApollo } from ".";
 import { updateAccount } from "../../database";
 import { IAccount } from "../../database/models/accounts";
 import { IRecord } from "../../database/models/records";
-import { AppError } from "../../helpers";
+import { AppError, delay } from "../../util";
 import { io } from "../../websockets";
 import { apolloDoc } from "./dom/scrapeData";
 import { BrowserContext } from "./scraper";
-import { apolloLoggedOutURLSubstr, apolloTableRowSelector, delay, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
+import { apolloLoggedOutURLSubstr, apolloTableRowSelector, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
 type Upgrade = {

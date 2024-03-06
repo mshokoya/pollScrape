@@ -1,9 +1,11 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { BrowserContext, visitGoogle } from "./scraper"
 import { logIntoApollo } from '.';
-import { updateAccount } from '../../database';
+import { getAllApolloAccounts, updateAccount } from '../../database';
 import { IAccount } from '../../database/models/accounts';
 import { io } from '../../websockets';
+import { AppError } from '../../util';
+import { selectAccForScrapingFILO } from '../../database/util';
 
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist
@@ -69,12 +71,6 @@ export const waitForNavigationTo = (browserCTX: BrowserContext, location: string
   }
 );
 
-export const delay = (time: number) => {
-  return new Promise(function(resolve) { 
-      setTimeout(resolve, time)
-  });
-}
-
 export const injectCookies = async (browserCTX: BrowserContext, cookies?: string) => {
   await visitGoogle(browserCTX);
   if (cookies) {
@@ -116,7 +112,6 @@ export const waitForNavHideDom = async ({page}: BrowserContext) => {
       })
     })
 }
-
 
 export const logIntoApolloThenVisit = async (taskID: string, browserCTX: BrowserContext, account: IAccount, url: string) => {
   const page = browserCTX.page as Page

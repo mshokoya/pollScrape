@@ -3,7 +3,7 @@ import { startScrapingApollo } from '../scraper/apollo';
 import { initMeta, updateAccount } from '../database';
 import { IMetaData, MetadataModel } from '../database/models/metadata';
 import { scraper } from '../scraper/apollo/scraper';
-import { getDomain, isNumber } from '../helpers';
+import { getDomain, isNumber } from '../util';
 import { taskQueue } from '../task_queue';
 import { generateSlug } from 'random-word-slugs';
 import { mailbox } from '../mailbox';

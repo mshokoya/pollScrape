@@ -3,7 +3,7 @@ import { Server as IO, Socket } from 'socket.io';
 import {cpus} from 'os';
 import { Mutex } from 'async-mutex'
 import AbortablePromise from "promise-abortable";
-import { generateID } from './helpers';
+import { generateID } from './util';
 import { io } from './websockets';
 
 

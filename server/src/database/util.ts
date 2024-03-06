@@ -2,7 +2,7 @@
 //@ts-ignore
 import proxyCheck from 'advanced-proxy-checker';
 import { IAccount } from './models/accounts';
-import { shuffleArray } from '../helpers';
+import { shuffleArray } from '../util';
 import { IProxy, ProxyModel } from './models/proxy';
 
 export type Proxy = {

@@ -24,12 +24,19 @@ import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
 import { io } from '../../websockets';
-import { AppError } from '../../helpers';
+import { AppError, chuckRange, getRangeFromApolloURL } from '../../util';
+import { IMetaData } from '../../database/models/metadata';
 
 // start apollo should use url
 // TODO
 // handle account failed login
-export const startScrapingApollo = async (taskID: string, browserCTX: BrowserContext, metaID: string, url: string, usingProxy: boolean) => {
+export const startScrapingApollo = async (
+  taskID: string, 
+  browserCTX: BrowserContext, 
+  metaID: string, 
+  url: string, 
+  usingProxy: boolean,
+  ) => {
   let proxy: string | null = null;
 
   const allAccounts = await getAllApolloAccounts()
@@ -53,13 +60,19 @@ export const startScrapingApollo = async (taskID: string, browserCTX: BrowserCon
       .then(() => {  io.emit('apollo', {taskID, message: 'added proxy'}) });
   }
 
+  // add proxies
   await setupApolloForScraping(taskID, browserCTX, account)
     .then(() => {  io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
 
+  // go to scrape link
   await goToApolloSearchUrl(taskID, browserCTX, url)
     .then(() => {  io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
-  const data = await apolloStartPageScrape(taskID, browserCTX) // edit
+  // ===================================== 
+  
+  while (true) {
+    // start scaraping
+    const data = await apolloStartPageScrape(taskID, browserCTX) // edit
     .then(_ => {  
       io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
       return _
@@ -67,8 +80,10 @@ export const startScrapingApollo = async (taskID: string, browserCTX: BrowserCon
   
     const cookies = await getBrowserCookies(browserCTX);
 
-  await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
-    .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
+    await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
+      .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
+  }
+  // ===================================== 
 }
 
 // (FIX) FINISH
@@ -304,11 +319,89 @@ export const apolloConfirmAccountEvent = async (taskID: string, {aliasEmail, aut
   }
 }
 
-export const apolloAddLeadsToListAndScrape = () => {
-  
+export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, meta: IMetaData, usingProxy: boolean) => {
+  const employeeRange = getRangeFromApolloURL(meta.url)
+  if (employeeRange.length > 1) throw new AppError(taskID, 'can only have one range set');
+  const employeeRangeMin = parseInt(employeeRange[0][0])
+  const employeeRangeMax = parseInt(employeeRange[0][1])
+
+  // (FIX) low ranges may fuckup - make parts dynamic
+  const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
+
+  await Promise.all(rng.map(r => (ssa(taskID, browserCTX, meta, usingProxy, r))))
 }
 
+export const ssa = async (
+  taskID: string, 
+  browserCTX: BrowserContext,
+  meta: IMetaData, 
+  usingProxy: boolean,
+  range: [number, number]
+  ) => {
+  let proxy: string | null = null;
+  let account: IAccount;
 
+  const acc4Scrape = meta.accounts.find(
+    a => ( (a.range[0] === range[0]) && (a.range[1] === range[1]) )
+  )
+
+  const allAccounts = await getAllApolloAccounts()
+    .then(_ => {  
+      io.emit('apollo', {taskID, message: 'obtained all accounts'}) 
+      return _
+    })
+    if (!allAccounts) throw new AppError(taskID, 'No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
+    if (allAccounts.length < 15) {
+      console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
+    }
+
+  if (!acc4Scrape) {
+    account = await selectAccForScrapingFILO(allAccounts)
+  } else {
+    let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as IAccount;
+    if (!acc) { acc = await selectAccForScrapingFILO(allAccounts) }
+    if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
+    account = acc
+  }
+
+  // (FIX) check is selectAccForScrapingFILO func returned a account
+
+  if (usingProxy) {
+    proxy =  await selectProxy(account, allAccounts);
+    if (!proxy) throw new AppError(taskID, `failed to use proxy`);
+    const page = browserCTX.page;
+    await useProxy(page, proxy)
+      .then(() => {  io.emit('apollo', {taskID, message: 'added proxy to page'}) });
+  }
+
+  // add proxies
+  await setupApolloForScraping(taskID, browserCTX, account)
+    .then(() => {  io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
+
+  // go to scrape link
+  await goToApolloSearchUrl(taskID, browserCTX, meta.url)
+    .then(() => {  io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
+
+  // ===================================== 
+  
+  while (true) {
+    // start scaraping
+    const data = await apolloStartPageScrape(taskID, browserCTX) // edit
+    .then(_ => {  
+      io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
+      return _
+    })
+  
+    const cookies = await getBrowserCookies(browserCTX);
+
+    await saveScrapeToDB(account._id, cookies, meta.url, data, meta._id, proxy)
+      .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
+  }
+  // ===================================== 
+}
+
+// remove page from url
+// &organizationNumEmployeesRanges[]=51%2C100
 
 // we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
 //remeber to check

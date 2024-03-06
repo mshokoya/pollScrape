@@ -1,5 +1,5 @@
 import { Mutex } from 'async-mutex';
-import { getDomain } from './helpers';
+import { getDomain } from './util';
 // import IMAP, { ImapConfig } from 'imap-mailbox';
 import { FetchMessageObject, ImapFlow, ImapFlowOptions } from 'imapflow';
 import { IAccount } from './database/models/accounts';

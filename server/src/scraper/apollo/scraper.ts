@@ -6,7 +6,7 @@ import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker';
 import { hideDom } from './util';
 import { generate } from 'generate-password';
 import { Mutex } from 'async-mutex';
-import { AppError } from '../../helpers';
+import { AppError } from '../../util';
 import { io } from '../../websockets';
 
 export type BrowserContext = {
