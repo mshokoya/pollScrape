@@ -4,6 +4,11 @@ import proxyCheck from 'advanced-proxy-checker';
 import { IAccount } from './models/accounts';
 import { shuffleArray } from '../util';
 import { IProxy, ProxyModel } from './models/proxy';
+import { getAllApolloAccounts } from '.';
+import { Mutex } from 'async-mutex'
+
+const _AccLock = new Mutex();
+const _ProxyLock = new Mutex();
 
 export type Proxy = {
   proxy: string;
@@ -61,29 +66,36 @@ export type ProxyResponse = {
 
 // 30mins
 // (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
-// (FIX) TEST TO MAKE SURE IT WORKS
-export const selectAccForScrapingFILO = (userAccounts: IAccount[], accsNeeded: number): (IAccount & {totalScrapedInLast30Mins: number})[] => {
-  const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
-
-  // get unused accounts first
-  for (let a of userAccounts) {
-    if (accsNeeded === 0) return accs
-    if (!a.history.length) {
-      accs.push({...a, totalScrapedInLast30Mins: 0})
-      accsNeeded--
+// (FIX) TEST TO MAKE SURE IT WORKS (also test lock) 
+export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IAccount & {totalScrapedInLast30Mins: number})[] > => {
+  return await _AccLock.runExclusive(async () => {
+    const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
+    const allAccounts = await getAllApolloAccounts() as (IAccount & {totalScrapedInLast30Mins: number})[]
+  
+      if (!allAccounts || !allAccounts.length) return []
+      if (allAccounts.length < 15) {
+        console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
+      }
+  
+    // get unused accounts first
+    for (let a of allAccounts) {
+      if (accsNeeded === 0) return accs
+      if (!a.history.length) {
+        accs.push({...a, totalScrapedInLast30Mins: 0})
+        accsNeeded--
+      }
     }
-  }
-  // if not enough unused accounts left, get account that have been used the least in the last 30mins
-  const ua: (IAccount & {totalScrapedInLast30Mins: number})[] = JSON.parse(JSON.stringify(userAccounts))
-  ua.sort((a, b) => {
-    const totalLeadsScrapedIn30MinsA = totalLeadsScrapedInTimeFrame(a)
-    const totalLeadsScrapedIn30MinsB = totalLeadsScrapedInTimeFrame(b)
-    a.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsA
-    b.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsB
-    return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
+    // if not enough unused accounts left, get account that have been used the least in the last 30mins
+    allAccounts.sort((a, b) => {
+      const totalLeadsScrapedIn30MinsA = totalLeadsScrapedInTimeFrame(a)
+      const totalLeadsScrapedIn30MinsB = totalLeadsScrapedInTimeFrame(b)
+      a.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsA
+      b.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsB
+      return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
+    })
+  
+    return accs.concat(allAccounts.splice(-accsNeeded))
   })
-
-  return accs.concat(ua.splice(-accsNeeded))
 }
 
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
@@ -137,30 +149,35 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
 }
 
 export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string | null> => {
-  let doesProxyStillWork = await verifyProxy(account.proxy)
+  try {
+    await _ProxyLock.acquire()
+    let doesProxyStillWork = await verifyProxy(account.proxy)
 
-  if (doesProxyStillWork.valid) return account.proxy;
-
-  const allProxiesInUse = allAccounts
-    // .filter((u) => u.proxy === account.proxy) // remove user from list  (??? why remove from list ?)
-    .map((u) => u.proxy) //retrun list of proxies
-
-  let getProxies = (ProxyModel.find({}).lean() as unknown) as IProxy[]
-
-  if (!getProxies.length) throw new Error('failed to find proxies to use, please add proxies, minimum 15, to be safe add 30');
-
-  let allProxiesNotInUse: string[] = getProxies
-    .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
-    .map(p => p.proxy );
-
-  if (!allProxiesNotInUse.length) throw new Error('failed to find proxies to use, all proxies are in use, please add proxies, minimum 15, to be safe add 30')
-
-  allProxiesNotInUse = shuffleArray(allProxiesNotInUse)
+    if (doesProxyStillWork.valid) return account.proxy;
   
-  for (let proxy of allProxiesNotInUse) {
-    doesProxyStillWork = await verifyProxy(proxy)
-    if (doesProxyStillWork.valid) return proxy;
+    const allProxiesInUse = (await getAllApolloAccounts())
+      // .filter((u) => u.proxy === account.proxy) // remove user from list  (??? why remove from list ?)
+      .map((u) => u.proxy) //retrun list of proxies
+  
+    let getProxies = (ProxyModel.find({}).lean() as unknown) as IProxy[]
+  
+    if (!getProxies.length) throw new Error('failed to find proxies to use, please add proxies, minimum 15, to be safe add 30');
+  
+    let allProxiesNotInUse: string[] = getProxies
+      .filter((p: IProxy) => !allProxiesInUse.includes(p.proxy))
+      .map(p => p.proxy );
+  
+    if (!allProxiesNotInUse.length) throw new Error('failed to find proxies to use, all proxies are in use, please add proxies, minimum 15, to be safe add 30')
+  
+    allProxiesNotInUse = shuffleArray(allProxiesNotInUse)
+    
+    for (let proxy of allProxiesNotInUse) {
+      doesProxyStillWork = await verifyProxy(proxy)
+      if (doesProxyStillWork.valid) return proxy;
+    }
+  
+    throw new Error('failed to use proxies, try scrape again, its fails try adding new proxies, if that fails please contact the developer')
+  } finally {
+    _ProxyLock.release()
   }
-
-  throw new Error('failed to use proxies, try scrape again, its fails try adding new proxies, if that fails please contact the developer')
 }

@@ -352,17 +352,22 @@ export const ssa = async (
       io.emit('apollo', {taskID, message: 'obtained all accounts'}) 
       return _
     })
-    if (!allAccounts) throw new AppError(taskID, 'No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
+    if (!allAccounts || !allAccounts.length) throw new AppError(taskID, 'No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
     if (allAccounts.length < 15) {
       console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
     }
 
   if (!acc4Scrape) {
-    account = await selectAccForScrapingFILO(allAccounts, 1)
+    account = (await selectAccForScrapingFILO(1))[0]
+    if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
+    // @ts-ignore
+    if (!account.totalScrapedInLast30Mins || account.totalScrapedInLast30Mins > 1000) throw new AppError(taskID, 'failed to find account for scraping') 
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean();
-    if (!acc) { acc = await selectAccForScrapingFILO(allAccounts) }
+    if (!acc) { acc = (await selectAccForScrapingFILO(1))[0] }
     if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
+    // @ts-ignore
+    if (!acc.totalScrapedInLast30Mins || acc.totalScrapedInLast30Mins > 1000) throw new AppError(taskID, 'failed to find account for scraping')
     account = acc
   }
 
