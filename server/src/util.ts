@@ -38,6 +38,12 @@ export const getRangeFromApolloURL = (url: string) => {
   return range.map(r => r.split('%2C'))
 }
 
+export const setRangeInApolloURL = (url: string, range: [number, number]) => {
+  const newURL = new URL(url)
+  newURL.searchParams.set('organizationNumEmployeesRanges[]', `${range[0]}%2C${range[1]}`)
+  return newURL.href
+}
+
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
    //@ts-ignore

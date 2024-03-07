@@ -59,13 +59,31 @@ export type ProxyResponse = {
 }
 
 
-export const selectAccForScrapingFILO = (userAccounts: IAccount[]): IAccount => {
-  return userAccounts.reduce((acc: IAccount, cv: any) => {
-    if (cv.lastUsed < acc.lastUsed) {
-      return cv
-    }
-  }, {lastUsed: Infinity} as any);
+// 30mins
+// (FIX) TEST TO MAKE SURE IT WORKS
+export const selectAccForScrapingFILO = (userAccounts: IAccount[], accsNeeded: number): (IAccount & {totalScrapedInLast30Mins: number})[] => {
+  const ua: (IAccount & {totalScrapedInLast30Mins: number})[] = JSON.parse(JSON.stringify(userAccounts))
+  ua.sort((a, b) => {
+    const totalLeadsScrapedIn30MinsA = totalLeadsScrapedInTimeFrame(a)
+    const totalLeadsScrapedIn30MinsB = totalLeadsScrapedInTimeFrame(b)
+    a.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsA
+    b.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsB
+    return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
+  })
+  return ua.splice(-accsNeeded)
 }
+
+export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
+  const timeLimit = 1000 * 60 * 30; // 30mins
+  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: Date]) => {
+    const isWithin30minMark = new Date().getTime() - (cv[1] as any) >= timeLimit
+    return isWithin30minMark
+      ? acc + (cv[1] as any)
+      : acc
+  }, 0)
+}
+
+
 
 export const rmPageFromURLQuery = (url: string): {url: string, page: number, params: Record<string, string>} => {
   const myURL = new URL(url);

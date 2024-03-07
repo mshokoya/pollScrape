@@ -24,7 +24,7 @@ import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
 import { io } from '../../websockets';
-import { AppError, chuckRange, getRangeFromApolloURL } from '../../util';
+import { AppError, chuckRange, getRangeFromApolloURL, setRangeInApolloURL } from '../../util';
 import { IMetaData } from '../../database/models/metadata';
 
 // start apollo should use url
@@ -358,7 +358,7 @@ export const ssa = async (
   if (!acc4Scrape) {
     account = await selectAccForScrapingFILO(allAccounts)
   } else {
-    let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as IAccount;
+    let acc = await AccountModel.findById(acc4Scrape.accountID).lean();
     if (!acc) { acc = await selectAccForScrapingFILO(allAccounts) }
     if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
     account = acc
@@ -371,26 +371,28 @@ export const ssa = async (
     if (!proxy) throw new AppError(taskID, `failed to use proxy`);
     const page = browserCTX.page;
     await useProxy(page, proxy)
-      .then(() => {  io.emit('apollo', {taskID, message: 'added proxy to page'}) });
+      .then(() => { io.emit('apollo', {taskID, message: 'added proxy to page'}) });
   }
 
   // add proxies
   await setupApolloForScraping(taskID, browserCTX, account)
-    .then(() => {  io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
+    .then(() => { io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
+
+  const url = setRangeInApolloURL(meta.url, range)
 
   // go to scrape link
-  await goToApolloSearchUrl(taskID, browserCTX, meta.url)
-    .then(() => {  io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
+  await goToApolloSearchUrl(taskID, browserCTX, url)
+    .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
   // ===================================== 
   
   while (true) {
     // start scaraping
     const data = await apolloStartPageScrape(taskID, browserCTX) // edit
-    .then(_ => {  
-      io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
-      return _
-    })
+      .then(_ => {  
+        io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
+        return _
+      })
   
     const cookies = await getBrowserCookies(browserCTX);
 

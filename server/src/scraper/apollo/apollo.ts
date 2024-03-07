@@ -338,8 +338,45 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
   }
 }
 
+export const apolloAddLeadsToListAndScrape = async (
+  taskID: string, 
+  browserCTX: BrowserContext, 
+  url: string, 
+  limit: number
+) => {
+  const page = browserCTX.page
 
-
-export const apolloAddLeadsToListAndScrape = (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
+  limit = limit <= 25 ? limit : 25
+  await page.goto(url)
+  await page.waitForSelector('[class="zp_RFed0"]', {visible: true, timeout: 10000})
+  let rows = await page.$$('[class="zp_RFed0"]')
+  if (rows.length > limit) {
+    
+  }
   
+  for (let row in rows) {
+    
+  }
 }
+
+// error oversave
+
+// -- error dialog --
+// div[role="dialog"][class="apolloio-css-vars-reset zp zp-modal zp_iDDtd"]
+// div[role="dialog"][class="apolloio-css-vars-reset zp zp-modal zp_iDDtd zp_APRN8 api-error-modal"]
+
+// -- error container --
+// div[class="apolloio-css-vars-reset zp_xfGlC"]
+
+// --text--
+// div[class="zp_Om6BZ"] > span 
+// -
+// Prospecting is blocked for 24 hours because you have violated our Terms of Services for the Unlimited plan. (Code 7)
+// In order to protect the platform and our customers' data, Apollo has automated security measures in place to prevent behaviors that are against our Terms of Service and may hurt our infrastructure. The block will be lifted automatically at the end of the specified term.
+// Our system identified a prospecting rate that is unusual for a human, and a limit was placed on your team to protect our database from any automations. Please check our Terms of Service to avoid behaviors that could block your account temporarily or permanently.
+
+// -- X/Close button ---
+// [class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]
+
+// -- OK/Close button --
+// div[role="dialog"][class="apolloio-css-vars-reset zp zp-modal zp_iDDtd zp_APRN8 api-error-modal"] > [class="zp-button zp_zUY3r"]
