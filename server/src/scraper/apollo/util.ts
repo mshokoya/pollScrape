@@ -1,11 +1,19 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 import { BrowserContext, visitGoogle } from "./scraper"
 import { logIntoApollo } from '.';
-import { getAllApolloAccounts, updateAccount } from '../../database';
+import { updateAccount } from '../../database';
 import { IAccount } from '../../database/models/accounts';
 import { io } from '../../websockets';
-import { AppError } from '../../util';
-import { selectAccForScrapingFILO } from '../../database/util';
+
+export type CreditsInfo = {
+  emailCreditsUsed: number
+  emailCreditsLimit: number
+  renewalDateTime?: number
+  renewalStartDate: number
+  renewalEndDate: number
+  trialDaysLeft?: number
+};
+
 
 // ================ 
 //full = https://app.apollo.io/#/onboarding/checklist

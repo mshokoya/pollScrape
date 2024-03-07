@@ -1,4 +1,5 @@
 import generator from 'generate-password';
+import { generateSlug as gs } from 'random-word-slugs';
 
 export function shuffleArray<T>(array: T[]): T[] {
   let currentIndex = array.length,  randomIndex;
@@ -28,6 +29,8 @@ export const getDomain = (email: string) => {
 
   return domain;
 }
+
+export const generateSlug = (n?: number) => gs(n)
 
 export const generateID = (length: number = 15) => generator.generate({length, numbers: true})
 

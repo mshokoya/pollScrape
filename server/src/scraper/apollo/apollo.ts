@@ -6,7 +6,7 @@ import { AppError, delay } from "../../util";
 import { io } from "../../websockets";
 import { apolloDoc } from "./dom/scrapeData";
 import { BrowserContext } from "./scraper";
-import { apolloLoggedOutURLSubstr, apolloTableRowSelector, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
+import { CreditsInfo, apolloLoggedOutURLSubstr, apolloTableRowSelector, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
 type Upgrade = {
@@ -17,15 +17,6 @@ type Upgrade = {
     limit: string
   }
 }
-
-type CreditsInfo = {
-  emailCreditsUsed: number
-  emailCreditsLimit: number
-  renewalDateTime?: number
-  renewalStartDate: number
-  renewalEndDate: number
-  trialDaysLeft?: number
-};
 
 // (WARN) this is for automation page update
 export const apolloUpdatePageQueryString = (url: string) => {

@@ -113,18 +113,10 @@ export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
 
 
 
-export const rmPageFromURLQuery = (url: string): {url: string, page: number, params: Record<string, string>} => {
+export const getParamsFromURL = (url: string): Record<string, string> => {
   const myURL = new URL(url);
-  const pageNum = myURL.searchParams.get('page');
-  myURL.searchParams.delete('page');
-  
   const paramsObj = Object.fromEntries(new URLSearchParams(myURL.search))
-
-  return {
-    url:  myURL.href,
-    params: paramsObj,
-    page: pageNum ? parseInt(pageNum) : 1
-  }
+  return paramsObj
 }
 
 // (FIX): impliment better proxy validation

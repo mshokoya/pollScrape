@@ -25,7 +25,7 @@ import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
 import { io } from '../../websockets';
-import { AppError, chuckRange, delay, getPageInApolloURL, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
+import { AppError, chuckRange, delay, generateSlug, getPageInApolloURL, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
 import { IMetaData } from '../../database/models/metadata';
 
 // start apollo should use url
@@ -397,7 +397,9 @@ export const ssa = async (
     await goToApolloSearchUrl(taskID, browserCTX, url)
       .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
-    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, url, limit) // edit
+
+    const listName = generateSlug(4)
+    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, limit, listName) // edit
       .then(_ => {  
         io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
         return _
@@ -406,18 +408,17 @@ export const ssa = async (
     delay(3000) // randomise between 3 - 5
 
     const cookies = await getBrowserCookies(browserCTX);
-    const nextPage = getPageInApolloURL(url) + 1
-    url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
     const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
     const totalScraped = newCredits.emailCreditsUsed - credits.emailCreditsUsed;
     account.totalScrapedInLast30Mins = account.totalScrapedInLast30Mins + totalScraped
     account.history.push([totalScraped, new Date().getTime()])
+    const nextPage = getPageInApolloURL(url) + 1
+    url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
 
     // (FIX) acc4Scrape & its range needs to be saved in db
-    await saveScrapeToDB(account._id, cookies, meta.url, data, meta._id, proxy)
+    await saveScrapeToDB(taskID, account, meta, newCredits, cookies, listName, range, data, proxy)
       .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
   }
-  // ===================================== 
 }
 
 // remove page from url

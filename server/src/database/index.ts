@@ -1,11 +1,13 @@
 import { startSession } from "mongoose";
 import { AccountModel, IAccount } from "./models/accounts";
 import { IProxy, ProxyModel } from "./models/proxy";
-import { parseProxy, rmPageFromURLQuery } from "./util";
+import { getParamsFromURL, parseProxy, rmPageFromURLQuery } from "./util";
 import { generateSlug } from "random-word-slugs";
 import { IRecord, RecordsModel } from "./models/records";
 import { IMetaData, MetadataModel } from "./models/metadata";
 import { v4 as uuidv4 } from 'uuid';
+import { CreditsInfo } from "../scraper/apollo/util";
+import { AppError } from "../util";
 
 export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccount> => {
   const acc = AccountModel.findOne({email: account.email})
@@ -37,11 +39,14 @@ export const addProxyToDB = async (p: string): Promise<IProxy | null> => {
 }
 
 export const saveScrapeToDB = async (
-  accountID: string, 
+  taskID: string,
+  account: IAccount,
+  meta: IMetaData,
+  credits: CreditsInfo,
   cookies: string[], 
-  url: string, 
+  listName: string,
+  range: [min: number, max: number],
   data: IRecord[],
-  metadataID: string,
   proxy: string | null,
 ) => {
   const session = await startSession();
@@ -51,48 +56,51 @@ export const saveScrapeToDB = async (
 
     // ACCOUNT UPDATE
     const newAcc = await AccountModel.findOneAndUpdate(
-      {_id: accountID},
-      { $set :{
-        cookies:  JSON.stringify(cookies),
-        proxy,
-        lastUsed: new Date()
-      }},
+      {_id: account._id},
+      { 
+        $set : {
+          cookies:  JSON.stringify(cookies),
+          lastUsed: new Date().getTime(),
+          history: account.history,
+          proxy,
+          ...credits,
+        }
+      },
       updateOpts
     ).lean();
 
 
     if (!newAcc) {
       await session.abortTransaction();
-      throw new Error('failed to update account after scrape, if this continues please contact developer')
+      throw new AppError(taskID, 'failed to update account after scrape, if this continues please contact developer')
     }
 
     // METADATA UPDATE
-    const fmtURL = rmPageFromURLQuery(url)
     const scrapeID = uuidv4()
     
     const newMeta = await MetadataModel.findOneAndUpdate(
-      {_id: metadataID}, 
+      {_id: meta._id}, 
       { 
-        $set: { page: fmtURL.page},
-        $push: { scrapes: {page: fmtURL.page, scrapeID} } // THIS MIGHT NOT WORK FIND ANOTHER WAY TO PUSH
+        $addToSet: { accounts: {accountID: account._id, range} },
+        $push: { scrapes: {scrapeID, listName} }
       }, 
       updateOpts
     ).lean();
 
     if (!newMeta) {
       await session.abortTransaction();
-      throw new Error('failed to update meta after scrape, if this continues please contact developer')
+      throw new AppError(taskID, 'failed to update meta after scrape, if this continues please contact developer');
     }
 
     // RECORD UPDATE
-    const fmtData = data.map((d) => ({scrapeID, url, page: fmtURL.page, data: d}))
+    const fmtData = data.map((d) => ({scrapeID, url: meta.url, data: d}))
 
     await RecordsModel.insertMany(fmtData, updateOpts)
 
     await session.commitTransaction();
   } catch (error) {
     await session.abortTransaction();
-    throw new Error('failed to save scrape to db')
+    throw new AppError(taskID, 'failed to save scrape to db')
   }
   await session.endSession();
 }
