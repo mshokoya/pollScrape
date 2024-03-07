@@ -85,6 +85,9 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
         accsNeeded--
       }
     }
+
+    if (accsNeeded === 0) return accs
+    
     // if not enough unused accounts left, get account that have been used the least in the last 30mins
     allAccounts.sort((a, b) => {
       const totalLeadsScrapedIn30MinsA = totalLeadsScrapedInTimeFrame(a)
@@ -148,7 +151,7 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
   return isOk;
 }
 
-export const selectProxy = async (account: IAccount, allAccounts: IAccount[]): Promise<string | null> => {
+export const selectProxy = async (account: IAccount): Promise<string | null> => {
   try {
     await _ProxyLock.acquire()
     let doesProxyStillWork = await verifyProxy(account.proxy)

@@ -346,7 +346,7 @@ export const apolloAddLeadsToListAndScrape = async (
 ) => {
   const page = browserCTX.page
 
-  limit = limit <= 25 ? limit : 25
+  
   await page.goto(url)
   await page.waitForSelector('[class="zp_RFed0"]', {visible: true, timeout: 10000})
   let rows = await page.$$('[class="zp_RFed0"]')

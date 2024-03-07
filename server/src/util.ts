@@ -44,6 +44,12 @@ export const setRangeInApolloURL = (url: string, range: [number, number]) => {
   return newURL.href
 }
 
+export const setPageInApolloURL = (url: string, page?: number) => {
+  const newURL = new URL(url)
+  newURL.searchParams.set('page', page?.toString() || '1')
+  return newURL.href
+}
+
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
    //@ts-ignore
@@ -115,3 +121,33 @@ export class AppError extends Error {
 // }
 
 // console.log(chuckRange(1,3,2))
+
+
+// ======== latest =========
+// const chuckRange = (min, max, parts) => {
+//   var result= [[]],
+//       delta = Math.round((max - min) / parts);
+      
+//   while (min < max) {
+//       const l = result.length-1
+//       if (result.length === 1 && result[l].length < 2) {
+//         //@ts-ignore
+//         result[l].push(min)
+//       } else {
+//         //@ts-ignore
+//         const s = result[l]
+//         const val = s[1]?s[1]+1:s[0]+1
+//         result.push([val, min])
+//       }
+//       min += delta;
+//   }
+  
+//   //@ts-ignore
+//   const l = result[result.length-1]
+//   const s = l[1]?l[1]+1:l[0]+1
+  
+//   //@ts-ignore
+//   if (l.length === 1) l.push(l[0]+1)
+//   result.push([s, (s===max)?max+1:max]);
+//   return result;
+// }

@@ -3,12 +3,13 @@ import {
   getBrowserCookies, logIntoApolloThenVisit
 } from './util'
 import {
-  selectAccForScrapingFILO, selectProxy
+  selectAccForScrapingFILO, selectProxy, totalLeadsScrapedInTimeFrame
 } from "../../database/util";
 import useProxy from 'puppeteer-page-proxy';
 import { AccountModel, IAccount } from '../../database/models/accounts';
 import { getAllApolloAccounts, saveScrapeToDB, updateAccount } from '../../database';
 import { 
+  apolloAddLeadsToListAndScrape,
   apolloConfirmAccount, 
   apolloDefaultLogin, 
   apolloDefaultSignup, 
@@ -24,7 +25,7 @@ import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
 import { io } from '../../websockets';
-import { AppError, chuckRange, getRangeFromApolloURL, setRangeInApolloURL } from '../../util';
+import { AppError, chuckRange, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
 import { IMetaData } from '../../database/models/metadata';
 
 // start apollo should use url
@@ -332,6 +333,7 @@ export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, m
   await Promise.all(rng.map(r => (ssa(taskID, browserCTX, meta, usingProxy, r))))
 }
 
+type SAccount = IAccount & { totalScrapedInLast30Mins: number }
 export const ssa = async (
   taskID: string, 
   browserCTX: BrowserContext,
@@ -340,41 +342,33 @@ export const ssa = async (
   range: [number, number]
   ) => {
   let proxy: string | null = null;
-  let account: IAccount;
+  let account: SAccount;
 
   
   const acc4Scrape = meta.accounts.find(
     a => ( (a.range[0] === range[0]) && (a.range[1] === range[1]) )
   )
 
-  const allAccounts = await getAllApolloAccounts()
-    .then(_ => {  
-      io.emit('apollo', {taskID, message: 'obtained all accounts'}) 
-      return _
-    })
-    if (!allAccounts || !allAccounts.length) throw new AppError(taskID, 'No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
-    if (allAccounts.length < 15) {
-      console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
-    }
-
   if (!acc4Scrape) {
     account = (await selectAccForScrapingFILO(1))[0]
     if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
-    // @ts-ignore
-    if (!account.totalScrapedInLast30Mins || account.totalScrapedInLast30Mins > 1000) throw new AppError(taskID, 'failed to find account for scraping') 
+    if (!account.totalScrapedInLast30Mins || account.totalScrapedInLast30Mins >= 1000) return
   } else {
-    let acc = await AccountModel.findById(acc4Scrape.accountID).lean();
-    if (!acc) { acc = (await selectAccForScrapingFILO(1))[0] }
-    if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
-    // @ts-ignore
-    if (!acc.totalScrapedInLast30Mins || acc.totalScrapedInLast30Mins > 1000) throw new AppError(taskID, 'failed to find account for scraping')
+    let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
+    if (!acc) { 
+      acc = (await selectAccForScrapingFILO(1))[0] 
+      if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
+    } else {
+      !acc.history.length 
+        ? (acc.totalScrapedInLast30Mins = 0) : ( acc.totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(acc))
+    }
+    if (!acc.totalScrapedInLast30Mins || acc.totalScrapedInLast30Mins >= 1000) return
     account = acc
   }
 
-  // (FIX) check is selectAccForScrapingFILO func returned a account
-
   if (usingProxy) {
-    proxy =  await selectProxy(account, allAccounts);
+    // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
+    proxy =  await selectProxy(account);
     if (!proxy) throw new AppError(taskID, `failed to use proxy`);
     const page = browserCTX.page;
     await useProxy(page, proxy)
@@ -385,7 +379,8 @@ export const ssa = async (
   await setupApolloForScraping(taskID, browserCTX, account)
     .then(() => { io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
 
-  const url = setRangeInApolloURL(meta.url, range)
+  let url = setRangeInApolloURL(meta.url, range)
+  url = setPageInApolloURL(url, 1)
 
   // go to scrape link
   await goToApolloSearchUrl(taskID, browserCTX, url)
@@ -396,15 +391,22 @@ export const ssa = async (
   let credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
   while (true) {
     const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
-    if (!creditsLeft) break;
+    if (creditsLeft <= 0) break;
 
-    const data = await apolloStartPageScrape(taskID, browserCTX) // edit
+    const a = 1000 - account.totalScrapedInLast30Mins
+    if (a <= 0) break;
+
+    const b = Math.min(a, creditsLeft)
+    const limit = (b >= 25) ? 25 : b
+
+    const rURL = url
+
+    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, rURL, limit) // edit
       .then(_ => {  
         io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
         return _
       })
 
-    
     credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
     const cookies = await getBrowserCookies(browserCTX);
