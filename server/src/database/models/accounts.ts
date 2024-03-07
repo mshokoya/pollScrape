@@ -15,7 +15,7 @@ export type IAccount = {
   lastname: string
   proxy: string
   domainEmail: string
-  lastUsed: Date
+  lastUsed: number // new Date.getTime()
   recoveryEmail: string
   emailCreditsUsed: number
   emailCreditsLimit: number
@@ -24,7 +24,7 @@ export type IAccount = {
   renewalEndDate: number | Date
   trialDaysLeft: number
   apolloPassword: string
-  history: [amountOfLeadsScrapedOnPage: number, timeOfScrape: Date][]
+  history: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number][]
 }
 
 
@@ -52,8 +52,8 @@ const accountSchema = new Schema<IAccount>({
   renewalEndDate: { type: Number, default: 0 }, // as Date
   trialDaysLeft: { type: Number, default: -1 },
   // @ts-ignore
-  lastUsed: { type: Date, default: Date() }, // used to pick which to use to scrape
-  history: {type: [[Number, Date]], default: []}
+  lastUsed: { type: Date, default: Date().getTime() }, // used to pick which to use to scrape
+  history: {type: [[Number, Number]], default: []}
 });
 
 export const AccountModel = model<IAccount>('accounts', accountSchema);

@@ -25,7 +25,7 @@ import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox';
 import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo';
 import passwordGenerator  from 'generate-password';
 import { io } from '../../websockets';
-import { AppError, chuckRange, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
+import { AppError, chuckRange, delay, getPageInApolloURL, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
 import { IMetaData } from '../../database/models/metadata';
 
 // start apollo should use url
@@ -375,41 +375,43 @@ export const ssa = async (
       .then(() => { io.emit('apollo', {taskID, message: 'added proxy to page'}) });
   }
 
-  // add proxies
   await setupApolloForScraping(taskID, browserCTX, account)
     .then(() => { io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
 
   let url = setRangeInApolloURL(meta.url, range)
   url = setPageInApolloURL(url, 1)
-
-  // go to scrape link
-  await goToApolloSearchUrl(taskID, browserCTX, url)
-    .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
-
-  // ===================================== 
-  
   let credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+
+  const apolloMaxPage = ['gmail', 'hotmail', 'outlook'].includes(account.domain) ? 3 : 5
+
   while (true) {
     const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
     if (creditsLeft <= 0) break;
 
     const a = 1000 - account.totalScrapedInLast30Mins
     if (a <= 0) break;
-
     const b = Math.min(a, creditsLeft)
     const limit = (b >= 25) ? 25 : b
 
-    const rURL = url
+    // go to scrape link
+    await goToApolloSearchUrl(taskID, browserCTX, url)
+      .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
-    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, rURL, limit) // edit
+    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, url, limit) // edit
       .then(_ => {  
         io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
         return _
       })
 
-    credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+    delay(3000) // randomise between 3 - 5
 
     const cookies = await getBrowserCookies(browserCTX);
+    const nextPage = getPageInApolloURL(url) + 1
+    url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
+    const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+    const totalScraped = newCredits.emailCreditsUsed - credits.emailCreditsUsed;
+    account.totalScrapedInLast30Mins = account.totalScrapedInLast30Mins + totalScraped
+    account.history.push([totalScraped, new Date().getTime()])
 
     // (FIX) acc4Scrape & its range needs to be saved in db
     await saveScrapeToDB(account._id, cookies, meta.url, data, meta._id, proxy)
