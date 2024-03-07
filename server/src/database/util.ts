@@ -103,8 +103,8 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
 
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
   const timeLimit = 1000 * 60 * 30; // 30mins
-  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: Date]) => {
-    const isWithin30minMark = new Date().getTime() - (cv[1] as any) >= timeLimit 
+  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number]) => {
+    const isWithin30minMark = new Date().getTime() - cv[1] >= timeLimit 
     return isWithin30minMark
       ? acc + (cv[0] as any)
       : acc
