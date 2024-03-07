@@ -60,6 +60,7 @@ export type ProxyResponse = {
 
 
 // 30mins
+// (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
 // (FIX) TEST TO MAKE SURE IT WORKS
 export const selectAccForScrapingFILO = (userAccounts: IAccount[], accsNeeded: number): (IAccount & {totalScrapedInLast30Mins: number})[] => {
   const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []

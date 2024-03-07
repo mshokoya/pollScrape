@@ -328,6 +328,7 @@ export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, m
   // (FIX) low ranges may fuckup - make parts dynamic
   const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
 
+  // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
   await Promise.all(rng.map(r => (ssa(taskID, browserCTX, meta, usingProxy, r))))
 }
 
@@ -341,6 +342,7 @@ export const ssa = async (
   let proxy: string | null = null;
   let account: IAccount;
 
+  
   const acc4Scrape = meta.accounts.find(
     a => ( (a.range[0] === range[0]) && (a.range[1] === range[1]) )
   )
@@ -356,7 +358,7 @@ export const ssa = async (
     }
 
   if (!acc4Scrape) {
-    account = await selectAccForScrapingFILO(allAccounts)
+    account = await selectAccForScrapingFILO(allAccounts, 1)
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean();
     if (!acc) { acc = await selectAccForScrapingFILO(allAccounts) }
@@ -386,16 +388,23 @@ export const ssa = async (
 
   // ===================================== 
   
+  let credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
   while (true) {
-    // start scaraping
+    const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
+    if (!creditsLeft) break;
+
     const data = await apolloStartPageScrape(taskID, browserCTX) // edit
       .then(_ => {  
         io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
         return _
       })
-  
+
+    
+    credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+
     const cookies = await getBrowserCookies(browserCTX);
 
+    // (FIX) acc4Scrape & its range needs to be saved in db
     await saveScrapeToDB(account._id, cookies, meta.url, data, meta._id, proxy)
       .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
   }
