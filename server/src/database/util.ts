@@ -81,17 +81,16 @@ export const selectAccForScrapingFILO = (userAccounts: IAccount[], accsNeeded: n
     b.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsB
     return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
   })
-  
+
   return accs.concat(ua.splice(-accsNeeded))
 }
 
-// (FIX) cv[1] could error because in db default value is not set (noe set on instanciation)
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
   const timeLimit = 1000 * 60 * 30; // 30mins
   return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: Date]) => {
     const isWithin30minMark = new Date().getTime() - (cv[1] as any) >= timeLimit 
     return isWithin30minMark
-      ? acc + (cv[1] as any)
+      ? acc + (cv[0] as any)
       : acc
   }, 0)
 }
