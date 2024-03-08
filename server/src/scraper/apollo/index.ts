@@ -28,64 +28,6 @@ import { io } from '../../websockets';
 import { AppError, chuckRange, delay, generateSlug, getPageInApolloURL, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
 import { IMetaData } from '../../database/models/metadata';
 
-// start apollo should use url
-// TODO
-// handle account failed login
-export const startScrapingApollo = async (
-  taskID: string, 
-  browserCTX: BrowserContext, 
-  metaID: string, 
-  url: string, 
-  usingProxy: boolean,
-  ) => {
-  let proxy: string | null = null;
-
-  const allAccounts = await getAllApolloAccounts()
-    .then(_ => {  
-      io.emit('apollo', {taskID, message: 'obtained all accounts'}) 
-      return _
-    })
-
-  if (!allAccounts) throw new AppError(taskID, 'No account for scraping, please create new apollo accounts for scraping (ideally 20-30)')
-  if (allAccounts.length < 15) {
-    console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
-  }
-  
-  const account = selectAccForScrapingFILO(allAccounts);
-
-  if (usingProxy) {
-    proxy =  await selectProxy(account, allAccounts);
-    if (!proxy) throw new AppError(taskID, `failed to use proxy`);
-    const page = browserCTX.page;
-    await useProxy(page, proxy)
-      .then(() => {  io.emit('apollo', {taskID, message: 'added proxy'}) });
-  }
-
-  // add proxies
-  await setupApolloForScraping(taskID, browserCTX, account)
-    .then(() => {  io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
-
-  // go to scrape link
-  await goToApolloSearchUrl(taskID, browserCTX, url)
-    .then(() => {  io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
-
-  // ===================================== 
-  
-  while (true) {
-    // start scaraping
-    const data = await apolloStartPageScrape(taskID, browserCTX) // edit
-    .then(_ => {  
-      io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
-      return _
-    })
-  
-    const cookies = await getBrowserCookies(browserCTX);
-
-    await saveScrapeToDB(account._id, cookies, url, data, metaID, proxy)
-      .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
-  }
-  // ===================================== 
-}
 
 // (FIX) FINISH
 export const logIntoApollo = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
@@ -397,13 +339,14 @@ export const ssa = async (
     await goToApolloSearchUrl(taskID, browserCTX, url)
       .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
-
     const listName = generateSlug(4)
     const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, limit, listName) // edit
       .then(_ => {  
         io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
         return _
       })
+    
+    if (!data || !data.length) return 
 
     delay(3000) // randomise between 3 - 5
 
@@ -420,50 +363,6 @@ export const ssa = async (
       .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
   }
 }
-
-// remove page from url
-// &organizationNumEmployeesRanges[]=51%2C100
-
-// we need to get format of cookies (all & apollo seprate) manually login on browser, extract cookies and add to app cookies
-//remeber to check
-
-// page
-// &page=1
-
-// name sort
-// &sortByField=person_name.raw&sortAscending=false
-// &sortByField=person_name.raw&sortAscending=true
-
-// title sort
-// &sortByField=person_title_normalized&sortAscending=true
-// &sortByField=person_title_normalized&sortAscending=false
-
-// company
-// &sortByField=sanitized_organization_name_unanalyzed&sortAscending=true
-// &sortByField=sanitized_organization_name_unanalyzed&sortAscending=false
-
-// employees
-// &sortByField=organization_estimated_number_employees&sortAscending=true
-// &sortByField=organization_estimated_number_employees&sortAscending=false
-
-// phone
-// &sortByField=person_phone&sortAscending=true
-// &sortByField=person_phone&sortAscending=false
-
-// industry
-// &sortByField=organization_linkedin_industry_tag_ids&sortAscending=true
-// &sortByField=organization_linkedin_industry_tag_ids&sortAscending=false
-
-// range
-// &organizationNumEmployeesRanges[]=1%2C10
-// &organizationNumEmployeesRanges[]=%2C1
-// &organizationNumEmployeesRanges[]=6%2C67
-// &organizationNumEmployeesRanges[]=6%2C1000000
-
-// 25 rows per table
-
-// 100 max pages
-
 
 
 

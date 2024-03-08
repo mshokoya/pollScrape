@@ -329,26 +329,67 @@ export const apolloConfirmAccount = async (taskID: string, browserCTX: BrowserCo
   }
 }
 
+// (FIX) use page.evaluate
 export const apolloAddLeadsToListAndScrape = async (
   taskID: string, 
   browserCTX: BrowserContext, 
-  url: string, 
-  limit: number
+  limit: number,
+  listName: string
 ) => {
   const page = browserCTX.page
+  const tableRowsSelector = '[class="zp_RFed0"]'
+  const checkboxSelector = '[class="zp_fwjCX"]'
+  const saveButtonSelector = '[class="zp-button zp_zUY3r zp_n9QPr zp_ML2Jn zp_Yeidq"]'
+  const disableSaveButtonSelector = '[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_ML2Jn zp_GE4Dz"]'
+  const addToListInputSelector = '[class="Select-input "]'
+  const saveListButtonSelector = '[class="zp-button zp_zUY3r"]'
+  const SLPopupSelector = '[class="zp_lMRYw zp_yHIi8"]'
+  const savedListTableSelector = '[class="zp_G5KZB"]'
+  const savedListTableRowSelector = '[class="zp_RFed0"]'
+  
+  await page.waitForSelector(tableRowsSelector, {visible: true, timeout: 10000})
+  let rows = await page.$$(tableRowsSelector)
 
-  
-  await page.goto(url)
-  await page.waitForSelector('[class="zp_RFed0"]', {visible: true, timeout: 10000})
-  let rows = await page.$$('[class="zp_RFed0"]')
-  if (rows.length > limit) {
-    
+  for (let i = 0; i < Math.min(limit, rows.length); i++) {
+    const check = await rows[i].$(checkboxSelector)
+    if (!check) continue;
+    await check.click()
   }
-  
-  for (let row in rows) {
-    
-  }
+
+  const saveButton = await page.$(saveButtonSelector)
+  const disabledSaveButton = await page.$(disableSaveButtonSelector)
+  if (!saveButton || disabledSaveButton) return;
+  await saveButton.click()
+
+  const addToListInput = await page.$$(addToListInputSelector)
+  if (!addToListInput[2]) return;
+  await addToListInput[2].focus()
+  await addToListInput[2].type(listName)
+  //@ts-ignore
+  await page.$$eval(addToListInputSelector, e => e[2].blur());
+
+  const saveListButton = await page.$$(saveListButtonSelector)
+  if (!saveListButton[3]) return;
+  await saveListButton[3].click()
+
+  await page.waitForSelector(SLPopupSelector, {hidden: true}) // or {visible: false}
+
+  delay(3000)
+
+  await page.goto('https://app.apollo.io/#/people/tags?teamListsOnly[]=no')
+  await page.waitForSelector(savedListTableSelector, {visible: true, timeout: 10000})
+
+  const savedListTableRow = await page.$(savedListTableRowSelector)
+  if (!savedListTableRow) return
+
+  await savedListTableRow.click()
+  await page.waitForNavigation()
+  await page.waitForSelector(tableRowsSelector, {visible: true})
+
+  return await apolloDoc(page) as IRecord[]
 }
+
+// zp_oVufw
 
 // error oversave
 
