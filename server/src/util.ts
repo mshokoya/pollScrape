@@ -35,8 +35,8 @@ export const generateSlug = (n?: number) => gs(n)
 export const generateID = (length: number = 15) => generator.generate({length, numbers: true})
 
 export const getRangeFromApolloURL = (url: string) => {
-  const pURL = new URL(url);
-  const range = pURL.searchParams.getAll('organizationNumEmployeesRanges[]')
+  const pURL = new URLSearchParams(url.split('/#/')[1]);
+  const range = pURL.getAll('organizationNumEmployeesRanges[]')
   if (!range.length) return []
   return range.map(r => r.split('%2C'))
 }

@@ -21,7 +21,7 @@ export const scrapeRoutes = (app: Express) => {
 
     try {
       // (FIX) test if works
-      if (!metaID || !url) {
+      if (!url) {
         throw new Error('failed to start scraper, invalid scrape parameters, please provide a valid start and end page')
       }
       
@@ -53,7 +53,7 @@ export const scrapeRoutes = (app: Express) => {
           }
         }
       )
-      
+
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message || 'failed to scrape' , data: null});
@@ -61,22 +61,3 @@ export const scrapeRoutes = (app: Express) => {
   });
 
 }
-
-// await taskQueue.enqueue({
-//   id: generateSlug(), 
-//   action: () => {
-//       return new Promise((res) => {
-//         let counter = 0
-//         console.log('Counting to 5')
-//         const l = setInterval(() => {
-//           if (counter === 5) {
-//             res(null)
-//             clearInterval(l)
-//           }
-//           console.log(`ID is = 1  ... Counter at ${counter}`)
-//           counter++
-//         }, 500)
-//       })
-//   },
-//   args: {a: 1, b:2}
-// })

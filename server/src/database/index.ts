@@ -1,7 +1,7 @@
 import { startSession } from "mongoose";
 import { AccountModel, IAccount } from "./models/accounts";
 import { IProxy, ProxyModel } from "./models/proxy";
-import { parseProxy, getParamsFromURL } from "./util";
+import { parseProxy, apolloGetParamsFromURL } from "./util";
 import { generateSlug } from "random-word-slugs";
 import { IRecord, RecordsModel } from "./models/records";
 import { IMetaData, MetadataModel } from "./models/metadata";
@@ -107,7 +107,7 @@ export const saveScrapeToDB = async (
 
 export const initMeta = async (url: string): Promise<IMetaData> => {
 
-  const params = getParamsFromURL(url) // sets page to 1
+  const params = apolloGetParamsFromURL(url) // sets page to 1
 
   const newMeta = await MetadataModel.create({
     name: generateSlug(), 

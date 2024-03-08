@@ -113,9 +113,9 @@ export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
 
 
 
-export const getParamsFromURL = (url: string): Record<string, string> => {
-  const myURL = new URL(url);
-  const paramsObj = Object.fromEntries(new URLSearchParams(myURL.search))
+export const apolloGetParamsFromURL = (url: string): Record<string, string> => {
+  const myURL = new URLSearchParams(url.split('/#/')[1]);
+  const paramsObj = Object.fromEntries(new URLSearchParams(myURL))
   return paramsObj
 }
 

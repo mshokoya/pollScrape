@@ -52,7 +52,7 @@ const accountSchema = new Schema<IAccount>({
   renewalEndDate: { type: Number, default: 0 }, // as Date
   trialDaysLeft: { type: Number, default: -1 },
   // @ts-ignore
-  lastUsed: { type: Date, default: Date().getTime() }, // used to pick which to use to scrape
+  lastUsed: { type: Date, default: new Date().getTime() }, // used to pick which to use to scrape
   history: {type: [[Number, Number]], default: []}
 });
 

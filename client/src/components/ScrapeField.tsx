@@ -10,19 +10,9 @@ export const ScrapeField = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (pages.start > pages.end) {
-      console.error("'Start' field should be less than or equal to the 'End' field")
-      return;
-    }
-
-    if (pages.end < pages.start) {
-      console.error(" 'End' field should be greater than or equal to the 'Start' field")
-      return;
-    }
-
     setreqInProcess(true)
 
-    await fetchData('/scrape', 'POST', {url: URLInput, from: pages.start, to: pages.end,  delay, usingProxy: false})
+    await fetchData('/scrape', 'POST', {url: URLInput, delay, usingProxy: false})
       .then( (d) => {
         console.log(d)
         setreqInProcess(false)
@@ -46,9 +36,10 @@ export const ScrapeField = () => {
         ? setDelay(1)
         : setDelay(val)
     } else if (e.target.dataset.url) {
-      setURLInput(e.currentTarget.value)
+      setURLInput(e.target.value)
     }
   }
+  
 
   const secondsToTime = (e: number) => {
     let time = ''; 

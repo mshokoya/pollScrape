@@ -14,6 +14,7 @@ import { initSocketIO } from './websockets';
 import { initMailBox } from './mailbox';
 import { initForwarder } from './forwarder';
 import { domainRoutes } from './server/domain-route';
+import { AccountModel } from './database/models/accounts';
 
 
 const app = express();
@@ -61,7 +62,7 @@ mongoose.connect(process.env.MONGOURI!)
     server.listen(port, () => {
       console.log(`Connected to server on port ${port}`)
     });
-    
+
   });
 
 // apollo dialog box (if visible click x to close)

@@ -134,6 +134,7 @@ const TaskQueue = () => {
           io.emit(task.taskGroup, {...taskIOArgs, ok: true,  metadata: r})
         })
         .catch(async (err) => {
+          console.log(err)
           io.emit(task.taskGroup,  {...taskIOArgs, ok: false, message: err.message})
         })
         .finally(() => {
