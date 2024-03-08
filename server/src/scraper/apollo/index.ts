@@ -272,7 +272,7 @@ export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, m
   const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
 
   // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
-  await Promise.all(rng.map(r => (ssa(taskID, browserCTX, meta, usingProxy, r))))
+  await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
 }
 
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
@@ -293,8 +293,10 @@ export const ssa = async (
 
   if (!acc4Scrape) {
     account = (await selectAccForScrapingFILO(1))[0]
+    console.log(account)
+    console.log('account')
     if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
-    if (!account.totalScrapedInLast30Mins || account.totalScrapedInLast30Mins >= 1000) return
+    if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= 1000) return
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
     if (!acc) { 
@@ -304,7 +306,7 @@ export const ssa = async (
       !acc.history.length 
         ? (acc.totalScrapedInLast30Mins = 0) : ( acc.totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(acc))
     }
-    if (!acc.totalScrapedInLast30Mins || acc.totalScrapedInLast30Mins >= 1000) return
+    if (acc.totalScrapedInLast30Mins === undefined || acc.totalScrapedInLast30Mins >= 1000) return
     account = acc
   }
   console.log('range')

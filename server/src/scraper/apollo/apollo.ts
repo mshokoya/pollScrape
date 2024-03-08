@@ -18,20 +18,6 @@ type Upgrade = {
   }
 }
 
-// (WARN) this is for automation page update
-export const apolloUpdatePageQueryString = (url: string) => {
-  const myURL = new URL(url);
-  const pageNum = myURL.searchParams.get('page') as string;
-
-  if (pageNum) {
-    myURL.searchParams.set('page', `${parseInt(pageNum)+1}`)
-  } else {
-    myURL.searchParams.set('page', '2')
-  }
-
-  return myURL.href;
-}
-
 export const visitApollo = async (taskID: string, browserCTX: BrowserContext) => {
   const page = browserCTX.page
   await page.goto("https://app.apollo.io");

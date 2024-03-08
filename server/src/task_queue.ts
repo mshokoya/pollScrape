@@ -131,9 +131,12 @@ const TaskQueue = () => {
           .catch((err) => { reject(err) })
       })
         .then(async (r) => {
+          console.log('in tq then')
+          console.log(r)
           io.emit(task.taskGroup, {...taskIOArgs, ok: true,  metadata: r})
         })
         .catch(async (err) => {
+          console.log('in tq err')
           console.log(err)
           io.emit(task.taskGroup,  {...taskIOArgs, ok: false, message: err.message})
         })
