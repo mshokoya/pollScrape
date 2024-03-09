@@ -275,7 +275,9 @@ export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, m
   await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
 }
 
+
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
+// (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
 export const ssa = async (
   taskID: string, 
   browserCTX: BrowserContext,
@@ -285,6 +287,8 @@ export const ssa = async (
   ) => {
   let proxy: string | null = null;
   let account: SAccount;
+  const maxLeadScrapeLimit = 1000 // max amount of leads 1 account can scrape before protentially 24hr ban
+  const maxLeadsOnPage = 25 // apollo has 25 leads per page MAX
 
   
   const acc4Scrape = meta.accounts.find(
@@ -293,10 +297,9 @@ export const ssa = async (
 
   if (!acc4Scrape) {
     account = (await selectAccForScrapingFILO(1))[0]
-    console.log(account)
-    console.log('account')
+
     if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
-    if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= 1000) return
+    if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
     if (!acc) { 
@@ -306,69 +309,64 @@ export const ssa = async (
       !acc.history.length 
         ? (acc.totalScrapedInLast30Mins = 0) : ( acc.totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(acc))
     }
-    if (acc.totalScrapedInLast30Mins === undefined || acc.totalScrapedInLast30Mins >= 1000) return
+    if (acc.totalScrapedInLast30Mins === undefined || acc.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
     account = acc
   }
-  console.log('range')
-  console.log(range)
-  console.log('acc4scrape')
-  console.log(acc4Scrape)
-  console.log('account')
-  console.log(account)
 
-  // if (usingProxy) {
-  //   // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
-  //   proxy =  await selectProxy(account);
-  //   if (!proxy) throw new AppError(taskID, `failed to use proxy`);
-  //   const page = browserCTX.page;
-  //   await useProxy(page, proxy)
-  //     .then(() => { io.emit('apollo', {taskID, message: 'added proxy to page'}) });
-  // }
+  if (usingProxy) {
+    // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
+    proxy =  await selectProxy(account);
+    if (!proxy) throw new AppError(taskID, `failed to use proxy`);
+    const page = browserCTX.page;
+    await useProxy(page, proxy)
+      .then(() => { io.emit('apollo', {taskID, message: 'added proxy to page'}) });
+  }
 
   await setupApolloForScraping(taskID, browserCTX, account)
     .then(() => { io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
-
   let url = setRangeInApolloURL(meta.url, range)
   url = setPageInApolloURL(url, 1)
   let credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
+  // (FIX) make sure this works
   const apolloMaxPage = ['gmail', 'hotmail', 'outlook'].includes(account.domain) ? 3 : 5
 
   // while (true) {
-  //   const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
-  //   if (creditsLeft <= 0) break;
+    const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
+    if (creditsLeft <= 0) throw new Error('fail 1');
 
-  //   const a = 1000 - account.totalScrapedInLast30Mins
-  //   if (a <= 0) break;
-  //   const b = Math.min(a, creditsLeft)
-  //   const limit = (b >= 25) ? 25 : b
+    const numOfLeadsAccCanScrape =  maxLeadScrapeLimit - account.totalScrapedInLast30Mins
+    if (numOfLeadsAccCanScrape <= 0) throw new Error('fail 2');
+    const b = Math.min(numOfLeadsAccCanScrape, creditsLeft)
+    const limit = (b >=  maxLeadsOnPage) ?  maxLeadsOnPage : b
 
-  //   // go to scrape link
-  //   await goToApolloSearchUrl(taskID, browserCTX, url)
-  //     .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
+    // go to scrape link
+    await goToApolloSearchUrl(taskID, browserCTX, url)
+      .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
-  //   const listName = generateSlug(4)
-  //   const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, limit, listName) // edit
-  //     .then(_ => {  
-  //       io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
-  //       return _
-  //     })
+    const listName = generateSlug(4)
+    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, limit, listName) // edit
+      .then(_ => {  
+        io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
+        return _
+      })
     
-  //   if (!data || !data.length) return 
+    if (!data || !data.length) return 
 
-  //   delay(3000) // randomise between 3 - 5
+    delay(3000) // randomise between 3 - 5
+    
+    const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+    const cookies = await getBrowserCookies(browserCTX);
+    const totalScraped = newCredits.emailCreditsUsed - credits.emailCreditsUsed;
+    account.totalScrapedInLast30Mins = account.totalScrapedInLast30Mins + totalScraped
+    account.history.push([totalScraped, new Date().getTime()])
 
-  //   const cookies = await getBrowserCookies(browserCTX);
-  //   const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-  //   const totalScraped = newCredits.emailCreditsUsed - credits.emailCreditsUsed;
-  //   account.totalScrapedInLast30Mins = account.totalScrapedInLast30Mins + totalScraped
-  //   account.history.push([totalScraped, new Date().getTime()])
-  //   const nextPage = getPageInApolloURL(url) + 1
-  //   url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
+    const nextPage = getPageInApolloURL(url) + 1
+    url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
 
-  //   // (FIX) acc4Scrape & its range needs to be saved in db
-  //   await saveScrapeToDB(taskID, account, meta, newCredits, cookies, listName, range, data, proxy)
-  //     .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
+    // (FIX) acc4Scrape & its range needs to be saved in db
+    await saveScrapeToDB(taskID, account, meta, newCredits, cookies, listName, range, data, proxy)
+      .then(() => {  io.emit('apollo', {taskID, message: 'saved leads to database'}) });
   // }
 }
 

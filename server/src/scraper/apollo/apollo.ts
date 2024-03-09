@@ -9,15 +9,6 @@ import { BrowserContext } from "./scraper";
 import { CreditsInfo, apolloLoggedOutURLSubstr, apolloTableRowSelector, getBrowserCookies, injectCookies, waitForNavHideDom } from "./util";
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer';
 
-type Upgrade = {
-  plan: string
-  trialEnd: string
-  credits: {
-    used: string
-    limit: string
-  }
-}
-
 export const visitApollo = async (taskID: string, browserCTX: BrowserContext) => {
   const page = browserCTX.page
   await page.goto("https://app.apollo.io");
@@ -53,7 +44,7 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
   const popupSelector = '[class="zp_RB9tu zp_0_HyN"]'
   const popupCloseButtonSelector = '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]'  // once click on 'access email'
 
-  if (!account.domainEmail || !account.password) throw new AppError(taskID,'failed to login, credentials missing');
+  if (!account.domainEmail || !account.apolloPassword) throw new AppError(taskID,'failed to login, credentials missing');
 
   const page = browserCTX.page
   
@@ -65,10 +56,18 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
   const submitButton = await page.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
   const login = await page?.$$(loginInputFieldSelector)
 
-  if (!login || !submitButton) throw new AppError(taskID,'failed to login');
+  console.log(login)
+  console.log(submitButton)
+  console.log(!login.length || !submitButton)
+
+  if (!login.length || !submitButton) throw new AppError(taskID,'failed to login');
+
+
 
   await login[0].type(account.domainEmail)
-  await login[1].type(account.password)
+  await login[1].type(account.apolloPassword)
+
+  await delay(5000)
 
   await submitButton?.click()
   // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
@@ -100,7 +99,7 @@ export const setupApolloForScraping = async (taskID: string, browserCTX: Browser
   
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {
-    logIntoApollo(taskID, browserCTX, account)
+    await logIntoApollo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
     const updatedAccount = await updateAccount({_id: account._id}, {cookie: JSON.stringify(cookies)})
     if (!updatedAccount) throw new AppError(taskID,'Failed to save cookies')
@@ -326,41 +325,44 @@ export const apolloAddLeadsToListAndScrape = async (
   const tableRowsSelector = '[class="zp_RFed0"]'
   const checkboxSelector = '[class="zp_fwjCX"]'
   const saveButtonSelector = '[class="zp-button zp_zUY3r zp_n9QPr zp_ML2Jn zp_Yeidq"]'
+  const saveButtonSmallScreenSelector = '[class="zp-icon apollo-icon apollo-icon-plus zp_dZ0gM zp_j49HX zp_uAV5p"]' // window the size of ipad
   const disableSaveButtonSelector = '[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_ML2Jn zp_GE4Dz"]'
   const addToListInputSelector = '[class="Select-input "]'
   const saveListButtonSelector = '[class="zp-button zp_zUY3r"]'
   const SLPopupSelector = '[class="zp_lMRYw zp_yHIi8"]'
   const savedListTableSelector = '[class="zp_G5KZB"]'
-  const savedListTableRowSelector = '[class="zp_RFed0"]'
+  const savedListTableRowSelector = '[class="zp_cWbgJ"]'
   
   await page.waitForSelector(tableRowsSelector, {visible: true, timeout: 10000})
   let rows = await page.$$(tableRowsSelector)
 
-  for (let i = 0; i < Math.min(limit, rows.length); i++) {
+  // Math.min(limit, rows.length)
+  for (let i = 0; i < 1; i++) {
     const check = await rows[i].$(checkboxSelector)
     if (!check) continue;
     await check.click()
   }
 
   const saveButton = await page.$(saveButtonSelector)
-  const disabledSaveButton = await page.$(disableSaveButtonSelector)
-  if (!saveButton || disabledSaveButton) return;
-  await saveButton.click()
+    .then(async v => !v ? await page.$(saveButtonSmallScreenSelector) : v);
+  const disabledSaveButton = await page.$(disableSaveButtonSelector);
+  if (!saveButton || disabledSaveButton) throw new Error('save button fail');
+  await saveButton.click();
+
+  await delay(3000)
 
   const addToListInput = await page.$$(addToListInputSelector)
-  if (!addToListInput[2]) return;
+  if (!addToListInput[2]) throw new Error('add to list fail');
+  await page.keyboard.type(listName)
   await addToListInput[2].focus()
-  await addToListInput[2].type(listName)
-  //@ts-ignore
-  await page.$$eval(addToListInputSelector, e => e[2].blur());
 
   const saveListButton = await page.$$(saveListButtonSelector)
-  if (!saveListButton[3]) return;
+  if (!saveListButton[3]) throw new Error('save list button fail');
   await saveListButton[3].click()
 
   await page.waitForSelector(SLPopupSelector, {hidden: true}) // or {visible: false}
 
-  delay(3000)
+  await delay(3000)
 
   await page.goto('https://app.apollo.io/#/people/tags?teamListsOnly[]=no')
   await page.waitForSelector(savedListTableSelector, {visible: true, timeout: 10000})
@@ -369,8 +371,8 @@ export const apolloAddLeadsToListAndScrape = async (
   if (!savedListTableRow) return
 
   await savedListTableRow.click()
-  await page.waitForNavigation()
-  await page.waitForSelector(tableRowsSelector, {visible: true})
+
+  await page.waitForSelector(tableRowsSelector, {visible: true, timeout: 10000})
 
   return await apolloDoc(page) as IRecord[]
 }

@@ -123,9 +123,9 @@ export const waitForNavHideDom = async ({page}: BrowserContext) => {
 
 export const logIntoApolloThenVisit = async (taskID: string, browserCTX: BrowserContext, account: IAccount, url: string) => {
   const page = browserCTX.page as Page
-  await page.goto(url)
+  page.goto(url)
 
-  await page.waitForNavigation({timeout:10000})
+  await page.waitForNavigation({timeout:15000})
     .then(async () => {
       if (page.url().includes('/#/login')) {
         await logIntoApollo(taskID, browserCTX, account)
@@ -136,78 +136,3 @@ export const logIntoApolloThenVisit = async (taskID: string, browserCTX: Browser
       }
     })
 }
-
-// https://devforum.roblox.com/t/convert-1k-1m-1b-to-number/1505551
-
-// local values = {
-//   ["K"] = 1000;
-//   ["M"] = 1000000;
-//   ["B"] = 1000000000;
-//   ["T"] = 1000000000000;
-//   -- and so on... you can fill the rest in if you need to
-// };
-
-// local function AbrToNum(str: string)
-//   local num, abr = str:match("^([%d.]+)(%a)$"); -- here we get the number and abbrevation from a string (case doesn't matter)
-//   if num and abr then -- check if the string format is correct so nothing breaks
-//       local val = values[abr:upper()]; -- get the value from 'values' table
-//       if val then
-//           return val * tonumber(num); -- if it exists then multiply number by value and return it
-//       end
-//   else
-//       error("Invalid abbreviation");
-//   end
-// end
-
-
-
-// local vals = {
-//   --  V, Exponent
-//     k = 3,   -- k = 1,000 // 10^exponent // 10^3 = 1,000
-//     m = 6, -- m = 1,000,000 // 10^exponent // 10^6 = 1,000,000
-//   }
-  
-//   -- func("1k") will return 1,000
-//   return function(_abbr: string)
-//           -- take the first part of the string, and the last part and separate them.
-//     local num, lttr = tonumber(string.sub(_abbr, 1, -2)), string.sub(_abbr, -1)
-//     return num * (10^vals[lttr]) -- multiply the number by the amount of 0's
-//   end
-
-
-
-// local function AbrevToNumber(nr_string)
-// 	local number = string.gsub(nr_string, "%D", "")
-// 	local abreviation = string.gsub(nr_string, "%d+", "")
-
-// 	if abreviation == "M" then
-// 		number *= 1000000
-// 	end
-
-// 	return number
-// end
-
-// print(AbrevToNumber("10M")) --// Should return 10000000
-
-
-
-
-
-
-// var ranges = [
-//   { divider: 1e18 , suffix: 'E' },
-//   { divider: 1e15 , suffix: 'P' },
-//   { divider: 1e12 , suffix: 'T' },
-//   { divider: 1e9 , suffix: 'G' },
-//   { divider: 1e6 , suffix: 'M' },
-//   { divider: 1e3 , suffix: 'k' }
-// ];
-
-// function formatNumber(n) {
-//   for (var i = 0; i < ranges.length; i++) {
-//     if (n >= ranges[i].divider) {
-//       return (n / ranges[i].divider).toString() + ranges[i].suffix;
-//     }
-//   }
-//   return n.toString();
-// }

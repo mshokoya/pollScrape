@@ -67,15 +67,21 @@ export type ProxyResponse = {
 // 30mins
 // (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
 // (FIX) TEST TO MAKE SURE IT WORKS (also test lock) 
+// (FIX) handle situation where accsNeeded > allAccounts
 export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IAccount & {totalScrapedInLast30Mins: number})[] > => {
   return await _AccLock.runExclusive(async () => {
     const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
-    const allAccounts = await getAllApolloAccounts() as (IAccount & {totalScrapedInLast30Mins: number})[]
+    const allAccounts = (await getAllApolloAccounts()).filter(a => a.verified === 'yes') as (IAccount & {totalScrapedInLast30Mins: number})[]
   
-      if (!allAccounts || !allAccounts.length) return []
-      if (allAccounts.length < 15) {
-        console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
-      }
+    if (!allAccounts || !allAccounts.length) return []
+    if (allAccounts.length < 15) {
+      console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
+    }
+
+    if (allAccounts.length === 1) {
+      allAccounts[0].totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(allAccounts[0])
+      return allAccounts
+    }
   
     // get unused accounts first
     for (let a of allAccounts) {
@@ -87,15 +93,16 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
     }
 
     if (accsNeeded === 0) return accs
-    
+
     // if not enough unused accounts left, get account that have been used the least in the last 30mins
     allAccounts.sort((a, b) => {
       const totalLeadsScrapedIn30MinsA = totalLeadsScrapedInTimeFrame(a)
       const totalLeadsScrapedIn30MinsB = totalLeadsScrapedInTimeFrame(b)
-      a.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsA
-      b.totalScrapedInLast30Mins = totalLeadsScrapedIn30MinsB
+      a['totalScrapedInLast30Mins'] = totalLeadsScrapedIn30MinsA
+      b['totalScrapedInLast30Mins'] = totalLeadsScrapedIn30MinsB
       return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
     })
+
   
     return accs.concat(allAccounts.splice(-accsNeeded))
   })

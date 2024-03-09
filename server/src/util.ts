@@ -35,27 +35,27 @@ export const generateSlug = (n?: number) => gs(n)
 export const generateID = (length: number = 15) => generator.generate({length, numbers: true})
 
 export const getRangeFromApolloURL = (url: string) => {
-  const pURL = new URLSearchParams(url.split('/#/')[1]);
+  const pURL = new URLSearchParams(url.split('/#/people?')[1]);
   const range = pURL.getAll('organizationNumEmployeesRanges[]')
   if (!range.length) return []
-  return range.map(r => r.split('%2C'))
+  return range.map(r => r.split(','))
 }
 
 export const setRangeInApolloURL = (url: string, range: [number, number]) => {
-  const newURL = new URL(url)
-  newURL.searchParams.set('organizationNumEmployeesRanges[]', `${range[0]}%2C${range[1]}`)
-  return newURL.href
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  params.set('organizationNumEmployeesRanges[]', `${range[0]}%2C${range[1]}`)
+  return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
 
 export const setPageInApolloURL = (url: string, page?: number) => {
-  const newURL = new URL(url)
-  newURL.searchParams.set('page', page?.toString() || '1')
-  return newURL.href
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  params.set('page', page?.toString() || '1')
+  return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
 
 export const getPageInApolloURL = (url: string) => {
-  const newURL = new URL(url)
-  const page = newURL.searchParams.get('page')
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  const page = params.get('page')
   return page ? parseInt(page) : 1
 }
 
