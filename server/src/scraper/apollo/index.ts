@@ -275,9 +275,9 @@ export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, m
   await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
 }
 
-
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
 // (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
+// (FIX) put mutex of selectAccForScrapingFILO() call and not inside the func, this way we can acc in use in global obj/list
 export const ssa = async (
   taskID: string, 
   browserCTX: BrowserContext,
@@ -290,7 +290,6 @@ export const ssa = async (
   const maxLeadScrapeLimit = 1000 // max amount of leads 1 account can scrape before protentially 24hr ban
   const maxLeadsOnPage = 25 // apollo has 25 leads per page MAX
 
-  
   const acc4Scrape = meta.accounts.find(
     a => ( (a.range[0] === range[0]) && (a.range[1] === range[1]) )
   )
@@ -337,15 +336,15 @@ export const ssa = async (
 
     const numOfLeadsAccCanScrape =  maxLeadScrapeLimit - account.totalScrapedInLast30Mins
     if (numOfLeadsAccCanScrape <= 0) throw new Error('fail 2');
-    const b = Math.min(numOfLeadsAccCanScrape, creditsLeft)
-    const limit = (b >=  maxLeadsOnPage) ?  maxLeadsOnPage : b
+    let numOfLeadsToScrape = Math.min(numOfLeadsAccCanScrape, creditsLeft)
+    numOfLeadsToScrape = (numOfLeadsToScrape >=  maxLeadsOnPage) ?  maxLeadsOnPage : numOfLeadsToScrape
 
     // go to scrape link
     await goToApolloSearchUrl(taskID, browserCTX, url)
       .then(() => { io.emit('apollo', {taskID, message: 'visiting apollo lead url'}) })
 
     const listName = generateSlug(4)
-    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, limit, listName) // edit
+    const data = await apolloAddLeadsToListAndScrape(taskID, browserCTX, numOfLeadsToScrape, listName) // edit
       .then(_ => {  
         io.emit('apollo', {taskID, message: 'successfully scraped page'}) 
         return _

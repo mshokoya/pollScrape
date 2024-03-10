@@ -15,6 +15,7 @@ import { initMailBox } from './mailbox';
 import { initForwarder } from './forwarder';
 import { domainRoutes } from './server/domain-route';
 import { AccountModel } from './database/models/accounts';
+import { initCache } from './cache';
 
 
 const app = express();
@@ -46,8 +47,11 @@ app.use((err: any, _req: any, res: any, next: any) => {
 mongoose.connect(process.env.MONGOURI!)
   .then(async () => {
     console.log('Mongoose started')
+
+    initCache()
+    console.log('Cache started')
     
-    const io = initSocketIO(server)
+    initSocketIO(server)
     console.log('SocketIO started')
 
     initTaskQueue()
