@@ -365,6 +365,7 @@ export const ssa = async (
     account.history.push([totalScraped, new Date().getTime()])
 
     const nextPage = getPageInApolloURL(url) + 1
+    // (FIX) make sure it works
     url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
 
     // (FIX) acc4Scrape & its range needs to be saved in db
