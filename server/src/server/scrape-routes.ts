@@ -6,6 +6,7 @@ import { scraper } from '../scraper/apollo/scraper';
 import { AppError, generateID, getDomain, isNumber } from '../util';
 import { taskQueue } from '../task_queue';
 import { io } from '../websockets';
+import { cache } from '../cache';
 
 
 export const scrapeRoutes = (app: Express) => {
@@ -49,6 +50,7 @@ export const scrapeRoutes = (app: Express) => {
           try {
             await apolloScrape(taskID, browserCTX, metadata, useProxy)
           } finally {
+            await cache.deleteMeta(metaID)
             await scraper.close(browserCTX)
           }
         }

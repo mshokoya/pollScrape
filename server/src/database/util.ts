@@ -6,6 +6,7 @@ import { shuffleArray } from '../util';
 import { IProxy, ProxyModel } from './models/proxy';
 import { getAllApolloAccounts } from '.';
 import { Mutex } from 'async-mutex'
+import { cache } from '../cache';
 
 const _AccLock = new Mutex();
 const _ProxyLock = new Mutex();
@@ -71,7 +72,10 @@ export type ProxyResponse = {
 export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IAccount & {totalScrapedInLast30Mins: number})[] > => {
   return await _AccLock.runExclusive(async () => {
     const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
-    const allAccounts = (await getAllApolloAccounts()).filter(a => a.verified === 'yes') as (IAccount & {totalScrapedInLast30Mins: number})[]
+
+    const allAccInUse = await cache.getAllAccountIDs()
+    const allAccounts = (await getAllApolloAccounts())
+      .filter( a => a.verified === 'yes' || !allAccInUse.includes(a._id) ) as (IAccount & {totalScrapedInLast30Mins: number})[]
   
     if (!allAccounts || !allAccounts.length) return []
     if (allAccounts.length < 15) {

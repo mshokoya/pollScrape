@@ -27,7 +27,8 @@ import passwordGenerator  from 'generate-password';
 import { io } from '../../websockets';
 import { AppError, chuckRange, delay, generateSlug, getPageInApolloURL, getRangeFromApolloURL, setPageInApolloURL, setRangeInApolloURL } from '../../util';
 import { IMetaData } from '../../database/models/metadata';
-
+import { Mutex } from 'async-mutex';
+import { cache } from '../../cache';
 
 // (FIX) FINISH
 export const logIntoApollo = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
@@ -276,6 +277,7 @@ export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, m
 }
 
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
+const _SALock = new Mutex()
 // (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
 // (FIX) put mutex of selectAccForScrapingFILO() call and not inside the func, this way we can acc in use in global obj/list
 export const ssa = async (
@@ -295,14 +297,14 @@ export const ssa = async (
   )
 
   if (!acc4Scrape) {
-    account = (await selectAccForScrapingFILO(1))[0]
+    account = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) )
 
     if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
     if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
     if (!acc) { 
-      acc = (await selectAccForScrapingFILO(1))[0] 
+      acc = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) ) 
       if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
     } else {
       !acc.history.length 
@@ -311,6 +313,8 @@ export const ssa = async (
     if (acc.totalScrapedInLast30Mins === undefined || acc.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
     account = acc
   }
+
+  await cache.addAccount(meta._id, account._id)
 
   if (usingProxy) {
     // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
@@ -332,10 +336,10 @@ export const ssa = async (
 
   // while (true) {
     const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
-    if (creditsLeft <= 0) throw new Error('fail 1');
+    if (creditsLeft <= 0) return;
 
     const numOfLeadsAccCanScrape =  maxLeadScrapeLimit - account.totalScrapedInLast30Mins
-    if (numOfLeadsAccCanScrape <= 0) throw new Error('fail 2');
+    if (numOfLeadsAccCanScrape <= 0) return;
     let numOfLeadsToScrape = Math.min(numOfLeadsAccCanScrape, creditsLeft)
     numOfLeadsToScrape = (numOfLeadsToScrape >=  maxLeadsOnPage) ?  maxLeadsOnPage : numOfLeadsToScrape
 

@@ -4,7 +4,7 @@ import { Mutex } from 'async-mutex';
 type ICache = {[key: string]: any} & {meta: {[metadataID: string]: string[]}}
 const Cache = () => {
   const _CLock = new Mutex()
-  const c: ICache = { meta: {}}
+  const c: ICache = { meta: {_: []}}
 
   return {
     get: async (key: string) => await _CLock.runExclusive(() => c[key]),
