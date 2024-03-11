@@ -70,7 +70,6 @@ export type ProxyResponse = {
 // (FIX) TEST TO MAKE SURE IT WORKS (also test lock) 
 // (FIX) handle situation where accsNeeded > allAccounts
 export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IAccount & {totalScrapedInLast30Mins: number})[] > => {
-  return await _AccLock.runExclusive(async () => {
     const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
 
     const allAccInUse = await cache.getAllAccountIDs()
@@ -109,12 +108,11 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
 
   
     return accs.concat(allAccounts.splice(-accsNeeded))
-  })
 }
 
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
   const timeLimit = 1000 * 60 * 30; // 30mins
-  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number]) => {
+  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string]) => {
     const isWithin30minMark = new Date().getTime() - cv[1] >= timeLimit 
     return isWithin30minMark
       ? acc + (cv[0] as any)
