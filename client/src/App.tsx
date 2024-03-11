@@ -2,12 +2,19 @@ import { RecordField } from './components/RecordField';
 import { ScrapeField } from './components/ScrapeField';
 import { Sidebar } from './components/Sidebar';
 import { TaskView } from './components/TaskView';
+import { PromptPopup } from './components/Prompt';
+import {promptState} from './core/state/prompt';
+import { observer } from '@legendapp/state/react';
 
-
-function App() {
+const App = observer(function App(){
 
   return (
     <div className='flex'>
+      {
+        promptState.get().length
+          ? <PromptPopup />
+          : null
+      }
       <div className='flex flex-col center h-screen z-0 grow p-2'>
         
         <div className='mb-3'>
@@ -29,6 +36,6 @@ function App() {
       </div>
     </div>
   )
-}
+})
 
 export default App

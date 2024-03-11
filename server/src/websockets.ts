@@ -1,4 +1,5 @@
 import {Server as IO}  from 'socket.io';
+import { prompt } from './prompt';
 
 type SocketResponse<T = Record<string, any>> = {
   id: string
@@ -18,6 +19,8 @@ export const SocketIO = (server: any) => {
 
   io.on('connection', (socket) => {
     console.log('A user connected');
+
+    socket.on('prompt', ({qid, choiceIDX}: {qid: string, choiceIDX: number}) => {prompt.answerQuestion(qid, choiceIDX)})
 
     socket.on('disconnect', () => {
       console.log('A user disconnected');
