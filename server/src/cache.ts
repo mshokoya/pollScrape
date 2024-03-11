@@ -32,12 +32,3 @@ const Cache = () => {
 
 export let cache: ReturnType<typeof Cache>
 export const initCache = () => { cache = Cache() }
-
-
-
-// export let mailbox: ReturnType<typeof Mailbox>
-
-// export const initMailBox = () => {
-//   mailbox = Mailbox()
-//   return mailbox
-// }

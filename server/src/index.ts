@@ -16,6 +16,7 @@ import { initForwarder } from './forwarder';
 import { domainRoutes } from './server/domain-route';
 import { AccountModel } from './database/models/accounts';
 import { initCache } from './cache';
+import { initPrompt } from './prompt';
 
 
 const app = express();
@@ -53,6 +54,9 @@ mongoose.connect(process.env.MONGOURI!)
     
     initSocketIO(server)
     console.log('SocketIO started')
+
+    initPrompt()
+    console.log('Prompt started')
 
     initTaskQueue()
     console.log('TaskQueue started')
