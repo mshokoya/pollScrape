@@ -15,6 +15,7 @@ import {
   apolloDefaultSignup, 
   apolloGetCreditsInfo, 
   apolloStartPageScrape, 
+  getSavedListAndScrape, 
   goToApolloSearchUrl, 
   setupApolloForScraping, 
   upgradeApolloAccount 
@@ -280,6 +281,7 @@ type SAccount = IAccount & { totalScrapedInLast30Mins: number }
 const _SALock = new Mutex()
 // (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
 // (FIX) put mutex of selectAccForScrapingFILO() call and not inside the func, this way we can acc in use in global obj/list
+// (FIX) handle account errors like suspension
 export const ssa = async (
   taskID: string, 
   browserCTX: BrowserContext,
@@ -325,6 +327,24 @@ export const ssa = async (
       .then(() => { io.emit('apollo', {taskID, message: 'added proxy to page'}) });
   }
 
+  // (FIX) ============ PUT INTO FUNC =====================
+  // leads recover (is account has listName and no date or numOfLeadsScraped)
+  // (FIX) test to see if it works
+  const metasWithEmptyList = meta.scrapes.filter((l) => {
+    const history = account.history.find(h => h[2] === l.listName)
+    if (!history) return false
+    return !history[0] && !history[1]
+  })
+
+  if (metasWithEmptyList.length) {
+    for (let s of metasWithEmptyList) {
+      const data = await getSavedListAndScrape(taskID, browserCTX, s.listName)
+      // await saveScrapeToDB(taskID, account, meta, newCredits, cookies, s.listName, range, data, proxy) // make func for updating db scrape
+    }
+  }
+// =========================================================
+
+
   await setupApolloForScraping(taskID, browserCTX, account)
     .then(() => { io.emit('apollo', {taskID, message: 'successfully setup apollo for scraping'}) })
   let url = setRangeInApolloURL(meta.url, range)
@@ -362,7 +382,7 @@ export const ssa = async (
     const cookies = await getBrowserCookies(browserCTX);
     const totalScraped = newCredits.emailCreditsUsed - credits.emailCreditsUsed;
     account.totalScrapedInLast30Mins = account.totalScrapedInLast30Mins + totalScraped
-    account.history.push([totalScraped, new Date().getTime()])
+    account.history.push([totalScraped, new Date().getTime(), listName])
 
     const nextPage = getPageInApolloURL(url) + 1
     // (FIX) make sure it works

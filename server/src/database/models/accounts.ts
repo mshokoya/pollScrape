@@ -24,7 +24,7 @@ export type IAccount = {
   renewalEndDate: number | Date
   trialDaysLeft: number
   apolloPassword: string
-  history: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number][]
+  history: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string][]
 }
 
 
@@ -53,7 +53,7 @@ const accountSchema = new Schema<IAccount>({
   trialDaysLeft: { type: Number, default: -1 },
   // @ts-ignore
   lastUsed: { type: Date, default: new Date().getTime() }, // used to pick which to use to scrape
-  history: {type: [[Number, Number]], default: []}
+  history: {type: [[Number, Number, String]], default: []}
 });
 
 export const AccountModel = model<IAccount>('accounts', accountSchema);

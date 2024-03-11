@@ -377,7 +377,65 @@ export const apolloAddLeadsToListAndScrape = async (
   return await apolloDoc(page) as IRecord[]
 }
 
-// zp_oVufw
+// (FIX) test to see if it works 
+export const getSavedListAndScrape = async (
+  taskID: string, 
+  browserCTX: BrowserContext,
+  listName: string) => {
+  const page = browserCTX.page
+  const tableRowsSelector = '[class="zp_RFed0"]'
+  const savedListTableSelector = '[class="zp_G5KZB"]'
+  const savedListTableRowsSelector = '[class="zp_cWbgJ"]'
+
+  await page.goto('https://app.apollo.io/#/people/tags?teamListsOnly[]=no')
+  await page.waitForSelector(savedListTableSelector, {visible: true, timeout: 10000})
+
+  let listIdx: number | null = null;
+  const rows = await page.$$(savedListTableRowsSelector)
+
+  let counter = 0
+  while (counter <= 4) {
+    const activeNextButton = await page.$('[class="zp-button zp_zUY3r zp_MCSwB zp_xCVC8"]').catch(() => null)
+    const disabledNextButton = await page.$('[class="zp-button zp_zUY3r zp_BAp0M zp_MCSwB zp_xCVC8"]').catch(() => null)
+    
+
+    const idx = await page.evaluate((listName) => {
+      let idx = null
+      const listOfRows = document.querySelectorAll('[class="zp_cWbgJ"]')
+      for (let i = 0; i < listOfRows.length; i++) {
+        // @ts-ignore
+        const rowTitle = listOfRows[i].querySelector('[class="zp_aBhrx"]').innerText
+        if (rowTitle === listName) {
+          idx = i
+          break
+        }
+      }
+      return idx
+    }, listName)
+
+    if (idx !== null) {
+      listIdx = idx
+      break
+    } else if (activeNextButton) {
+      await activeNextButton.click()
+      counter = 0
+    } else if (disabledNextButton) { break }
+
+    delay(3000)
+  }
+
+  if (listIdx === null) { throw new AppError(taskID, 'failed to find list')}
+  
+  await rows[listIdx].click()
+  await page.waitForSelector(tableRowsSelector, {visible: true, timeout: 10000})
+
+  return await apolloDoc(page) as IRecord[]
+}
+
+// -- next button
+// zp-button zp_zUY3r zp_MCSwB zp_xCVC8
+// zp-button zp_zUY3r zp_BAp0M zp_MCSwB zp_xCVC8 // disabled
+// zp-button zp_zUY3r zp_MCSwB zp_xCVC8
 
 // error oversave
 
