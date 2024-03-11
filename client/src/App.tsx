@@ -9,12 +9,7 @@ import { observer } from '@legendapp/state/react';
 const App = observer(function App(){
 
   return (
-    <div className='flex'>
-      {
-        promptState.get().length
-          ? <PromptPopup />
-          : null
-      }
+    <div className='flex relative'>
       <div className='flex flex-col center h-screen z-0 grow p-2'>
         
         <div className='mb-3'>
@@ -30,10 +25,14 @@ const App = observer(function App(){
         </div>
 
       </div>
-
       <div>
         <Sidebar />
       </div>
+      {
+        promptState.get().length
+          ? <PromptPopup prompt={promptState[0].get()} />
+          : null
+      }
     </div>
   )
 })

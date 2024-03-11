@@ -21,8 +21,6 @@ io.on('processQueue', handleApolloProcessQueueEvents)
 io.on('prompt', handleAPromptEvents)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+<App />,
 )
 

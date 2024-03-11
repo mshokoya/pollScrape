@@ -24,14 +24,16 @@ export const Prompt = () => {
 
   Timeout.meta
 
-  const setToDefaultAns = (id: string) => {
-    Timeout.clear(id);
-    Q[id].answer = Q[id].defaultAnsIDX;
+  const setToDefaultAns = (qid: string) => {
+    if (Q[qid]) return
+    Timeout.clear(qid);
+    Q[qid].answer = Q[qid].defaultAnsIDX;
   };
 
-  const deleteQuestion = (id: string) => {
-    Timeout.clear(id);
-    delete Q[id];
+  const deleteQuestion = (qid: string) => {
+    if (Q[qid]) return
+    Timeout.clear(qid);
+    delete Q[qid];
   };
 
   const getTimeLeft = (id: string) => Timeout.remaining(id);
@@ -40,31 +42,38 @@ export const Prompt = () => {
     const qid = generateID()
     Q[qid] = { question, timer: null, answer: null, choices, defaultAnsIDX };
 
-    io.emit('prompt', {...Q[qid], qid})
+    io.emit('prompt', {type: 'create', ...Q[qid], qid, timer: Timeout.set(qid, () => { setToDefaultAns(qid) }, 60000)})
 
-    while (!Q[qid].answer) await delay(3000);
+
+    while (Q[qid].answer === null) await delay(3000);
 
     const answer = Q[qid].choices[Q[qid].answer!];
     deleteQuestion(qid);
+
+    console.log('AAANNNSSSWWWEERRR')
+    console.log(answer)
     return answer;
   };
 
   const answerQuestion = (qid: string, answerIDX: number) => {
-    const answer = Q[qid] ? Q[qid].choices[answerIDX] : undefined;
+    if (!Q[qid]) return
+    const answer = Q[qid].choices[answerIDX];
     if (!answer) false;
-    Q[qid].answer = Q[qid].choices[answerIDX];
+    Q[qid].answer = answerIDX;
     return true;
   };
 
-  const startTimer = (qid: string, timeLimit: number) => {
-    Q[qid].timer = Timeout.set(qid, () => { setToDefaultAns(qid) }, timeLimit);
-  }
+  // const startTimer = (qid: string, timeLimit: number) => {
+  //   console.log('timer started')
+  //   console.log(timeLimit)
+  //   Q[qid].timer = Timeout.set(qid, () => { setToDefaultAns(qid) }, timeLimit);
+  // }
 
   return {
     askQuestion,
     answerQuestion,
     getTimeLeft,
-    startTimer
+    // startTimer
   };
 };
 

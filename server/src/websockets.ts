@@ -20,7 +20,17 @@ export const SocketIO = (server: any) => {
   io.on('connection', (socket) => {
     console.log('A user connected');
 
-    socket.on('prompt', ({qid, choiceIDX}: {qid: string, choiceIDX: number}) => {prompt.answerQuestion(qid, choiceIDX)})
+    socket.on('prompt', (res) => {
+      switch (res.type) {
+        case "timer":
+          // prompt.startTimer(res.metadata.qid, res.metadata.timeLimit)
+          break
+        case "answer":
+          console.log(res)
+          prompt.answerQuestion(res.metadata.qid, res.metadata.choiceIDX)
+          break
+      }
+    })
 
     socket.on('disconnect', () => {
       console.log('A user disconnected');

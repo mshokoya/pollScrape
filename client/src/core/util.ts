@@ -17,6 +17,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export type FetchData<T = unknown> = {ok: boolean, message: string | null, data: T}
 
+export const promptCountdownTime = 10000;
+
 export const delay = (time: number) => {
   return new Promise(function(resolve) { 
       setTimeout(resolve, time)
@@ -125,3 +127,19 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
     return rs[idx]
   },
 })
+
+export const getTimeRemaining = (endtime: ms) => {
+  const total = Date.parse(endtime) - Date.parse(new Date());
+  const seconds = Math.floor( (total/1000) % 60 );
+  const minutes = Math.floor( (total/1000/60) % 60 );
+  const hours = Math.floor( (total/(1000*60*60)) % 24 );
+  const days = Math.floor( total/(1000*60*60*24) );
+
+  return {
+    total,
+    days,
+    hours,
+    minutes,
+    seconds
+  };
+}
