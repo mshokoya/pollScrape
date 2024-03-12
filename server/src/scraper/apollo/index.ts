@@ -30,6 +30,7 @@ import { AppError, chuckRange, delay, generateSlug, getPageInApolloURL, getRange
 import { IMetaData } from '../../database/models/metadata';
 import { Mutex } from 'async-mutex';
 import { cache } from '../../cache';
+import { prompt } from '../../prompt';
 
 // (FIX) FINISH
 export const logIntoApollo = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
@@ -292,6 +293,7 @@ export const ssa = async (
   let proxy: string | null = null;
   let account: SAccount;
   const maxLeadScrapeLimit = 1000 // max amount of leads 1 account can scrape before protentially 24hr ban
+  const minLeadScrapeLimit = 100 
   const maxLeadsOnPage = 25 // apollo has 25 leads per page MAX
 
   const acc4Scrape = meta.accounts.find(
@@ -299,6 +301,7 @@ export const ssa = async (
   )
 
   if (!acc4Scrape) {
+    // (FIX) move mutex to the function instead
     account = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) )
 
     if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
@@ -306,6 +309,7 @@ export const ssa = async (
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
     if (!acc) { 
+      // (FIX) move mutex to the function instead
       acc = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) ) 
       if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
     } else {
@@ -314,6 +318,20 @@ export const ssa = async (
     }
     if (acc.totalScrapedInLast30Mins === undefined || acc.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
     account = acc
+  }
+
+  const amountAccountCanScrape = (maxLeadScrapeLimit - account.totalScrapedInLast30Mins)
+  if ( amountAccountCanScrape <= minLeadScrapeLimit ) {
+    // (FIX calculate time left to scrape limit reset)
+    const answer = await prompt.askQuestion( `
+      The max amount of leads you can scrape right now is 
+      ${amountAccountCanScrape}/minLeadScrapeLimit. if you wait 30 minutes / 1hour accounts will reset. 
+      do you want to continue anyway ?
+      `, 
+      ['yes', 'no'], 0
+    )
+
+    if (answer === 'no') { return }
   }
 
   await cache.addAccount(meta._id, account._id)
