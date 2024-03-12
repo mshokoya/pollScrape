@@ -1,23 +1,26 @@
 import { io } from "../../main"
-import { deletePrompt, promptState } from "../state/prompt"
+import { PromptState, deletePrompt, promptState } from "../state/prompt"
 
-type PromptEvent = {
+type PromptEvent<T> = {
   taskID: string
   type: string
-  qid: string
-  question: string
-  choices: any[]
-  defaultAnsIDX: number
-  answer: number | null
+  metadata: T
 }
 
-export function handleAPromptEvents (res: PromptEvent) { 
+// metadata: {
+//   qid: string
+//   question: string
+//   choices: any[]
+//   defaultAnsIDX: number
+//   answer: number | null
+// }
+
+export function handleAPromptEvents (res: PromptEvent<unknown>) { 
   switch (res.type) {
     case 'create':
-      promptState.push({...res, timer: null}) // put into func in state
+      promptState.push({...res.metadata as PromptState }) // put into func in state
     break
   }
-  
 }
 
 export const answerPromptEvent = (qid: string, choiceIDX: number) => {

@@ -15,8 +15,6 @@
 import { delay, generateID } from "./util";
 import { io } from "./websockets";
 
-import Timeout from "smart-timeout";
-
 type Q = {[qid: string]: {question: string, choices: any[], answer: number | null, defaultAnsIDX: number,  timer: NodeJS.Timeout | null}}
 
 export const Prompt = () => {
@@ -36,9 +34,10 @@ export const Prompt = () => {
 
   const askQuestion = async <T>(question: string, choices: T[], defaultAnsIDX: number) => {
     const qid = generateID()
-    Q[qid] = { question, timer: null, answer: null, choices, defaultAnsIDX };
 
-    io.emit('prompt', {type: 'create', ...Q[qid], qid, timer: setTimeout(() => { setToDefaultAns(qid) }, 60000)})
+    Q[qid] = { question, timer: setTimeout(() => { setToDefaultAns(qid) }, 60000), answer: null, choices, defaultAnsIDX };
+
+    io.emit('prompt', {type: 'create', metadata: {...Q[qid], qid, timer: null }})
 
     while (Q[qid].answer === null) await delay(3000);
 
@@ -56,16 +55,9 @@ export const Prompt = () => {
     return true;
   };
 
-  // const startTimer = (qid: string, timeLimit: number) => {
-  //   console.log('timer started')
-  //   console.log(timeLimit)
-  //   Q[qid].timer = Timeout.set(qid, () => { setToDefaultAns(qid) }, timeLimit);
-  // }
-
   return {
     askQuestion,
     answerQuestion,
-    // startTimer
   };
 };
 

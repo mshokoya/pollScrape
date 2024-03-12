@@ -10,25 +10,34 @@ export const domainRoutes = (app: Express) => {
   app.post('/domain', async (req, res) => {
     console.log('Add new domain')
 
-    try {
-      const email =  req.body.email || 'mayo_s@hotmail.co.uk' // (FIX) get account email from somewhere
-      const domain = req.body.domain;
-      if (!domain) throw new Error('Failed to add domain, invalid domain');
+    Promise.all([
+      await prompt.askQuestion('what is your name', ['michael', 'oj', 'cynthia'], 1),
+      await prompt.askQuestion('whos king', ['mum', 'dad', 'mee'], 2),
+      await prompt.askQuestion('whos m2', ['mum', 'dad', 'mee'], 2)
+    ])
+    
 
-      if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain') // (FIX) find lib to do this better
+    console.log('WE ARE IN THE AFTER')
 
-      const doesExist = await DomainModel.findOne({domain}).lean();
-      if (doesExist) throw new Error('domain already exists')
+    // try {
+    //   const email =  req.body.email || 'mayo_s@hotmail.co.uk' // (FIX) get account email from somewhere
+    //   const domain = req.body.domain;
+    //   if (!domain) throw new Error('Failed to add domain, invalid domain');
 
-      const isOK = await forwarder.addDomain(domain, email);
-      if (!isOK) throw new Error('failed to save domain in forwarder');
+    //   if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain') // (FIX) find lib to do this better
 
-      const newDomain = await DomainModel.create({domain, authEmail: email})
+    //   const doesExist = await DomainModel.findOne({domain}).lean();
+    //   if (doesExist) throw new Error('domain already exists')
 
-      res.json({ok: true, message: null, data: newDomain});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: err});
-    }
+    //   const isOK = await forwarder.addDomain(domain, email);
+    //   if (!isOK) throw new Error('failed to save domain in forwarder');
+
+    //   const newDomain = await DomainModel.create({domain, authEmail: email})
+
+    //   res.json({ok: true, message: null, data: newDomain});
+    // } catch (err: any) {
+    //   res.json({ok: false, message: err.message, data: err});
+    // }
   })
 
   // (NEW)

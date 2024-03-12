@@ -22,9 +22,7 @@ export const SocketIO = (server: any) => {
 
     socket.on('prompt', (res) => {
       switch (res.type) {
-        case "timer":
-          // prompt.startTimer(res.metadata.qid, res.metadata.timeLimit)
-          break
+
         case "answer":
           prompt.answerQuestion(res.metadata.qid, res.metadata.choiceIDX)
           break
