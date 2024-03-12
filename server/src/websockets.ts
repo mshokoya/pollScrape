@@ -26,7 +26,6 @@ export const SocketIO = (server: any) => {
           // prompt.startTimer(res.metadata.qid, res.metadata.timeLimit)
           break
         case "answer":
-          console.log(res)
           prompt.answerQuestion(res.metadata.qid, res.metadata.choiceIDX)
           break
       }

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { ObservableObject } from "@legendapp/state";
+import React from "react";
 
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok'|'fail']

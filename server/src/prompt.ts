@@ -11,47 +11,40 @@
 
 // ==========================
 
-import { Mutex } from 'async-mutex';
+// import { Mutex } from 'async-mutex';
 import { delay, generateID } from "./util";
 import { io } from "./websockets";
 
 import Timeout from "smart-timeout";
 
-type Q = {[qid: string]: {question: string, choices: any[], answer: number | null, defaultAnsIDX: number,  timer: Timeout | null}}
+type Q = {[qid: string]: {question: string, choices: any[], answer: number | null, defaultAnsIDX: number,  timer: NodeJS.Timeout | null}}
 
 export const Prompt = () => {
   const Q: Q = {};
 
-  Timeout.meta
-
   const setToDefaultAns = (qid: string) => {
     if (Q[qid]) return
-    Timeout.clear(qid);
+    clearTimeout(Q[qid].timer!)
     Q[qid].answer = Q[qid].defaultAnsIDX;
   };
 
   const deleteQuestion = (qid: string) => {
     if (Q[qid]) return
-    Timeout.clear(qid);
+    clearTimeout(Q[qid].timer!)
     delete Q[qid];
   };
-
-  const getTimeLeft = (id: string) => Timeout.remaining(id);
 
   const askQuestion = async <T>(question: string, choices: T[], defaultAnsIDX: number) => {
     const qid = generateID()
     Q[qid] = { question, timer: null, answer: null, choices, defaultAnsIDX };
 
-    io.emit('prompt', {type: 'create', ...Q[qid], qid, timer: Timeout.set(qid, () => { setToDefaultAns(qid) }, 60000)})
-
+    io.emit('prompt', {type: 'create', ...Q[qid], qid, timer: setTimeout(() => { setToDefaultAns(qid) }, 60000)})
 
     while (Q[qid].answer === null) await delay(3000);
 
     const answer = Q[qid].choices[Q[qid].answer!];
     deleteQuestion(qid);
 
-    console.log('AAANNNSSSWWWEERRR')
-    console.log(answer)
     return answer;
   };
 
@@ -72,7 +65,6 @@ export const Prompt = () => {
   return {
     askQuestion,
     answerQuestion,
-    getTimeLeft,
     // startTimer
   };
 };

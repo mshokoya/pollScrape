@@ -1,6 +1,4 @@
-import { batch, observable } from "@legendapp/state";
-import { answerPromptEvent, startPrompCountdownEvent } from "../io/prompt";
-import { promptCountdownTime } from "../util";
+import { observable } from "@legendapp/state";
 
 export type PromptState = {
   taskID: string
@@ -15,19 +13,19 @@ export type PromptState = {
 
 export const promptState = observable<PromptState[]>([])
 
-export const startPromptCountdown = (qid: string, timeLimit?: number) => {
+// export const startPromptCountdown = (qid: string, timeLimit?: number) => {
 
-    const prompt = promptState.find(p => p.qid.peek() === qid)
-    if (!prompt || prompt?.timer.peek()) return
-    console.log('got an timer')
+//     const prompt = promptState.find(p => p.qid.peek() === qid)
+//     if (!prompt || prompt?.timer.peek()) return
+//     console.log('got an timer')
   
-    prompt.timer.set(
-      setTimeout(() => {
-        answerPromptEvent(qid, prompt.defaultAnsIDX.peek())
-      }, 10000)
-    )
-  // startPrompCountdownEvent(prompt.qid.peek(), 10000)
-}
+//     prompt.timer.set(
+//       setTimeout(() => {
+//         answerPromptEvent(qid, prompt.defaultAnsIDX.peek())
+//       }, promptCountdownTime )
+//     )
+//   // startPrompCountdownEvent(prompt.qid.peek(), 10000)
+// }
 
 export const deletePrompt = (qid: string) => {
   const prompt = promptState.find(p1 => p1.qid.peek() === qid)
