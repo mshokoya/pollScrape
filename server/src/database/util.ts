@@ -112,7 +112,7 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
 
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
   const timeLimit = 1000 * 60 * 30; // 30mins
-  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string]) => {
+  return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string, scrapeID: string]) => {
     const isWithin30minMark = new Date().getTime() - cv[1] >= timeLimit 
     return isWithin30minMark
       ? acc + (cv[0] as any)
@@ -152,6 +152,7 @@ export const verifyProxy = async (proxy: string): Promise<ProxyResponse> => {
   return isOk;
 }
 
+// (FIX) test function works
 export const selectProxy = async (account: IAccount): Promise<string | null> => {
   try {
     await _ProxyLock.acquire()

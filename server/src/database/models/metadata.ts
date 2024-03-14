@@ -5,7 +5,7 @@ export type IMetaData = {
   url: string
   params: {[key: string]: string}
   name: string
-  scrapes: {scrapeID: string, listName: string}[]
+  scrapes: {scrapeID: string, listName: string, length: number, date: number}[]
   accounts: {accountID: string, range:[min:number, max:number]}[]
 }
 
