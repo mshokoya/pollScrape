@@ -11,8 +11,6 @@ export type IDomain = {
   VerifyMessage: string
 }
 
-
-
 const domainSchema = new Schema<IDomain>({
   domain: { type: String, default: "" },
   authEmail: { type: String, default: "" },

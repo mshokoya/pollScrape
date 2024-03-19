@@ -8,15 +8,15 @@ const Cache = () => {
 
   return {
     get: async (key: string) => await _CLock.runExclusive(() => c[key]),
-    set: async (key: string, value: any) => await _CLock.runExclusive(() => {c[key] = value}),
+    // set: async (key: string, value: any) => await _CLock.runExclusive(() => {c[key] = value}),
     delete: async (key: string) => await _CLock.runExclusive(() => {delete c[key]}),
     // meta
     deleteMeta: async (metaID: string) => await _CLock.runExclusive(() => {delete c.meta[metaID]}),
     getMeta: async (metaID: string) => await _CLock.runExclusive(() => c.meta[metaID]),
-    addAccount: async (metaID: string, accountID: string) => await _CLock.runExclusive(() => {
+    addAccounts: async (metaID: string, accountIDs: string[]) => await _CLock.runExclusive(() => {
       !c.meta[metaID] 
-        ? c.meta[metaID] = [accountID] 
-        : c.meta[metaID].push(accountID)
+        ? c.meta[metaID] = accountIDs 
+        : c.meta[metaID].concat(accountIDs)
     }),
     removeAccount: async (metaID: string, accountID: string) => await _CLock.runExclusive(() => {
       if (c.meta[metaID]) {

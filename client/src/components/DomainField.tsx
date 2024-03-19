@@ -150,7 +150,7 @@ export const DomainField = observer(() => {
             <thead className='sticky top-0 bg-black'>
               <tr>
                 <th>Domain</th>
-                <th>Email ?</th>
+                <th>Email</th>
                 <th>Is Verified</th>
                 <th className='w-[7%] sticky bg-black right-0'><IoOptionsOutline className='inline' /></th>
               </tr>

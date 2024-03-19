@@ -53,7 +53,7 @@ const accountSchema = new Schema<IAccount>({
   trialDaysLeft: { type: Number, default: -1 },
   // @ts-ignore
   lastUsed: { type: Date, default: new Date().getTime() }, // used to pick which to use to scrape
-  history: {type: [[Number, Number, String]], default: []}
+  history: {type: [Schema.Types.Mixed], default: []}
 });
 
 export const AccountModel = model<IAccount>('accounts', accountSchema);

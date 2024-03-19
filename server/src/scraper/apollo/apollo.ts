@@ -56,13 +56,7 @@ export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserCont
   const submitButton = await page.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
   const login = await page?.$$(loginInputFieldSelector)
 
-  console.log(login)
-  console.log(submitButton)
-  console.log(!login.length || !submitButton)
-
   if (!login.length || !submitButton) throw new AppError(taskID,'failed to login');
-
-
 
   await login[0].type(account.domainEmail)
   await login[1].type(account.apolloPassword)
@@ -343,7 +337,7 @@ export const apolloAddLeadsToListAndScrape = async (
     await check.click()
   }
 
-  const saveButton = await page.$(saveButtonSelector)
+  const saveButton = await page.waitForSelector(saveButtonSelector, {visible: true, timeout: 10000})
     .then(async v => !v ? await page.$(saveButtonSmallScreenSelector) : v);
   const disabledSaveButton = await page.$(disableSaveButtonSelector);
   if (!saveButton || disabledSaveButton) throw new Error('save button fail');
@@ -351,6 +345,7 @@ export const apolloAddLeadsToListAndScrape = async (
 
   await delay(3000)
 
+  
   const addToListInput = await page.$$(addToListInputSelector)
   if (!addToListInput[2]) throw new Error('add to list fail');
   await page.keyboard.type(listName)
@@ -362,10 +357,27 @@ export const apolloAddLeadsToListAndScrape = async (
 
   await page.waitForSelector(SLPopupSelector, {hidden: true}) // or {visible: false}
 
-  await delay(3000)
+  await delay(2000)
 
   await page.goto('https://app.apollo.io/#/people/tags?teamListsOnly[]=no')
-  await page.waitForSelector(savedListTableSelector, {visible: true, timeout: 10000})
+  await page.waitForSelector(savedListTableRowSelector, {visible: true, timeout: 10000})
+
+  let counter = 0
+  let ln = (await page.$eval(savedListTableRowSelector, el => el.querySelector('[class="zp_aBhrx"]')?.innerText))
+  console.log(ln)
+  console.log(ln === listName)
+  while (
+    ln !== listName &&
+    counter <= 5
+  ) {
+    await page.reload()
+    await page.waitForSelector(savedListTableRowSelector, {visible: true, timeout: 10000})
+    ln = (await page.$eval(savedListTableRowSelector, el => el.querySelector('[class="zp_aBhrx"]')?.innerText))
+    console.log(ln)
+    console.log(ln === listName)
+    counter++
+    delay(3000)
+  }
 
   const savedListTableRow = await page.$(savedListTableRowSelector)
   if (!savedListTableRow) return

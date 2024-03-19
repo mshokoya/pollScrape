@@ -267,9 +267,8 @@ export const AccountField = observer(() => {
                         </tr>
                         <tr className="hover:border-cyan-600 hover:border-y">
                           <th className="whitespace-nowrap px-2">Domain Email:</th>
-                          <td className="px-2">{a.domain}</td>
+                          <td className="px-2">{a.domainEmail}</td>
                         </tr>
-
                         <tr className="hover:border-cyan-600 hover:border-y">
                           <th className="whitespace-nowrap px-2">Is Account Suspended:</th>
                           <td className="px-2">{a.suspended}</td>
@@ -401,7 +400,10 @@ export const DomainForm = (props: DomainProps) => {
         value={selected.get()}
       >
         {
-          props.domains.map((d) => <option value={d.domain}>{d.domain}</option>)
+          props
+            .domains
+            .filter(d => d.verified === true)
+            .map(d => <option value={d.domain}>{d.domain}</option>)
         }
       </select>
       </div>

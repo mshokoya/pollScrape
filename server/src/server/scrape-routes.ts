@@ -50,6 +50,7 @@ export const scrapeRoutes = (app: Express) => {
         async () => {
           io.emit( 'apollo', { taskID, taskType: 'scrape', message: 'starting lead scraper' } );
           const browserCTX = await scraper.newBrowser(false)
+          await browserCTX?.page.setViewport({ width: 0, height: 0});
           if (!browserCTX) throw new AppError(taskID, 'Failed to scrape, browser could not be started')
           try {
             await apolloScrape(taskID, browserCTX, metadata, useProxy)

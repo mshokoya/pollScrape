@@ -189,7 +189,7 @@ export const updateDBForNewScrape = async (taskID: string, meta: IMetaData, acco
       {_id: account._id}, 
       { 
         $set: {
-          history: [...account.history, [undefined as any, undefined as any, listName, scrapeID]]
+          history: [...account.history, [null, null, listName, scrapeID]]
         },
       }, 
       updateOpts
@@ -200,11 +200,7 @@ export const updateDBForNewScrape = async (taskID: string, meta: IMetaData, acco
       throw new AppError(taskID, 'failed to update account after scrape, if this continues please contact developer');
     }
 
-    await session.commitTransaction();
-  } catch (error) {
-    await session.abortTransaction();
-    throw new AppError(taskID, 'failed to save scrape to db')
-    
+    await session.commitTransaction();  
   } finally {
     await session.endSession();
   }

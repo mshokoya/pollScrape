@@ -310,14 +310,16 @@ export const ssa = async (
 
   if (!acc4Scrape) {
     // (FIX) move mutex to the function instead
-    account = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) )
-    if (!account) throw new AppError(taskID, 'failed to find account for scraping')
+    account = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(meta._id, 1))[0] ) )
+    // if (!account) throw new AppError(taskID, 'failed to find account for scraping')
+    if (!account) return
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
     if (!acc) { 
       // (FIX) move mutex to the function instead
-      acc = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) ) 
-      if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
+      acc = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(meta._id, 1))[0] ) ) 
+      // if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
+      if (!acc) return
     } else {
       !acc.history.length 
         ? (acc.totalScrapedInLast30Mins = 0) 
@@ -325,6 +327,7 @@ export const ssa = async (
     }
     account = acc
   }
+
   if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
 
   const amountAccountCanScrape = (maxLeadScrapeLimit - account.totalScrapedInLast30Mins)
@@ -341,8 +344,6 @@ export const ssa = async (
 
     if (answer === 'no') { return }
   }
-
-  await cache.addAccount(meta._id, account._id)
 
   if (usingProxy) {
     // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
@@ -380,7 +381,8 @@ export const ssa = async (
   // (FIX) make sure this works
   const apolloMaxPage = ['gmail', 'hotmail', 'outlook'].includes(account.domain) ? 3 : 5
 
-  while (true) {
+  let counter = 0
+  while (counter <= 2) {
     const creditsLeft =  credits.emailCreditsLimit - credits.emailCreditsUsed
     if (creditsLeft <= 0) return;
 
@@ -427,6 +429,7 @@ export const ssa = async (
     url = setPageInApolloURL(url, (nextPage > apolloMaxPage) ? 1 : nextPage)
     meta = save.meta
     account = {...account, ...save.account}
+    counter++
   }
 }
 

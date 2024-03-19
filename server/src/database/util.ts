@@ -68,12 +68,15 @@ export type ProxyResponse = {
 // // (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
 // // (FIX) TEST TO MAKE SURE IT WORKS (also test lock) 
 // // (FIX) handle situation where accsNeeded > allAccounts
-export const selectAccForScrapingFILO = async (accsNeeded: number): Promise<(IAccount & {totalScrapedInLast30Mins: number})[] > => {
+export const selectAccForScrapingFILO = async (metaID: string, accsNeeded: number): Promise<(IAccount & {totalScrapedInLast30Mins: number})[] > => {
     const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
 
     const allAccInUse = await cache.getAllAccountIDs()
     const allAccounts = (await getAllApolloAccounts())
-      .filter( a => a.verified === 'yes' || !allAccInUse.includes(a._id) ) as (IAccount & {totalScrapedInLast30Mins: number})[]
+      .filter( a => a.verified === 'yes' && !allAccInUse.includes(a._id) ) as (IAccount & {totalScrapedInLast30Mins: number})[]
+
+    // console.log('allacc')
+    // console.log(allAccounts)
     
     if (!allAccounts || !allAccounts.length) return []
     if (allAccounts.length < 15) {
@@ -105,7 +108,13 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise<(IAc
       return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
     })
   
-    return accs.concat(allAccounts.splice(-accsNeeded))
+
+    const accounts = accs.concat(allAccounts.splice(-accsNeeded))
+    const accountIDs = accounts.map(a => a._id)
+
+    cache.addAccounts(metaID, accountIDs)
+
+    return accounts
 }
 
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
