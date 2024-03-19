@@ -17,11 +17,11 @@ export const domainRoutes = (app: Express) => {
 
       if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain') // (FIX) find lib to do this better
 
+      const ad = await forwarder.addDomain(domain, email);
+      if (!ad.ok) throw new Error('failed to save domain in forwarder');
+
       const doesExist = await DomainModel.findOne({domain}).lean();
       if (doesExist) throw new Error('domain already exists')
-
-      const isOK = await forwarder.addDomain(domain, email);
-      if (!isOK) throw new Error('failed to save domain in forwarder');
 
       const newDomain = await DomainModel.create({domain, authEmail: email})
 
@@ -38,13 +38,16 @@ export const domainRoutes = (app: Express) => {
       const domain = req.params.domain
       if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
 
-      const verifyRes = await forwarder.verifyDomain(domain)
+      const vr = await forwarder.verifyDomain(domain)
 
-      const newDomain = !verifyRes.ok
-        ? await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: verifyRes.message || '', verified: false}}, {new: true})
-        : await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: verifyRes.message, MXRecords: true, TXTRecords: true, verified: true}}, {new: true})
+      console.log('verifyRes')
+      console.log(vr)
 
-      res.json({ok: verifyRes.ok, message: null, data: newDomain});
+      const newDomain = !vr.ok
+        ? await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: vr.message || '', MXRecords: vr.data?.has_mx_record, TXTRecords: vr.data?.has_txt_record,  verified: false}}, {new: true})
+        : await DomainModel.findOneAndUpdate({domain}, {'$set': {VerifyMessage: vr.message,  MXRecords: vr.data?.has_mx_record, TXTRecords: vr.data?.has_txt_record, verified: true}}, {new: true})
+
+      res.json({ok: vr.ok, message: null, data: newDomain});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }
@@ -58,8 +61,6 @@ export const domainRoutes = (app: Express) => {
 
       const delRes = await forwarder.deleteDomain(domain)
 
-      console.log(delRes)
-
       // (FIX) could be a problem
       if (delRes.ok) {
         const deleteCount = await DomainModel.deleteOne({domain})
@@ -67,22 +68,6 @@ export const domainRoutes = (app: Express) => {
       }
 
       res.json({ok: delRes.ok, message: null, data: null});
-    } catch (err: any) {
-      res.json({ok: false, message: err.message, data: err});
-
-    }
-  })
-
-  app.post('/domain/tess', async (req, res) => {
-    console.log('geta domains')
-    console.log(req.body.domain)
-    try{
-      if (!req.body.domain) throw new Error('no dd')
-      const r = await forwarder.getDomain(req.body.domain)
-      console.log('getsss domain')
-      console.log(r)
-
-      res.json({ok: true, message: null, data: null});
     } catch (err: any) {
       res.json({ok: false, message: err.message, data: err});
     }

@@ -22,13 +22,9 @@ export const DomainPopup = (p: Props) => {
     switch(h) {
       case 'delete':
         await p.deleteDomain()
-          .then(() => { p.closePopup() })
         break
       case 'verify':
         await p.verifyDomain()
-        break
-      case 'tess':
-        await fetchData('/domain/tess', 'POST', {domain: p.domain.domain})
         break
     }
   }
@@ -60,14 +56,6 @@ export const DomainPopup = (p: Props) => {
             className={blinkCSS(isDeleteReq)}
           > Delete domain </button>
           <Spin show={isDeleteReq}/>
-        </div>
-
-        <div>
-          <button 
-            disabled={isDeleteReq} 
-            onClick={() => {handleRequest('tess')}}
-            className={blinkCSS(isDeleteReq)}
-          > tess </button>
         </div>
 
         {

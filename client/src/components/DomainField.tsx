@@ -66,10 +66,12 @@ export const DomainField = observer(() => {
 
   const handleDeleteDomain = async () => {
     const domainID = domains[s.selectedDomain.peek()]._id
+    const domain = domains[s.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, {type: 'delete', status: 'processing'})
-    await fetchData<IDomain>(`/domain/${domainID}`, 'DELETE')
+    await fetchData<IDomain>(`/domain/${domain}`, 'DELETE')
       .then(res => {
         if (res.ok) {
+          closePopup()
           domainResStatusHelper.add(domainID, ['delete', 'ok'])
           appState$.domains.find(d => d._id.peek() === domainID)?.delete()
         } else {
@@ -87,8 +89,9 @@ export const DomainField = observer(() => {
 
   const handleVerifyDomain = async () => {
     const domainID = domains[s.selectedDomain.peek()]._id
+    const domain = domains[s.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, {type: 'verify', status: 'processing'})
-    await fetchData<IDomain>(`/domain/verify/${domainID}`, 'GET')
+    await fetchData<IDomain>(`/domain/verify/${domain}`, 'GET')
       .then((res) => {
         if (res.ok) {
           domainResStatusHelper.add(domainID, ['verify', 'ok'])
@@ -172,6 +175,8 @@ export const DomainField = observer(() => {
                         <td className='overflow-scroll truncate' data-type='extend' >{a.domain}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{a.authEmail}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{a.verified ? 'yes' : 'no' }</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.MXRecords}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.TXTRecords}</td>
                         <td className='overflow-scroll sticky bg-black right-0' data-type='opt'>
                           <button >
                             <SlOptionsVertical className='inline'/>
@@ -189,8 +194,16 @@ export const DomainField = observer(() => {
                           <td className="px-2">{a.authEmail}</td>
                         </tr>
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">IsVerified:</th>
-                          <td className="px-2">{a.verified}</td>
+                          <th className="whitespace-nowrap px-2">Verified:</th>
+                          <td className="px-2">{a.verified ? 'yes' : 'no' }</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">TXT Records:</th>
+                          <td className="px-2">{a.TXTRecords ? 'yes' : 'no' }</td>
+                        </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">MX Records:</th>
+                          <td className="px-2">{a.MXRecords ? 'yes' : 'no' }</td>
                         </tr>
                       </table>
                     </tr>

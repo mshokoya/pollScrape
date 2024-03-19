@@ -27,14 +27,17 @@ type Domain = {
   link: string
 }
 
-type CreateDomainRes = {
+type CreateDomainRes = { ok: boolean, message: string | null, data: {
   has_mx_record: boolean,
   has_txt_record: boolean,
   id: string,
-}
+} | null}
 
-
-type VerifyDomainRes = {ok: boolean, message: string}
+type VerifyDomainRes = {ok: boolean, message: string | null, data: {
+  has_mx_record: boolean,
+  has_txt_record: boolean,
+  id: string,
+} | null}
 
 type DeleteDomainRes = {ok: boolean, message: string | null, data: Domain | null}
 
@@ -42,50 +45,97 @@ export const Forwarder = () => {
   const Authorization =  `Basic ${Buffer.from(`${process.env.FMTOKEN}:`).toString('base64')}`;
 
   const addDomain = async (domain:string, forwardToEmail: string): Promise<CreateDomainRes> => {
-
-    const res = await superagent
+    return await superagent
       .post(process.env.FMCDURI!)
       .set({Authorization})
       .send({catchall: forwardToEmail, domain}) 
-      .then((data) => ({
-          has_mx_record: data.body.has_mx_record,
-          has_txt_record: data.body.has_txt_record,
-          id: data.body.id
-        })
-      )
-    return res
+      .then((r) => ({ok: r.ok, message: null, data: {
+          has_mx_record: r.body.has_mx_record,
+          has_txt_record: r.body.has_txt_record,
+          id: r.body.id
+        }}))
+      .catch((err) => {
+        return {ok: false, message: null, data: null}
+      
+      })
   }
 
   // (FIX) get doomain info too to check if mx or txt records have been updated
   const verifyDomain = async (domain: string):Promise<VerifyDomainRes> => {
-    const res = await superagent
+    return await superagent
     .get(`${process.env.FMDURI!}/${domain}/verify-records`)
     .set({Authorization})
-    .then((err) => {
-      console.log(`
-      
-      
-      TTTHHEEENNN
-      
-      ${err}
-      
-
-      `)
-      return {
-        ok: true,
-        message: "tfghj"
-      }
-    })
-    .catch((err) => ({
-      ok: false,
-      message: JSON.parse(err.response.text).message.replace(`\nPlease ensure you do not have any typos and have both unique records added (e.g. make sure both records aren't the same). Read our FAQ [https://forwardemail.net/faq?domain=${domain}] for detailed instructions.\n`, '')
+    .then((r) => ({ ok: true, message: r.message, data: {
+        has_mx_record: true,
+        has_txt_record: true,
+      } 
     }))
+    .catch((err) => {
+      
+      const errRes = {ok: false, message: null, data: null}
+      const l = JSON.parse(err.response.text)
+      if (l.statusCode === 404) {
+        errRes.message = l.message
+      } else {
+        errRes.message = 'Making changes to your DNS records takes time to propagate throughout the Internet. You may need to wait a few minutes and then try again' as any
+      }
 
-    return res
+      return getDomain(domain)
+        .then((r) => ({ ok: false, message: null, data: {
+              has_mx_record: r.data.has_mx_record,
+              has_txt_record: r.data.has_txt_record,
+            }
+          })
+        )
+        .catch(r => ({ok: false, message: errRes.message, date: null}))
+    })
+
+
+
+
+  //   const res = await superagent
+  //   .get(`${process.env.FMDURI!}/${domain}/verify-records`)
+  //   .set({Authorization})
+  //   .then((r) => {
+  //     console.log(`
+      
+      
+  //     TTTHHEEENNN
+      
+  //     ${r.body}
+
+
+  //     aanndd
+
+  //     ${JSON.parse(r.text)}
+
+  //     aann
+
+  //     ${JSON.parse(r.message)}
+      
+
+  //     `)
+  //     return {
+  //       ok: true,
+  //       message: null
+  //     }
+  //   })
+  //   .catch((err) => {
+  //     const errRes = {ok: false, message: null, data: null}
+  //     const l = JSON.parse(err.response.text)
+  //     if (l.statusCode === 404) {
+  //       errRes.message = l.message
+  //     } else {
+  //       errRes.message = 'Making changes to your DNS records takes time to propagate throughout the Internet. You may need to wait a few minutes and then try again' as any
+  //     }
+  //     return errRes
+  // })
+
+  //   return res
   }
 
   const deleteDomain = async (domain: string): Promise<DeleteDomainRes> => {
-    const res = await superagent
+    return await superagent
       .delete(`${process.env.FMDURI!}/${domain}`)
       .set({Authorization})
       .then( r => ({ok: r.ok, message: null, data: r.body}) )
@@ -94,19 +144,14 @@ export const Forwarder = () => {
           .then(() => ({ok: false, message: null, data: null}))
           .catch(r => ({ok: r.ok, message: null, data: r.body}))
       })
-
-    return res
   }
 
   const getDomain = async (domain: string) => {
-    console.log('in get domain')
-    const res = await superagent
-    .get(`${process.env.FMDURI!}/${domain}`)
-    .set({Authorization})
-    .then( r => ({ok: r.ok, message: null, data: r.body}) )
-    .catch( r => ({ok: false, message: null, data: null}) )
-
-    return res
+    return await superagent
+      .get(`${process.env.FMDURI!}/${domain}`)
+      .set({Authorization})
+      .then( r => ({ok: r.ok, message: null, data: r.body}) )
+      .catch( r => ({ok: false, message: null, data: null}) )
   }
 
   return {
