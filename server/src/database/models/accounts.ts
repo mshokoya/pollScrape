@@ -47,12 +47,13 @@ const accountSchema = new Schema<IAccount>({
   recoveryEmail: { type: String, default: "" },
   emailCreditsUsed: { type: Number, default: -1 },
   emailCreditsLimit: { type: Number, default: -1 },
-  renewalDateTime: { type: Number, default: 0 }, // as Date
-  renewalStartDate: { type: Number, default: 0 }, // as Date
-  renewalEndDate: { type: Number, default: 0 }, // as Date
+  renewalDateTime: { type: Number, default: -1 }, // as Date
+  renewalStartDate: { type: Number, default: -1 }, // as Date
+  renewalEndDate: { type: Number, default: -1 }, // as Date
   trialDaysLeft: { type: Number, default: -1 },
   // @ts-ignore
   lastUsed: { type: Date, default: new Date().getTime() }, // used to pick which to use to scrape
+  // @ts-ignore
   history: {type: [Schema.Types.Mixed], default: []}
 });
 

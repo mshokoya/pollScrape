@@ -4,7 +4,7 @@ import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
 import { IDomain } from "./DomainField";
-import { observer, useObservable, useSelector } from "@legendapp/state/react";
+import { observer, useSelector } from "@legendapp/state/react";
 import { Observable, ObservableObject, batch } from "@legendapp/state";
 import { accountState, accountTaskHelper, stateResStatusHelper, IAccount, AccountReqType } from "../core/state/account";
 import { appState$ } from "../core/state";
@@ -142,9 +142,16 @@ export const AccountField = observer(() => {
       })
   }
 
-  const fmtDate = (n: any) => n.toDateString
-      ? n.toDateString()
-      : n;
+  const fmtDate = (n: any) => n && n !== 'n/a'
+      ? new Date(n).toDateString()
+      : "N/A";
+
+  const fmtCredits = (limit?: number, used?: number) => {
+    return (limit === -1 || used === -1)
+      ? "N/A"
+      : `${used}/${limit} (${limit-used} left)`
+    
+  }
 
   const setPopup = (v: number | null) => {s.selectedAcc.set(v)}
 
@@ -208,19 +215,20 @@ export const AccountField = observer(() => {
         </div>
 
         <div className='border-cyan-600 border rounded grow overflow-auto'>
-          <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
+          <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%]">
             <thead className='sticky top-0 bg-black'>
               <tr>
-                <th>Domain Email</th>
-                <th>Auth Email</th>
-                <th>Trial</th>
-                <th>Password</th>
-                <th>Type</th>
-                <th>TT</th>
-                <th className='w-[7%] sticky bg-black right-0'><IoOptionsOutline className='inline' /></th>
+                <th className='px-2'> Domain Email </th>
+                <th className='px-2'> Credits </th>
+                <th className='px-2'> Verified </th>
+                <th className='px-2'> Suspended </th>
+                <th className='px-2'> Last Used </th>
+                <th className='px-2'> Type </th>
+                <th className='px-2'> Trial </th>
+                <th className='w-7 sticky bg-black right-0'><IoOptionsOutline className='inline' /></th>
               </tr>
             </thead>
-            <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
+            <tbody className="text-[0.5rem] text-center" onClick={handleExtendRow}>
               {
                 accounts.length && accounts.map(
                   (a, idx) => (
@@ -235,10 +243,11 @@ export const AccountField = observer(() => {
                         `}
                         data-idx={idx} key={idx}
                       >
-                      <td className='overflow-scroll truncate' data-type='extend' >{a.domainEmail}</td>
-                      <td className='overflow-scroll truncate' data-type='extend' >{a.email}</td>
-                        <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>
-                        <td className='overflow-scroll truncate' data-type='extend' >{a.password}</td>
+                        <td className='overflow-scroll truncate max-w-2' data-type='extend' >{a.domainEmail}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{fmtCredits(a.emailCreditsLimit, a.emailCreditsUsed)}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.verified}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{a.suspended ? 'yes' : 'no'}</td>
+                        <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.lastUsed)}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{a.accountType}</td>
                         <td className='overflow-scroll truncate' data-type='extend' >{fmtDate(a.trialTime)}</td>
                         <td className='overflow-scroll sticky bg-black right-0' data-type='opt'>
@@ -247,44 +256,101 @@ export const AccountField = observer(() => {
                           </button>
                         </td>
                       </tr>
-                      <tr className="hidden">
-                      <table className="hidden border-cyan-600 border-y text-[0.7rem]">
+
+                      {/* OTHER TABLE */}
+                      <tr className="hidden text-left ">
+                      <table className={`hidden border-cyan-600 border-y text-[0.7rem] w-[1000px] ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'} opacity-95`}>
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Trial:</th>
-                          <td className="px-2">{fmtDate(a.trialTime)}</td>
-                        </tr>
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Email:</th>
-                          <td className="px-2">{a.email}</td>
-                        </tr>
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Password:</th>
-                          <td className="px-2">{a.password}</td>
-                        </tr>
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Account Type:</th>
-                          <td className="px-2">{a.accountType}</td>
-                        </tr>
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Domain Email:</th>
+                          <th className="whitespace-nowrap px-2 w-4">Domain Email:</th>
                           <td className="px-2">{a.domainEmail}</td>
                         </tr>
+
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Is Account Suspended:</th>
-                          <td className="px-2">{a.suspended}</td>
+                          <th className="whitespace-nowrap px-2 w-4">Password:</th>
+                          <td className="px-2">{a.apolloPassword}</td>
                         </tr>
+
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Cookies:</th>
-                          <td className="px-2">{!!a.cookie}</td>
+                          <th className="whitespace-nowrap px-2 w-4">Credits Used:</th>
+                          <td className="px-2">{a.emailCreditsUsed === -1 ? "N/A" : a.emailCreditsUsed}</td>
                         </tr>
+
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Proxy:</th>
-                          <td className="px-2">{a.proxy}</td>
+                          <th className="whitespace-nowrap px-2 w-4">Credits Limit:</th>
+                          <td className="px-2">{a.emailCreditsLimit === -1 ? "N/A" : a.emailCreditsLimit}</td>
                         </tr>
+
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">Last Used:</th>
+                          <th className="whitespace-nowrap px-2 w-4">Credits Renewal Date:</th>
+                          <td className="px-2">{fmtDate(a.renewalEndDate)}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Trial Days Left:</th>
+                          <td className="px-2">{a.trialDaysLeft === -1 ? 'N/A' : a.trialDaysLeft}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Is Suspended ?:</th>
+                          <td className="px-2">{a.suspended ? "yes" : 'no'}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Email:</th>
+                          <td className="px-2">{a.email}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Logged In ?:</th>
+                          <td className="px-2">{a.cookie ? 'yes' : 'no'}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Proxy:</th>
+                          <td className="px-2">{a.proxy ? a.proxy : 'N/A'}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Trial:</th>
+                          <td className="px-2">{fmtDate(a.trialTime)}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Last Used:</th>
                           <td className="px-2">{fmtDate(a.lastUsed)}</td>
                         </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">History:</th>
+                          <td className="px-2">
+                            <table className='text-center'>
+                              <thead className='sticky top-0 bg-black opacity-100'>
+                                <tr>
+                                  <th className='px-2'> Amount Scraped </th>
+                                  <th className='px-2'> Time Of Scraped </th>
+                                  <th className='px-2'> ListName </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {
+                                  a.history.map((h, idx) => (
+                                    <tr key={idx}>
+                                      <td className='overflow-scroll truncate' >{h[0] || "N/A"}</td>
+                                      <td className='overflow-scroll truncate' >{fmtDate(h[1])}</td>
+                                      <td className='overflow-scroll truncate' >{h[2] || "N/A"} </td>
+                                    </tr>
+                                  ))
+                                }
+                                <tr>
+                                  <td className='overflow-scroll truncate' >{h[0] || "N/A"}</td>
+                                  <td className='overflow-scroll truncate' >{fmtDate(h[1])}</td>
+                                  <td className='overflow-scroll truncate' >{h[2] || "N/A"} </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+
                       </table>
                     </tr>
                   </>
@@ -310,7 +376,6 @@ type EmailProps = {
 export const EmailForm = (props: EmailProps) => {
   const isCreateReq = !!accountTaskHelper.findTaskByReqType('account', 'create')
 
-  
   return(
     <form onSubmit={props.addAccount}>
       <div className='flex basis-1/2 gap-5'>
@@ -340,7 +405,7 @@ export const EmailForm = (props: EmailProps) => {
           </div>
         </div>
 
-        <div>
+        {/* <div>
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
             <input 
@@ -364,7 +429,7 @@ export const EmailForm = (props: EmailProps) => {
               `}
               type="text" id="recovery" value={props.input.recoveryEmail.get()} onChange={ e => {props.input.set(p => ({...p, recoveryEmail: e.target.value}))}}/>
           </div>
-        </div>
+        </div> */}
       </div>
       <input disabled={isCreateReq} className='text-cyan-600 border-cyan-600 border rounded p-1' type="submit" value="Add Account"/>
     </form>

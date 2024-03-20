@@ -1,5 +1,5 @@
 import 'react-tooltip/dist/react-tooltip.css'
-import React from 'react'
+import '@radix-ui/themes/styles.css';
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -8,6 +8,7 @@ import {connect} from "socket.io-client";
 import { handleTaskQueueEvent } from './core/io/taskqueue.ts';
 import { handleApolloEvent, handleApolloProcessQueueEvents} from './core/io/apollo.ts';
 import { handleAPromptEvents } from './core/io/prompt.ts'
+
 
 enableReactTracking({
   auto: true,

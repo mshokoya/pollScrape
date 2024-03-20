@@ -38,6 +38,7 @@ export type IAccount = {
   renewalEndDate: number | Date
   trialDaysLeft: number
   apolloPassword: string
+  history: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string, scrapeID: string][]
 }
 
 export type State = {
