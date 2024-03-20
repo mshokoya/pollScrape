@@ -215,7 +215,7 @@ export const AccountField = observer(() => {
         </div>
 
         <div className='border-cyan-600 border rounded grow overflow-auto'>
-          <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%]">
+          <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%] overflow-hidden">
             <thead className='sticky top-0 bg-black'>
               <tr>
                 <th className='px-2'> Domain Email </th>
@@ -258,8 +258,8 @@ export const AccountField = observer(() => {
                       </tr>
 
                       {/* OTHER TABLE */}
-                      <tr className="hidden text-left ">
-                      <table className={`hidden border-cyan-600 border-y text-[0.7rem] w-[1000px] ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'} opacity-95`}>
+                      <tr className="hidden text-left">
+                      <table className={`hidden border-cyan-600 border-y text-[0.7rem] w-[2000px] ${a.emailCreditsUsed !== a.emailCreditsLimit  ? 'el-ok' : 'el-no'} opacity-95`}>
                         <tr className="hover:border-cyan-600 hover:border-y">
                           <th className="whitespace-nowrap px-2 w-4">Domain Email:</th>
                           <td className="px-2">{a.domainEmail}</td>
@@ -342,9 +342,15 @@ export const AccountField = observer(() => {
                                   ))
                                 }
                                 <tr>
-                                  <td className='overflow-scroll truncate' >{h[0] || "N/A"}</td>
-                                  <td className='overflow-scroll truncate' >{fmtDate(h[1])}</td>
-                                  <td className='overflow-scroll truncate' >{h[2] || "N/A"} </td>
+                                  <td className='overflow-scroll bg-cyan-500/90 font-bold border-t-2' >
+                                    {
+                                      a.history.reduce((acc, cur) => {
+                                        const o = (typeof cur[0] !== 'number') ? 0 : cur[0]
+                                        return acc + o
+                                      }, 0)
+                                    }
+                                  </td>
+                                  <div className="bg-cyan-500/90 font-bold border-t-2">TOTAL LEADS SCRAPED</div>
                                 </tr>
                               </tbody>
                             </table>
