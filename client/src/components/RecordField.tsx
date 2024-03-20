@@ -41,7 +41,7 @@ export type IRecord = {
   'Company Facebook': string
   Email: string
   isVerified: boolean
-  Location: string
+  'Company Location': string
   Employees: string
   Phone: string
   Industry: string
@@ -190,20 +190,11 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
 }
 
 
-
-
-
-
 export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
     const type = e.target.closest('td')?.dataset.type as string
-
-    const link = e.currentTarget.dataset.link as string
-
-    console.log(link)
-
 
     switch (type) {
       case 'link':
@@ -242,7 +233,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
           <th className="px-2">Title</th>
           <th className="px-2">Company</th>
           <th className="px-2">Email</th>
-          <th className="px-2">Contact Location</th>
+          <th className="px-2">Location</th>
           <th className="px-2"># Employees</th>
           <th className="px-2">Phone</th>
           <th className="px-2">Industry</th>
@@ -275,7 +266,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
 
                   <td className='py-3 px-2 truncate' data-type='extend'>{a.data.Email}</td>
                   
-                  <td className='py-3 px-2 truncate' data-type='extend'>{a.data.Location}</td>
+                  <td className='py-3 px-2 truncate' data-type='extend'>{ a.data['Company Location'] }</td>
                   
                   <td className='py-3 px-2 truncate' data-type='extend'>{a.data.Employees}</td>
                   
@@ -327,7 +318,7 @@ export const Record = ({records, meta, metaChecked}: RecordsSubCompArgs) => {
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
                       <th className="whitespace-nowrap px-2">Location:</th>
-                      <td className="px-2">{a.data.Location}</td>
+                      <td className="px-2">{a.data['Company Location']}</td>
                     </tr>
                     <tr className="hover:border-cyan-600 hover:border-y">
                       <th className="whitespace-nowrap px-2">Employees:</th>

@@ -44,11 +44,11 @@ type DeleteDomainRes = {ok: boolean, message: string | null, data: Domain | null
 export const Forwarder = () => {
   const Authorization =  `Basic ${Buffer.from(`${process.env.FMTOKEN}:`).toString('base64')}`;
 
-  const addDomain = async (domain:string, forwardToEmail: string): Promise<CreateDomainRes> => {
+  const addDomain = async (domain:string): Promise<CreateDomainRes> => {
     return await superagent
       .post(process.env.FMCDURI!)
       .set({Authorization})
-      .send({catchall: forwardToEmail, domain}) 
+      .send({catchall: process.env.AUTHEMAIL, domain}) 
       .then((r) => ({ok: r.ok, message: null, data: {
           has_mx_record: r.body.has_mx_record,
           has_txt_record: r.body.has_txt_record,

@@ -20,7 +20,7 @@ export type IRecord = {
   'Company Facebook': string
   Email: string
   isVerified: boolean
-  Location: string
+  'Company Location': string
   Employees: string
   Phone: string
   Industry: string

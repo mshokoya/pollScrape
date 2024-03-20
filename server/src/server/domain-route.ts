@@ -11,19 +11,18 @@ export const domainRoutes = (app: Express) => {
     console.log('Add new domain')
 
     try {
-      const email =  req.body.email || 'mayo_s@hotmail.co.uk' // (FIX) get account email from somewhere
       const domain = req.body.domain;
       if (!domain) throw new Error('Failed to add domain, invalid domain');
 
       if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain') // (FIX) find lib to do this better
 
-      const ad = await forwarder.addDomain(domain, email);
+      const ad = await forwarder.addDomain(domain);
       if (!ad.ok) throw new Error('failed to save domain in forwarder');
 
       const doesExist = await DomainModel.findOne({domain}).lean();
       if (doesExist) throw new Error('domain already exists')
 
-      const newDomain = await DomainModel.create({domain, authEmail: email})
+      const newDomain = await DomainModel.create({domain})
 
       res.json({ok: true, message: null, data: newDomain});
     } catch (err: any) {

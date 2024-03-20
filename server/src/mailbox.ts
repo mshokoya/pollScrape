@@ -1,5 +1,5 @@
 import { Mutex } from 'async-mutex';
-import { getDomain } from './util';
+import { AppError, getDomain } from './util';
 // import IMAP, { ImapConfig } from 'imap-mailbox';
 import { FetchMessageObject, ImapFlow, ImapFlowOptions } from 'imapflow';
 import { IAccount } from './database/models/accounts';
@@ -52,6 +52,8 @@ const Mailbox = () => {
     for await (let message of conn.fetch('1:*', { uid: true, envelope: true, source: true})) {
       mails.push(message)
     }
+
+    await relinquishConnection(process.env.AUTHEMAIL);
     return mails
   }
 
@@ -61,7 +63,9 @@ const Mailbox = () => {
     const conn = await getConnection(opts);
     // (FIX) is messages come in too fast, might haveto use 'fetch' = https://stackoverflow.com/questions/66489396/how-can-i-get-only-unread-emails-using-imapflow
     // if (!conn) throw new Error('Failed to get mailbox, please reconnect')
-    return await conn.fetchOne('*', {envelope: true, source: true, uid: true})
+    const mail = await conn.fetchOne('*', {envelope: true, source: true, uid: true})
+    await relinquishConnection(process.env.AUTHEMAIL);
+    return mail
   }
 
 
@@ -84,6 +88,7 @@ const Mailbox = () => {
         break
       }
     }
+    await relinquishConnection(process.env.AUTHEMAIL);
     return mail
   }
 
@@ -143,17 +148,17 @@ const Mailbox = () => {
   }
 
   const getConnection = async (authDeets: MailboxAuthOptions, cb?: (data: MBEventArgs) => Promise<void>) => {
-    return await C_lock.runExclusive(async () => {
-      const opt = mailbox.find((mb) => mb.auth.user === authDeets.auth.user)
-      if (!opt) mailbox.push(authDeets)
-      const conn = conns.find((c) => c.email = authDeets.auth.user)
-      if (!conn) {
-        return await newConnection(authDeets, cb)
-      } else{
-        conn.u++
-        return conn.conn
-      }
-    })
+      return await C_lock.runExclusive(async () => {
+        const opt = mailbox.find((mb) => mb.auth.user === authDeets.auth.user)
+        if (!opt) mailbox.push(authDeets)
+        const conn = conns.find((c) => c.email = authDeets.auth.user)
+        if (!conn) {
+          return await newConnection(authDeets, cb)
+        } else {
+          conn.u++
+          return conn.conn
+        }
+      })
   }
 
   // (FIX) check if works
@@ -174,6 +179,7 @@ const Mailbox = () => {
       const c_idx = conns.findIndex((c) => c.email = email) // check if works
       if (c_idx === -1) return;
       const c = conns.splice(c_idx, 1)[0]
+      console.log('loggin out')
       await c.conn.logout()
     })
   }
@@ -191,15 +197,15 @@ const Mailbox = () => {
   }
 }
 
-export const accountToMailbox = (account: IAccount): MailboxAuthOptions => {
+export const accountToMailbox = (taskID: string, account: IAccount): MailboxAuthOptions => {
   return {
     auth: {
-      user: account.email,
-      pass: account.password
+      user: process.env.AUTHEMAIL,
+      pass: process.env.AUTHPASS
     },
     port: 993,
     secure: true,
-    host: findIMAP(account.email),
+    host: findIMAP(taskID, account.email),
   }
 }
 
@@ -209,7 +215,7 @@ export const accountToMailbox = (account: IAccount): MailboxAuthOptions => {
 //   accessToken?: string;
 // }
 
-const findIMAP = (email: string) => {
+const findIMAP = (taskID: string, email: string) => {
   switch(getDomain(email)) {
     case 'gmail':
       return 'imap.gmail.com'
@@ -217,7 +223,7 @@ const findIMAP = (email: string) => {
     case 'outlook':
       return 'outlook.office365.com'
     default:
-      throw new Error('domain not supported, please provide imap server e,g gmail = imap.gmail.com')
+      throw new AppError(taskID, 'domain not supported, please provide imap server e,g gmail = imap.gmail.com')
   }
 }
 

@@ -380,7 +380,6 @@ type DomainProps = {
 }
 
 export const DomainForm = (props: DomainProps) => {
-  const selected = useObservable('')
   const isCreateReq = !!accountTaskHelper.findTaskByReqType('account', 'create')
 
   return (
@@ -391,19 +390,22 @@ export const DomainForm = (props: DomainProps) => {
       <select
         disabled={isCreateReq}
         id="domain"
-        onChange={e => selected.set(e.target.value)}
+        onChange={e => props.selectedDomain.set(e.target.value)}
         className={`
           ${ props.accountTaskHelper.getTaskByReqType('create')[0] ? 'fieldBlink' : '' }
           ${ props.stateResStatusHelper.getByID('create', 0)[1] === 'ok' ? 'resOK' : '' }
           ${ props.stateResStatusHelper.getByID('create', 0)[1] === 'fail' ? 'resFail' : '' }
         `}
-        value={selected.get()}
+        value={props.selectedDomain.get()}
       >
         {
           props
             .domains
             .filter(d => d.verified === true)
-            .map(d => <option value={d.domain}>{d.domain}</option>)
+            .map( (d, idx) => {
+              if (idx === 0) props.selectedDomain.set(d.domain)
+              return <option key={idx} value={d.domain}>{d.domain}</option>
+            })
         }
       </select>
       </div>

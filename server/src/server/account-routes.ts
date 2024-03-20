@@ -16,7 +16,7 @@ import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from '
 import { AppError, generateID, getDomain } from '../util';
 // import { apolloGetCreditsInfo } from '../scraper/apollo';
 import { taskQueue } from '../task_queue';
-import { MailboxAuthOptions, mailbox } from '../mailbox';
+import { MailboxAuthOptions, accountToMailbox, mailbox } from '../mailbox';
 import { generateSlug } from 'random-word-slugs';
 import { DomainModel } from '../database/models/domain';
 import { io } from '../websockets';
@@ -27,14 +27,16 @@ export const accountRoutes = (app: Express) => {
   app.post('/account', async (req, res) => {
     console.log('addAccount')
 
+    console.log(req.body)
+
     try{
       const selectedDomain = req.body.selectedDomain
       const addType = req.body.addType
-      const email = req.body.email;
+      const email = req.body.email || process.env.AUTHEMAIL;
       const password = req.body.password;
       const recoveryEmail = req.body.recoveryEmail;
-      const domainEmail = req.body.domainEmail || email ;
-      const domain = getDomain(domainEmail);
+      const domainEmail = req.body.domainEmail || email;
+      const domain = email;
       let account: Partial<IAccount>;
       const taskID = generateID()
 
@@ -47,19 +49,16 @@ export const accountRoutes = (app: Express) => {
       
         account = {
           // (FIX) make sure it does not try to use domain email that already exists
-          domainEmail: `${generateSlug(3)}@${selectedDomain}`,
+          domainEmail: `${generateSlug(2)}@${selectedDomain}`,
           domain: selectedDomain,
           email: d.authEmail,
           password: d.authPassword,
           apolloPassword: generateID()
-        }
+        } 
 
+        
         // (FIX) better error handling (show user correct error)
-        await mailbox.getConnection({
-          auth: {
-            user: account.email,
-            pass: account.password
-          },
+        await mailbox.getConnection({...accountToMailbox('', account as IAccount),
           aliasEmail: account.domainEmail
         } as MailboxAuthOptions
         , 
@@ -126,6 +125,7 @@ export const accountRoutes = (app: Express) => {
 
       res.json({ok: true, message: null, data: null});
     } catch (err: any) {
+      console.log(err)
       res.json({ok: false, message: err.message, data: err});
     }
   })
@@ -190,7 +190,7 @@ export const accountRoutes = (app: Express) => {
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
             await manuallyLogIntoApollo(taskID, browserCTX, account)
-            await waitForNavigationTo(browserCTX, '/settings/account', 'settings page')
+            await waitForNavigationTo(taskID, browserCTX, '/settings/account', 'settings page')
               .then(async () => {
                 const cookies = await getBrowserCookies(browserCTX)
                 return await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
@@ -237,9 +237,9 @@ export const accountRoutes = (app: Express) => {
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
-            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
+            // if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             await logIntoApollo(taskID, browserCTX, account)
-            await waitForNavigationTo(browserCTX, 'settings/account')
+            await waitForNavigationTo(taskID, browserCTX, 'settings/account')
               .then(async () => {
                 const cookies = await getBrowserCookies(browserCTX)
                 return await updateAccount({_id: accountID}, {cookie: JSON.stringify(cookies)})
@@ -350,7 +350,7 @@ export const accountRoutes = (app: Express) => {
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
-            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
+            // if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
             return await updateAccount({_id: accountID}, creditsInfo);
           } finally {
@@ -396,7 +396,7 @@ export const accountRoutes = (app: Express) => {
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
-            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
+            // if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             await logIntoApolloAndUpgradeAccount(taskID, browserCTX, account)
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
             return await updateAccount({_id: accountID}, creditsInfo); // (FIX)
@@ -442,7 +442,7 @@ export const accountRoutes = (app: Express) => {
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
-            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
+            // if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             await logIntoApolloAndUpgradeAccountManually(taskID, browserCTX, account)
             const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
             return await updateAccount({_id: accountID}, creditsInfo); // (FIX)
@@ -468,7 +468,7 @@ export const accountRoutes = (app: Express) => {
 
       const account = await AccountModel.findById(accountID).lean();
       if (!account) throw new Error('Failed to find account');
-      if (account.verified) throw new Error('Request Failed, account is already verified');
+      // if (account.verified) throw new Error('Request Failed, account is already verified');
 
       
       taskQueue.enqueue(
@@ -490,12 +490,12 @@ export const accountRoutes = (app: Express) => {
           const browserCTX  = await scraper.newBrowser(false)
           if (!browserCTX) throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           try {
-            if (account.cookie) browserCTX.page.setCookie(JSON.parse(account.cookie))
             const newAccount = await completeApolloAccountConfimation(taskID, browserCTX, account);
             if (!newAccount) throw new AppError(taskID, 'Failed to confirm account, could not complete the process');
             return newAccount
           } finally {
             await scraper.close(browserCTX)
+            await mailbox.relinquishConnection(process.env.AUTHEMAIL)
           }
         }
       )

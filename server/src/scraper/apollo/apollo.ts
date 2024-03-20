@@ -34,6 +34,24 @@ export const apolloStartPageScrape = async (taskID: string, {page}: BrowserConte
   return data;
 }
 
+export const visitApolloDefaultLogin = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
+  const page = browserCTX.page
+  const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
+  const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
+
+  if (!account.domainEmail || !account.apolloPassword) throw new AppError(taskID,'failed to login, credentials missing');
+  
+  await visitApolloLoginPage(taskID, browserCTX)
+
+  const submitButton = await page.waitForSelector(loginButtonSelector, {visible: true, timeout: 10000}).catch(() => null);
+  const login = await page?.$$(loginInputFieldSelector)
+
+  if (!login.length || !submitButton) throw new AppError(taskID,'failed to login');
+
+  await login[0].type(account.domainEmail)
+  await login[1].type(account.apolloPassword)
+}
+
 
 
 export const apolloDefaultLogin = async (taskID: string, browserCTX: BrowserContext, account: Partial<IAccount>) => {
@@ -318,13 +336,9 @@ export const apolloAddLeadsToListAndScrape = async (
   const page = browserCTX.page
   const tableRowsSelector = '[class="zp_RFed0"]'
   const checkboxSelector = '[class="zp_fwjCX"]'
-  const saveButtonSelector = '[class="zp-button zp_zUY3r zp_n9QPr zp_ML2Jn zp_Yeidq"]'
-  const saveButtonSmallScreenSelector = '[class="zp-icon apollo-icon apollo-icon-plus zp_dZ0gM zp_j49HX zp_uAV5p"]' // window the size of ipad
-  const disableSaveButtonSelector = '[class="zp-button zp_zUY3r zp_n9QPr zp_MCSwB zp_ML2Jn zp_GE4Dz"]'
   const addToListInputSelector = '[class="Select-input "]'
-  const saveListButtonSelector = '[class="zp-button zp_zUY3r"]'
+  const saveListButtonSelector = '[class="zp-button zp_zUY3r"][type="submit"]'
   const SLPopupSelector = '[class="zp_lMRYw zp_yHIi8"]'
-  const savedListTableSelector = '[class="zp_G5KZB"]'
   const savedListTableRowSelector = '[class="zp_cWbgJ"]'
   
   await page.waitForSelector(tableRowsSelector, {visible: true, timeout: 10000})
@@ -337,23 +351,24 @@ export const apolloAddLeadsToListAndScrape = async (
     await check.click()
   }
 
-  const saveButton = await page.waitForSelector(saveButtonSelector, {visible: true, timeout: 10000})
-    .then(async v => !v ? await page.$(saveButtonSmallScreenSelector) : v);
-  const disabledSaveButton = await page.$(disableSaveButtonSelector);
-  if (!saveButton || disabledSaveButton) throw new Error('save button fail');
-  await saveButton.click();
+  const l = await page.$$('[class="zp-button zp_zUY3r zp_hLUWg zp_n9QPr zp_B5hnZ zp_MCSwB zp_ML2Jn"]')
+  if (!l) throw new Error('failed to find list button');
+  await l[1].click()
+
+  const b = await page.waitForSelector('[class="zp-menu-item zp_fZtsJ zp_pEvFx"]', {visible: true, timeout: 5000})
+  if (!b) throw new Error('failed to find doo to list button');
+  await b.click()
 
   await delay(3000)
-
   
   const addToListInput = await page.$$(addToListInputSelector)
   if (!addToListInput[2]) throw new Error('add to list fail');
   await page.keyboard.type(listName)
   await addToListInput[2].focus()
 
-  const saveListButton = await page.$$(saveListButtonSelector)
-  if (!saveListButton[3]) throw new Error('save list button fail');
-  await saveListButton[3].click()
+  const saveListButton = await page.$(saveListButtonSelector)
+  if (!saveListButton) throw new Error('save list button fail');
+  await saveListButton.click()
 
   await page.waitForSelector(SLPopupSelector, {hidden: true}) // or {visible: false}
 
@@ -364,8 +379,6 @@ export const apolloAddLeadsToListAndScrape = async (
 
   let counter = 0
   let ln = (await page.$eval(savedListTableRowSelector, el => el.querySelector('[class="zp_aBhrx"]')?.innerText))
-  console.log(ln)
-  console.log(ln === listName)
   while (
     ln !== listName &&
     counter <= 5
@@ -373,8 +386,6 @@ export const apolloAddLeadsToListAndScrape = async (
     await page.reload()
     await page.waitForSelector(savedListTableRowSelector, {visible: true, timeout: 10000})
     ln = (await page.$eval(savedListTableRowSelector, el => el.querySelector('[class="zp_aBhrx"]')?.innerText))
-    console.log(ln)
-    console.log(ln === listName)
     counter++
     delay(3000)
   }
@@ -443,11 +454,6 @@ export const getSavedListAndScrape = async (
 
   return await apolloDoc(page) as IRecord[]
 }
-
-// -- next button
-// zp-button zp_zUY3r zp_MCSwB zp_xCVC8
-// zp-button zp_zUY3r zp_BAp0M zp_MCSwB zp_xCVC8 // disabled
-// zp-button zp_zUY3r zp_MCSwB zp_xCVC8
 
 // error oversave
 

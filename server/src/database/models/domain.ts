@@ -13,8 +13,8 @@ export type IDomain = {
 
 const domainSchema = new Schema<IDomain>({
   domain: { type: String, default: "" },
-  authEmail: { type: String, default: "" },
-  authPassword: { type: String, default: "" },
+  authEmail: { type: String, default: process.env.AUTHEMAIL },
+  authPassword: { type: String, default: process.env.AUTHPASS },
   verified: {type: Boolean, default: false},
   MXRecords: {type: Boolean, default: false},
   TXTRecords: {type: Boolean, default: false},

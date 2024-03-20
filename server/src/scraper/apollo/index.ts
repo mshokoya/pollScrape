@@ -18,7 +18,8 @@ import {
   getSavedListAndScrape, 
   goToApolloSearchUrl, 
   setupApolloForScraping, 
-  upgradeApolloAccount 
+  upgradeApolloAccount, 
+  visitApolloDefaultLogin
 } from './apollo';
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook';
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail';
@@ -96,6 +97,8 @@ export const manuallyLogIntoApollo = async (taskID: string, browserCTX: BrowserC
         .then(() => {  io.emit('apollo', {taskID, message: 'navigated to gmail auth portal'}) })
       break
     default:
+      await visitApolloDefaultLogin(taskID, browserCTX, account)
+        .then(() => {  io.emit('apollo', {taskID, message: 'navigated to apollo login page'}) })
       break
   }
 }
@@ -149,15 +152,17 @@ export const logIntoApolloAndGetCreditsInfo = async (taskID: string, browserCTX:
 }
 
 export const completeApolloAccountConfimation = async (taskID: string, browserCTX: BrowserContext, account: IAccount) => {
-  
-  await mailbox.getConnection(accountToMailbox(account))
+
+  await mailbox.getConnection(accountToMailbox(taskID, account))
     .then(() => io.emit('apollo', { taskID, message: 'started mailbox'}) );
+    
 
   const allMail = await mailbox.getAllMail(account.email)
     .then(_ => { 
       io.emit('apollo', { taskID, message: 'got all mail'}); 
       return _
     });
+    
 
   for (let mail of allMail) {
     const toAddress = mail.envelope.to[0].address?.trim()
@@ -200,6 +205,7 @@ export const completeApolloAccountConfimation = async (taskID: string, browserCT
       continue
     }
   }
+  
 }
 
 // (FIX) need to figure out how to handle io for events
@@ -342,7 +348,7 @@ export const ssa = async (
       ['yes', 'no'], 0
     )
 
-    if (answer === 'no') { return }
+    if (answer === 'no') return;
   }
 
   if (usingProxy) {

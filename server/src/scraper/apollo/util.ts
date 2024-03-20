@@ -4,6 +4,7 @@ import { logIntoApollo } from '.';
 import { updateAccount } from '../../database';
 import { IAccount } from '../../database/models/accounts';
 import { io } from '../../websockets';
+import { AppError, delay } from '../../util';
 
 export type CreditsInfo = {
   emailCreditsUsed: number
@@ -65,7 +66,7 @@ export const getBrowserCookies = async ({page}: BrowserContext): Promise<string[
 //   return (cookies as unknown) as string[];
 // };
 
-export const waitForNavigationTo = (browserCTX: BrowserContext, location: string, dest?: string) => new Promise<boolean>((resolve, _reject) => {
+export const waitForNavigationTo = (taskID: string, browserCTX: BrowserContext, location: string, dest?: string) => new Promise<boolean>((resolve, _reject) => {
     const browser_check = setInterval(async () => {
       if ( browserCTX.page.url().includes(location) ) {
         clearInterval(browser_check);
@@ -73,7 +74,7 @@ export const waitForNavigationTo = (browserCTX: BrowserContext, location: string
         // @ts-ignore
       } else if ( (await browserCTX.context.pages()).length === 0) {
         clearInterval(browser_check);
-        throw new Error(`browser closed before reaching ${dest ? dest : 'destined route'}`)
+        throw new AppError(taskID, `browser closed before reaching ${dest ? dest : 'destined route'}`)
       }
     }, 3000);
   }
@@ -127,6 +128,7 @@ export const logIntoApolloThenVisit = async (taskID: string, browserCTX: Browser
 
   await page.waitForNavigation({timeout:15000})
     .then(async () => {
+      await delay(7000)
       if (page.url().includes('/#/login')) {
         await logIntoApollo(taskID, browserCTX, account)
           .then(() => { io.emit('apollo', {taskID, message: 'Logged into apollo'}) })
