@@ -89,7 +89,7 @@ export const selectAccForScrapingFILO = async (metaID: string, accsNeeded: numbe
     }
 
     // get unused accounts first
-    for (let a of allAccounts) {
+    for (const a of allAccounts) {
       if (accsNeeded === 0) return accs
       if (!a.history.length) {
         accs.push({...a, totalScrapedInLast30Mins: 0})

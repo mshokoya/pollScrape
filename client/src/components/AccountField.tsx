@@ -146,7 +146,7 @@ export const AccountField = observer(() => {
       ? new Date(n).toDateString()
       : "N/A";
 
-  const fmtCredits = (limit?: number, used?: number) => {
+  const fmtCredits = (limit: number, used: number) => {
     return (limit === -1 || used === -1)
       ? "N/A"
       : `${used}/${limit} (${limit-used} left)`

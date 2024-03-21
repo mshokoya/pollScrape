@@ -1,11 +1,24 @@
 import { ChangeEvent, FormEvent, useState } from "react"
-import {fetchData} from '../core/util';
+import {fetchData, getRangeFromApolloURL} from '../core/util';
+import { computed } from "@legendapp/state";
+import { useObservable } from "@legendapp/state/react";
 
 export const ScrapeField = () => {
   const [reqInProcess, setreqInProcess] = useState<boolean>(false)
-  const [URLInput, setURLInput] = useState('');
-  const [pages, setPages] = useState({start: 1, end: 1});
-  const [delay, setDelay] = useState(1);
+  const URLInput = useObservable('');
+
+  // const re = new RegExp(/(?<=%2C).+$/)   // after null
+  // /* const re = new RegExp(/.+?(?=%2C)/)   // before */
+
+  computed(
+    () => {
+      const range = getRangeFromApolloURL(URLInput.get())
+      if (!range.length) return range
+
+    },
+    () => {}
+  )
+
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -24,41 +37,30 @@ export const ScrapeField = () => {
   }
 
   const handleChanges = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value)
-
-    if (e.target.dataset.start) {
-      setPages({...pages, start: val})
-    } else if (e.target.dataset.end) {
-      setPages({...pages, end: val})
-    } else if (e.target.dataset.delay) {
-      const val = parseInt(e.target.value)
-      val < 1 || e.target.value === ''
-        ? setDelay(1)
-        : setDelay(val)
-    } else if (e.target.dataset.url) {
-      setURLInput(e.target.value)
-    }
+    URLInput.set(e.target.value)
   }
   
 
-  const secondsToTime = (e: number) => {
-    let time = ''; 
-    const h = Math.floor(e / 3600).toString().padStart(2,'0'),
-          m = Math.floor(e % 3600 / 60).toString().padStart(2,'0'),
-          s = Math.floor(e % 60).toString().padStart(2,'0');
+  // const secondsToTime = (e: number) => {
+  //   let time = ''; 
+  //   const h = Math.floor(e / 3600).toString().padStart(2,'0'),
+  //         m = Math.floor(e % 3600 / 60).toString().padStart(2,'0'),
+  //         s = Math.floor(e % 60).toString().padStart(2,'0');
     
-    if (h !== '00') { time = time + h + ' hours ' }
-    if (m !== '00') { time = time + m + ' minutes '}
-    if (s !== '00') { time = time + s + ' seconds ' }
+  //   if (h !== '00') { time = time + h + ' hours ' }
+  //   if (m !== '00') { time = time + m + ' minutes '}
+  //   if (s !== '00') { time = time + s + ' seconds ' }
 
-    return time
-  }
+  //   return time
+  // }
 
-  const numPagesScrape = () => {
-    return pages.start === pages.end
-      ? 1
-      : pages.end - pages.start
-  }
+  // const numPagesScrape = () => {
+  //   return pages.start === pages.end
+  //     ? 1
+  //     : pages.end - pages.start
+  // }
+
+  const get
 
   return (
     <form onSubmit={handleSubmit}>
@@ -66,7 +68,7 @@ export const ScrapeField = () => {
         <div className='mb-3 text-left' onChange={handleChanges}>
           <div className='mb-3'>
             <label className='mr-2' htmlFor="startScrape">URL: </label>
-            <input required type="text" id="startScrape" value={URLInput} data-url />
+            <input required type="text" id="startScrape" value={URLInput.get()} data-url />
           </div>
           
           <div className='mb-3'>
@@ -88,6 +90,11 @@ export const ScrapeField = () => {
         </div>
 
         <div className='mb-3'>
+          <div> ----- </div>
+          
+        </div>
+
+        {/* <div className='mb-3'>
           <div>Estimated time</div>
           <div>
             <span className='text-red-700'>{secondsToTime(delay)}</span> lead enrichment delay
@@ -98,7 +105,7 @@ export const ScrapeField = () => {
           <div>
            <span className='text-pink-800'>{secondsToTime( (delay * 25) * numPagesScrape() )}</span> to scrape all pages
           </div>
-        </div>
+        </div> */}
       </div>
     </form>
   )

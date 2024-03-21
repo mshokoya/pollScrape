@@ -24,9 +24,26 @@ type AppState = {
 }
 
 export const appState$ = observable<AppState>({
-  accounts: await fetchData<IAccount[]>('/account', 'GET').then(data => data.data).catch(() => []),
-  domains: await fetchData<IDomain[]>('/domain', 'GET').then(data => data.data).catch(() => []),
-  // proxies: await fetchData<IProxy[]>('/proxy', 'GET').then( data => data.data).catch(() => []),
-  // metas: await fetchData<IMetaData[]>('/metadata', 'GET').then( data => data.data).catch(() => []),
-  // records: await fetchData<IRecord[]>('/records', 'GET').then( data => data.data).catch(() => []),
+  accounts: [],
+  domains: [],
+  proxies: [],
+  metas: [],
+  records: [],
 });
+
+Promise.all([
+  await fetchData<IAccount[]>('/account', 'GET').then(data => data.data).catch(() => []),
+  await fetchData<IDomain[]>('/domain', 'GET').then(data => data.data).catch(() => []),
+  await fetchData<IProxy[]>('/proxy', 'GET').then( data => data.data).catch(() => []),
+  await fetchData<IMetaData[]>('/metadata', 'GET').then( data => data.data).catch(() => []),
+  await fetchData<IRecord[]>('/records', 'GET').then( data => data.data).catch(() => [])
+]).then((r) => {
+  //  ORDER MATTERS
+  appState$.set({
+    accounts: r[0],
+    domains: r[1],
+    proxies: r[2],
+    metas: r[3],
+    records: r[4],
+  })
+})

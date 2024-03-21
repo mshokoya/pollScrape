@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { ObservableObject } from "@legendapp/state";
 import React from "react";
+import { IAccount, accountState } from "./state/account";
+import { appState$ } from "./state";
 
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok'|'fail']
@@ -129,18 +131,49 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
   },
 })
 
-export const getTimeRemaining = (endtime: ms) => {
-  const total = Date.parse(endtime) - Date.parse(new Date());
-  const seconds = Math.floor( (total/1000) % 60 );
-  const minutes = Math.floor( (total/1000/60) % 60 );
-  const hours = Math.floor( (total/(1000*60*60)) % 24 );
-  const days = Math.floor( total/(1000*60*60*24) );
 
-  return {
-    total,
-    days,
-    hours,
-    minutes,
-    seconds
-  };
+// (FIX) infinate is defined as undefined
+export const getRangeFromApolloURL = (url: string): [min: string | null, max: string | null] => {
+  const pURL = new URLSearchParams(url.split('/#/people?')[1]);
+  const range = pURL.getAll('organizationNumEmployeesRanges[]')
+  if (!range.length) return [null, null]
+  const min = range[0].match(/.+?(?=%2C)/) 
+  const max = range[0].match(/(?<=%2C).+$/)
+
+  return [
+    min ? min[0] : null, 
+    max ? max[0] : null
+  ]
+}
+
+export const setRangeInApolloURL = (url: string, range: [min: number, max: number]) => {
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  params.set('organizationNumEmployeesRanges[]', `${range[0]}%2C${range[1]}`)
+  return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
+}
+
+// min - 1 / max - 3 // lowest
+// if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
+export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
+  //@ts-ignore
+  const result: [number, number][] = [[]]
+  const delta = Math.round((max - min) / (parts - 1));
+
+  while (min < max) {
+    const l = result.length-1
+    if (result.length === 1 && result[l].length < 2) {
+       //@ts-ignore
+      result[l].push(min)
+    } else {
+       //@ts-ignore
+      result.push([result[l][1]+1, min])
+    }
+    min += delta;
+  }
+
+  //@ts-ignore
+  const l = result[result.length-1][1]+1
+  //@ts-ignore
+  result.push([l, (l===max)?max+1:max]) 
+  return result;
 }
