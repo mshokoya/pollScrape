@@ -1,9 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { ObservableObject } from "@legendapp/state";
-import React from "react";
-import { IAccount, accountState } from "./state/account";
-import { appState$ } from "./state";
 
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok'|'fail']
@@ -148,7 +145,6 @@ export const getRangeFromApolloURL = (url: string): [min: number | null, max: nu
 
 export const setRangeInApolloURL = (url: string, range: [min: number, max: number]) => {
   if (!url.includes('/#/people?')) return url
-  console.log('mmaadde it')
   const params = new URLSearchParams(url.split('/#/people?')[1]);
   params.set('organizationNumEmployeesRanges[]', `${range[0]}%2C${range[1]}`)
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
@@ -179,3 +175,58 @@ export const chuckRange = (min: number, max: number, parts: number): [number, nu
   result.push([l, (l===max)?max+1:max]) 
   return result;
 }
+
+// (FIX) infinate is defined as undefined
+export const getEmailStatusFromApolloURL = (url: string): string[] => {
+  const pURL = new URLSearchParams(url.split('/#/people?')[1]);
+  const status = pURL.getAll('contactEmailStatus[]')
+  if (!status.length) return []
+  return status
+}
+
+export const setEmailStatusInApolloURL = (url: string, status: string) => {
+  if (!url.includes('/#/people?')) return url
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  params.append('contactEmailStatus[]', status)
+  return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
+}
+
+
+export const removeEmailStatusInApolloURL = (url: string, status: string) => {
+  const s = `contactEmailStatus[]=${status}`;
+  const b = '&' + s;
+  const f = s + '&';
+  let u = url;
+
+  if (url.includes(b)) {
+    u = url.replace(b, '')
+  } else if (url.includes(f)) {
+    u = url.replace(f, '')
+  } else {
+    u = url.replace(s, '')
+  }
+
+  return u
+}
+
+export const getLeadColFromApolloURL = (url: string): string => {
+  const pURL = new URLSearchParams(url.split('/#/people?')[1]);
+  const col = pURL.getAll('prospectedByCurrentTeam[]')
+  if (!col.length) return ''
+  return col[0]
+}
+
+export const setLeadColInApolloURL = (url: string, col: string) => {
+  if (!url.includes('/#/people?')) return url
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  params.set('prospectedByCurrentTeam[]', col)
+  return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
+}
+
+export const removeLeadColInApolloURL = (url: string) => {
+  if (!url.includes('/#/people?')) return url
+  const params = new URLSearchParams(url.split('/#/people?')[1]);
+  params.delete('prospectedByCurrentTeam[]')
+  return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
+}
+
