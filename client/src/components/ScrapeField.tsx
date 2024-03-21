@@ -1,31 +1,28 @@
 import { ChangeEvent, FormEvent, useState } from "react"
-import {fetchData, getRangeFromApolloURL} from '../core/util';
-import { computed } from "@legendapp/state";
+import {fetchData, getRangeFromApolloURL, setRangeInApolloURL} from '../core/util';
+import { batch } from "@legendapp/state";
 import { useObservable } from "@legendapp/state/react";
+
+type State = {
+  url: string
+  min?: number,
+  max?: number
+}
 
 export const ScrapeField = () => {
   const [reqInProcess, setreqInProcess] = useState<boolean>(false)
-  const URLInput = useObservable('');
-
-  // const re = new RegExp(/(?<=%2C).+$/)   // after null
-  // /* const re = new RegExp(/.+?(?=%2C)/)   // before */
-
-  computed(
-    () => {
-      const range = getRangeFromApolloURL(URLInput.get())
-      if (!range.length) return range
-
-    },
-    () => {}
-  )
-
+  const s = useObservable<State>({
+    url: '',
+    min: undefined,
+    max: undefined
+  });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     setreqInProcess(true)
 
-    await fetchData('/scrape', 'POST', {url: URLInput, delay, usingProxy: false})
+    await fetchData('/scrape', 'POST', {url: s.url.peek(), usingProxy: false})
       .then( (d) => {
         console.log(d)
         setreqInProcess(false)
@@ -36,55 +33,58 @@ export const ScrapeField = () => {
       })
   }
 
-  const handleChanges = (e: ChangeEvent<HTMLInputElement>) => {
-    URLInput.set(e.target.value)
+  const handleInput = (urll: string) => {
+    console.log('a hit')
+    const range = getRangeFromApolloURL(urll)
+    const min = !range[0] ? 1 : range[0]
+    const max = !range[1] ? 10000000 : range[1]
+    const url = setRangeInApolloURL(urll,[min, max])
+    batch(() => {
+      s.min.set(min)
+      s.max.set(max)
+      s.url.set(url)
+    })
+  }
+
+  const handleRange = (val: number, rng: 'min' | 'max') => {
+    const min = rng === 'min' 
+      ? Number.isNaN(val)
+        ? 1
+        : val
+      : s.min.get()
+    const max = rng === 'max' 
+    ? Number.isNaN(val)
+      ? 10000000
+      : val
+    : s.max.get()
+    const url = setRangeInApolloURL(s.url.get(),[min, max])
+    batch(() => {
+      s.url.set(url)
+      rng === 'min'
+        ? s.min.set(val)
+        : s.max.set(val)
+    })
   }
   
-
-  // const secondsToTime = (e: number) => {
-  //   let time = ''; 
-  //   const h = Math.floor(e / 3600).toString().padStart(2,'0'),
-  //         m = Math.floor(e % 3600 / 60).toString().padStart(2,'0'),
-  //         s = Math.floor(e % 60).toString().padStart(2,'0');
-    
-  //   if (h !== '00') { time = time + h + ' hours ' }
-  //   if (m !== '00') { time = time + m + ' minutes '}
-  //   if (s !== '00') { time = time + s + ' seconds ' }
-
-  //   return time
-  // }
-
-  // const numPagesScrape = () => {
-  //   return pages.start === pages.end
-  //     ? 1
-  //     : pages.end - pages.start
-  // }
-
-  const get
-
   return (
     <form onSubmit={handleSubmit}>
       <div className='mb-3 flex'>
-        <div className='mb-3 text-left' onChange={handleChanges}>
+        <div className='mb-3 text-left'>
           <div className='mb-3'>
             <label className='mr-2' htmlFor="startScrape">URL: </label>
-            <input required type="text" id="startScrape" value={URLInput.get()} data-url />
+            <input required type="text" id="startScrape" value={s.url.get()} onChange={(e) => {handleInput(e.target.value)}}/>
           </div>
           
           <div className='mb-3'>
-            <label className='mr-2' htmlFor="scrapeFrom">Start Page: </label>
-            <input required id='scrapeFrom' type="number" min='1' max='100' value={pages.start} data-start />
+            <label className='mr-2' htmlFor="scrapeFrom">Min: </label>
+            <input required id='scrapeFrom' type="number" min='1'  value={s.min.get()} onChange={(e) => {handleRange(e.target.value, 'min')} }/>
           </div>
           
           <div className='mb-3'>
-            <label className='mr-2' htmlFor="scrapeTo">End Page: </label>
-            <input required id='scrapeTo' className='mr-2' type="number" min='1' max='100' value={pages.end} data-end />
+            <label className='mr-2' htmlFor="scrapeTo">Max: </label>
+            <input required id='scrapeTo' className='mr-2' type="number" min='1' value={s.max.get()} onChange={(e) => {handleRange(e.target.value, 'max')} }/>
           </div>
           
-          <div className='mb-3'>
-          <label className='mr-2' htmlFor="delay">Delay: </label>
-          <input required id='delay' className='mr-2' type='number' min='1' max='30' value={delay} data-delay />
-          </div>
 
           <input disabled={reqInProcess} className='text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Start Scraping"/>
         </div>
@@ -93,19 +93,6 @@ export const ScrapeField = () => {
           <div> ----- </div>
           
         </div>
-
-        {/* <div className='mb-3'>
-          <div>Estimated time</div>
-          <div>
-            <span className='text-red-700'>{secondsToTime(delay)}</span> lead enrichment delay
-          </div>
-          <div> 
-            <span className='text-green-500'>{secondsToTime(delay * 25)}</span> to scrape one page
-          </div>
-          <div>
-           <span className='text-pink-800'>{secondsToTime( (delay * 25) * numPagesScrape() )}</span> to scrape all pages
-          </div>
-        </div> */}
       </div>
     </form>
   )

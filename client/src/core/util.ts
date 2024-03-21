@@ -133,7 +133,7 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
 
 
 // (FIX) infinate is defined as undefined
-export const getRangeFromApolloURL = (url: string): [min: string | null, max: string | null] => {
+export const getRangeFromApolloURL = (url: string): [min: number | null, max: number | null] => {
   const pURL = new URLSearchParams(url.split('/#/people?')[1]);
   const range = pURL.getAll('organizationNumEmployeesRanges[]')
   if (!range.length) return [null, null]
@@ -141,12 +141,14 @@ export const getRangeFromApolloURL = (url: string): [min: string | null, max: st
   const max = range[0].match(/(?<=%2C).+$/)
 
   return [
-    min ? min[0] : null, 
-    max ? max[0] : null
+    min ? parseInt(min[0]) : null, 
+    max ? parseInt(max[0]) : null
   ]
 }
 
 export const setRangeInApolloURL = (url: string, range: [min: number, max: number]) => {
+  if (!url.includes('/#/people?')) return url
+  console.log('mmaadde it')
   const params = new URLSearchParams(url.split('/#/people?')[1]);
   params.set('organizationNumEmployeesRanges[]', `${range[0]}%2C${range[1]}`)
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
