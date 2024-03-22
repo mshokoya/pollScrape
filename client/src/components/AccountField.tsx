@@ -215,7 +215,7 @@ export const AccountField = observer(() => {
         </div>
 
         <div className='border-cyan-600 border rounded grow overflow-auto'>
-          <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%] overflow-hidden">
+          <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%]">
             <thead className='sticky top-0 bg-black'>
               <tr>
                 <th className='px-2'> Domain Email </th>
