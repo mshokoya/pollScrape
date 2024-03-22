@@ -266,12 +266,20 @@ export const apolloConfirmAccountEvent = async (taskID: string, {aliasEmail, aut
 }
 
 export const apolloScrape = async (taskID: string, browserCTX: BrowserContext, meta: IMetaData, usingProxy: boolean) => {
+  let employeeRangeMin;
+  let employeeRangeMax;
   const employeeRange = getRangeFromApolloURL(meta.url)
   if (employeeRange.length > 1) throw new AppError(taskID, 'can only have one range set');
-  const employeeRangeMin = parseInt(employeeRange[0][0])
-  const employeeRangeMax = parseInt(employeeRange[0][1])
 
-  // (FIX) low ranges may fuckup - make parts dynamic
+  if (!employeeRange.length) {
+    employeeRangeMin = 1
+    employeeRangeMax = 3
+  } else {
+    employeeRangeMin = parseInt(employeeRange[0][0])
+    employeeRangeMax = parseInt(employeeRange[0][1])
+  }
+  
+  // (FIX) low ranges may fuckup - make parts dynamic (lowest min/max difference must be 3)
   const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
 
   // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
@@ -322,6 +330,7 @@ export const ssa = async (
   }
 
   const amountAccountCanScrape = (maxLeadScrapeLimit - account.totalScrapedInLast30Mins)
+
   if ( amountAccountCanScrape <= minLeadScrapeLimit ) {
     // (FIX calculate time left to scrape limit reset)
     const answer = await prompt.askQuestion( `

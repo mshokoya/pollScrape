@@ -65,17 +65,18 @@ export type ProxyResponse = {
 }
 
 
-// 30mins
 // (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
 // (FIX) TEST TO MAKE SURE IT WORKS (also test lock) 
 // (FIX) handle situation where accsNeeded > allAccounts
-export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IAccount & {totalScrapedInLast30Mins: number})[] > => {
+export const selectAccForScrapingFILO = async (accsNeeded: number, accss: IAccount[]): Promise<(IAccount & {totalScrapedInLast30Mins: number})[] > => {
     const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
 
     const allAccInUse = await cache.getAllAccountIDs()
-    const allAccounts = (await getAllApolloAccounts())
+    const allAccounts = accss
       .filter( a => a.verified === 'yes' || !allAccInUse.includes(a._id) ) as (IAccount & {totalScrapedInLast30Mins: number})[]
-  
+    
+    // console.log(JSON.stringify(allAccounts.splice(0,10)))
+    
     if (!allAccounts || !allAccounts.length) return []
     if (allAccounts.length < 15) {
       console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
@@ -85,7 +86,7 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
       allAccounts[0].totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(allAccounts[0])
       return allAccounts
     }
-  
+
     // get unused accounts first
     for (let a of allAccounts) {
       if (accsNeeded === 0) return accs
@@ -110,10 +111,57 @@ export const selectAccForScrapingFILO = async (accsNeeded: number): Promise< (IA
     return accs.concat(allAccounts.splice(-accsNeeded))
 }
 
+
+// // 30mins
+// // (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
+// // (FIX) TEST TO MAKE SURE IT WORKS (also test lock) 
+// // (FIX) handle situation where accsNeeded > allAccounts
+// export const selectAccForScrapingFILO = async (accsNeeded: number): Promise<(IAccount & {totalScrapedInLast30Mins: number})[] > => {
+//     const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
+
+//     const allAccInUse = await cache.getAllAccountIDs()
+//     const allAccounts = (await getAllApolloAccounts())
+//       .filter( a => a.verified === 'yes' || !allAccInUse.includes(a._id) ) as (IAccount & {totalScrapedInLast30Mins: number})[]
+    
+//     if (!allAccounts || !allAccounts.length) return []
+//     if (allAccounts.length < 15) {
+//       console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
+//     }
+
+//     if (allAccounts.length === 1) {
+//       allAccounts[0].totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(allAccounts[0])
+//       return allAccounts
+//     }
+
+//     // get unused accounts first
+//     for (let a of allAccounts) {
+//       if (accsNeeded === 0) return accs
+//       if (!a.history.length) {
+//         accs.push({...a, totalScrapedInLast30Mins: 0})
+//         accsNeeded--
+//       }
+//     }
+
+//     if (accsNeeded === 0) return accs
+
+//     // if not enough unused accounts left, get account that have been used the least in the last 30mins
+//     allAccounts.sort((a, b) => {
+//       const totalLeadsScrapedIn30MinsA = totalLeadsScrapedInTimeFrame(a)
+//       const totalLeadsScrapedIn30MinsB = totalLeadsScrapedInTimeFrame(b)
+//       a['totalScrapedInLast30Mins'] = totalLeadsScrapedIn30MinsA
+//       b['totalScrapedInLast30Mins'] = totalLeadsScrapedIn30MinsB
+//       return totalLeadsScrapedIn30MinsB-totalLeadsScrapedIn30MinsA
+//     })
+
+  
+//     return accs.concat(allAccounts.splice(-accsNeeded))
+// }
+
 export const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
   const timeLimit = 1000 * 60 * 30; // 30mins
   return a.history.reduce((acc: number, cv: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string, scrapeID: string]) => {
     const isWithin30minMark = new Date().getTime() - cv[1] >= timeLimit 
+
     return isWithin30minMark
       ? acc + (cv[0] as any)
       : acc

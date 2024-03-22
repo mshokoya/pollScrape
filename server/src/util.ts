@@ -59,6 +59,7 @@ export const getPageInApolloURL = (url: string) => {
   return page ? parseInt(page) : 1
 }
 
+// min - 1 / max - 3 // lowest
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
    //@ts-ignore
