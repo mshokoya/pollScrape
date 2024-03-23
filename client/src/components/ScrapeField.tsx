@@ -4,6 +4,7 @@ import { batch, computed } from "@legendapp/state";
 import { observer, useObservable } from "@legendapp/state/react";
 import { selectAccForScrapingFILO } from "../core/state/account";
 import { IoMdCloseCircle } from "react-icons/io";
+import { ObservableComputed } from "@legendapp/state";
 
 
 type State = {
@@ -14,6 +15,10 @@ type State = {
   checkedStatus: string[]
   leadCol: string,
   chunkParts: number
+  aar: ObservableComputed<{
+    chunk: [number, number][];
+    accounts: string[];
+}>
 }
 
 
@@ -27,6 +32,19 @@ export const ScrapeField = observer(() => {
     checkedStatus: [],
     leadCol: 'total',
     chunkParts: 4,
+    aar: computed(() => {
+      const {min, max, chunkParts} = s.get()
+
+      if (!min || !max || !chunkParts) return { chunk: [], accounts: []}
+    
+      const chunk = chuckRange(min, max, chunkParts)
+      const accounts = selectAccForScrapingFILO(chunk.length)
+  
+      return { 
+        chunk,
+        accounts: accounts.map(a => a.domainEmail )
+      }
+    })
   }
   const s = useObservable<State>(defaultState);
 
@@ -83,7 +101,7 @@ export const ScrapeField = observer(() => {
         ? 1
         : val
       : s.min.peek()
-      
+
     const max = rng === 'max' 
     ? Number.isNaN(val)
       ? 10000000
@@ -104,6 +122,7 @@ export const ScrapeField = observer(() => {
     e.stopPropagation()
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
     
+    // @ts-ignore
     const status = e.target.dataset.status as string
     const url = s.url.get()
 
@@ -131,6 +150,7 @@ export const ScrapeField = observer(() => {
     e.stopPropagation()
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
     
+    // @ts-ignore
     const leadCol = e.target.dataset.status as string
     const url = s.url.get()
 
@@ -153,46 +173,50 @@ export const ScrapeField = observer(() => {
     }
   }
 
-  const aar = () => {
-    const {min, max, chunkParts} = s.get()
+  // const aar = () => {
+  //   const {min, max, chunkParts} = s.get()
 
-    if (!min || !max || !chunkParts) return { chunk: [], accounts: []}
+  //   if (!min || !max || !chunkParts) return { chunk: [], accounts: []}
     
 
-    const chunk = chuckRange(min, max, chunkParts)
-    const accounts = selectAccForScrapingFILO(chunk.length)
+  //   const chunk = chuckRange(min, max, chunkParts)
+  //   const accounts = selectAccForScrapingFILO(chunk.length)
 
-    return { 
-      chunk,
-      accounts: accounts.map(a => a.domainEmail )
-    }
-  }
+  //   return { 
+  //     chunk,
+  //     accounts: accounts.map(a => a.domainEmail )
+  //   }
+  // }
 
   const resetState = () => { s.set(defaultState) }
   
   return (
     <form onSubmit={handleSubmit}>
+     
+
+      <div className='mb-3 text-left'>
+        <label className='mr-2' htmlFor="startScrape">URL: </label>
+        <input className="mr-2 w-[50%]" required type="text" id="startScrape" disabled={!!s.url.get()} value={s.url.get()} onChange={(e) => {handleInput(e.target.value)}}/>
+        <div className={`inline text-cyan-600 text-xl ${ !s.get().url ? 'hidden' : ''}`} onClick={() => {resetState()}}> <IoMdCloseCircle fill='rgb(8 145 178 / 1)' /> </div>
+        <input disabled={!s.url.get()} className='text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Start Scraping"/>
+      </div>
+   
+
+
       <div className='mb-3 flex gap-5'>
         <div className='mb-3 text-left'>
-          <div className='mb-3'>
-            <label className='mr-2' htmlFor="startScrape">URL: </label>
-            <input className="mr-2" required type="text" id="startScrape" disabled={!!s.url.get()} value={s.url.get()} onChange={(e) => {handleInput(e.target.value)}}/>
-            <div className={`inline text-cyan-600 text-xl ${ !s.get().url ? 'hidden' : ''}`} onClick={() => {resetState()}}> <IoMdCloseCircle fill='rgb(8 145 178 / 1)' /> </div>
-          </div>
-          
           <div className='mb-2'> ------- Employee Range ------- </div>
 
           <div className='mb-3'>
             <label className='mr-2' htmlFor="scrapeFrom">Min: </label>
-            <input required id='scrapeFrom' type="number" min='1'  value={s.min.get()} onChange={(e) => {handleRange(e.target.value, 'min')} }/>
-          </div>
-          
-          <div className='mb-3'>
-            <label className='mr-2' htmlFor="scrapeTo">Max: </label>
-            <input required id='scrapeTo' className='mr-2' type="number" min='1' value={s.max.get()} onChange={(e) => {handleRange(e.target.value, 'max')} }/>
+            <input required id='scrapeFrom' type="number" min='1'  value={s.min.get()} onChange={(e: any) => {handleRange(e.target.value, 'min')} }/>
           </div>
 
-          <input disabled={s.reqInProcess.get()} className='text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500' type="submit" value="Start Scraping"/>
+          <div className='mb-3'>
+            <label className='mr-2' htmlFor="scrapeTo">Max: </label>
+            <input required id='scrapeTo' className='mr-2' type="number" min='1' value={s.max.get()} onChange={(e: any) => {handleRange(e.target.value, 'max')} }/>
+          </div>
+
         </div>
 
         <div className='mb-3'>
@@ -214,10 +238,10 @@ export const ScrapeField = observer(() => {
           </div>
         </div>
 
-        <div className='mb-3 w-[20rem] bg-pink '>
+        <div className='mb-3 w-[20rem] text-sm'>
           <div className='mb-5'>
             <div className='mb-1'> ------- Accounts For Scrape ------- </div>
-            <ChunkComp aar={aar()} />
+            <ChunkComp aar={s.aar.get()} />
           </div>
 
         </div>
@@ -235,8 +259,6 @@ type ChunkCompProps = {
 }
 
 const ChunkComp = ({aar}: ChunkCompProps) => {
-
-  console.log(aar)
 
   return (
     <div className="scrape w-full">
