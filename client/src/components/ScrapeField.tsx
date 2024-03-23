@@ -1,7 +1,10 @@
 import { FormEvent, MouseEvent} from "react"
-import {fetchData, getEmailStatusFromApolloURL, getLeadColFromApolloURL, getRangeFromApolloURL, removeEmailStatusInApolloURL, removeLeadColInApolloURL, setEmailStatusInApolloURL, setLeadColInApolloURL, setRangeInApolloURL} from '../core/util';
-import { batch } from "@legendapp/state";
-import { useObservable } from "@legendapp/state/react";
+import {chuckRange, fetchData, getEmailStatusFromApolloURL, getLeadColFromApolloURL, getRangeFromApolloURL, removeEmailStatusInApolloURL, removeLeadColInApolloURL, setEmailStatusInApolloURL, setLeadColInApolloURL, setRangeInApolloURL} from '../core/util';
+import { batch, computed } from "@legendapp/state";
+import { observer, useObservable } from "@legendapp/state/react";
+import { selectAccForScrapingFILO } from "../core/state/account";
+import { IoMdCloseCircle } from "react-icons/io";
+
 
 type State = {
   reqInProcess: boolean
@@ -9,37 +12,47 @@ type State = {
   min?: number
   max?: number
   checkedStatus: string[]
-  leadCol: string
+  leadCol: string,
+  chunkParts: number
 }
 
-export const ScrapeField = () => {
-  const s = useObservable<State>({
+
+
+export const ScrapeField = observer(() => {
+  const defaultState = {
     reqInProcess: false,
     url: '',
     min: undefined,
     max: undefined,
     checkedStatus: [],
-    leadCol: 'total'
-  });
+    leadCol: 'total',
+    chunkParts: 4,
+  }
+  const s = useObservable<State>(defaultState);
+
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    s.reqInProcess.set(true)
+    // s.reqInProcess.set(true)
 
-    await fetchData('/scrape', 'POST', {url: s.url.peek(), usingProxy: false})
-      .then( (d) => {
-        console.log(d)
-      })
-      .catch((err) => {
-        console.error(err)
-      })
-      .finally(() => {
-        s.reqInProcess.set(false)
-      })
+    // await fetchData('/scrape', 'POST', {url: s.url.peek(), usingProxy: false})
+    //   .then( (d) => {
+    //     console.log(d)
+    //   })
+    //   .catch((err) => {
+    //     console.error(err)
+    //   })
+    //   .finally(() => {
+    //     s.reqInProcess.set(false)
+    //   })
   }
 
   const handleInput = (urll: string) => {
+    if (!urll.includes('https://app.apollo.io/#/people?finderViewId=')) {
+      s.set(defaultState)
+      return
+    }
     const range = getRangeFromApolloURL(urll)
     const min = !range[0] ? 1 : range[0]
     const max = !range[1] ? 10000000 : range[1]
@@ -63,18 +76,22 @@ export const ScrapeField = () => {
   }
 
   const handleRange = (val: number, rng: 'min' | 'max') => {
+    if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
+    
     const min = rng === 'min' 
       ? Number.isNaN(val)
         ? 1
         : val
-      : s.min.get()
+      : s.min.peek()
+      
     const max = rng === 'max' 
     ? Number.isNaN(val)
       ? 10000000
       : val
-    : s.max.get()
+    : s.max.peek()
     
-    const url = setRangeInApolloURL(s.url.get(),[min, max])
+    const url = setRangeInApolloURL(s.url.peek(),[min, max])
+
     batch(() => {
       s.url.set(url)
       rng === 'min'
@@ -85,6 +102,8 @@ export const ScrapeField = () => {
 
   const handleEmailStatus = (e:  MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
+    if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
+    
     const status = e.target.dataset.status as string
     const url = s.url.get()
 
@@ -110,6 +129,8 @@ export const ScrapeField = () => {
 
   const handleLeadCol = (e:  MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
+    if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
+    
     const leadCol = e.target.dataset.status as string
     const url = s.url.get()
 
@@ -131,6 +152,23 @@ export const ScrapeField = () => {
         break
     }
   }
+
+  const aar = () => {
+    const {min, max, chunkParts} = s.get()
+
+    if (!min || !max || !chunkParts) return { chunk: [], accounts: []}
+    
+
+    const chunk = chuckRange(min, max, chunkParts)
+    const accounts = selectAccForScrapingFILO(chunk.length)
+
+    return { 
+      chunk,
+      accounts: accounts.map(a => a.domainEmail )
+    }
+  }
+
+  const resetState = () => { s.set(defaultState) }
   
   return (
     <form onSubmit={handleSubmit}>
@@ -138,7 +176,8 @@ export const ScrapeField = () => {
         <div className='mb-3 text-left'>
           <div className='mb-3'>
             <label className='mr-2' htmlFor="startScrape">URL: </label>
-            <input required type="text" id="startScrape" value={s.url.get()} onChange={(e) => {handleInput(e.target.value)}}/>
+            <input className="mr-2" required type="text" id="startScrape" disabled={!!s.url.get()} value={s.url.get()} onChange={(e) => {handleInput(e.target.value)}}/>
+            <div className={`inline text-cyan-600 text-xl ${ !s.get().url ? 'hidden' : ''}`} onClick={() => {resetState()}}> <IoMdCloseCircle fill='rgb(8 145 178 / 1)' /> </div>
           </div>
           
           <div className='mb-2'> ------- Employee Range ------- </div>
@@ -157,24 +196,100 @@ export const ScrapeField = () => {
         </div>
 
         <div className='mb-3'>
-          <div className='mb-1'> ------- Email Status ------- </div>
-          <div className="email" onClick={handleEmailStatus}>
-            <div>* Leave all boxes unchecked to include all types  </div>
-            <div><input type="checkbox" id="email" name="email" value="verified" data-status='verified' checked={s.checkedStatus.get().includes('verified')}/> Verified </div>
-            <div><input type="checkbox" id="email" name="email" value="guessed" data-status='guessed'  checked={s.checkedStatus.get().includes('guessed')}/> Guessed </div>
+          <div className='mb-5'>
+            <div className='mb-1'> ------- Email Status ------- </div>
+            <div className="email" onClick={handleEmailStatus}>
+              <div>* Leave all boxes unchecked to include all types  </div>
+              <div><input type="checkbox" id="email" name="email" value="verified" data-status='verified' checked={s.checkedStatus.get().includes('verified')}/> Verified </div>
+              <div><input type="checkbox" id="email" name="email" value="guessed" data-status='guessed'  checked={s.checkedStatus.get().includes('guessed')}/> Guessed </div>
+            </div>
+          </div>
+
+          <div>
+            <div className='mb-1'> ------- Lead Column ------- </div>
+            <div className="lead" onClick={handleLeadCol}>
+              <div> <input type="checkbox" id="lead" name="lead" value="total" data-status='total' checked={s.leadCol.get().includes('total')}/> Total </div>
+              <div> <input type="checkbox" id="lead" name="lead" value="new" data-status='new'  checked={s.leadCol.get().includes('new')}/> Net New </div>
+            </div>
           </div>
         </div>
 
-        <div className='mb-3'>
-          <div className='mb-1'> ------- Lead Column ------- </div>
-          <div className="lead" onClick={handleLeadCol}>
-            <div> <input type="checkbox" id="lead" name="lead" value="total" data-status='total' checked={s.leadCol.get().includes('total')}/> Total </div>
-            <div> <input type="checkbox" id="lead" name="lead" value="new" data-status='new'  checked={s.leadCol.get().includes('new')}/> Net New </div>
+        <div className='mb-3 w-[20rem] bg-pink '>
+          <div className='mb-5'>
+            <div className='mb-1'> ------- Accounts For Scrape ------- </div>
+            <ChunkComp aar={aar()} />
           </div>
-        </div>
 
+        </div>
 
       </div>
     </form>
   )
+})
+
+type ChunkCompProps = {
+  aar: {
+    accounts: string[],
+    chunk: [min:number, max: number][]
+  }
 }
+
+const ChunkComp = ({aar}: ChunkCompProps) => {
+
+  console.log(aar)
+
+  return (
+    <div className="scrape w-full">
+      {
+        aar.chunk.length && (
+          <table className="text-left">
+            <thead>
+              <tr>
+                <th className='px-2'> Accounts </th>
+                <th className='px-2'> Range </th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                aar.chunk.map((aar0, idx) => (
+                  aar.accounts[idx]
+                    ? (
+                      <tr key={idx} className="">
+                        <td className='overflow-scroll truncate max-w-2'>{aar.accounts[idx]}</td>
+                        <td className='overflow-scroll truncate'>{`${aar0[0]} - ${aar0[1]}`}</td>
+                      </tr>
+                    )
+                    : (
+                      <tr key={idx} className="">
+                        <td className='overflow-scroll truncate max-w-2'>No Account Available</td>
+                        <td className='overflow-scroll truncate'>{`${aar0[0]} - ${aar0[1]}`}</td>
+                      </tr>
+                    )
+                ))
+              }
+            </tbody>
+          </table>
+        )
+      }
+    </div>
+  )
+}
+
+// const aar = () => {
+//   const chunk = chuckRange(min.get(), max.get(), chunkParts.get())
+//   const accounts = selectAccForScrapingFILO(chunk.length)
+
+//   const accountsAndRange = () => {
+//     const {min, max, chunkParts} = s.get()
+//     if (!min || !max || !chunkParts) return
+
+//     const chunk = chuckRange(min, max, chunkParts)
+//     const accounts = selectAccForScrapingFILO(chunk.length)
+
+//     return {
+//       chunk,
+//       accounts
+//     }
+//   }
+
+// }

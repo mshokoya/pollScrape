@@ -1,5 +1,5 @@
 import { Dispatch, MouseEvent, SetStateAction, useEffect, useState } from "react"
-import {fetchData} from '../core/util';
+import {fetchData, fmtDate} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { MdCheckBoxOutlineBlank } from "react-icons/md";
@@ -10,16 +10,15 @@ import { FaTwitter } from "react-icons/fa";
 import { FaFacebookF } from "react-icons/fa";
 import { MetaPopup } from "./MetaPopup";
 import { metaMockData, recordMockData } from "../core/mockdata";
+import { appState$ } from "../core/state";
 
 export type IMetaData = {
   _id: string
   url: string
   params: {[key: string]: string}
-  fullURL: string
   name: string
-  maxPages: number
-  page: number
-  scrapes: {page: number, scrapeID: string}[]
+  scrapes: {scrapeID: string, listName: string, length: number, date: number}[]
+  accounts: {accountID: string, range:[min:number, max:number]}[]
 }
 
 export type IRecords = {
@@ -110,7 +109,7 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
         break;
       case 'extend':
         //@ts-ignore
-        e.target.closest('tr').nextSibling?.firstElementChild?.classList.toggle('hidden')
+        e.target.closest('tr').nextSibling.classList.toggle('hidden')
         break;
     }
   }
@@ -128,9 +127,9 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
   return (
     <>
     <PopupComp />
-    <div className=' border-cyan-600 min-w-[30%] max-w-[30%] border rounded overflow-auto'>
-    <table className="text-[0.7rem] m-auto w-full table-fixed">
-      <thead className='sticky top-0 bg-black'>
+    <div className=' border-cyan-600 min-w-[30%] max-w-[30%] border rounded overflow-auto '>
+    <table className="text-[0.7rem] font-light m-auto w-[150%] table-fixed">
+      <thead className='sticky top-0 bg-black text text-[0.8rem]'>
         <tr>
           <th className='w-[7%]' onClick={handleMetaToggle}>
             {
@@ -141,11 +140,10 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
           </th>
           <th>Name</th>
           <th>URL</th>
-          <th>MaxPages</th>
-          <th className='w-[7%]'><IoOptionsOutline className='inline' /></th>
+          <th className='w-7 sticky bg-black right-0'><IoOptionsOutline className='inline' /></th>
         </tr>
       </thead>
-      <tbody className="text-[0.5rem]" onClick={handleExtendRow}>
+      <tbody className="text-[0.8rem] " onClick={handleExtendRow}>
       {
             meta.length && meta.map( 
               (a, idx) => ( 
@@ -160,24 +158,91 @@ export const Meta = ({meta, metaChecked, setMetaChecked}: MetaSubCompArgs) => {
                     </td>
                     <td className='overflow-scroll truncate' data-type='extend' >{a.name}</td>
                     <td className='overflow-scroll truncate' data-type='extend' >{a.url}</td>
-                    <td className='overflow-scroll truncate' data-type='extend' >{a.maxPages}</td>
-                    <td className='overflow-scroll truncate' data-type='opt'>
+                    <td className='overflow-scroll sticky bg-black right-0' data-type='opt'>
                       <button >
                         <SlOptionsVertical className='inline'/>
                       </button>
                     </td>
                   </tr>
-                  <tr>
-                    <td colSpan={3} className="hidden hover:border-cyan-600 hover:border">
-                      <div>url: {a.url}</div>
-                      <div>params: {JSON.stringify(a.params)}</div>
-                      <div>full url: {a.fullURL}</div>
-                      <div>name: {a.name}</div>
-                      <div>max pages: {a.maxPages}</div>
-                      <div>page: {a.page}</div>
-                      <div>scrapes: {JSON.stringify(a.scrapes)}</div>
-                    </td>
-                  </tr>
+
+                  {/* META OTHER TABLE */}
+                  <tr className="text-left w-auto h-full overflow-hidden hidden ">
+                      <table className={` border-cyan-600 border-y text-[0.7rem] opacity-95`}>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">URL:</th>
+                          <td className="px-2">{a.url}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">params:</th>
+                          <td className="px-2"></td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Name:</th>
+                          <td className="px-2">{a.name}</td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Accounts:</th>
+                          <td className="px-2">
+                            <table>
+                              <thead className='sticky top-0 bg-black'>
+                                <tr>
+                                  <th className='px-2'> Account Used </th>
+                                  <th className='px-2'> Min Employee Range </th>
+                                  <th className='px-2'> Max Employee Range </th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[0.5rem] text-center">
+                                {
+                                  a.accounts?.length && a.accounts.map((a0, idx) => (
+                                    <tr key={idx} className="hover:border-cyan-600 hover:border-y">
+                                      <td className="px-2">{ appState$.accounts.peek().find(a1 => a1._id === a0.accountID)?.domainEmail }</td>
+                                      <td className="px-2">{a0.range[0]}</td>
+                                      <td className="px-2">{a0.range[1]}</td>
+                                    </tr>
+                                  ))
+                                }
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">Scrapes:</th>
+                          <td className="px-2">
+                            <table>
+                              <thead className='sticky top-0 bg-black'>
+                                <tr>
+                                  <th className='px-2'> Length </th>
+                                  <th className='px-2'> Date </th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[0.5rem] text-center">
+                                {
+                                  a.scrapes?.length && a.scrapes.map((a0, idx) => (
+                                    <tr key={idx} className="hover:border-cyan-600 hover:border-y">
+                                      <td className="px-2">{a0.length}</td>
+                                      <td className="px-2">{fmtDate(a0.date)}</td>
+                                    </tr>
+                                  ))
+                                }
+                                <td className='overflow-scroll bg-cyan-500/90 font-bold border-t-2' >
+                                    {
+                                      a.scrapes.reduce((acc, cur) => {
+                                        const o = (typeof cur.length !== 'number') ? 0 : cur.length
+                                        return acc + o
+                                      }, 0)
+                                    }
+                                  </td>
+                                  <div className="bg-cyan-500/90 font-bold border-t-2">TOTAL LEADS SCRAPED</div>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </tr>
                 </>
               )
             )

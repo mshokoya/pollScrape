@@ -16,7 +16,7 @@ export const accountTaskHelper = TaskHelpers(accountState.reqInProcess)
 export const stateResStatusHelper = ResStatusHelpers(accountState.resStatus)
 
 
-export const selectAccForScrapingFILO = async (accsNeeded: number): Promise<(IAccount & {totalScrapedInLast30Mins: number})[] > => {
+export const selectAccForScrapingFILO = (accsNeeded: number): (IAccount & {totalScrapedInLast30Mins: number})[] => {
   const accs: (IAccount & {totalScrapedInLast30Mins: number})[] = []
 
   // need to add cache

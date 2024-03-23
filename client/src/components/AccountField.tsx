@@ -1,5 +1,5 @@
 import { FormEvent, MouseEvent } from "react"
-import { ResStatusHelpers, TaskHelpers, fetchData} from '../core/util';
+import { ResStatusHelpers, TaskHelpers, fetchData, fmtDate} from '../core/util';
 import { SlOptionsVertical } from "react-icons/sl";
 import { IoOptionsOutline } from "react-icons/io5";
 import { AccountPopup } from "./AccountPopup";
@@ -141,10 +141,6 @@ export const AccountField = observer(() => {
         }, 1500)
       })
   }
-
-  const fmtDate = (n: any) => n && n !== 'n/a'
-      ? new Date(n).toDateString()
-      : "N/A";
 
   const fmtCredits = (limit: number, used: number) => {
     return (limit === -1 || used === -1)
