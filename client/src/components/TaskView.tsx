@@ -34,8 +34,7 @@ export const TaskView = () => {
   return (
     <>
       <PopupComp />
-      <div className='w-full h-10 bg-cyan-600'>
-        <div>
+      <div className='w-full h-[5.5%] mb-4 bg-cyan-600'>
             { 
               tq.timeout && tq.timeout.map((t, idx) => 
                 <div 
@@ -45,7 +44,7 @@ export const TaskView = () => {
                   onClick={() => s.popup.set(true)}><BiSolidGhost /></div> 
               )
             }
-            <span className='text-3xl font-bold inline'>( </span>
+            <span className='text-[150%] font-bold inline'>( </span>
             { 
               tq.processing && tq.processing.map((t, idx) => 
                 <div 
@@ -55,7 +54,7 @@ export const TaskView = () => {
                   onClick={() => s.popup.set(true)}><RiGhostLine /></div> 
               )
             }
-            <span className='text-3xl font-bold inline'> )</span>
+            <span className='text-[150%] font-bold inline'> )</span>
             { 
               tq.queue && tq.queue.map((t, idx) => 
                 <div 
@@ -73,7 +72,7 @@ export const TaskView = () => {
               <div>Metadata Task Type: {s.selectedTask.metadata.taskType.get()}</div>
               <div>Metadata AccountID: {s.selectedTask.metadata.metadata.accountID.get()}</div>
             </Tooltip>
-        </div>
+
       </div>
     </>
   )

@@ -10,20 +10,10 @@ const App = observer(function App(){
 
   return (
     <div className='flex relative'>
-      <div className='flex flex-col center h-screen z-0 grow p-2'>
-        
-        <div className='mb-3'>
+      <div className='flex flex-col center h-screen z-0 w-full p-2'>
           <TaskView />
-        </div>
-
-        <div className='mb-4 text-center'>
           <ScrapeField />
-        </div>
-
-        <div className='flex flex-col basis-full'>
           <RecordField />
-        </div>
-
       </div>
       <div>
         <Sidebar />
