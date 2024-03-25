@@ -1,5 +1,5 @@
 import { IoMdClose } from "react-icons/io";
-import { blinkCSS } from "../core/util";
+import { blinkCSS, fetchData } from "../core/util";
 import { IDomain } from "./DomainField";
 import { Spin } from "./util";
 import { domainTaskHelper, DomainReqType } from "../core/state/domain";
@@ -26,6 +26,9 @@ export const DomainPopup = (p: Props) => {
         break
       case 'verify':
         await p.verifyDomain()
+        break
+      case 'tess':
+        await fetchData('/domain/tess', 'POST', {domain: p.domain.domain})
         break
     }
   }
@@ -57,6 +60,14 @@ export const DomainPopup = (p: Props) => {
             className={blinkCSS(isDeleteReq)}
           > Delete domain </button>
           <Spin show={isDeleteReq}/>
+        </div>
+
+        <div>
+          <button 
+            disabled={isDeleteReq} 
+            onClick={() => {handleRequest('tess')}}
+            className={blinkCSS(isDeleteReq)}
+          > tess </button>
         </div>
 
         {

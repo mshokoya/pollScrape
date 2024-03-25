@@ -89,12 +89,28 @@ export const Forwarder = () => {
       .delete(`${process.env.FMDURI!}/${domain}`)
       .set({Authorization})
       .then( r => ({ok: r.ok, message: null, data: r.body}) )
-      .catch( () => ({ok: false, message: null, data: null}) )
+      .catch(async () => {
+        return getDomain(domain)
+          .then(() => ({ok: false, message: null, data: null}))
+          .catch(r => ({ok: r.ok, message: null, data: r.body}))
+      })
+
+    return res
+  }
+
+  const getDomain = async (domain: string) => {
+    console.log('in get domain')
+    const res = await superagent
+    .get(`${process.env.FMDURI!}/${domain}`)
+    .set({Authorization})
+    .then( r => ({ok: r.ok, message: null, data: r.body}) )
+    .catch( r => ({ok: false, message: null, data: null}) )
 
     return res
   }
 
   return {
+    getDomain,
     addDomain,
     verifyDomain,
     deleteDomain,

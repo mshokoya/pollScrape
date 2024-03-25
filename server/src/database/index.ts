@@ -103,6 +103,7 @@ export const saveScrapeToDB = async (
   } catch (error) {
     await session.abortTransaction();
     throw new AppError(taskID, 'failed to save scrape to db')
+
   } finally {
     await session.endSession();
   }
@@ -160,52 +161,54 @@ export const updateMeta = async (meta: Partial<IMetaData> & Required<{_id: strin
   return newMeta;
 }
 
-// export const updateMetaInitForNewScrape = async (taskID: string, meta: IMetaData) => {
-//   const session = await startSession();
-//   try {
-//     session.startTransaction();
-//     const updateOpts = { new: true, session }
+export const updateDBForNewScrape = async (taskID: string, meta: IMetaData, account: IAccount, listName: string, scrapeID: string) => {
+  const session = await startSession();
+  try {
+    session.startTransaction();
+    const updateOpts = { new: true, session }
 
-//     const newMeta = await MetadataModel.findOneAndUpdate(
-//       {_id: meta._id}, 
-//       { 
-//         $set: {
-//           scrapes: meta.scrapes.map(s => s.listName === listName ? {...s, length: data.length} : s )
-//         },
-//       }, 
-//       updateOpts
-//     ).lean();
+    // METADATA UPDATE
+    const newMeta = await MetadataModel.findOneAndUpdate(
+      {_id: meta._id}, 
+      { 
+        $set: {
+          scrapes: [...meta.scrapes, {scrapeID, listName, date: new Date().getTime(), length: 0}]
+        },
+      }, 
+      updateOpts
+    ).lean();
 
-//     if (!newMeta) {
-//       await session.abortTransaction();
-//       throw new AppError(taskID, 'failed to update meta after scrape, if this continues please contact developer');
-//     }
+    if (!newMeta) {
+      await session.abortTransaction();
+      throw new AppError(taskID, 'failed to update meta after scrape, if this continues please contact developer');
+    }
 
 
+    // ACCOUNT UPDATE
+    const newAccount = await AccountModel.findOneAndUpdate(
+      {_id: account._id}, 
+      { 
+        $set: {
+          history: [...account.history, [undefined as any, undefined as any, listName, scrapeID]]
+        },
+      }, 
+      updateOpts
+    ).lean();
 
-//     // METADATA UPDATE
-//     const newMeta = await MetadataModel.findOneAndUpdate(
-//       {_id: meta._id}, 
-//       { 
-//         $set: {
-//           scrapes: meta.scrapes.map(s => s.listName === listName ? {...s, length: data.length} : s )
-//         },
-//       }, 
-//       updateOpts
-//     ).lean();
+    if (!newAccount) {
+      await session.abortTransaction();
+      throw new AppError(taskID, 'failed to update account after scrape, if this continues please contact developer');
+    }
 
-//     if (!newMeta) {
-//       await session.abortTransaction();
-//       throw new AppError(taskID, 'failed to update meta after scrape, if this continues please contact developer');
-//     }
-
-//     await session.commitTransaction();
-//   } catch (error) {
-//     await session.abortTransaction();
-//     throw new AppError(taskID, 'failed to save scrape to db')
-//   }
-//   await session.endSession();
-// }
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw new AppError(taskID, 'failed to save scrape to db')
+    
+  } finally {
+    await session.endSession();
+  }
+}
 
 export const saveLeadsFromRecovery = async (
   taskID: string,

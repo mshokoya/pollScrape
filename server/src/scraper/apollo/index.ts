@@ -7,7 +7,7 @@ import {
 } from "../../database/util";
 import useProxy from 'puppeteer-page-proxy';
 import { AccountModel, IAccount } from '../../database/models/accounts';
-import { getAllApolloAccounts, saveLeadsFromRecovery, saveScrapeToDB, updateAccount, updateMeta } from '../../database';
+import { getAllApolloAccounts, saveLeadsFromRecovery, saveScrapeToDB, updateAccount, updateDBForNewScrape, updateMeta } from '../../database';
 import { 
   apolloAddLeadsToListAndScrape,
   apolloConfirmAccount, 
@@ -311,9 +311,7 @@ export const ssa = async (
   if (!acc4Scrape) {
     // (FIX) move mutex to the function instead
     account = await _SALock.runExclusive(async () => ( (await selectAccForScrapingFILO(1))[0] ) )
-
-    if (!account) throw new AppError(taskID, 'failed to find account for scraping') 
-    if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
+    if (!account) throw new AppError(taskID, 'failed to find account for scraping')
   } else {
     let acc = await AccountModel.findById(acc4Scrape.accountID).lean() as SAccount;
     if (!acc) { 
@@ -325,9 +323,9 @@ export const ssa = async (
         ? (acc.totalScrapedInLast30Mins = 0) 
         : ( acc.totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(acc))
     }
-    if (acc.totalScrapedInLast30Mins === undefined || acc.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
     account = acc
   }
+  if (account.totalScrapedInLast30Mins === undefined || account.totalScrapedInLast30Mins >= maxLeadScrapeLimit) return
 
   const amountAccountCanScrape = (maxLeadScrapeLimit - account.totalScrapedInLast30Mins)
 
@@ -368,7 +366,7 @@ export const ssa = async (
   const metasWithEmptyList = meta.scrapes.filter((l) => {
     const history = account.history.find(h => h[2] === l.listName)
     if (!history) return false
-    return !history[0] && !history[1]
+    return history[0] == undefined && !history[1]
   })
 
   if (metasWithEmptyList.length) {
@@ -391,7 +389,8 @@ export const ssa = async (
 
     const scrapeID = generateID()
     const listName = generateSlug(4)
-    const l = await updateMeta({_id: meta._id, scrapes:[...meta.scrapes, {scrapeID, listName, date: new Date().getTime(), length: 0}]})
+
+    await updateDBForNewScrape(taskID, meta, account, listName, scrapeID)
 
     let numOfLeadsToScrape = Math.min(numOfLeadsAccCanScrape, creditsLeft)
     numOfLeadsToScrape = (numOfLeadsToScrape >=  maxLeadsOnPage) ?  maxLeadsOnPage : numOfLeadsToScrape
