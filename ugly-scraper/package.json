@@ -24,6 +24,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@nozbe/watermelondb": "^0.27.1",
     "advanced-proxy-checker": "^1.1.0",
     "async-mutex": "^0.5.0",
     "electron-updater": "^6.1.7",
