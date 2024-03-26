@@ -1,13 +1,11 @@
 import 'dotenv/config'
 import express from 'express'
 import mongoose from 'mongoose'
-import cors from 'cors'
-import bodyParser from 'body-parser'
+
 import { createServer } from 'node:http'
-import { getRecord, getRecords, recordRoutes } from './server/record-routes'
-import { addProxy, getProxies, proxyRoutes } from './server/proxy-routes'
+import { getRecord, getRecords } from './server/record-routes'
+import { addProxy, getProxies } from './server/proxy-routes'
 import {
-  accountRoutes,
   addAccount,
   checkAccount,
   confirmAccount,
@@ -20,18 +18,13 @@ import {
   upgradeAutomatically,
   upgradeManually
 } from './server/account-routes'
-import {
-  deleteMetadata,
-  getMetadatas,
-  metadataRoutes,
-  updateMetadata
-} from './server/metadata-route'
-import { scrapeLeads, scrapeRoutes } from './server/scrape-routes'
+import { deleteMetadata, getMetadatas, updateMetadata } from './server/metadata-route'
+import { scrapeLeads } from './server/scrape-routes'
 import { initTaskQueue } from './task_queue'
 import { initSocketIO } from './websockets'
 import { initMailBox } from './mailbox'
 import { initForwarder } from './forwarder'
-import { addDomain, deleteDomain, domainRoutes, getDomains } from './server/domain-route'
+import { addDomain, deleteDomain, getDomains } from './server/domain-route'
 import { initCache } from './cache'
 import { initPrompt } from './prompt'
 import { IAccount } from './database/models/accounts'
@@ -137,4 +130,5 @@ export const WgetRecord = async (id: string) => await init().then(async () => aw
 export const WgetRecords = async () => await init().then(async () => await getRecords())
 
 // scrape
-export const Wscrape = async (id: string, proxy: boolean, url: string) => await init().then(async () => await scrapeLeads(id, proxy, url))
+export const Wscrape = async (id: string, proxy: boolean, url: string) =>
+  await init().then(async () => await scrapeLeads(id, proxy, url))
