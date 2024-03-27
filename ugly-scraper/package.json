@@ -13,7 +13,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "cvt": "tsc --project tsconfig.core.json --outDir ./src/main",
-    "dev": "npm run cvt && electron-vite dev",
+    "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -24,6 +24,7 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@legendapp/state": "^2.1.8",
     "@nozbe/watermelondb": "^0.27.1",
     "advanced-proxy-checker": "^1.1.0",
     "async-mutex": "^0.5.0",
@@ -33,7 +34,9 @@
     "is-valid-domain": "^0.1.6",
     "mailparser": "^3.6.7",
     "mongoose": "^8.2.3",
+    "piscina": "^4.4.0",
     "promise-abortable": "^1.2.6",
+    "puppeteer-cluster": "^0.24.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
@@ -41,6 +44,7 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-page-proxy": "^1.3.0",
     "random-word-slugs": "^0.1.7",
+    "react-tooltip": "^5.26.3",
     "socket.io": "^4.7.5",
     "superagent": "^8.1.2"
   },
@@ -70,6 +74,7 @@
     "tailwind": "^4.0.0",
     "tailwind-merge": "^2.2.2",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.12"
   }
