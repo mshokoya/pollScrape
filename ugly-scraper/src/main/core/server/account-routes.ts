@@ -583,7 +583,6 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
 
     const account = await AccountModel.findById(accountID)
     if (!account) throw new Error("Failed to start demining, couldn't find account")
-    console.log('inzzz')
     const taskID = generateID()
     await taskQueue.enqueue(
       taskID,
@@ -592,7 +591,6 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
       `Demine ${account.domainEmail} popups`,
       { accountID },
       async () => {
-        console.log('in the mines')
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'demine',
@@ -603,9 +601,7 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
         try {
           const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) {
-            console.log('failure')
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
-          
           }
           return (await browserCTX.execute(
             { taskID, account, accountID },

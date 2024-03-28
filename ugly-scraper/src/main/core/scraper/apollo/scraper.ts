@@ -5,7 +5,6 @@ import StealthUserAgent from 'puppeteer-extra-plugin-anonymize-ua'
 import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker'
 import Devtools from 'puppeteer-extra-plugin-devtools'
 import { hideDom } from './util'
-import { generate } from 'generate-password'
 import { AppError } from '../../util'
 import { io } from '../../websockets'
 import { Cluster } from 'puppeteer-cluster'
@@ -43,7 +42,8 @@ export const scraper = (() => {
           puppeteerOptions: {
             headless,
             defaultViewport: null
-          }
+          },
+          timeout: 31536000000
         })
       }
     } else {
@@ -55,7 +55,8 @@ export const scraper = (() => {
           puppeteerOptions: {
             headless,
             defaultViewport: null
-          }
+          },
+          timeout: 31536000000
         })
       }
     }
