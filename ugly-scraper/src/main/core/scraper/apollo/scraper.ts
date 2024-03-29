@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-extra'
-import { Browser, Page } from 'puppeteer-extra-plugin/dist/puppeteer'
+import { Page } from 'puppeteer-extra-plugin/dist/puppeteer'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import StealthUserAgent from 'puppeteer-extra-plugin-anonymize-ua'
 import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker'
@@ -11,9 +11,7 @@ import { Cluster } from 'puppeteer-cluster'
 import { cpus } from 'node:os'
 
 export type BrowserContext = {
-  id: string
   page: Page
-  type: 'headless' | 'head'
 }
 
 puppeteer.use(StealthPlugin())

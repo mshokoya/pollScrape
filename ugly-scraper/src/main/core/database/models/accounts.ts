@@ -1,4 +1,6 @@
-import { Schema, model } from "mongoose"
+import { Schema, model } from 'mongoose'
+import { Model } from '@nozbe/watermelondb'
+import { field, json } from '@nozbe/watermelondb/decorators'
 
 export type IAccount = {
   _id: string
@@ -11,8 +13,6 @@ export type IAccount = {
   email: string
   password: string
   cookie: string
-  firstname: string
-  lastname: string
   proxy: string
   domainEmail: string
   lastUsed: number // new Date.getTime()
@@ -24,27 +24,49 @@ export type IAccount = {
   renewalEndDate: number | Date
   trialDaysLeft: number
   apolloPassword: string
-  history: [amountOfLeadsScrapedOnPage: number, timeOfScrape: number, listName: string, scrapeID: string][]
+  history: [
+    amountOfLeadsScrapedOnPage: number,
+    timeOfScrape: number,
+    listName: string,
+    scrapeID: string
+  ][]
 }
 
+export default class Account extends Model {
+  static table = 'account'
 
+  @field('domain') domain
+  @field('accountType') accountType
+  @field('trialTime') trialTime
+  @field('suspended') suspended
+  @field('loginType') loginType
+  @field('verified') verified
+  @field('email') email
+  @field('password') password
+  @field('proxy') proxy
+  @field('emailCreditsUsed') emailCreditsUsed
+  @field('emailCreditsLimit') emailCreditsLimit
+  @field('renewalDateTime') renewalDateTime
+  @field('renewalStartDate') renewalStartDate
+  @field('renewalEndDate') renewalEndDate
+  @field('trialDaysLeft') trialDaysLeft
+  @field('lastUsed') lastUsed
+  @json('history', (f) => f) history
+}
 
 const accountSchema = new Schema<IAccount>({
-  domain: { type: String, default: "" },
-  accountType: { type: String, default: "free" }, // free or premuim
-  trialTime: { type: String, default: "" }, // should be trial end date & time
+  domain: { type: String, default: '' },
+  accountType: { type: String, default: 'free' }, // free or premuim
+  trialTime: { type: String, default: '' }, // should be trial end date & time
   suspended: { type: Boolean, default: false },
-  loginType: {type: String, default: "default"}, // (FIX) remove and switch with domain
-  domainEmail: { type: String, default: "" },
+  loginType: { type: String, default: 'default' }, // (FIX) remove and switch with domain
+  domainEmail: { type: String, default: '' },
   verified: { type: String, default: 'no' },
-  firstname: { type: String, default: "" },
-  lastname: { type: String, default: "" },
-  email: { type: String, default: "" },
-  password: { type: String, default: "" },
-  cookie: { type: String, default: "" },
-  apolloPassword: { type: String, default: "" },
-  proxy: { type: String, default: "" },
-  recoveryEmail: { type: String, default: "" },
+  email: { type: String, default: '' },
+  password: { type: String, default: '' },
+  cookie: { type: String, default: '' },
+  apolloPassword: { type: String, default: '' },
+  proxy: { type: String, default: '' },
   emailCreditsUsed: { type: Number, default: -1 },
   emailCreditsLimit: { type: Number, default: -1 },
   renewalDateTime: { type: Number, default: -1 }, // as Date
@@ -54,7 +76,7 @@ const accountSchema = new Schema<IAccount>({
   // @ts-ignore
   lastUsed: { type: Date, default: new Date().getTime() }, // used to pick which to use to scrape
   // @ts-ignore
-  history: {type: [Schema.Types.Mixed], default: []}
-});
+  history: { type: [Schema.Types.Mixed], default: [] }
+})
 
-export const AccountModel = model<IAccount>('accounts', accountSchema);
+export const AccountModel = model<IAccount>('accounts', accountSchema)
