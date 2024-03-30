@@ -23,7 +23,15 @@ export default class MetaData extends Model {
 
   static async getAll() {
     // @ts-ignore
-    return await database.get<IMetaData>('metadata').query().fetch()
+    return (await database.get<IMetaData>('metadata').query().fetch()).map((m) => {
+      // @ts-ignore
+      m.params = JSON.parse(m.params)
+      // @ts-ignore
+      m.scrapes = JSON.parse(m.scrapes)
+      // @ts-ignore
+      m.accounts = JSON.parse(m.accounts)
+      return m
+    })
   }
 
   static async findOneById(id: string): Promise<IMetaData | null> {
@@ -31,16 +39,39 @@ export default class MetaData extends Model {
       // @ts-ignore
       .get<IMetaData>('metadata')
       .find(id)
+      .then((m) => {
+        // @ts-ignore
+        m.params = JSON.parse(m.params)
+        // @ts-ignore
+        m.scrapes = JSON.parse(m.scrapes)
+        // @ts-ignore
+        m.accounts = JSON.parse(m.accounts)
+        return m
+      })
       .catch(() => null)
   }
 
   static async find(filter: IMetaData) {
-    const args = Object.entries(filter).map((a: [string, any]) => Q.where(a[0], a[1]))
-    return await database
-      .get('metadata')
-      .query(...args)
-      .fetch()
-      .catch(() => [])
+    const args = Object.entries(filter).map((m: [string, any]) => Q.where(m[0], m[1]))
+    return (
+      (
+        await database
+          .get('metadata')
+          .query(...args)
+          .fetch()
+          .catch(() => [])
+      )
+        // @ts-ignore
+        .map((m: IMetaData) => {
+          // @ts-ignore
+          m.params = JSON.parse(m.params)
+          // @ts-ignore
+          m.scrapes = JSON.parse(m.scrapes)
+          // @ts-ignore
+          m.accounts = JSON.parse(m.accounts)
+          return m
+        })
+    )
   }
 
   static async create(metadata: Partial<IMetaData>) {
@@ -50,12 +81,12 @@ export default class MetaData extends Model {
         await database.get('metadata').create((m: IMetaData) => {
           m.url = metadata.url || ''
           //@ts-ignore
-          m.params = metadata.params || '{}'
+          m.params = metadata.params ? JSON.stringify(metadata.params) : '{}'
           m.name = metadata.name || ''
           //@ts-ignore
-          m.scrapes = metadata.scrapes || '[]'
+          m.scrapes = metadata.scrapes ? JSON.stringify(metadata.scrapes) : '[]'
           //@ts-ignore
-          m.accounts = metadata.accounts || '[]'
+          m.accounts = metadata.accounts ? JSON.stringify(metadata.account) : '[]'
         })
     )) as unknown as IMetaData
   }
@@ -74,8 +105,9 @@ export default class MetaData extends Model {
         if (key === 'params' || key === 'scrapes' || key === 'accounts') {
           // @ts-ignore
           m[key] = JSON.stringify(value)
+        } else {
+          m[key] = value
         }
-        m[key] = value
       }
     })) as IMetaData
 

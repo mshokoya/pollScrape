@@ -39,7 +39,7 @@ export default class Domain extends Model {
   }
 
   static async find(filter: IDomain) {
-    const args = Object.entries(filter).map((a: [string, any]) => Q.where(a[0], a[1]))
+    const args = Object.entries(filter).map((d: [string, any]) => Q.where(d[0], d[1]))
     return await database
       .get('domain')
       .query(...args)

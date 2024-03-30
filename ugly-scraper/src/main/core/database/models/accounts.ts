@@ -68,16 +68,32 @@ export default class Account extends Model {
       // @ts-ignore
       .get<IAccount>('account')
       .find(id)
+      // @ts-ignore
+      .then((a: IAccount) => {
+        // @ts-ignore
+        a.history = JSON.parse(a.history)
+        return a
+      })
       .catch(() => null)
   }
 
   static async find(filter: Partial<Omit<IAccount, 'history'>>) {
     const args = Object.entries(filter).map((a: [string, any]) => Q.where(a[0], a[1]))
-    return await database
-      .get('account')
-      .query(...args)
-      .fetch()
-      .catch(() => [])
+    return (
+      (
+        await database
+          .get('account')
+          .query(...args)
+          .fetch()
+          .catch(() => [])
+      )
+        // @ts-ignore
+        .map((a: IAccount) => {
+          // @ts-ignore
+          a.history = JSON.parse(a.history)
+          return a
+        })
+    )
   }
 
   static async create(account: Partial<IAccount>) {
@@ -104,7 +120,7 @@ export default class Account extends Model {
           a.trialDaysLeft = account.trialDaysLeft || -1
           a.lastUsed = account.lastUsed || new Date().getTime()
           // @ts-ignore
-          a.history = '[]'
+          a.history = account.history ? JSON.stringify(account.history) : '[]'
         })
     )) as unknown as IAccount
   }
@@ -118,17 +134,16 @@ export default class Account extends Model {
     if (!acc) return null
 
     // @ts-ignore
-    const newAcc = (await acc.update((a: IAccount) => {
+    return (await acc.update((a: IAccount) => {
       for (const [key, value] of Object.entries(account)) {
         if (key === 'history') {
           // @ts-ignore
-          a.history = JSON.stringify(value)
+          a[key] = JSON.stringify(value)
+        } else {
+          a[key] = value
         }
-        a[key] = value
       }
     })) as IAccount
-
-    return newAcc
   }
 }
 

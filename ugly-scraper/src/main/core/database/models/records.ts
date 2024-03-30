@@ -1,6 +1,7 @@
 import { Schema, model } from 'mongoose'
-import { Model } from '@nozbe/watermelondb'
+import { Model, Q } from '@nozbe/watermelondb'
 import { field, json } from '@nozbe/watermelondb/decorators'
+import { database } from '../db'
 
 export type IRecords = {
   _id: string
@@ -35,6 +36,82 @@ export default class Record extends Model {
   @field('scrapeID') scrapeID
   @field('url') url
   @json('data', (f) => f) data
+
+  static async getAll() {
+    // @ts-ignore
+    return (await database.get<IRecords>('record').query().fetch()).map((r) => {
+      // @ts-ignore
+      r.data = JSON.parse(r.data)
+      return r
+    })
+  }
+
+  static async findOneById(id: string): Promise<IRecords | null> {
+    return await database
+      // @ts-ignore
+      .get<IRecords>('record')
+      .find(id)
+      // @ts-ignore
+      .then((r: IAccount) => {
+        // @ts-ignore
+        r.data = JSON.parse(r.data)
+        return r
+      })
+      .catch(() => null)
+  }
+
+  static async find(filter: Partial<Omit<IRecords, 'data'>>) {
+    const args = Object.entries(filter).map((r: [string, any]) => Q.where(r[0], r[1]))
+    return (
+      (
+        await database
+          .get('record')
+          .query(...args)
+          .fetch()
+          .catch(() => [])
+      )
+        // @ts-ignore
+        .map((r: IAccount) => {
+          // @ts-ignore
+          r.data = JSON.parse(r.data)
+          return r
+        })
+    )
+  }
+
+  static async create(record: Partial<IRecords>) {
+    return (await database.write(
+      async () =>
+        //@ts-ignore
+        await database.get('record').create((r: IRecords) => {
+          r.scrapeID = record.scrapeID || ''
+          r.url = record.url || ''
+          // @ts-ignore
+          r.data = record.data ? JSON.stringify(record.data) : '{}'
+        })
+    )) as unknown as IRecords
+  }
+
+  static async updateOne(recordID: string, record: Partial<IRecords>) {
+    const prox: Model | null = await database
+      .get('record')
+      .find(recordID)
+      .catch(() => null)
+
+    if (!prox) return null
+
+    // @ts-ignore
+    return (await prox.update((r: IRecords) => {
+      for (const [key, value] of Object.entries(record)) {
+        if (key === 'data') {
+          // @ts-ignore
+          r.data = JSON.stringify(value)
+        } else {
+          r[key] = value
+        }
+      }
+    })) as IRecords
+  }
 }
 
 const records = new Schema<IRecords>({
