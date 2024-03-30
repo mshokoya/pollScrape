@@ -80,7 +80,7 @@ export default class Account extends Model {
       .catch(() => [])
   }
 
-  async create(account: Partial<IAccount>) {
+  static async create(account: Partial<IAccount>) {
     return (await database.write(
       async () =>
         //@ts-ignore
@@ -109,11 +109,12 @@ export default class Account extends Model {
     )) as unknown as IAccount
   }
 
-  async updateOne(accountID: string, account: Partial<IAccount>) {
+  static async updateOne(accountID: string, account: Partial<IAccount>) {
     const acc: Model | null = await database
       .get('account')
       .find(accountID)
       .catch(() => null)
+
     if (!acc) return null
 
     // @ts-ignore
