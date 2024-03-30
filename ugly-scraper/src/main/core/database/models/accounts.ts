@@ -1,6 +1,7 @@
 import { Schema, model } from 'mongoose'
-import { Model } from '@nozbe/watermelondb'
+import { Model, Q } from '@nozbe/watermelondb'
 import { field, json } from '@nozbe/watermelondb/decorators'
+import { database } from '../db'
 
 export type IAccount = {
   _id: string
@@ -52,6 +53,82 @@ export default class Account extends Model {
   @field('trialDaysLeft') trialDaysLeft
   @field('lastUsed') lastUsed
   @json('history', (f) => f) history
+
+  static async getAll() {
+    // @ts-ignore
+    return (await database.get<IAccount>('account').query().fetch()).map((a) => {
+      // @ts-ignore
+      a.history = JSON.parse(a.history)
+      return a
+    })
+  }
+
+  static async findOneById(id: string): Promise<IAccount | null> {
+    return await database
+      // @ts-ignore
+      .get<IAccount>('account')
+      .find(id)
+      .catch(() => null)
+  }
+
+  static async find(filter: Partial<Omit<IAccount, 'history'>>) {
+    const args = Object.entries(filter).map((a: [string, any]) => Q.where(a[0], a[1]))
+    return await database
+      .get('account')
+      .query(...args)
+      .fetch()
+      .catch(() => [])
+  }
+
+  async create(account: Partial<IAccount>) {
+    return (await database.write(
+      async () =>
+        //@ts-ignore
+        await database.get('account').create((a: IAccount) => {
+          a.domain = account.domain || ''
+          a.accountType = account.accountType || 'free'
+          a.trialTime = account.trialTime || ''
+          a.suspended = account.suspended || false
+          a.loginType = account.loginType || 'default'
+          a.domainEmail = account.domainEmail || ''
+          a.verified = account.verified || 'no'
+          ;(a.email = account.email || ''), (a.password = account.password || '')
+          a.cookie = account.cookie || ''
+          a.apolloPassword = account.apolloPassword || ''
+          a.proxy = account.password || ''
+          a.emailCreditsUsed = account.emailCreditsUsed || -1
+          a.emailCreditsLimit = account.emailCreditsLimit || -1
+          a.renewalDateTime = account.renewalDateTime || -1
+          a.renewalStartDate = account.renewalStartDate || -1
+          a.renewalEndDate = account.renewalEndDate || -1
+          a.trialDaysLeft = account.trialDaysLeft || -1
+          a.lastUsed = account.lastUsed || new Date().getTime()
+          // @ts-ignore
+          a.history = '[]'
+        })
+    )) as unknown as IAccount
+  }
+
+  async updateOne(accountID: string, account: Partial<IAccount>) {
+    const acc: Model | null = await database
+      .get('account')
+      .find(accountID)
+      .catch(() => null)
+    if (!acc) return null
+
+    // @ts-ignore
+    const newAcc = (await acc.update((a: IAccount) => {
+      for (const [key, value] of Object.entries(account)) {
+        if (key === 'history') {
+          // @ts-ignore
+          a.history = JSON.stringify(value)
+        }
+        a[key] = value
+      }
+    })) as IAccount
+
+    return newAcc
+  }
 }
 
 const accountSchema = new Schema<IAccount>({

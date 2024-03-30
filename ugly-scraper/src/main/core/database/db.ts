@@ -89,7 +89,7 @@ const adapter = new SQLiteAdapter({
   // }
 })
 
-export const database = new Database({
+export const database: Database = new Database({
   adapter,
   modelClasses: [Account, Domain, MetaData, Proxy, Record]
 })

@@ -10,6 +10,7 @@ import { cache } from '../cache'
 import { selectAccForScrapingFILO } from '../database/util'
 import { IAccount } from '../database/models/accounts'
 import { getSavedListAndScrape } from '../scraper/apollo/apollo'
+import { init } from '../start'
 
 export const scrapeRoutes = (app: Express) => {
   // (FIX) test this function and make sure it works correctly
@@ -52,15 +53,21 @@ export const scrapeLeads = async (id: string, proxyy: boolean, urll: string) => 
       { metaID: metaID },
       async () => {
         io.emit('apollo', { taskID, taskType: 'scrape', message: 'starting lead scraper' })
-        const browserCTX = await scraper.newBrowser(false)
-        await browserCTX?.page.setViewport({ width: 0, height: 0 })
-        if (!browserCTX)
-          throw new AppError(taskID, 'Failed to scrape, browser could not be started')
         try {
-          await apolloScrape(taskID, browserCTX, metadata, useProxy)
+          const browserCTX = await scraper.newBrowser(false)
+          if (!browserCTX)
+            throw new AppError(taskID, 'Failed to scrape, browser could not be started')
+
+          await browserCTX.execute(
+            { taskID, metadata, useProxy },
+            async ({ page, data: { taskID, metadata, useProxy } }) => {
+              await init()
+              await apolloScrape(taskID, { page }, metadata, useProxy)
+            }
+          )
         } finally {
+          // (FIX) CACHE NOW IN DB
           await cache.deleteMeta(metaID)
-          await scraper.close(browserCTX)
         }
       }
     )
@@ -70,6 +77,28 @@ export const scrapeLeads = async (id: string, proxyy: boolean, urll: string) => 
     return { ok: false, message: err.message || 'failed to scrape', data: null }
   }
 }
+
+// try {
+//   const browserCTX = await scraper.newBrowser(false)
+//   if (!browserCTX)
+//     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+
+//   return (await browserCTX.execute(
+//     { taskID, account, accountID },
+//     async ({ page, data: { taskID, account, accountID } }) => {
+//       await init()
+//       await logIntoApolloAndUpgradeAccount(taskID, { page } as BrowserContext, account)
+//       const creditsInfo = await logIntoApolloAndGetCreditsInfo(
+//         taskID,
+//         { page } as BrowserContext,
+//         account
+//       )
+//       return await updateAccount({ _id: accountID }, creditsInfo) // (FIX)
+//     }
+//   )) as Promise<IAccount>
+// } finally {
+//   /* empty */
+// }
 
 // const met: any[] = [
 //   {

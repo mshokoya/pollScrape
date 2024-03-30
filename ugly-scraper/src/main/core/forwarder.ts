@@ -50,12 +50,15 @@ type VerifyDomainRes = {
 type DeleteDomainRes = { ok: boolean; message: string | null; data: Domain | null }
 
 export const Forwarder = () => {
+  // @ts-ignore
   const Authorization = `Basic ${Buffer.from(`${import.meta.env.MAIN_VITE_FMTOKEN}:`).toString('base64')}`
 
   const addDomain = async (domain: string): Promise<CreateDomainRes> => {
     return await superagent
+      // @ts-ignore
       .post(import.meta.env.MAIN_VITE_FMCDURI!)
       .set({ Authorization })
+      // @ts-ignore
       .send({ catchall: import.meta.env.MAIN_VITE_AUTHEMAIL, domain })
       .then((r) => ({
         ok: r.ok,
@@ -66,7 +69,7 @@ export const Forwarder = () => {
           id: r.body.id
         }
       }))
-      .catch((err) => {
+      .catch(() => {
         return { ok: false, message: null, data: null }
       })
   }
@@ -74,6 +77,7 @@ export const Forwarder = () => {
   // (FIX) get doomain info too to check if mx or txt records have been updated
   const verifyDomain = async (domain: string): Promise<VerifyDomainRes> => {
     return await superagent
+      // @ts-ignore
       .get(`${import.meta.env.MAIN_VITE_FMDURI!}/${domain}/verify-records`)
       .set({ Authorization })
       .then((r) => ({
@@ -103,49 +107,13 @@ export const Forwarder = () => {
               has_txt_record: r.data.has_txt_record
             }
           }))
-          .catch((r) => ({ ok: false, message: errRes.message, date: null }))
+          .catch(() => ({ ok: false, message: errRes.message, date: null }))
       })
-
-    //   const res = await superagent
-    //   .get(`${import.meta.env.MAIN_VITE_FMDURI!}/${domain}/verify-records`)
-    //   .set({Authorization})
-    //   .then((r) => {
-    //     console.log(`
-
-    //     TTTHHEEENNN
-
-    //     ${r.body}
-
-    //     aanndd
-
-    //     ${JSON.parse(r.text)}
-
-    //     aann
-
-    //     ${JSON.parse(r.message)}
-
-    //     `)
-    //     return {
-    //       ok: true,
-    //       message: null
-    //     }
-    //   })
-    //   .catch((err) => {
-    //     const errRes = {ok: false, message: null, data: null}
-    //     const l = JSON.parse(err.response.text)
-    //     if (l.statusCode === 404) {
-    //       errRes.message = l.message
-    //     } else {
-    //       errRes.message = 'Making changes to your DNS records takes time to propagate throughout the Internet. You may need to wait a few minutes and then try again' as any
-    //     }
-    //     return errRes
-    // })
-
-    //   return res
   }
 
   const deleteDomain = async (domain: string): Promise<DeleteDomainRes> => {
     return await superagent
+      // @ts-ignore
       .delete(`${import.meta.env.MAIN_VITE_FMDURI!}/${domain}`)
       .set({ Authorization })
       .then((r) => ({ ok: r.ok, message: null, data: r.body }))
@@ -158,10 +126,11 @@ export const Forwarder = () => {
 
   const getDomain = async (domain: string) => {
     return await superagent
+      // @ts-ignore
       .get(`${import.meta.env.MAIN_VITE_FMDURI!}/${domain}`)
       .set({ Authorization })
       .then((r) => ({ ok: r.ok, message: null, data: r.body }))
-      .catch((r) => ({ ok: false, message: null, data: null }))
+      .catch(() => ({ ok: false, message: null, data: null }))
   }
 
   return {

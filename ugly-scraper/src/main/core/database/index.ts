@@ -9,6 +9,9 @@ import { v4 as uuidv4 } from 'uuid'
 import { CreditsInfo } from '../scraper/apollo/util'
 import { AppError } from '../util'
 
+// ==================================================================
+
+
 export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccount> => {
   const acc = AccountModel.findOne({ email: account.email })
 
