@@ -13,7 +13,9 @@ import {
   WloginManually,
   WupdateAcc,
   WupgradeAutomatically,
-  WupgradeManually
+  WupgradeManually,
+  accountGetAll,
+  accountCreate
 } from './core/worker'
 import { IAccount } from './core/database/models/accounts'
 
@@ -42,6 +44,10 @@ ipcMain.handle(
     domainEmail: string
   ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
 )
+
+ipcMain.handle('accountCreate', async () => await accountCreate())
+
+ipcMain.handle('accountGetAll', async () => await accountGetAll())
 
 // domain
 // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))

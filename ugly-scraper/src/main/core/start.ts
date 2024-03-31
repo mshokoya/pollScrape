@@ -9,35 +9,30 @@ import { initCache } from './cache'
 import { initPrompt } from './prompt'
 
 export const init = async (): Promise<void> => {
-  mongoose.connect(import.meta.env.MAIN_VITE_MONGOURI!).then(async () => {
-    const app = express()
-    const server = createServer(app)
-    const port = 4000
 
-    console.log('Mongoose started')
+  
+  // const app = express()
+  //   const server = createServer(app)
 
-    initCache()
-    console.log('Cache started')
+  //   console.log('Mongoose started')
 
-    initSocketIO(server)
-    console.log('SocketIO started')
+  //   initCache()
+  //   console.log('Cache started')
 
-    initPrompt()
-    console.log('Prompt started')
+  //   initSocketIO(server)
+  //   console.log('SocketIO started')
 
-    initTaskQueue()
-    console.log('TaskQueue started')
+  //   initPrompt()
+  //   console.log('Prompt started')
 
-    initForwarder()
-    console.log('Forwarder started')
+  //   initTaskQueue()
+  //   console.log('TaskQueue started')
 
-    await initMailBox()
-    console.log('Mailbox started')
+  //   initForwarder()
+  //   console.log('Forwarder started')
 
-    // server.listen(port, () => {
-    //   console.log(`Connected to server on port ${port}`)
-    // })
-  })
+  //   await initMailBox()
+  //   console.log('Mailbox started')
 }
 
 // import 'dotenv/config'

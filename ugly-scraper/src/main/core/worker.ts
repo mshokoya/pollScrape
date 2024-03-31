@@ -17,7 +17,7 @@ import {
 import { deleteMetadata, getMetadatas, updateMetadata } from './server/metadata-route'
 import { scrapeLeads } from './server/scrape-routes'
 import { addDomain, deleteDomain, getDomains } from './server/domain-route'
-import { IAccount } from './database/models/accounts'
+import Account, { IAccount } from './database/models/accounts'
 import { IMetaData } from './database/models/metadata'
 
 //  free proxies
@@ -74,3 +74,37 @@ export const WgetRecords = async () => await getRecords()
 // scrape
 export const Wscrape = async (id: string, proxy: boolean, url: string) =>
   await scrapeLeads(id, proxy, url)
+
+export const accountCreate = async () => {
+  await Account.create({
+    domain: 'new domain',
+    accountType: 'free',
+    email: 'testemail@gmail.com'
+  })
+    .then((user) => {
+      console.log(`
+  
+    UUSSEERR
+    ${user}
+    
+    
+    email
+    ${user.email}
+  
+  
+    `)
+    })
+    .catch(() => {
+      console.log('failed to create')
+    })
+}
+
+export const accountGetAll = async () => {
+  await Account.getAll()
+    .then((a) => {
+      console.log(a)
+    })
+    .catch(() => {
+      console.log('failed to getAll')
+    })
+}

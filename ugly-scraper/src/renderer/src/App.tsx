@@ -1,10 +1,19 @@
 function App(): JSX.Element {
 
-  const handleClick = async () => {
-    await window.account.demine()
+  const handleAccountGetAll = async () => {
+    await window.account.accountGetAll()
   }
 
-  return <div className="bg-amber-600" onClick={() => handleClick()}>Hello world</div>
+  const handleAccountCreate = async () => {
+    await window.account.accountCreate()
+  }
+
+  return (
+    <div>
+      <div className="bg-amber-600" onClick={() => handleAccountGetAll()}>gettall</div>
+      <div className="bg-amber-600" onClick={() => handleAccountCreate()}>create</div>
+    </div>
+  )
 }
 
 export default App

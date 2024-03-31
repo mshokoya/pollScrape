@@ -6,7 +6,7 @@ import { database } from '../db'
 export type IAccount = {
   _id: string
   domain: string
-  accountType: string
+  accountType: 'free' | 'premium'
   trialTime: string
   suspended: boolean
   verified: 'no' | 'confirm' | 'yes' // confirm = conformation email sent

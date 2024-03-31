@@ -1,4 +1,5 @@
 import { ipcRenderer ,contextBridge } from 'electron'
+import { accountCreate, accountGetAll } from '../main/core/worker'
 // import { electronAPI } from '@electron-toolkit/preload'
 
 if (!process.contextIsolated) {
@@ -12,7 +13,13 @@ contextBridge.exposeInMainWorld('account', {
   },
   getAllAccounts: async (id: string) => {
     return await ipcRenderer.invoke('getAccounts', id)
-  }
+  },
+  accountCreate: async () => {
+    return await ipcRenderer.invoke('accountCreate')
+  },
+  accountGetAll: async () => {
+    return await ipcRenderer.invoke('accountGetAll')
+  },
 })
 
 contextBridge.exposeInMainWorld('meta', {
