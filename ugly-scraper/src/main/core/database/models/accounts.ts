@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose'
-import { Model, Q } from '@nozbe/watermelondb'
 import { field, json } from '@nozbe/watermelondb/decorators'
-import { database } from '../db'
+import { DataTypes, FindOptions, Model, ModelDefined } from 'sequelize'
+import { sequelize } from '../db'
 
 export type IAccount = {
   _id: string
@@ -33,117 +33,152 @@ export type IAccount = {
   ][]
 }
 
-export default class Account extends Model {
-  static table = 'account'
-
-  @field('domain') domain
-  @field('accountType') accountType
-  @field('trialTime') trialTime
-  @field('suspended') suspended
-  @field('loginType') loginType
-  @field('verified') verified
-  @field('email') email
-  @field('password') password
-  @field('proxy') proxy
-  @field('emailCreditsUsed') emailCreditsUsed
-  @field('emailCreditsLimit') emailCreditsLimit
-  @field('renewalDateTime') renewalDateTime
-  @field('renewalStartDate') renewalStartDate
-  @field('renewalEndDate') renewalEndDate
-  @field('trialDaysLeft') trialDaysLeft
-  @field('lastUsed') lastUsed
-  @json('history', (f) => f) history
-
-  static async getAll() {
-    // @ts-ignore
-    return (await database.get<IAccount>('account').query().fetch()).map((a) => {
-      // @ts-ignore
-      a.history = JSON.parse(a.history)
-      return a
-    })
+// @ts-ignore
+export const Account = sequelize.define('account', {
+  domain: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  accountType: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'free'
+  },
+  trialTime: {
+    type: DataTypes.BIGINT,
+    allowNull: true
+  },
+  suspended: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  loginType: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: 'default'
+  },
+  verified: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'no'
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  proxy: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  emailCreditsUsed: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: -1
+  },
+  emailCreditsLimit: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: -1
+  },
+  renewalDateTime: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: -1
+  },
+  renewalStartDate: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: -1
+  },
+  renewalEndDate: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: -1
+  },
+  trialDaysLeft: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: -1
+  },
+  lastUsed: {
+    type: DataTypes.BIGINT,
+    allowNull: false,
+    defaultValue: -1
+  },
+  history: {
+    type: DataTypes.ARRAY(DataTypes.JSON),
+    allowNull: false,
+    defaultValue: []
   }
+})
 
-  static async findOneById(id: string): Promise<IAccount | null> {
-    return await database
-      // @ts-ignore
-      .get<IAccount>('account')
-      .find(id)
-      // @ts-ignore
-      .then((a: IAccount) => {
-        // @ts-ignore
-        a.history = JSON.parse(a.history)
+type MD = ModelDefined<IAccount, unknown>
+
+export const AccountModel_ = {
+  findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}) =>
+    //@ts-ignore
+    (await Account.findAll<IAccount>({ where: filter, raw: true })).map((a) => {
+      a.history = JSON.parse(a.history as any)
+      return a
+    }),
+  create: async (account: IAccount) =>
+    //@ts-ignore
+    await Account.create<IAccount>(account, { raw: true })
+      .then((a) => {
+        a.history = JSON.parse(a.history as any)
         return a
       })
-      .catch(() => null)
-  }
+      .catch(() => null),
+  findById: async (id: string) =>
+    //@ts-ignore
+    await Account.findByPk<IAccount>(id, { raw: true })
+      .then((a) => {
+        a.history = JSON.parse(a.history as any)
+        return a
+      })
+      .catch(() => null),
+  findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any) =>
+    //@ts-ignore
+    await Account.findOne<IAccount>({ raw: true, where: filter })
+      .then((a) => {
+        a.history = JSON.parse(a.history as any)
+        return a
+      })
+      .catch(() => null),
+  findOneAndUpdate: async (filter: Partial<Omit<IAccount, 'history'>>, data: Partial<IAccount>) => {
+    const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
-  static async find(filter: Partial<Omit<IAccount, 'history'>>) {
-    const args = Object.entries(filter).map((a: [string, any]) => Q.where(a[0], a[1]))
-    return (
-      (
-        await database
-          .get('account')
-          .query(...args)
-          .fetch()
-          .catch(() => [])
-      )
+    if (!account) return null
+
+    for (const [key, value] of Object.entries(data)) {
+      if (key === 'history') {
         // @ts-ignore
-        .map((a: IAccount) => {
-          // @ts-ignore
-          a.history = JSON.parse(a.history)
-          return a
-        })
-    )
-  }
+        account[key] = JSON.stringify(value)
+      } else {
+        account[key] = value
+      }
+    }
+    // @ts-ignore
+    return await account.save().then((a: IAccount) => {
+      a.history = JSON.parse(a.history as any)
+      return a
+    })
+  },
+  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>) => {
+    const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
-  static async create(account: Partial<IAccount>) {
-    return (await database.write(
-      async () =>
-        //@ts-ignore
-        await database.get('account').create((a: IAccount) => {
-          a.domain = account.domain || ''
-          a.accountType = account.accountType || 'free'
-          a.trialTime = account.trialTime || ''
-          a.suspended = account.suspended || false
-          a.loginType = account.loginType || 'default'
-          a.domainEmail = account.domainEmail || ''
-          a.verified = account.verified || 'no'
-          ;(a.email = account.email || ''), (a.password = account.password || '')
-          a.cookie = account.cookie || ''
-          a.apolloPassword = account.apolloPassword || ''
-          a.proxy = account.password || ''
-          a.emailCreditsUsed = account.emailCreditsUsed || -1
-          a.emailCreditsLimit = account.emailCreditsLimit || -1
-          a.renewalDateTime = account.renewalDateTime || -1
-          a.renewalStartDate = account.renewalStartDate || -1
-          a.renewalEndDate = account.renewalEndDate || -1
-          a.trialDaysLeft = account.trialDaysLeft || -1
-          a.lastUsed = account.lastUsed || new Date().getTime()
-          // @ts-ignore
-          a.history = account.history ? JSON.stringify(account.history) : '[]'
-        })
-    )) as unknown as IAccount
-  }
-
-  static async updateOne(accountID: string, account: Partial<IAccount>) {
-    const acc: Model | null = await database
-      .get('account')
-      .find(accountID)
-      .catch(() => null)
-
-    if (!acc) return null
+    if (!account) return null
 
     // @ts-ignore
-    return (await acc.update((a: IAccount) => {
-      for (const [key, value] of Object.entries(account)) {
-        if (key === 'history') {
-          // @ts-ignore
-          a[key] = JSON.stringify(value)
-        } else {
-          a[key] = value
-        }
-      }
-    })) as IAccount
+    return await account
+      .destroy()
+      .then(() => true)
+      .catch(() => null)
   }
 }
 
