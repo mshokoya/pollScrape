@@ -1,5 +1,5 @@
 import { startSession } from 'mongoose'
-import { AccountModel, IAccount } from './models/accounts'
+import { AccountModel__, IAccount } from './models/accounts'
 import { IProxy, ProxyModel } from './models/proxy'
 import { parseProxy, apolloGetParamsFromURL } from './util'
 import { generateSlug } from 'random-word-slugs'
@@ -13,11 +13,11 @@ import { AppError } from '../util'
 
 
 export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccount> => {
-  const acc = AccountModel.findOne({ email: account.email })
+  const acc = AccountModel_.findOne({ email: account.email })
 
   if (acc !== null) throw new Error('account already exists')
 
-  const newAcc = await AccountModel.create(account)
+  const newAcc = await AccountModel_.create(account)
 
   return newAcc
 }
@@ -27,7 +27,7 @@ export const updateAccount = async (
   data: Partial<IAccount>,
   opts?: Record<string, string>
 ): Promise<IAccount> => {
-  const account = (await AccountModel.findOneAndUpdate(
+  const account = (await AccountModel_.findOneAndUpdate(
     filter,
     { $set: data },
     { new: true, ...opts }
@@ -62,7 +62,7 @@ export const saveScrapeToDB = async (
     const updateOpts = { new: true, session }
 
     // ACCOUNT UPDATE
-    const newAcc = await AccountModel.findOneAndUpdate(
+    const newAcc = await AccountModel_.findOneAndUpdate(
       { _id: account._id },
       {
         $set: {
@@ -133,7 +133,7 @@ export const initMeta = async (url: string): Promise<IMetaData> => {
 }
 
 export const getAllApolloAccounts = async (): Promise<IAccount[]> => {
-  return (await AccountModel.find({}).lean()) as IAccount[]
+  return (await AccountModel_.find({}).lean()) as IAccount[]
 }
 
 export const deleteMetaAndRecords = async (metaID: string) => {
@@ -203,7 +203,7 @@ export const updateDBForNewScrape = async (
     }
 
     // ACCOUNT UPDATE
-    const newAccount = await AccountModel.findOneAndUpdate(
+    const newAccount = await AccountModel_.findOneAndUpdate(
       { _id: account._id },
       {
         $set: {
@@ -243,7 +243,7 @@ export const saveLeadsFromRecovery = async (
     const updateOpts = { new: true, session }
 
     // ACCOUNT UPDATE
-    const newAcc = await AccountModel.findOneAndUpdate(
+    const newAcc = await AccountModel_.findOneAndUpdate(
       { _id: account._id },
       {
         $set: {

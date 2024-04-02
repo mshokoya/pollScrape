@@ -1,6 +1,6 @@
 import { Express } from 'express'
 import { updateAccount } from '../database'
-import { AccountModel, IAccount } from '../database/models/accounts'
+import { AccountModel_, IAccount } from '../database/models/accounts'
 import { BrowserContext, scraper } from '../scraper/apollo/scraper'
 import {
   apolloConfirmAccountEvent,
@@ -47,7 +47,7 @@ export const accountRoutes = (app: Express) => {
   })
   // (fix) make sure body is corrct format and do error checks and dont use findOne
   app.put('/account/:id', async (req, res) => {
-    res.json(await updateAcc(req.body._id, req.body))
+    res.json(await updateAcc(req.body.id, req.body))
   })
   // (FIX): should only works with gmail & outlook auth logins
   // (FIX): check if waitForNavigationTo func can get cookies after browser closed
@@ -88,7 +88,7 @@ export const confirmAccount = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
 
-    const account = await AccountModel.findById(accountID).lean()
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
     // if (account.verified) throw new Error('Request Failed, account is already verified');
 
@@ -145,7 +145,7 @@ export const upgradeManually = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
 
-    const account = await AccountModel.findById(accountID).lean()
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
 
     const taskID = generateID()
@@ -182,7 +182,7 @@ export const upgradeManually = async (id: string) => {
                 { page } as BrowserContext,
                 account
               )
-              return await updateAccount({ _id: accountID }, creditsInfo) // (FIX)
+              return await updateAccount({ id: accountID }, creditsInfo) // (FIX)
             }
           )) as Promise<IAccount>
         } finally {
@@ -203,7 +203,7 @@ export const upgradeAutomatically = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
 
-    const account = await AccountModel.findById(accountID).lean()
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
 
     const taskID = generateID()
@@ -236,7 +236,7 @@ export const upgradeAutomatically = async (id: string) => {
                 { page } as BrowserContext,
                 account
               )
-              return await updateAccount({ _id: accountID }, creditsInfo) // (FIX)
+              return await updateAccount({ id: accountID }, creditsInfo) // (FIX)
             }
           )) as Promise<IAccount>
         } finally {
@@ -257,7 +257,7 @@ export const checkAccount = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
 
-    const account = await AccountModel.findById(accountID).lean()
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
 
     const taskID = generateID()
@@ -289,7 +289,7 @@ export const checkAccount = async (id: string) => {
                 { page } as BrowserContext,
                 account
               )
-              return await updateAccount({ _id: accountID }, creditsInfo)
+              return await updateAccount({ id: accountID }, creditsInfo)
             }
           )) as Promise<IAccount>
         } finally {
@@ -310,7 +310,7 @@ export const deleteAccount = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to delete account, please provide valid id')
 
-    await AccountModel.deleteOne({ _id: accountID }).lean()
+    await AccountModel_.findOneAndDelete({ id: accountID })
 
     return { ok: true, message: null, data: null }
   } catch (err: any) {
@@ -324,7 +324,7 @@ export const loginAuto = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to login, invalid id')
 
-    const account = await AccountModel.findById(accountID).lean()
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to login, cannot find account')
 
     const taskID = generateID()
@@ -362,7 +362,7 @@ export const loginAuto = async (id: string) => {
               })
 
               io.emit('apollo', { taskID, message: 'saving browser cookies in db' })
-              await updateAccount({ _id: accountID }, { cookie: JSON.stringify(cookies) })
+              await updateAccount({ id: accountID }, { cookie: JSON.stringify(cookies) })
             }
           )) as Promise<IAccount>
         } finally {
@@ -402,7 +402,7 @@ export const addAccount = async ({
 
     if (addType === 'domain') {
       if (!selectedDomain) throw new Error('Failed to add account, domain not provided')
-      const d = await DomainModel.findOne({ domain: selectedDomain }).lean()
+      const d = await DomainModel.findOne({ domain: selectedDomain })
       if (!d) throw new Error('Failed to add account, domain could not be found')
 
       account = {
@@ -445,8 +445,8 @@ export const addAccount = async ({
       }
 
       const accountExists = ['gmail', 'outlook', 'hotmail'].includes(getDomain(domainEmail))
-        ? await AccountModel.findOne({ email }).lean()
-        : await AccountModel.findOne({ domainEmail }).lean()
+        ? await AccountModel_.findOne({ email })
+        : await AccountModel_.findOne({ domainEmail })
 
       if (accountExists) throw new Error('Failed to create new account, account already exists')
     }
@@ -475,7 +475,7 @@ export const addAccount = async ({
               await init()
               await signupForApollo(taskID, { page } as BrowserContext, account)
               // (FIX) indicate that account exists on db but not verified via email or apollo
-              return await AccountModel.create(account)
+              return await AccountModel_.create(account)
             }
           )) as Promise<IAccount>
         } finally {
@@ -493,7 +493,7 @@ export const addAccount = async ({
 export const getAccounts = async () => {
   console.log('getAccounts')
   try {
-    const accounts = await AccountModel.find({}).lean()
+    const accounts = await AccountModel_.find({})
 
     return { ok: true, message: null, data: accounts }
   } catch (err: any) {
@@ -508,7 +508,7 @@ export const updateAcc = async (id: string, fields: Record<string, any>) => {
     if (!accountID) throw new Error('Failed to update account, invalid body')
 
     //
-    const updatedAccount = await updateAccount({ _id: accountID }, fields)
+    const updatedAccount = await updateAccount({ id: accountID }, fields)
     if (!updateAccount) throw new Error('Failed to update account')
 
     return { ok: true, message: null, data: updatedAccount }
@@ -523,7 +523,7 @@ export const loginManually = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
 
-    const account = await AccountModel.findById(accountID)
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error("Failed to start demining, couldn't find account")
     if (account.domain === 'default') throw new Error('Failed to start manual login, invalid email')
 
@@ -559,7 +559,7 @@ export const loginManually = async (id: string) => {
                 'settings page'
               ).then(async () => {
                 const cookies = await getBrowserCookies({ page } as BrowserContext)
-                return await updateAccount({ _id: accountID }, { cookie: JSON.stringify(cookies) })
+                return await updateAccount({ id: accountID }, { cookie: JSON.stringify(cookies) })
               })
             }
           )) as Promise<IAccount>
@@ -581,7 +581,7 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
     const accountID = id
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
 
-    const account = await AccountModel.findById(accountID)
+    const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error("Failed to start demining, couldn't find account")
     const taskID = generateID()
     await taskQueue.enqueue(
@@ -614,7 +614,7 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
                 'settings/account'
               ).then(async () => {
                 const cookies = await getBrowserCookies({ page } as BrowserContext)
-                return await updateAccount({ _id: accountID }, { cookie: JSON.stringify(cookies) })
+                return await updateAccount({ id: accountID }, { cookie: JSON.stringify(cookies) })
               })
             }
           )) as Promise<IAccount>

@@ -5,6 +5,7 @@
     "composite": true,
     "types": ["electron-vite/node"],
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "esModuleInterop": true
   }
 }

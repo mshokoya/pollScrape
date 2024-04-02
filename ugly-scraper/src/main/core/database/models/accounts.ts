@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose'
-import { DataTypes, Model, ModelDefined } from 'sequelize'
+import { DataTypes, Model } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IAccount = {
@@ -12,7 +12,7 @@ export type IAccount = {
   loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
-  cookie: string
+  cookies: string
   proxy: string
   domainEmail: string
   lastUsed: number // new Date.getTime()
@@ -112,6 +112,10 @@ export const Account = sequelize.define('account', {
     allowNull: false,
     defaultValue: -1
   },
+  cookies: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   history: {
     type: DataTypes.TEXT,
     allowNull: false,
@@ -200,7 +204,7 @@ const accountSchema = new Schema<IAccount>({
   verified: { type: String, default: 'no' },
   email: { type: String, default: '' },
   password: { type: String, default: '' },
-  cookie: { type: String, default: '' },
+  cookies: { type: String, default: '' },
   apolloPassword: { type: String, default: '' },
   proxy: { type: String, default: '' },
   emailCreditsUsed: { type: Number, default: -1 },

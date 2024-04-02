@@ -1,5 +1,4 @@
 import { cpus } from 'os'
-import { join } from 'path'
 import { Sequelize } from 'sequelize'
 
 // const dbPath =
