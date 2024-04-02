@@ -1,6 +1,6 @@
 import { startSession } from 'mongoose'
-import { AccountModel__, IAccount } from './models/accounts'
-import { IProxy, ProxyModel } from './models/proxy'
+import { AccountModel_, IAccount } from './models/accounts'
+import { IProxy, ProxyModel_ } from './models/proxy'
 import { parseProxy, apolloGetParamsFromURL } from './util'
 import { generateSlug } from 'random-word-slugs'
 import { IRecord, RecordsModel } from './models/records'
@@ -8,9 +8,9 @@ import { IMetaData, MetadataModel } from './models/metadata'
 import { v4 as uuidv4 } from 'uuid'
 import { CreditsInfo } from '../scraper/apollo/util'
 import { AppError } from '../util'
+import { sequelize } from './db'
 
 // ==================================================================
-
 
 export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccount> => {
   const acc = AccountModel_.findOne({ email: account.email })
@@ -24,25 +24,16 @@ export const addAccountToDB = async (account: Partial<IAccount>): Promise<IAccou
 
 export const updateAccount = async (
   filter: Record<string, any>,
-  data: Partial<IAccount>,
-  opts?: Record<string, string>
+  data: Partial<IAccount>
 ): Promise<IAccount> => {
-  const account = (await AccountModel_.findOneAndUpdate(
-    filter,
-    { $set: data },
-    { new: true, ...opts }
-  ).lean()) as IAccount
+  const account = (await AccountModel_.findOneAndUpdate(filter, data)) as IAccount
 
   return account
 }
 
 export const addProxyToDB = async (p: string): Promise<IProxy | null> => {
   const fmtProxy = parseProxy(p)
-  return (await ProxyModel.findOneAndUpdate(
-    { proxy: p },
-    { $set: fmtProxy },
-    { new: true }
-  ).lean()) as IProxy | null
+  return (await ProxyModel_.findOneAndUpdate({ proxy: p }, fmtProxy)) as IProxy | null
 }
 
 export const saveScrapeToDB = async (
@@ -56,28 +47,23 @@ export const saveScrapeToDB = async (
   data: IRecord[],
   proxy: string | null
 ): Promise<{ meta: IMetaData; account: IAccount }> => {
-  const session = await startSession()
+  const t = await sequelize.transaction()
   try {
-    session.startTransaction()
-    const updateOpts = { new: true, session }
-
     // ACCOUNT UPDATE
     const newAcc = await AccountModel_.findOneAndUpdate(
-      { _id: account._id },
+      { id: account.id },
       {
-        $set: {
-          cookies: JSON.stringify(cookies),
-          lastUsed: new Date().getTime(),
-          history: account.history,
-          proxy,
-          ...credits
-        }
+        cookies: JSON.stringify(cookies),
+        lastUsed: new Date().getTime(),
+        history: account.history,
+        proxy,
+        ...credits
       },
-      updateOpts
-    ).lean()
+      { transaction: t }
+    )
 
     if (!newAcc) {
-      await session.abortTransaction()
+      await t.rollback()
       throw new AppError(
         taskID,
         'failed to update account after scrape, if this continues please contact developer'
@@ -88,13 +74,13 @@ export const saveScrapeToDB = async (
     const scrapeID = uuidv4()
 
     const newMeta = await MetadataModel.findOneAndUpdate(
-      { _id: meta._id },
+      { id: meta.id },
       {
-        $addToSet: { accounts: { accountID: account._id, range } },
+        $addToSet: { accounts: { accountID: account.id, range } },
         $push: { scrapes: { scrapeID, listName } }
       },
       updateOpts
-    ).lean()
+    )
 
     if (!newMeta) {
       await session.abortTransaction()
@@ -133,14 +119,14 @@ export const initMeta = async (url: string): Promise<IMetaData> => {
 }
 
 export const getAllApolloAccounts = async (): Promise<IAccount[]> => {
-  return (await AccountModel_.find({}).lean()) as IAccount[]
+  return (await AccountModel_.find({})) as IAccount[]
 }
 
 export const deleteMetaAndRecords = async (metaID: string) => {
   const session = await startSession()
 
   try {
-    const meta = await MetadataModel.findOneAndDelete({ _id: metaID }, { session }).lean()
+    const meta = await MetadataModel.findOneAndDelete({ id: metaID }, { session })
 
     if (!meta) {
       await session.abortTransaction()
@@ -159,9 +145,9 @@ export const deleteMetaAndRecords = async (metaID: string) => {
   await session.endSession()
 }
 
-export const updateMeta = async (meta: Partial<IMetaData> & Required<{ _id: string }>) => {
+export const updateMeta = async (meta: Partial<IMetaData> & Required<{ id: string }>) => {
   const newMeta = await MetadataModel.findByIdAndUpdate(
-    { _id: meta._id },
+    { id: meta.id },
     { $set: meta },
     { new: true }
   )
@@ -185,14 +171,14 @@ export const updateDBForNewScrape = async (
 
     // METADATA UPDATE
     const newMeta = await MetadataModel.findOneAndUpdate(
-      { _id: meta._id },
+      { id: meta.id },
       {
         $set: {
           scrapes: [...meta.scrapes, { scrapeID, listName, date: new Date().getTime(), length: 0 }]
         }
       },
       updateOpts
-    ).lean()
+    )
 
     if (!newMeta) {
       await session.abortTransaction()
@@ -204,14 +190,14 @@ export const updateDBForNewScrape = async (
 
     // ACCOUNT UPDATE
     const newAccount = await AccountModel_.findOneAndUpdate(
-      { _id: account._id },
+      { id: account.id },
       {
         $set: {
           history: [...account.history, [null, null, listName, scrapeID]]
         }
       },
       updateOpts
-    ).lean()
+    )
 
     if (!newAccount) {
       await session.abortTransaction()
@@ -244,7 +230,7 @@ export const saveLeadsFromRecovery = async (
 
     // ACCOUNT UPDATE
     const newAcc = await AccountModel_.findOneAndUpdate(
-      { _id: account._id },
+      { id: account.id },
       {
         $set: {
           lastUsed: Math.max(scrapeDate, account.lastUsed),
@@ -255,7 +241,7 @@ export const saveLeadsFromRecovery = async (
         }
       },
       updateOpts
-    ).lean()
+    )
 
     if (!newAcc) {
       await session.abortTransaction()
@@ -267,7 +253,7 @@ export const saveLeadsFromRecovery = async (
 
     // METADATA UPDATE
     const newMeta = await MetadataModel.findOneAndUpdate(
-      { _id: meta._id },
+      { id: meta.id },
       {
         $set: {
           scrapes: meta.scrapes.map((s) =>
@@ -276,7 +262,7 @@ export const saveLeadsFromRecovery = async (
         }
       },
       updateOpts
-    ).lean()
+    )
 
     if (!newMeta) {
       await session.abortTransaction()

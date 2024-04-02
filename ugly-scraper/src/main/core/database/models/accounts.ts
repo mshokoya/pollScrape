@@ -130,7 +130,7 @@ export const AccountModel_ = {
       ...a,
       history: JSON.parse(a.history as any)
     })),
-  create: async (a: Partial<IAccount> = {}, opts: CreateOptions) =>
+  create: async (a: Partial<IAccount> = {}, opts?: CreateOptions) =>
     //@ts-ignore
     await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true, ...opts })
       .then((a1) => ({
@@ -148,7 +148,11 @@ export const AccountModel_ = {
     await Account.findOne<IAccount>({ raw: true, where: filter })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
-  findOneAndUpdate: async (filter: Partial<Omit<IAccount, 'history'>>, data: Partial<IAccount>, opts: SaveOptions) => {
+  findOneAndUpdate: async (
+    filter: Partial<Omit<IAccount, 'history'>>,
+    data: Partial<IAccount>,
+    opts?: SaveOptions
+  ) => {
     const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
     if (!account) return null
@@ -168,13 +172,18 @@ export const AccountModel_ = {
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>, opts: DestroyOptions) => {
+  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>, opts?: DestroyOptions) => {
     // @ts-ignore
     return await Account.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))
       .catch(() => null)
   },
-  pushToArray: async (filter: Partial<Omit<IAccount, 'history'>>, key: 'history', value: any[], opts: SaveOptions) => {
+  pushToArray: async (
+    filter: Partial<Omit<IAccount, 'history'>>,
+    key: 'history',
+    value: any[],
+    opts?: SaveOptions
+  ) => {
     const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
     if (!account) return null
