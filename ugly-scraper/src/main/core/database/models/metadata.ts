@@ -163,7 +163,6 @@ export const MetaDataModel_ = {
 
     return await metadata
       .save()
-      // @ts-ignore
       .then((m1) => ({
         ...m1.dataValues,
         params: JSON.parse(m1.dataValues.params as any),

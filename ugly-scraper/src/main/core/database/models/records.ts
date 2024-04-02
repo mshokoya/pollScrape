@@ -37,7 +37,7 @@ export const Record = sequelize.define('record', {
   },
   url: {
     type: DataTypes.TEXT,
-    allowNull: false,
+    allowNull: false
   },
   data: {
     type: DataTypes.TEXT,
@@ -96,9 +96,14 @@ export const RecordModel_ = {
     return await Record.destroy({ where: filter })
       .then((n) => (n === 0 ? null : n))
       .catch(() => null)
+  },
+  bulkCreate: async (records: IRecords[]) => {
+    const r = records.map((r1) => ({ ...r1, data: JSON.stringify(r1.data) }))
+    return await Record.bulkCreate(r)
+      .then((r) => r.map((r1) => ({ ...r1.dataValues, data: JSON.parse(r1.dataValues.data) })))
+      .catch(() => null)
   }
 }
-
 
 const records = new Schema<IRecords>({
   scrapeID: { type: String, default: 'null' },
