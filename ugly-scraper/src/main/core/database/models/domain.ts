@@ -1,5 +1,12 @@
 import { Schema, model } from 'mongoose'
-import { CreateOptions, DataTypes, DestroyOptions, Model, SaveOptions } from 'sequelize'
+import {
+  CreateOptions,
+  DataTypes,
+  DestroyOptions,
+  FindOptions,
+  Model,
+  SaveOptions
+} from 'sequelize'
 import { sequelize } from '../db'
 
 export type IDomain = {
@@ -49,21 +56,25 @@ export const Domain = sequelize.define('domain', {
 })
 
 export const DomainModel_ = {
-  findAll: async (filter: Partial<IDomain> = {}) =>
+  findAll: async (filter: Partial<IDomain> = {}, opts?: FindOptions) =>
     // @ts-ignore
-    await Domain.findAll<IDomain>({ where: filter, raw: true }),
+    await Domain.findAll<IDomain>({ where: filter, raw: true, ...opts }),
   create: async (d: Partial<IDomain> = {}, opts?: CreateOptions) =>
     await Domain.create(d, { raw: true, ...opts })
       .then((d1) => d1.dataValues)
       .catch(() => null),
-  findById: async (id: string) =>
+  findById: async (id: string, opts?: FindOptions) =>
     // @ts-ignore
-    await Domain.findByPk<IDomain>(id, { raw: true }).catch(() => null),
-  findOne: async (filter: Partial<IDomain> = {} as any) =>
+    await Domain.findByPk<IDomain>(id, { raw: true, ...opts }).catch(() => null),
+  findOne: async (filter: Partial<IDomain> = {} as any, opts?: FindOptions) =>
     // @ts-ignore
-    await Domain.findOne<IDomain>({ raw: true, where: filter }).catch(() => null),
-  findOneAndUpdate: async (filter: Partial<IDomain>, data: Partial<IDomain>, opts?: SaveOptions) => {
-    const domain: Model = await Domain.findOne({ where: filter }).catch(() => null)
+    await Domain.findOne<IDomain>({ raw: true, where: filter, ...opts }).catch(() => null),
+  findOneAndUpdate: async (
+    filter: Partial<IDomain>,
+    data: Partial<IDomain>,
+    opts?: SaveOptions & FindOptions
+  ) => {
+    const domain: Model = await Domain.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!domain) return null
 

@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose'
-import { CreateOptions, DataTypes, DestroyOptions, Model, SaveOptions } from 'sequelize'
+import { CreateOptions, DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IAccount = {
@@ -124,9 +124,9 @@ export const Account = sequelize.define('account', {
 })
 
 export const AccountModel_ = {
-  findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}) =>
+  findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}, opts?: FindOptions) =>
     //@ts-ignore
-    (await Account.findAll<IAccount>({ where: filter, raw: true })).map((a) => ({
+    (await Account.findAll<IAccount>({ where: filter, raw: true, ...opts })).map((a) => ({
       ...a,
       history: JSON.parse(a.history as any)
     })),
@@ -138,22 +138,22 @@ export const AccountModel_ = {
         history: JSON.parse(a1.dataValues.history as any)
       }))
       .catch(() => null),
-  findById: async (id: string) =>
+  findById: async (id: string, opts: FindOptions) =>
     //@ts-ignore
-    await Account.findByPk<IAccount>(id, { raw: true })
+    await Account.findByPk<IAccount>(id, { raw: true, ...opts })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
-  findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any) =>
+  findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any, opts?: FindOptions) =>
     //@ts-ignore
-    await Account.findOne<IAccount>({ raw: true, where: filter })
+    await Account.findOne<IAccount>({ raw: true, where: filter, ...opts })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
   findOneAndUpdate: async (
     filter: Partial<Omit<IAccount, 'history'>>,
     data: Partial<IAccount>,
-    opts?: SaveOptions
+    opts?: SaveOptions & FindOptions
   ) => {
-    const account: Model = await Account.findOne({ where: filter }).catch(() => null)
+    const account: Model = await Account.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!account) return null
 
@@ -182,9 +182,9 @@ export const AccountModel_ = {
     filter: Partial<Omit<IAccount, 'history'>>,
     key: 'history',
     value: any[],
-    opts?: SaveOptions
+    opts?: SaveOptions & FindOptions
   ) => {
-    const account: Model = await Account.findOne({ where: filter }).catch(() => null)
+    const account: Model = await Account.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!account) return null
 
