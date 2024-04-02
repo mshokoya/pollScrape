@@ -15,7 +15,11 @@ import {
   WupgradeAutomatically,
   WupgradeManually,
   accountGetAll,
-  accountCreate
+  accountCreate,
+  accountFindOne,
+  accountFindById,
+  accountFindOneAndUpdate,
+  accountFindOneAndDelete
 } from './core/worker'
 import { IAccount } from './core/database/models/accounts'
 
@@ -45,9 +49,49 @@ ipcMain.handle(
   ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
 )
 
-ipcMain.handle('accountCreate', async () => await accountCreate())
+ipcMain.handle('accountCreate', async () => {
+  const testa = await accountCreate()
+  console.log('accountCreate')
+  console.log(testa)
+  return testa
+})
 
-ipcMain.handle('accountGetAll', async () => await accountGetAll())
+ipcMain.handle('accountGetAll', async () => {
+  const testa = await accountGetAll()
+  console.log('accountGetAll')
+  console.log(testa)
+  return testa
+})
+
+// =====
+
+ipcMain.handle('accountFindOne', async () => {
+  const testa = await accountFindOne()
+  console.log('accountFindOne')
+  console.log(testa)
+  return testa
+})
+
+ipcMain.handle('accountFindById', async () => {
+  const testa = await accountFindById()
+  console.log('accountFindById')
+  console.log(testa)
+  return testa
+})
+
+ipcMain.handle('accountFindOneAndUpdate', async () => {
+  const testa = await accountFindOneAndUpdate()
+  console.log('accountFindOneAndUpdate')
+  console.log(testa)
+  return testa
+})
+
+ipcMain.handle('accountFindOneAndDelete', async () => {
+  const testa = await accountFindOneAndDelete()
+  console.log('accountFindOneAndDelete')
+  console.log(testa)
+  return testa
+})
 
 // domain
 // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))

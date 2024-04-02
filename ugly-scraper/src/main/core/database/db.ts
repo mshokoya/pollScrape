@@ -1,9 +1,17 @@
 import { cpus } from 'os'
+import { join } from 'path'
 import { Sequelize } from 'sequelize'
+
+// const dbPath =
+//   process.env.NODE_ENV === 'development' ? './ugly.db' : join(process.resourcesPath, './ugly.db')
+const dbPath = './ugly.db'
 
 export const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: './db.sqlite',
+  storage: dbPath,
+  username: null,
+  password: null,
+  host: null,
   pool: {
     max: cpus().length,
     min: 0,
@@ -20,3 +28,8 @@ export const startConnection = async () => {
     console.error('Unable to connect to the database:', error)
   }
 }
+
+export const syncDB = () =>
+  sequelize.sync({force: true}).then(() => {
+    console.log('Database synchronized')
+  })

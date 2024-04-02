@@ -1,7 +1,6 @@
 import { Schema, model } from 'mongoose'
-import { Model, Q } from '@nozbe/watermelondb'
-import { field, json } from '@nozbe/watermelondb/decorators'
-import { database } from '../db'
+import { DataTypes, Model } from 'sequelize'
+import { sequelize } from '../db'
 
 export type IRecords = {
   _id: string
@@ -30,89 +29,76 @@ export type IRecord = {
   Keywords: string[]
 }
 
-export default class Record extends Model {
-  static table = 'record'
-
-  @field('scrapeID') scrapeID
-  @field('url') url
-  @json('data', (f) => f) data
-
-  static async getAll() {
-    // @ts-ignore
-    return (await database.get<IRecords>('record').query().fetch()).map((r) => {
-      // @ts-ignore
-      r.data = JSON.parse(r.data)
-      return r
-    })
+// @ts-ignore
+export const Record = sequelize.define('record', {
+  scrapeID: {
+    type: DataTypes.STRING,
+    allowNull: false // (FIX) should this be allowed ?
+  },
+  url: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  data: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '[]'
   }
+})
 
-  static async findOneById(id: string): Promise<IRecords | null> {
-    return await database
-      // @ts-ignore
-      .get<IRecords>('record')
-      .find(id)
-      // @ts-ignore
-      .then((r: IAccount) => {
+export const RecordModel_ = {
+  findAll: async (filter: Partial<Omit<IRecords, 'data'>> = {}) =>
+    //@ts-ignore
+    (await Record.findAll<IRecords>({ where: filter, raw: true })).map((r) => ({
+      ...r,
+      data: JSON.parse(r.data as any)
+    })),
+  create: async (r: Partial<IRecords> = {}) =>
+    //@ts-ignore
+    await Record.create({ ...r, data: JSON.stringify(r.data) }, { raw: true })
+      .then((r1) => ({
+        ...r1.dataValues,
+        data: JSON.parse(r1.dataValues.data as any)
+      }))
+      .catch(() => null),
+  findById: async (id: string) =>
+    //@ts-ignore
+    await Record.findByPk<IRecords>(id, { raw: true })
+      .then((r1) => ({ ...r1, data: JSON.parse(r1.data as any) }))
+      .catch(() => null),
+  findOne: async (filter: Partial<Omit<IRecords, 'data'>> = {} as any) =>
+    //@ts-ignore
+    await Record.findOne<IRecords>({ raw: true, where: filter })
+      .then((r1) => ({ ...r1, data: JSON.parse(r1.data as any) }))
+      .catch(() => null),
+  findOneAndUpdate: async (filter: Partial<Omit<IRecords, 'data'>>, data: Partial<IRecords>) => {
+    const record: Model = await Record.findOne({ where: filter }).catch(() => null)
+
+    if (!record) return null
+
+    for (const [key, value] of Object.entries(data)) {
+      if (key === 'data') {
         // @ts-ignore
-        r.data = JSON.parse(r.data)
-        return r
-      })
-      .catch(() => null)
-  }
-
-  static async find(filter: Partial<Omit<IRecords, 'data'>>) {
-    const args = Object.entries(filter).map((r: [string, any]) => Q.where(r[0], r[1]))
-    return (
-      (
-        await database
-          .get('record')
-          .query(...args)
-          .fetch()
-          .catch(() => [])
-      )
-        // @ts-ignore
-        .map((r: IAccount) => {
-          // @ts-ignore
-          r.data = JSON.parse(r.data)
-          return r
-        })
-    )
-  }
-
-  static async create(record: Partial<IRecords>) {
-    return (await database.write(
-      async () =>
-        //@ts-ignore
-        await database.get('record').create((r: IRecords) => {
-          r.scrapeID = record.scrapeID || ''
-          r.url = record.url || ''
-          // @ts-ignore
-          r.data = record.data ? JSON.stringify(record.data) : '{}'
-        })
-    )) as unknown as IRecords
-  }
-
-  static async updateOne(recordID: string, record: Partial<IRecords>) {
-    const prox: Model | null = await database
-      .get('record')
-      .find(recordID)
-      .catch(() => null)
-
-    if (!prox) return null
-
-    // @ts-ignore
-    return (await prox.update((r: IRecords) => {
-      for (const [key, value] of Object.entries(record)) {
-        if (key === 'data') {
-          // @ts-ignore
-          r.data = JSON.stringify(value)
-        } else {
-          r[key] = value
-        }
+        record[key] = JSON.stringify(value)
+      } else {
+        record[key] = value
       }
-    })) as IRecords
+    }
+
+    return await record
+      .save()
+      // @ts-ignore
+      .then((r1) => ({ ...r1.dataValues, data: JSON.parse(r1.dataValues.data) }))
+      .catch(() => null)
+  },
+  findOneAndDelete: async (filter: Partial<Omit<IRecord, 'data'>>) => {
+    // @ts-ignore
+    return await Record.destroy({ where: filter })
+      .then((n) => (n === 0 ? null : n))
+      .catch(() => null)
   }
 }
+
 
 const records = new Schema<IRecords>({
   scrapeID: { type: String, default: 'null' },

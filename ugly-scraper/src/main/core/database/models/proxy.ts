@@ -1,7 +1,6 @@
 import { Schema, model } from 'mongoose'
-import { Model, Q } from '@nozbe/watermelondb'
-import { field } from '@nozbe/watermelondb/decorators'
-import { database } from '../db'
+import { DataTypes, Model } from 'sequelize'
+import { sequelize } from '../db'
 
 export type IProxy = {
   _id: string
@@ -11,66 +10,61 @@ export type IProxy = {
   port: string
 }
 
-export default class Proxy extends Model {
-  static table = 'proxy'
-
-  @field('proxy') proxy
-  @field('protocol') protocol
-  @field('host') host
-  @field('port') port
-
-
-  static async getAll() {
-    // @ts-ignore
-    return await database.get<IProxy>('proxy').query().fetch()
+export const Proxy = sequelize.define('proxy', {
+  proxy: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  protocol: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  host: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  port: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: false
   }
+})
 
-  static async findOneById(id: string): Promise<IProxy | null> {
-    return await database
+export const ProxyModel_ = {
+  findAll: async (filter: Partial<IProxy> = {}) =>
+    // @ts-ignore
+    await Proxy.findAll<IProxy>({ where: filter, raw: true }),
+  create: async (p: Partial<IProxy> = {}) =>
+    await Proxy.create(p, { raw: true })
+      .then((p1) => p1.dataValues)
+      .catch(() => null),
+  findById: async (id: string) =>
+    // @ts-ignore
+    await Proxy.findByPk<IProxy>(id, { raw: true }).catch(() => null),
+  findOne: async (filter: Partial<IProxy> = {} as any) =>
+    // @ts-ignore
+    await Proxy.findOne<IProxy>({ raw: true, where: filter }).catch(() => null),
+  findOneAndUpdate: async (filter: Partial<IProxy>, data: Partial<IProxy>) => {
+    const proxy: Model = await Proxy.findOne({ where: filter }).catch(() => null)
+
+    if (!proxy) return null
+
+    for (const [key, value] of Object.entries(data)) {
+      proxy[key] = value
+    }
+
+    return await proxy
+      .save()
       // @ts-ignore
-      .get<IProxy>('proxy')
-      .find(id)
+      .then((p) => p.dataValues)
       .catch(() => null)
-  }
-
-  static async find(filter: IProxy) {
-    const args = Object.entries(filter).map((p: [string, any]) => Q.where(p[0], p[1]))
-    return await database
-      .get('proxy')
-      .query(...args)
-      .fetch()
-      .catch(() => [])
-  }
-
-  static async create(proxy: Partial<IProxy>) {
-    return (await database.write(
-      async () =>
-        //@ts-ignore
-        await database.get('proxy').create((p: IProxy) => {
-          p.proxy = proxy.proxy || ''
-          p.protocol = proxy.protocol || ''
-          p.host = proxy.host || ''
-          p.port = proxy.port || ''
-        })
-    )) as unknown as IProxy
-  }
-
-  static async updateOne(proxyID: string, proxy: Partial<IProxy>) {
-    const prox: Model | null = await database
-      .get('proxy')
-      .find(proxyID)
-      .catch(() => null)
-
-    if (!prox) return null
-
+  },
+  findOneAndDelete: async (filter: Partial<IProxy>) => {
     // @ts-ignore
-    const newProx = (await prox.update((p: IProxy) => {
-      for (const [key, value] of Object.entries(proxy)) {
-        p[key] = value
-      }
-    })) as IProxy
-
-    return newProx
+    return await Proxy.destroy({ where: filter })
+      .then((n) => (n === 0 ? null : n))
+      .catch(() => null)
   }
 }
 

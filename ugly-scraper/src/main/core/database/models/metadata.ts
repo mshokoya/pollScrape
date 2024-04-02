@@ -1,7 +1,6 @@
 import { Schema, model } from 'mongoose'
-import { Model, Q } from '@nozbe/watermelondb'
-import { field, text, json } from '@nozbe/watermelondb/decorators'
-import { database } from '../db'
+import { DataTypes, Model } from 'sequelize'
+import { sequelize } from '../db'
 
 export type IMetaData = {
   _id: string
@@ -12,106 +11,166 @@ export type IMetaData = {
   accounts: { accountID: string; range: [min: number, max: number] }[]
 }
 
-export default class MetaData extends Model {
-  static table = 'metadata'
-
-  @field('url') url
-  @json('params', (f) => f) params
-  @text('name') name
-  @json('accounts', (f) => f) accounts
-  @json('scrapes', (f) => f) scrapes
-
-  static async getAll() {
-    // @ts-ignore
-    return (await database.get<IMetaData>('metadata').query().fetch()).map((m) => {
-      // @ts-ignore
-      m.params = JSON.parse(m.params)
-      // @ts-ignore
-      m.scrapes = JSON.parse(m.scrapes)
-      // @ts-ignore
-      m.accounts = JSON.parse(m.accounts)
-      return m
-    })
+export const MetaData = sequelize.define('metadata', {
+  url: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  params: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '{}'
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  scrapes: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '[]'
+  },
+  accounts: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: '[]'
   }
+})
 
-  static async findOneById(id: string): Promise<IMetaData | null> {
-    return await database
-      // @ts-ignore
-      .get<IMetaData>('metadata')
-      .find(id)
-      .then((m) => {
-        // @ts-ignore
-        m.params = JSON.parse(m.params)
-        // @ts-ignore
-        m.scrapes = JSON.parse(m.scrapes)
-        // @ts-ignore
-        m.accounts = JSON.parse(m.accounts)
-        return m
-      })
-      .catch(() => null)
-  }
-
-  static async find(filter: IMetaData) {
-    const args = Object.entries(filter).map((m: [string, any]) => Q.where(m[0], m[1]))
-    return (
-      (
-        await database
-          .get('metadata')
-          .query(...args)
-          .fetch()
-          .catch(() => [])
-      )
-        // @ts-ignore
-        .map((m: IMetaData) => {
-          // @ts-ignore
-          m.params = JSON.parse(m.params)
-          // @ts-ignore
-          m.scrapes = JSON.parse(m.scrapes)
-          // @ts-ignore
-          m.accounts = JSON.parse(m.accounts)
-          return m
-        })
+export const MetaDataModel_ = {
+  findAll: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {}) =>
+    //@ts-ignore
+    (await MetaData.findAll<IMetaData>({ where: filter, raw: true })).map((m) => ({
+      ...m,
+      params: JSON.parse(m.params as any),
+      scrapes: JSON.parse(m.scrapes as any),
+      accounts: JSON.parse(m.accounts as any)
+    })),
+  create: async (m: Partial<IMetaData> = {}) =>
+    //@ts-ignore
+    await MetaData.create(
+      {
+        ...m,
+        params: JSON.stringify(m.params as any),
+        scrapes: JSON.stringify(m.scrapes as any),
+        accounts: JSON.stringify(m.accounts as any)
+      },
+      { raw: true }
     )
-  }
+      .then((m) => ({
+        ...m.dataValues,
+        params: JSON.parse(m.dataValues.params as any),
+        scrapes: JSON.parse(m.dataValues.scrapes as any),
+        accounts: JSON.parse(m.dataValues.accounts as any)
+      }))
+      .catch(() => null),
+  findById: async (id: string) =>
+    //@ts-ignore
+    await MetaData.findByPk<IMetaData>(id, { raw: true })
+      .then((m) => ({
+        ...m,
+        params: JSON.parse(m.params as any),
+        scrapes: JSON.parse(m.scrapes as any),
+        accounts: JSON.parse(m.accounts as any)
+      }))
+      .catch(() => null),
+  findOne: async (
+    filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {} as any
+  ) =>
+    //@ts-ignore
+    await MetaData.findOne<IMetaData>({ raw: true, where: filter })
+      .then((m) => ({
+        ...m,
+        params: JSON.parse(m.params as any),
+        scrapes: JSON.parse(m.scrapes as any),
+        accounts: JSON.parse(m.accounts as any)
+      }))
+      .catch(() => null),
+  findOneAndUpdate: async (
+    filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>,
+    data: Partial<IMetaData>
+  ) => {
+    const meta: Model = await MetaData.findOne({ where: filter }).catch(() => null)
 
-  static async create(metadata: Partial<IMetaData>) {
-    return (await database.write(
-      async () =>
-        //@ts-ignore
-        await database.get('metadata').create((m: IMetaData) => {
-          m.url = metadata.url || ''
-          //@ts-ignore
-          m.params = metadata.params ? JSON.stringify(metadata.params) : '{}'
-          m.name = metadata.name || ''
-          //@ts-ignore
-          m.scrapes = metadata.scrapes ? JSON.stringify(metadata.scrapes) : '[]'
-          //@ts-ignore
-          m.accounts = metadata.accounts ? JSON.stringify(metadata.account) : '[]'
-        })
-    )) as unknown as IMetaData
-  }
+    if (!meta) return null
 
-  static async updateOne(metaID: string, meta: Partial<IMetaData>) {
-    const met: Model | null = await database
-      .get('metadata')
-      .find(metaID)
-      .catch(() => null)
-
-    if (!met) return null
-
-    // @ts-ignore
-    const newMeta = (await met.update((m: IMetaData) => {
-      for (const [key, value] of Object.entries(meta)) {
-        if (key === 'params' || key === 'scrapes' || key === 'accounts') {
-          // @ts-ignore
-          m[key] = JSON.stringify(value)
-        } else {
-          m[key] = value
-        }
+    for (const [key, value] of Object.entries(data)) {
+      if (key === 'params' || key === 'scrapes' || key === 'accounts') {
+        // @ts-ignore
+        meta[key] = JSON.stringify(value)
+      } else {
+        meta[key] = value
       }
-    })) as IMetaData
+    }
 
-    return newMeta
+    return await meta
+      .save()
+      // @ts-ignore
+      .then((m) => ({
+        ...m.dataValues,
+        params: JSON.parse(m.dataValues.params as any),
+        scrapes: JSON.parse(m.dataValues.scrapes as any),
+        accounts: JSON.parse(m.dataValues.accounts as any)
+      }))
+      .catch(() => null)
+  },
+  findOneAndDelete: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>) => {
+    // @ts-ignore
+    return await MetaData.destroy({ where: filter })
+      .then((n) => (n === 0 ? null : n))
+      .catch(() => null)
+  },
+  pushToArray: async (
+    filter: Partial<Omit<IMetaData, 'scrapes' | 'accounts'>>,
+    key: 'scrapes' | 'accounts',
+    value: any
+  ) => {
+    const metadata: Model = await MetaData.findOne({ where: filter }).catch(() => null)
+
+    if (!metadata) return null
+
+    const meta = JSON.parse(metadata[key])
+
+    if (!Array.isArray(meta)) return null
+
+    meta.push(value)
+    metadata[key] = JSON.stringify(meta)
+
+    return await metadata
+      .save()
+      // @ts-ignore
+      .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
+      .catch(() => null)
+  },
+  addToObj: async (
+    filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>,
+    key: 'params',
+    value: Record<string, any>
+  ) => {
+    const metadata: Model = await MetaData.findOne({ where: filter }).catch(() => null)
+
+    if (!metadata) return null
+
+    const meta = JSON.parse(metadata[key])
+
+    if (!meta && meta.constructor.name !== 'Object') return null
+
+    for (const [k, v] of Object.entries(value)) {
+      meta[k] = v
+    }
+
+    metadata[key] = JSON.stringify(meta)
+
+    return await metadata
+      .save()
+      // @ts-ignore
+      .then((m1) => ({
+        ...m1.dataValues,
+        params: JSON.parse(m1.dataValues.params as any),
+        scrapes: JSON.parse(m1.dataValues.scrapes as any),
+        accounts: JSON.parse(m1.dataValues.accounts as any)
+      }))
+      .catch(() => null)
   }
 }
 
@@ -119,7 +178,7 @@ const metaData = new Schema<IMetaData>({
   url: { type: String, default: '' },
   params: { type: Object, default: {} },
   name: { type: String, default: '', unique: true },
-  accounts: { type: [Object], default: [] }, // IAccount
+  accounts: { type: [Object], default: [] }, // IMetaData
   scrapes: { type: [Object], default: [] } // [{scrapeID: "", listName: ''}] - is used in Records Model (scrape)
 })
 

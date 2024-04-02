@@ -1,7 +1,6 @@
 import { Schema, model } from 'mongoose'
-import { Model, Q } from '@nozbe/watermelondb'
-import { field } from '@nozbe/watermelondb/decorators'
-import { database } from '../db'
+import { DataTypes, Model } from 'sequelize'
+import { sequelize } from '../db'
 
 export type IDomain = {
   _id: string
@@ -14,71 +13,75 @@ export type IDomain = {
   VerifyMessage: string
 }
 
-export default class Domain extends Model {
-  static table = 'domain'
-
-  @field('domain') domain
-  @field('authEmail') authEmail
-  @field('authPassword') authPassword
-  @field('verified') verified
-  @field('MXRecords') MXRecords
-  @field('TXTRecords') TXTRecords
-  @field('VerifyMessage') VerifyMessage
-
-  static async getAll() {
-    // @ts-ignore
-    return await database.get<IDomain>('domain').query().fetch()
+export const Domain = sequelize.define('domain', {
+  domain: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  authEmail: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  authPassword: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  verified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  MXRecords: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  TXTRecords: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  VerifyMessage: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
+})
 
-  static async findOneById(id: string): Promise<IDomain | null> {
-    return await database
+export const DomainModel_ = {
+  findAll: async (filter: Partial<IDomain> = {}) =>
+    // @ts-ignore
+    await Domain.findAll<IDomain>({ where: filter, raw: true }),
+  create: async (d: Partial<IDomain> = {}) =>
+    await Domain.create(d, { raw: true })
+      .then((d1) => d1.dataValues)
+      .catch(() => null),
+  findById: async (id: string) =>
+    // @ts-ignore
+    await Domain.findByPk<IDomain>(id, { raw: true }).catch(() => null),
+  findOne: async (filter: Partial<IDomain> = {} as any) =>
+    // @ts-ignore
+    await Domain.findOne<IDomain>({ raw: true, where: filter }).catch(() => null),
+  findOneAndUpdate: async (filter: Partial<IDomain>, data: Partial<IDomain>) => {
+    const domain: Model = await Domain.findOne({ where: filter }).catch(() => null)
+
+    if (!domain) return null
+
+    for (const [key, value] of Object.entries(data)) {
+      domain[key] = value
+    }
+
+    return await domain
+      .save()
       // @ts-ignore
-      .get<IDomain>('domain')
-      .find(id)
+      .then((d1) => d1.dataValues)
       .catch(() => null)
-  }
-
-  static async find(filter: IDomain) {
-    const args = Object.entries(filter).map((d: [string, any]) => Q.where(d[0], d[1]))
-    return await database
-      .get('domain')
-      .query(...args)
-      .fetch()
-      .catch(() => [])
-  }
-
-  static async create(domain: Partial<IDomain>) {
-    return (await database.write(
-      async () =>
-        //@ts-ignore
-        await database.get('domain').create((d: IDomain) => {
-          d.domain = domain.domain || ''
-          d.authEmail = domain.authEmail || ''
-          d.authPassword = domain.authPassword || ''
-          d.verified = domain.verified || false
-          d.MXRecords = domain.MXRecords || false
-          d.TXTRecords = domain.TXTRecords || false
-          d.VerifyMessage = domain.VerifyMessage || ''
-        })
-    )) as unknown as IDomain
-  }
-
-  static async updateOne(domainID: string, domain: Partial<IDomain>) {
-    const dom: Model | null = await database
-      .get('domain')
-      .find(domainID)
-      .catch(() => null)
-
-    if (!dom) return null
-
+  },
+  findOneAndDelete: async (filter: Partial<IDomain>) => {
     // @ts-ignore
-    const newD = (await dom.update((d: IDomain) => {
-      for (const [key, value] of Object.entries(domain)) {
-        d[key] = value
-      }
-    })) as IDomain
-
-    return newD
+    return await Domain.destroy({ where: filter })
+      .then((n) => (n === 0 ? null : n))
+      .catch(() => null)
   }
 }
 

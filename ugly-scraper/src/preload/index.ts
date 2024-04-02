@@ -14,12 +14,40 @@ contextBridge.exposeInMainWorld('account', {
   getAllAccounts: async (id: string) => {
     return await ipcRenderer.invoke('getAccounts', id)
   },
+  // ===============
   accountCreate: async () => {
     return await ipcRenderer.invoke('accountCreate')
   },
   accountGetAll: async () => {
-    return await ipcRenderer.invoke('accountGetAll')
+    const lett = await ipcRenderer.invoke('accountGetAll')
+    console.log('its lett')
+    console.log(lett)
+    return lett
   },
+  accountFindOne: async () => {
+    const lett = await ipcRenderer.invoke('accountFindOne')
+    console.log('its lett')
+    console.log(lett)
+    return lett
+  },
+  accountFindById: async () => {
+    const lett = await ipcRenderer.invoke('accountFindById')
+    console.log('its lett')
+    console.log(lett)
+    return lett
+  },
+  accountFindOneAndUpdate: async () => {
+    const lett = await ipcRenderer.invoke('accountFindOneAndUpdate')
+    console.log('its lett')
+    console.log(lett)
+    return lett
+  },
+  accountFindOneAndDelete: async () => {
+    const lett = await ipcRenderer.invoke('accountFindOneAndDelete')
+    console.log('its lett')
+    console.log(lett)
+    return lett
+  }
 })
 
 contextBridge.exposeInMainWorld('meta', {

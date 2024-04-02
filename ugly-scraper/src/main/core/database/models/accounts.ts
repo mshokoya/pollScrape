@@ -1,6 +1,5 @@
 import { Schema, model } from 'mongoose'
-import { field, json } from '@nozbe/watermelondb/decorators'
-import { DataTypes, FindOptions, Model, ModelDefined } from 'sequelize'
+import { DataTypes, Model, ModelDefined } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IAccount = {
@@ -37,7 +36,7 @@ export type IAccount = {
 export const Account = sequelize.define('account', {
   domain: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true // (FIX) should this be allowed ?
   },
   accountType: {
     type: DataTypes.STRING,
@@ -65,15 +64,18 @@ export const Account = sequelize.define('account', {
   },
   email: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
   },
   password: {
     type: DataTypes.STRING,
     allowNull: false
   },
   proxy: {
-    type: DataTypes.STRING,
-    allowNull: false
+    type: DataTypes.STRING
   },
   emailCreditsUsed: {
     type: DataTypes.INTEGER,
@@ -111,44 +113,36 @@ export const Account = sequelize.define('account', {
     defaultValue: -1
   },
   history: {
-    type: DataTypes.ARRAY(DataTypes.JSON),
+    type: DataTypes.TEXT,
     allowNull: false,
-    defaultValue: []
+    defaultValue: '[]'
   }
 })
-
-type MD = ModelDefined<IAccount, unknown>
 
 export const AccountModel_ = {
   findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}) =>
     //@ts-ignore
-    (await Account.findAll<IAccount>({ where: filter, raw: true })).map((a) => {
-      a.history = JSON.parse(a.history as any)
-      return a
-    }),
-  create: async (account: IAccount) =>
+    (await Account.findAll<IAccount>({ where: filter, raw: true })).map((a) => ({
+      ...a,
+      history: JSON.parse(a.history as any)
+    })),
+  create: async (a: Partial<IAccount> = {}) =>
     //@ts-ignore
-    await Account.create<IAccount>(account, { raw: true })
-      .then((a) => {
-        a.history = JSON.parse(a.history as any)
-        return a
-      })
+    await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true })
+      .then((a1) => ({
+        ...a1.dataValues,
+        history: JSON.parse(a1.dataValues.history as any)
+      }))
       .catch(() => null),
   findById: async (id: string) =>
     //@ts-ignore
     await Account.findByPk<IAccount>(id, { raw: true })
-      .then((a) => {
-        a.history = JSON.parse(a.history as any)
-        return a
-      })
+      .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
   findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any) =>
     //@ts-ignore
     await Account.findOne<IAccount>({ raw: true, where: filter })
-      .then((a) => {
-        a.history = JSON.parse(a.history as any)
-        return a
-      })
+      .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
   findOneAndUpdate: async (filter: Partial<Omit<IAccount, 'history'>>, data: Partial<IAccount>) => {
     const account: Model = await Account.findOne({ where: filter }).catch(() => null)
@@ -163,21 +157,35 @@ export const AccountModel_ = {
         account[key] = value
       }
     }
-    // @ts-ignore
-    return await account.save().then((a: IAccount) => {
-      a.history = JSON.parse(a.history as any)
-      return a
-    })
+
+    return await account
+      .save()
+      // @ts-ignore
+      .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
+      .catch(() => null)
   },
   findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>) => {
+    // @ts-ignore
+    return await Account.destroy({ where: filter })
+      .then((n) => (n === 0 ? null : n))
+      .catch(() => null)
+  },
+  pushToArray: async (filter: Partial<Omit<IAccount, 'history'>>, key: 'history', value: any[]) => {
     const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
     if (!account) return null
 
-    // @ts-ignore
+    const arr = JSON.parse(account[key])
+
+    if (!Array.isArray(arr)) return null
+
+    arr.push(value)
+    account[key] = JSON.stringify(arr)
+
     return await account
-      .destroy()
-      .then(() => true)
+      .save()
+      // @ts-ignore
+      .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
       .catch(() => null)
   }
 }

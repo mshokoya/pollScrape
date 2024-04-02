@@ -7,8 +7,11 @@ import { initMailBox } from './mailbox'
 import { initForwarder } from './forwarder'
 import { initCache } from './cache'
 import { initPrompt } from './prompt'
+import { syncDB } from './database/db'
 
-export const init = async (): Promise<void> => {
+export const init = async (): Promise<void> => await syncDB()
+
+// export const init = async (): Promise<void> => {
 
   
   // const app = express()
@@ -33,7 +36,9 @@ export const init = async (): Promise<void> => {
 
   //   await initMailBox()
   //   console.log('Mailbox started')
-}
+// }
+
+
 
 // import 'dotenv/config'
 // import express from 'express';
