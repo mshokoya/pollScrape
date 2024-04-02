@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose'
-import { DataTypes, Model } from 'sequelize'
+import { DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IProxy = {
@@ -32,21 +32,21 @@ export const Proxy = sequelize.define('proxy', {
 })
 
 export const ProxyModel_ = {
-  findAll: async (filter: Partial<IProxy> = {}) =>
+  findAll: async (filter: Partial<IProxy> = {}, opts?: FindOptions) =>
     // @ts-ignore
-    await Proxy.findAll<IProxy>({ where: filter, raw: true }),
-  create: async (p: Partial<IProxy> = {}) =>
-    await Proxy.create(p, { raw: true })
+    await Proxy.findAll<IProxy>({ where: filter, raw: true, ...opts }),
+  create: async (p: Partial<IProxy> = {}, opts?: SaveOptions) =>
+    await Proxy.create(p, { raw: true, ...opts })
       .then((p1) => p1.dataValues)
       .catch(() => null),
-  findById: async (id: string) =>
+  findById: async (id: string, opts?: FindOptions) =>
     // @ts-ignore
-    await Proxy.findByPk<IProxy>(id, { raw: true }).catch(() => null),
-  findOne: async (filter: Partial<IProxy> = {} as any) =>
+    await Proxy.findByPk<IProxy>(id, { raw: true, ...opts }).catch(() => null),
+  findOne: async (filter: Partial<IProxy> = {} as any, opts?: FindOptions) =>
     // @ts-ignore
-    await Proxy.findOne<IProxy>({ raw: true, where: filter }).catch(() => null),
-  findOneAndUpdate: async (filter: Partial<IProxy>, data: Partial<IProxy>) => {
-    const proxy: Model = await Proxy.findOne({ where: filter }).catch(() => null)
+    await Proxy.findOne<IProxy>({ raw: true, where: filter, ...opts }).catch(() => null),
+  findOneAndUpdate: async (filter: Partial<IProxy>, data: Partial<IProxy>, opts?: SaveOptions & FindOptions) => {
+    const proxy: Model = await Proxy.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!proxy) return null
 
@@ -55,14 +55,14 @@ export const ProxyModel_ = {
     }
 
     return await proxy
-      .save()
+      .save(opts)
       // @ts-ignore
       .then((p) => p.dataValues)
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<IProxy>) => {
+  findOneAndDelete: async (filter: Partial<IProxy>, opts?: DestroyOptions) => {
     // @ts-ignore
-    return await Proxy.destroy({ where: filter })
+    return await Proxy.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))
       .catch(() => null)
   }
