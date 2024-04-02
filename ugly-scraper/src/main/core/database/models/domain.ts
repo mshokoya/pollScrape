@@ -3,7 +3,7 @@ import { DataTypes, Model } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IDomain = {
-  _id: string
+  id: string
   domain: string
   authEmail: string
   authPassword: string

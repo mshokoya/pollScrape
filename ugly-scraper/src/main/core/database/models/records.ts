@@ -3,7 +3,7 @@ import { DataTypes, Model } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IRecords = {
-  _id: string
+  id: string
   scrapeID: string
   url: string
   data: IRecord

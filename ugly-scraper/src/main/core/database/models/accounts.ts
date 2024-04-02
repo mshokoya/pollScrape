@@ -1,9 +1,9 @@
 import { Schema, model } from 'mongoose'
-import { DataTypes, Model } from 'sequelize'
+import { CreateOptions, DataTypes, DestroyOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IAccount = {
-  _id: string
+  id: string
   domain: string
   accountType: 'free' | 'premium'
   trialTime: string
@@ -130,9 +130,9 @@ export const AccountModel_ = {
       ...a,
       history: JSON.parse(a.history as any)
     })),
-  create: async (a: Partial<IAccount> = {}) =>
+  create: async (a: Partial<IAccount> = {}, opts: CreateOptions) =>
     //@ts-ignore
-    await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true })
+    await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true, ...opts })
       .then((a1) => ({
         ...a1.dataValues,
         history: JSON.parse(a1.dataValues.history as any)
@@ -148,7 +148,7 @@ export const AccountModel_ = {
     await Account.findOne<IAccount>({ raw: true, where: filter })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
-  findOneAndUpdate: async (filter: Partial<Omit<IAccount, 'history'>>, data: Partial<IAccount>) => {
+  findOneAndUpdate: async (filter: Partial<Omit<IAccount, 'history'>>, data: Partial<IAccount>, opts: SaveOptions) => {
     const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
     if (!account) return null
@@ -163,18 +163,18 @@ export const AccountModel_ = {
     }
 
     return await account
-      .save()
+      .save(opts)
       // @ts-ignore
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>) => {
+  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>, opts: DestroyOptions) => {
     // @ts-ignore
-    return await Account.destroy({ where: filter })
+    return await Account.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))
       .catch(() => null)
   },
-  pushToArray: async (filter: Partial<Omit<IAccount, 'history'>>, key: 'history', value: any[]) => {
+  pushToArray: async (filter: Partial<Omit<IAccount, 'history'>>, key: 'history', value: any[], opts: SaveOptions) => {
     const account: Model = await Account.findOne({ where: filter }).catch(() => null)
 
     if (!account) return null
@@ -187,7 +187,7 @@ export const AccountModel_ = {
     account[key] = JSON.stringify(arr)
 
     return await account
-      .save()
+      .save(opts)
       // @ts-ignore
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
       .catch(() => null)

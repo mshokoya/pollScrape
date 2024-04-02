@@ -3,7 +3,7 @@ import { DataTypes, Model } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IMetaData = {
-  _id: string
+  id: string
   url: string
   params: { [key: string]: string }
   name: string

@@ -3,7 +3,7 @@ import { DataTypes, Model } from 'sequelize'
 import { sequelize } from '../db'
 
 export type IProxy = {
-  _id: string
+  id: string
   proxy: string
   protocol: string
   host: string
