@@ -1,5 +1,5 @@
 import { BrowserContext, scraper } from './scraper'
-import { getBrowserCookies, logIntoApolloThenVisit } from './util'
+import { getBrowserCookies, logIntoApolloThenVisit, waitForNavigationTo } from './util'
 import {
   selectAccForScrapingFILO,
   selectProxy,
@@ -49,6 +49,7 @@ import { IMetaData, MetadataModel } from '../../database/models/metadata'
 import { Mutex } from 'async-mutex'
 import { cache } from '../../cache'
 import { prompt } from '../../prompt'
+import { init } from '../../start'
 
 // (FIX) FINISH
 export const logIntoApollo = async (
@@ -282,7 +283,7 @@ export const completeApolloAccountConfimation = async (
       const newAccount = await updateAccount(
         { domainEmail: toAddress },
         {
-          cookie: JSON.stringify(cookies),
+          cookies: JSON.stringify(cookies),
           verified: 'yes',
           apolloPassword: account.apolloPassword
         }
@@ -333,7 +334,7 @@ export const apolloConfirmAccountEvent = async (
         'Failed to confirm apollo account, could not find confimation link'
       )
 
-    const account = await AccountModel_.findOne({ domainEmail: toAddress }).lean()
+    const account = await AccountModel_.findOne({ domainEmail: toAddress })
     if (!account) throw new AppError(taskID, 'Failed to find account (new mail)')
 
     account.apolloPassword = passwordGenerator.generate({
@@ -341,23 +342,34 @@ export const apolloConfirmAccountEvent = async (
       numbers: true
     })
 
-    const browserCTX = (await scraper.newBrowser(false))!
-    await apolloConfirmAccount(taskID, browserCTX, links[0], account).then(() =>
-      io.emit('apollo', { taskID, message: `confirmed ${account.domainEmail}` })
-    )
-    const cookies = await getBrowserCookies(browserCTX)
-    await scraper.close(browserCTX)
-    await updateAccount(
-      { domainEmail: toAddress },
-      {
-        cookie: JSON.stringify(cookies),
-        verified: 'yes',
-        apolloPassword: account.apolloPassword
-      }
-    )
-    console.log('heeemail id')
-    console.log(mail.emailId)
-    await mailbox.deleteMailByID(authEmail, uid)
+    const browserCTX = await scraper.newBrowser(false)
+    if (!browserCTX) {
+      throw new AppError(taskID, 'Failed to confirm account, unable to start browser')
+    }
+
+    // return (await browserCTX.execute(
+    //   { taskID, account, accountID: account.id },
+    //   async ({ page, data: { taskID, account, accountID } }) => {
+    //     await init()
+    //     await apolloConfirmAccount(taskID, browserCTX, links[0], account).then(() =>
+    //       io.emit('apollo', { taskID, message: `confirmed ${account.domainEmail}` })
+    //     )
+    //     const cookies = await getBrowserCookies(browserCTX)
+    //     await scraper.close(browserCTX)
+    //     await updateAccount(
+    //       { domainEmail: toAddress },
+    //       {
+    //         cookies: JSON.stringify(cookies),
+    //         verified: 'yes',
+    //         apolloPassword: account.apolloPassword
+    //       }
+    //     )
+    //     console.log('heeemail id')
+    //     console.log(mail.emailId)
+    //     await mailbox.deleteMailByID(authEmail, uid)
+    //   }
+    // )) as Promise<IAccount>
+
   } catch (err: any) {
     io.emit('apollo', { taskID, message: err.message, ok: false })
   }
@@ -412,15 +424,15 @@ export const ssa = async (
   if (!acc4Scrape) {
     // (FIX) move mutex to the function instead
     account = await _SALock.runExclusive(
-      async () => (await selectAccForScrapingFILO(meta._id, 1))[0]
+      async () => (await selectAccForScrapingFILO(meta.id, 1))[0]
     )
     // if (!account) throw new AppError(taskID, 'failed to find account for scraping')
     if (!account) return
   } else {
-    let acc = (await AccountModel_.findById(acc4Scrape.accountID).lean()) as SAccount
+    let acc = (await AccountModel_.findById(acc4Scrape.accountID)) as SAccount
     if (!acc) {
       // (FIX) move mutex to the function instead
-      acc = await _SALock.runExclusive(async () => (await selectAccForScrapingFILO(meta._id, 1))[0])
+      acc = await _SALock.runExclusive(async () => (await selectAccForScrapingFILO(meta.id, 1))[0])
       // if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
       if (!acc) return
     } else {

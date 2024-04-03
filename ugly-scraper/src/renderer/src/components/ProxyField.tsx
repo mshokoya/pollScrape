@@ -6,7 +6,7 @@ import { ProxyPopup } from './ProxyPopup'
 import { proxyMockData } from '../core/mockdata'
 
 export type IProxy = {
-  _id: string
+  id: string
   protocol: string
   host: string
   port: string

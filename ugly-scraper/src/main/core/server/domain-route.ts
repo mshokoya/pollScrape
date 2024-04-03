@@ -1,5 +1,5 @@
 import { Express } from 'express'
-import { DomainModel } from '../database/models/domain'
+import { DomainModel_ } from '../database/models/domain'
 import { forwarder } from '../forwarder'
 import isValidDomain from 'is-valid-domain'
 
@@ -35,10 +35,10 @@ export const addDomain = async (domainn: string) => {
     const ad = await forwarder.addDomain(domain)
     if (!ad.ok) throw new Error('failed to save domain in forwarder')
 
-    const doesExist = await DomainModel.findOne({ domain }).lean()
+    const doesExist = await DomainModel_.findOne({ domain })
     if (doesExist) throw new Error('domain already exists')
 
-    const newDomain = await DomainModel.create({ domain })
+    const newDomain = await DomainModel_.create({ domain })
 
     return { ok: true, message: null, data: newDomain }
   } catch (err: any) {
@@ -58,29 +58,23 @@ export const verifyDomain = async (domainn: string) => {
     console.log(vr)
 
     const newDomain = !vr.ok
-      ? await DomainModel.findOneAndUpdate(
+      ? await DomainModel_.findOneAndUpdate(
           { domain },
           {
-            $set: {
-              VerifyMessage: vr.message || '',
-              MXRecords: vr.data?.has_mx_record,
-              TXTRecords: vr.data?.has_txt_record,
-              verified: false
-            }
-          },
-          { new: true }
+            VerifyMessage: vr.message || '',
+            MXRecords: vr.data?.has_mx_record,
+            TXTRecords: vr.data?.has_txt_record,
+            verified: false
+          }
         )
-      : await DomainModel.findOneAndUpdate(
+      : await DomainModel_.findOneAndUpdate(
           { domain },
           {
-            $set: {
-              VerifyMessage: vr.message,
-              MXRecords: vr.data?.has_mx_record,
-              TXTRecords: vr.data?.has_txt_record,
-              verified: true
-            }
-          },
-          { new: true }
+            VerifyMessage: vr.message,
+            MXRecords: vr.data?.has_mx_record,
+            TXTRecords: vr.data?.has_txt_record,
+            verified: true
+          }
         )
 
     return { ok: vr.ok, message: null, data: newDomain }
@@ -99,8 +93,8 @@ export const deleteDomain = async (domainn: string) => {
 
     // (FIX) could be a problem
     if (delRes.ok) {
-      const deleteCount = await DomainModel.deleteOne({ domain })
-      if (deleteCount.deletedCount < 1) throw new Error('failed to delete domain, try again')
+      const deleteCount = await DomainModel_.findOneAndDelete({ domain })
+      if (!deleteCount) throw new Error('failed to delete domain, try again')
     }
 
     return { ok: delRes.ok, message: null, data: null }
@@ -112,7 +106,7 @@ export const deleteDomain = async (domainn: string) => {
 export const getDomains = async () => {
   console.log('get domains')
   try {
-    const domains = await DomainModel.find({}).lean()
+    const domains = await DomainModel_.findAll()
 
     return { ok: true, message: null, data: domains }
   } catch (err: any) {

@@ -13,7 +13,7 @@ import { metaMockData, recordMockData } from '../core/mockdata'
 import { appState$ } from '../core/state'
 
 export type IMetaData = {
-  _id: string
+  id: string
   url: string
   params: { [key: string]: string }
   name: string
@@ -22,7 +22,7 @@ export type IMetaData = {
 }
 
 export type IRecords = {
-  _id: string
+  id: string
   scrapeID: string
   url: string
   page: number
@@ -225,7 +225,7 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                                       {
                                         appState$.accounts
                                           .peek()
-                                          .find((a1) => a1._id === a0.accountID)?.domainEmail
+                                          .find((a1) => a1.id === a0.accountID)?.domainEmail
                                       }
                                     </td>
                                     <td className="px-2">{a0.range[0]}</td>

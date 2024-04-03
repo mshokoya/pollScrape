@@ -22,7 +22,7 @@ export type State = {
 }
 
 export type IDomain = {
-  _id: string
+  id: string
   domain: string
   authEmail: string
   verified: boolean

@@ -12,6 +12,11 @@ export type IMetaData = {
 }
 
 export const MetaData = sequelize.define('metadata', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   url: {
     type: DataTypes.TEXT,
     allowNull: false

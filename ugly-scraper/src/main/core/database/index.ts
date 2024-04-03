@@ -1,9 +1,8 @@
-import { startSession } from 'mongoose'
 import { AccountModel_, IAccount } from './models/accounts'
 import { IProxy, ProxyModel_ } from './models/proxy'
 import { parseProxy, apolloGetParamsFromURL } from './util'
 import { generateSlug } from 'random-word-slugs'
-import { IRecord, IRecords, RecordModel_, RecordsModel } from './models/records'
+import { IRecord, IRecords, RecordModel_, } from './models/records'
 import { IMetaData, MetaDataModel_ } from './models/metadata'
 import { v4 as uuidv4 } from 'uuid'
 import { CreditsInfo } from '../scraper/apollo/util'
@@ -146,7 +145,10 @@ export const deleteMetaAndRecords = async (metaID: string) => {
       throw new Error('failed to find metadata')
     }
 
-    const metaDeleteLength = await MetaDataModel_.findOneAndDelete({ id: metaID }, { transaction: t })
+    const metaDeleteLength = await MetaDataModel_.findOneAndDelete(
+      { id: metaID },
+      { transaction: t }
+    )
     if (!metaDeleteLength) {
       await t.rollback()
       throw new Error('failed to delete metadata')
@@ -155,7 +157,10 @@ export const deleteMetaAndRecords = async (metaID: string) => {
     const scrapeIds = meta.scrapes.map((m) => m.scrapeID)
 
     // https://stackoverflow.com/a/34917715/5252283
-    const recordDeleteLength = await RecordModel_.findOneAndDelete({ scrapeID: scrapeIds as any }, { transaction: t })
+    const recordDeleteLength = await RecordModel_.findOneAndDelete(
+      { scrapeID: scrapeIds as any },
+      { transaction: t }
+    )
     if (!recordDeleteLength) {
       await t.rollback()
       throw new Error('failed to delete records')
@@ -184,7 +189,12 @@ export const updateDBForNewScrape = async (
   const t = await sequelize.transaction()
   try {
     // METADATA UPDATE
-    const newMeta = await MetaDataModel_.pushToArray({id: meta.id}, 'scrapes', { scrapeID, listName, date: new Date().getTime(), length: 0 }, {transaction: t} )
+    const newMeta = await MetaDataModel_.pushToArray(
+      { id: meta.id },
+      'scrapes',
+      { scrapeID, listName, date: new Date().getTime(), length: 0 },
+      { transaction: t }
+    )
     if (!newMeta) {
       await t.rollback()
       throw new AppError(
@@ -194,7 +204,12 @@ export const updateDBForNewScrape = async (
     }
 
     // ACCOUNT UPDATE
-    const newAccount = await AccountModel_.pushToArray({id: account.id}, 'history', [null, null, listName, scrapeID], {transaction: t})
+    const newAccount = await AccountModel_.pushToArray(
+      { id: account.id },
+      'history',
+      [null, null, listName, scrapeID],
+      { transaction: t }
+    )
     if (!newAccount) {
       await t.rollback()
       throw new AppError(
@@ -223,28 +238,23 @@ export const saveLeadsFromRecovery = async (
   listName: string,
   proxy: string | null
 ) => {
-  const session = await startSession()
+  const t = await sequelize.transaction()
   try {
-    session.startTransaction()
-    const updateOpts = { new: true, session }
-
     // ACCOUNT UPDATE
     const newAcc = await AccountModel_.findOneAndUpdate(
       { id: account.id },
       {
-        $set: {
-          lastUsed: Math.max(scrapeDate, account.lastUsed),
-          history: account.history.map((h) =>
-            h[2] === listName ? [data.length, scrapeDate, listName, scrapeID] : h
-          ),
-          proxy
-        }
+        lastUsed: Math.max(scrapeDate, account.lastUsed),
+        proxy,
+        history: account.history.map((h) =>
+          h[2] === listName ? [data.length, scrapeDate, listName, scrapeID] : h
+        )
       },
-      updateOpts
+      { transaction: t }
     )
 
     if (!newAcc) {
-      await session.abortTransaction()
+      await t.rollback()
       throw new AppError(
         taskID,
         'failed to update account after scrape, if this continues please contact developer'
@@ -255,17 +265,15 @@ export const saveLeadsFromRecovery = async (
     const newMeta = await MetaDataModel_.findOneAndUpdate(
       { id: meta.id },
       {
-        $set: {
-          scrapes: meta.scrapes.map((s) =>
-            s.listName === listName ? { ...s, length: data.length } : s
-          )
-        }
+        scrapes: meta.scrapes.map((s) =>
+          s.listName === listName ? { ...s, length: data.length } : s
+        )
       },
-      updateOpts
+      { transaction: t }
     )
 
     if (!newMeta) {
-      await session.abortTransaction()
+      await t.rollback()
       throw new AppError(
         taskID,
         'failed to update meta after scrape, if this continues please contact developer'
@@ -273,14 +281,12 @@ export const saveLeadsFromRecovery = async (
     }
 
     // RECORD UPDATE
-    const fmtData = data.map((d) => ({ scrapeID, url: meta.url, data: d }))
+    const fmtData: Omit<IRecords, 'id'>[] = data.map((d) => ({ scrapeID, url: meta.url, data: d }))
+    await RecordModel_.bulkCreate(fmtData, { transaction: t })
 
-    await RecordsModel.insertMany(fmtData, updateOpts)
-
-    await session.commitTransaction()
+    await t.commit()
   } catch (error) {
-    await session.abortTransaction()
+    await t.rollback()
     throw new AppError(taskID, 'failed to save scrape to db')
   }
-  await session.endSession()
 }

@@ -2,7 +2,7 @@
 import proxyCheck from 'advanced-proxy-checker'
 import { IAccount } from './models/accounts'
 import { shuffleArray } from '../util'
-import { IProxy, ProxyModel } from './models/proxy'
+import { IProxy, ProxyModel_ } from './models/proxy'
 import { getAllApolloAccounts } from '.'
 import { Mutex } from 'async-mutex'
 import { cache } from '../cache'
@@ -63,10 +63,11 @@ export type ProxyResponse = {
   }
 }
 
-// // 30mins
+// // 30mins id default 
 // // (FIX) make sue acc is verified and not suspended, suspension is i time limit so check if count down is over
 // // (FIX) TEST TO MAKE SURE IT WORKS (also test lock)
 // // (FIX) handle situation where accsNeeded > allAccounts
+// (FIX) remove cache & lock from this file to outside func
 export const selectAccForScrapingFILO = async (
   metaID: string,
   accsNeeded: number
@@ -75,7 +76,7 @@ export const selectAccForScrapingFILO = async (
 
   const allAccInUse = await cache.getAllAccountIDs()
   const allAccounts = (await getAllApolloAccounts()).filter(
-    (a) => a.verified === 'yes' && !allAccInUse.includes(a._id)
+    (a) => a.verified === 'yes' && !allAccInUse.includes(a.id)
   ) as (IAccount & { totalScrapedInLast30Mins: number })[]
 
   // console.log('allacc')
@@ -114,7 +115,7 @@ export const selectAccForScrapingFILO = async (
   })
 
   const accounts = accs.concat(allAccounts.splice(-accsNeeded))
-  const accountIDs = accounts.map((a) => a._id)
+  const accountIDs = accounts.map((a) => a.id)
 
   cache.addAccounts(metaID, accountIDs)
 
@@ -183,7 +184,7 @@ export const selectProxy = async (account: IAccount): Promise<string | null> => 
       // .filter((u) => u.proxy === account.proxy) // remove user from list  (??? why remove from list ?)
       .map((u) => u.proxy) //retrun list of proxies
 
-    const getProxies = ProxyModel.find({}).lean() as unknown as IProxy[]
+    const getProxies = await ProxyModel_.findAll()
 
     if (!getProxies.length)
       throw new Error(

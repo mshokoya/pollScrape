@@ -14,98 +14,14 @@ import {
   WupdateAcc,
   WupgradeAutomatically,
   WupgradeManually,
-  accountGetAll,
-  accountCreate,
-  accountFindOne,
-  accountFindById,
-  accountFindOneAndUpdate,
-  accountFindOneAndDelete
+  // accountGetAll,
+  // accountCreate,
+  // accountFindOne,
+  // accountFindById,
+  // accountFindOneAndUpdate,
+  // accountFindOneAndDelete
 } from './core/worker'
 import { IAccount } from './core/database/models/accounts'
-
-// account
-ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-ipcMain.handle('upgradeManually', async (e, id: string) => await WupgradeManually(id))
-ipcMain.handle('upgradeAutomatically', async (e, id: string) => await WupgradeAutomatically(id))
-ipcMain.handle('checkAccount', async (e, id: string) => await WcheckAccount(id))
-ipcMain.handle('deleteAccount', async (e, id: string) => await WdeleteAccount(id))
-ipcMain.handle('loginAuto', async (e, id: string) => await WloginAuto(id))
-ipcMain.handle('loginManually', async (e, id: string) => await WloginManually(id))
-ipcMain.handle(
-  'updateAcc',
-  async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
-)
-ipcMain.handle('getAccounts', async () => await WgetAccounts())
-ipcMain.handle(
-  'addAccount',
-  async (
-    e,
-    email: string,
-    addType: string,
-    selectedDomain: string,
-    password: string,
-    recoveryEmail: string,
-    domainEmail: string
-  ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
-)
-
-ipcMain.handle('accountCreate', async () => {
-  const testa = await accountCreate()
-  console.log('accountCreate')
-  console.log(testa)
-  return testa
-})
-
-ipcMain.handle('accountGetAll', async () => {
-  const testa = await accountGetAll()
-  console.log('accountGetAll')
-  console.log(testa)
-  return testa
-})
-
-// =====
-
-ipcMain.handle('accountFindOne', async () => {
-  const testa = await accountFindOne()
-  console.log('accountFindOne')
-  console.log(testa)
-  return testa
-})
-
-ipcMain.handle('accountFindById', async () => {
-  const testa = await accountFindById()
-  console.log('accountFindById')
-  console.log(testa)
-  return testa
-})
-
-ipcMain.handle('accountFindOneAndUpdate', async () => {
-  const testa = await accountFindOneAndUpdate()
-  console.log('accountFindOneAndUpdate')
-  console.log(testa)
-  return testa
-})
-
-ipcMain.handle('accountFindOneAndDelete', async () => {
-  const testa = await accountFindOneAndDelete()
-  console.log('accountFindOneAndDelete')
-  console.log(testa)
-  return testa
-})
-
-// domain
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-// ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
 
 function createWindow(): void {
   // Create the browser window.
@@ -131,6 +47,86 @@ function createWindow(): void {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+
+  // domain
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+
+  // account
+  ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
+  ipcMain.handle('upgradeManually', async (e, id: string) => await WupgradeManually(id))
+  ipcMain.handle('upgradeAutomatically', async (e, id: string) => await WupgradeAutomatically(id))
+  ipcMain.handle('checkAccount', async (e, id: string) => await WcheckAccount(id))
+  ipcMain.handle('deleteAccount', async (e, id: string) => await WdeleteAccount(id))
+  ipcMain.handle('loginAuto', async (e, id: string) => await WloginAuto(id))
+  ipcMain.handle('loginManually', async (e, id: string) => await WloginManually(id))
+  ipcMain.handle(
+    'updateAcc',
+    async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
+  )
+  ipcMain.handle('getAccounts', async () => await WgetAccounts())
+  ipcMain.handle(
+    'addAccount',
+    async (
+      e,
+      email: string,
+      addType: string,
+      selectedDomain: string,
+      password: string,
+      recoveryEmail: string,
+      domainEmail: string
+    ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
+  )
+
+  ipcMain.handle('accountCreate', async () => {
+    const res = await accountCreate()
+    mainWindow.webContents.send('accountCreate', res)
+  })
+
+  ipcMain.handle('accountGetAll', async () => {
+    const res = await accountGetAll()
+    mainWindow.webContents.send('accountGetAll', res)
+  })
+
+  // ===================================================================
+
+  // ipcMain.handle('accountFindOne', async () => {
+  //   const testa = await accountFindOne()
+  //   console.log('accountFindOne')
+  //   console.log(testa)
+  //   return testa
+  // })
+
+  // ipcMain.handle('accountFindById', async () => {
+  //   const testa = await accountFindById()
+  //   console.log('accountFindById')
+  //   console.log(testa)
+  //   return testa
+  // })
+
+  // ipcMain.handle('accountFindOneAndUpdate', async () => {
+  //   const testa = await accountFindOneAndUpdate()
+  //   console.log('accountFindOneAndUpdate')
+  //   console.log(testa)
+  //   return testa
+  // })
+
+  // ipcMain.handle('accountFindOneAndDelete', async () => {
+  //   const testa = await accountFindOneAndDelete()
+  //   console.log('accountFindOneAndDelete')
+  //   console.log(testa)
+  //   return testa
+  // })
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.

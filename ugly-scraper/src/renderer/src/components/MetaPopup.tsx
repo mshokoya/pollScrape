@@ -18,7 +18,7 @@ export const MetaPopup = ({ setPopup, meta }: Props) => {
   const submitChange = () => {
     if (rename === meta.name) return
     setReqInProcess(true)
-    fetchData('/meta', 'PUT', { id: meta._id, name: rename })
+    fetchData('/meta', 'PUT', { id: meta.id, name: rename })
       .then(() => {
         console.log('success')
       })
@@ -47,7 +47,7 @@ export const MetaPopup = ({ setPopup, meta }: Props) => {
   // create warning popup
   const deleteAccount = () => {
     setReqInProcess(true)
-    fetchData('/meta/delete', 'PUT', { id: meta._id })
+    fetchData('/meta/delete', 'PUT', { id: meta.id })
       .then(() => {
         console.log('success')
       })

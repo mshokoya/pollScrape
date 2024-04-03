@@ -53,32 +53,32 @@ export const AccountField = observer(() => {
   const login = async () => {
     // s.reqType.set('login')
     const selectedAcc = s.selectedAcc.peek()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/login/a/${accountID}`, 'GET')
   }
 
   const manualLogin = async () => {
     // s.reqType.set('manualLogin')
     const selectedAcc = s.selectedAcc.peek()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/login/m/${accountID}`, 'GET')
   }
 
   const checkAccount = async () => {
     // s.reqType.set('check')
     const selectedAcc = s.selectedAcc.peek()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/check/${accountID}`, 'GET')
   }
 
   const updateAccount = async (input: Partial<IAccount>) => {
-    const accountID = accounts[s.selectedAcc.peek()]._id
+    const accountID = accounts[s.selectedAcc.peek()].id
     accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
     await fetchData<IAccount>(`/account/${accountID}`, 'PUT', input)
       .then((data) => {
         if (data.ok) {
           stateResStatusHelper.add(accountID, ['update', 'ok'])
-          appState$.accounts.find((a) => a._id.peek() === accountID)?.set(data.data)
+          appState$.accounts.find((a) => a.id.peek() === accountID)?.set(data.data)
         } else {
           stateResStatusHelper.add(accountID, ['update', 'fail'])
         }
@@ -99,35 +99,35 @@ export const AccountField = observer(() => {
   const upgradeAccount = async () => {
     // s.reqType.set('upgrade')
     const selectedAcc = s.selectedAcc.get()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/upgrade/a/${accountID}`, 'GET')
   }
 
   const manualUpgradeAccount = async () => {
     // s.reqType.set('manualUpgrade')
     const selectedAcc = s.selectedAcc.get()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/upgrade/m/${accountID}`, 'GET')
   }
 
   const clearMines = async () => {
     // s.reqType.set('mines')
     const selectedAcc = s.selectedAcc.get()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/demine/${accountID}`, 'GET')
   }
 
   const confirmAccount = async () => {
     // s.reqType.set('confirm')
     const selectedAcc = s.selectedAcc.get()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     await fetchData(`/account/confirm/${accountID}`, 'GET')
   }
 
   // (FIX) complete func (dont delete, just archive)
   const deleteAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
-    const accountID = accounts[selectedAcc]._id
+    const accountID = accounts[selectedAcc].id
     if (!accountTaskHelper.isEntityPiplineEmpty(accountID)) return
 
     accountTaskHelper.add(accountID, { status: 'processing', type: 'delete' })
@@ -138,7 +138,7 @@ export const AccountField = observer(() => {
           data.ok
             ? stateResStatusHelper.add(accountID, ['delete', 'ok'])
             : stateResStatusHelper.add(accountID, ['delete', 'fail'])
-          appState$.accounts.set((a1) => a1.filter((a2) => a2._id !== accountID))
+          appState$.accounts.set((a1) => a1.filter((a2) => a2.id !== accountID))
         })
       })
       .catch(() => {
@@ -244,9 +244,9 @@ export const AccountField = observer(() => {
                         className={`
                           text-[0.8rem] text-center hover:border-cyan-600 hover:border
                           ${a.emailCreditsUsed !== a.emailCreditsLimit ? 'el-ok' : 'el-no'}
-                          ${accountTaskHelper.getEntityTasks(a._id).length ? 'fieldBlink' : ''}
-                          ${stateResStatusHelper.getByID(a._id, 0)[1] === 'ok' ? 'resOK' : ''}
-                          ${stateResStatusHelper.getByID(a._id, 0)[1] === 'fail' ? 'resFail' : ''}
+                          ${accountTaskHelper.getEntityTasks(a.id).length ? 'fieldBlink' : ''}
+                          ${stateResStatusHelper.getByID(a.id, 0)[1] === 'ok' ? 'resOK' : ''}
+                          ${stateResStatusHelper.getByID(a.id, 0)[1] === 'fail' ? 'resFail' : ''}
                         `}
                         data-idx={idx}
                         key={idx}
@@ -332,7 +332,7 @@ export const AccountField = observer(() => {
 
                           <tr className="hover:border-cyan-600 hover:border-y">
                             <th className="whitespace-nowrap px-2 w-4">Logged In ?:</th>
-                            <td className="px-2">{a.cookie ? 'yes' : 'no'}</td>
+                            <td className="px-2">{a.cookies ? 'yes' : 'no'}</td>
                           </tr>
 
                           <tr className="hover:border-cyan-600 hover:border-y">

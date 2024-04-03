@@ -1,4 +1,3 @@
-import { Page } from 'puppeteer-extra-plugin/dist/puppeteer'
 import { BrowserContext, apolloInitSignup } from './scraper'
 import { IAccount } from '../../database/models/accounts'
 import { visitApolloLoginPage } from './apollo'

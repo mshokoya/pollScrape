@@ -144,7 +144,7 @@ export const setupApolloForScraping = async (
   browserCTX: BrowserContext,
   account: IAccount
 ) => {
-  await injectCookies(browserCTX, account.cookie)
+  await injectCookies(browserCTX, account.cookies)
   await visitApollo(taskID, browserCTX)
 
   const page = browserCTX.page as Page
@@ -155,8 +155,8 @@ export const setupApolloForScraping = async (
     await logIntoApollo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
     const updatedAccount = await updateAccount(
-      { _id: account._id },
-      { cookie: JSON.stringify(cookies) }
+      { id: account.id },
+      { cookies: JSON.stringify(cookies) }
     )
     if (!updatedAccount) throw new AppError(taskID, 'Failed to save cookies')
   }

@@ -93,15 +93,15 @@ type MProps = {
 } & Props
 
 export const MainFields = (p: MProps) => {
-  const isLoginReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'login')
-  const isCheckReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'check')
-  const isUpdateReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'update')
-  const isManUpgradeReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'manualUpgrade')
-  const isManLoginReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'manualLogin')
-  const isUpgradeReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'upgrade')
-  const isMinesReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'mines')
-  const isDeleteReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'delete')
-  const isConfirmReq = !!accountTaskHelper.findTaskByReqType(p.account._id, 'confirm')
+  const isLoginReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'login')
+  const isCheckReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'check')
+  const isUpdateReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'update')
+  const isManUpgradeReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'manualUpgrade')
+  const isManLoginReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'manualLogin')
+  const isUpgradeReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'upgrade')
+  const isMinesReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'mines')
+  const isDeleteReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'delete')
+  const isConfirmReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'confirm')
 
   return (
     <>

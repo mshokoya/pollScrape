@@ -15,7 +15,7 @@ export const ProxyPopup = ({ setPopup, proxy }: Props) => {
 
   const checkProxy = () => {
     setReqInProcess(true)
-    fetchData(`/proxy/check/${proxy._id}`, 'GET')
+    fetchData(`/proxy/check/${proxy.id}`, 'GET')
       .then(() => {
         console.log('success')
       })
@@ -30,7 +30,7 @@ export const ProxyPopup = ({ setPopup, proxy }: Props) => {
   // create warning popup
   const deleteProxy = () => {
     setReqInProcess(true)
-    fetchData('/meta/delete', 'PUT', { id: proxy._id })
+    fetchData('/meta/delete', 'PUT', { id: proxy.id })
       .then(() => {
         console.log('success')
       })

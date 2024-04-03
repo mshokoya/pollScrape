@@ -1,7 +1,7 @@
 import { Express } from 'express'
 import { verifyProxy } from '../database/util'
 import { addProxyToDB } from '../database'
-import { ProxyModel } from '../database/models/proxy'
+import { ProxyModel_ } from '../database/models/proxy'
 
 export const proxyRoutes = (app: Express) => {
   app.get('/proxy', async (req, res) => {
@@ -15,7 +15,7 @@ export const proxyRoutes = (app: Express) => {
 
 export const getProxies = async () => {
   try {
-    const proxies = await ProxyModel.find({}).lean()
+    const proxies = await ProxyModel_.findAll()
 
     return { ok: true, message: null, data: proxies }
   } catch (err) {

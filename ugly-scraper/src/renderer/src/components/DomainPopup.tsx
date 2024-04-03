@@ -12,8 +12,8 @@ type Props = {
 }
 
 export const DomainPopup = (p: Props) => {
-  const isVerifyReq = !!domainTaskHelper.findTaskByReqType(p.domain._id, 'verify')
-  const isDeleteReq = !!domainTaskHelper.findTaskByReqType(p.domain._id, 'delete')
+  const isVerifyReq = !!domainTaskHelper.findTaskByReqType(p.domain.id, 'verify')
+  const isDeleteReq = !!domainTaskHelper.findTaskByReqType(p.domain.id, 'delete')
 
   const close = () => p.closePopup()
 

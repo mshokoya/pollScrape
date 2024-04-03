@@ -1,5 +1,5 @@
 import { Express } from 'express'
-import { IMetaData, MetadataModel } from '../database/models/metadata'
+import { IMetaData, MetaDataModel_ } from '../database/models/metadata'
 import { deleteMetaAndRecords, updateMeta } from '../database'
 
 export const metadataRoutes = (app: Express) => {
@@ -47,7 +47,7 @@ export const deleteMetadata = async (id: string) => {
 export const getMetadatas = async () => {
   console.log('get all metadata')
   try {
-    const metadata = await MetadataModel.find({}).lean()
+    const metadata = await MetaDataModel_.findAll()
 
     return { ok: true, message: null, data: metadata }
   } catch (err: any) {

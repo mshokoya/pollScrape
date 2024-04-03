@@ -21,6 +21,11 @@ export type IDomain = {
 }
 
 export const Domain = sequelize.define('domain', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   domain: {
     type: DataTypes.STRING,
     allowNull: false,

@@ -17,7 +17,7 @@ import { deleteMetadata, getMetadatas, updateMetadata } from './server/metadata-
 import { scrapeLeads } from './server/scrape-routes'
 import { addDomain, deleteDomain, getDomains } from './server/domain-route'
 import { AccountModel_, IAccount } from './database/models/accounts'
-import { IMetaData } from './database/models/metadata'
+import { IMetaData, MetaDataModel_ } from './database/models/metadata'
 import { RecordModel_ } from './database/models/records'
 
 //  free proxies
@@ -186,23 +186,23 @@ export const Wscrape = async (id: string, proxy: boolean, url: string) =>
 
 // // =============
 
-// export const accountCreate = async () =>
-//   await RecordModel_.create({
-//     url: 'www.apollo.io',
-//     params: { hello: 'world', this: 'is', me: 'lol' },
-//     name: 'this-is-the-lool',
-//     scrapes: [{ scrapeID: 'me=dskjfaw=easd', listName: 'lfjdsa' }],
-//     accounts: [{ accountID: 'kdjlsaasd', range: [1, 40] }]
-//   })
+export const accountCreate = async () =>
+  await MetaDataModel_.create({
+    url: 'www.apollo.io',
+    params: { hello: 'world', this: 'is', me: 'lol' },
+    name: 'this-is-the-lool',
+    scrapes: [{ scrapeID: 'me=dskjfaw=easd', listName: 'lfjdsa' }],
+    accounts: [{ accountID: 'kdjlsaasd', range: [1, 40] }]
+  })
 
-// export const accountGetAll = async () => await RecordModel_.findAll()
+export const accountGetAll = async () => await MetaDataModel_.findAll()
 
-// export const accountFindOne = async () => await RecordModel_.findOne({ url: 'www.apollo.io' })
+export const accountFindOne = async () => await MetaDataModel_.findOne({ url: 'www.apollo.io' })
 
-// export const accountFindById = async () => await RecordModel_.findById(1)
+export const accountFindById = async () => await MetaDataModel_.findById(1)
 
-// export const accountFindOneAndUpdate = async () =>
-//   await RecordModel_.findOneAndUpdate({ name: 'this-is-the-lool' }, { url: 'google.com' })
+export const accountFindOneAndUpdate = async () =>
+  await MetaDataModel_.findOneAndUpdate({ name: 'this-is-the-lool' }, { url: 'google.com' })
 
-// export const accountFindOneAndDelete = async () =>
-//   await RecordModel_.findOneAndDelete({ name: 'this-is-the-lool' })
+export const accountFindOneAndDelete = async () =>
+  await MetaDataModel_.findOneAndDelete({ name: 'this-is-the-lool' })

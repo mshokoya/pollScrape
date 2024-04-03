@@ -1,4 +1,4 @@
-import { RecordsModel } from '../database/models/records'
+import { RecordModel_ } from '../database/models/records'
 import { Express } from 'express'
 
 export const recordRoutes = (app: Express) => {
@@ -7,7 +7,7 @@ export const recordRoutes = (app: Express) => {
   })
 
   app.post('/records', async (req, res) => {
-    res.json(await getRecord(req.body._id))
+    res.json(await getRecord(req.body.id))
   })
 }
 
@@ -15,7 +15,7 @@ export const getRecords = async () => {
   console.log('get all records')
 
   try {
-    const records = await RecordsModel.find({}).lean()
+    const records = await RecordModel_.findAll()
 
     return { ok: true, message: null, data: records }
   } catch (err: any) {
@@ -27,7 +27,7 @@ export const getRecord = async (id: string ) => {
   console.log('get record')
 
   try {
-    const record = await RecordsModel.findOne({ _id: id }).lean()
+    const record = await RecordModel_.findOne({ id })
 
     if (record === null) throw new Error('cannot find record')
 

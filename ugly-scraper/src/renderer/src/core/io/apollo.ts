@@ -45,7 +45,7 @@ function processApolloEventData(taskType: string, msg: ApolloSocketEvent<IAccoun
     case 'upgrade':
     case 'check':
       if (msg.ok) {
-        const acc = appState$.accounts.find((a) => a._id.get() === msg.metadata._id)
+        const acc = appState$.accounts.find((a) => a.id.get() === msg.metadata.id)
         if (acc) acc.set(msg.metadata)
       }
       break

@@ -4,7 +4,7 @@ import { logIntoApollo } from '.'
 import { updateAccount } from '../../database'
 import { IAccount } from '../../database/models/accounts'
 import { io } from '../../websockets'
-import { AppError, delay } from '../../util'
+import { delay } from '../../util'
 
 export type CreditsInfo = {
   emailCreditsUsed: number
@@ -143,7 +143,7 @@ export const logIntoApolloThenVisit = async (
         io.emit('apollo', { taskID, message: 'Logged into apollo' })
       })
       const cookies = await getBrowserCookies(browserCTX)
-      await updateAccount({ _id: account._id }, { cookie: JSON.stringify(cookies) })
+      await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
       await browserCTX.page.goto(url)
     }
   })

@@ -13,8 +13,6 @@ import { getSavedListAndScrape } from '../scraper/apollo/apollo';
 
 
 export const scrapeRoutes = (app: Express) => {
-
-
   // (FIX) test this function and make sure it works correctly
   app.post('/scrape', async (req, res) => {
     console.log('scrape')

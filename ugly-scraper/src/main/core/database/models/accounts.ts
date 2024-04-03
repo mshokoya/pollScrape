@@ -34,6 +34,11 @@ export type IAccount = {
 
 // @ts-ignore
 export const Account = sequelize.define('account', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   domain: {
     type: DataTypes.STRING,
     allowNull: true // (FIX) should this be allowed ?
@@ -124,13 +129,13 @@ export const Account = sequelize.define('account', {
 })
 
 export const AccountModel_ = {
-  findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}, opts?: FindOptions) =>
+  findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}, opts?: FindOptions): Promise<IAccount> =>
     //@ts-ignore
     (await Account.findAll<IAccount>({ where: filter, raw: true, ...opts })).map((a) => ({
       ...a,
       history: JSON.parse(a.history as any)
     })),
-  create: async (a: Partial<IAccount> = {}, opts?: CreateOptions) =>
+  create: async (a: Partial<IAccount> = {}, opts?: CreateOptions): Promise<IAccount> =>
     //@ts-ignore
     await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true, ...opts })
       .then((a1) => ({
@@ -138,12 +143,12 @@ export const AccountModel_ = {
         history: JSON.parse(a1.dataValues.history as any)
       }))
       .catch(() => null),
-  findById: async (id: string, opts: FindOptions) =>
+  findById: async (id: string, opts: FindOptions = {}): Promise<IAccount> =>
     //@ts-ignore
     await Account.findByPk<IAccount>(id, { raw: true, ...opts })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
-  findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any, opts?: FindOptions) =>
+  findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any, opts?: FindOptions): Promise<IAccount> =>
     //@ts-ignore
     await Account.findOne<IAccount>({ raw: true, where: filter, ...opts })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
@@ -152,7 +157,7 @@ export const AccountModel_ = {
     filter: Partial<Omit<IAccount, 'history'>>,
     data: Partial<IAccount>,
     opts?: SaveOptions & FindOptions
-  ) => {
+  ): Promise<IAccount> => {
     const account: Model = await Account.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!account) return null
@@ -172,7 +177,7 @@ export const AccountModel_ = {
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>, opts?: DestroyOptions) => {
+  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>, opts?: DestroyOptions): Promise<number> => {
     // @ts-ignore
     return await Account.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))
@@ -183,7 +188,7 @@ export const AccountModel_ = {
     key: 'history',
     value: any[],
     opts?: SaveOptions & FindOptions
-  ) => {
+  ): Promise<IAccount> => {
     const account: Model = await Account.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!account) return null

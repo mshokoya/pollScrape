@@ -22,9 +22,8 @@ import { AppError, generateID, getDomain } from '../util'
 import { taskQueue } from '../task_queue'
 import { MailboxAuthOptions, accountToMailbox, mailbox } from '../mailbox'
 import { generateSlug } from 'random-word-slugs'
-import { DomainModel } from '../database/models/domain'
+import { DomainModel_ } from '../database/models/domain'
 import { io } from '../websockets'
-import { Cluster } from 'puppeteer-cluster'
 import { init } from '../start'
 
 export const accountRoutes = (app: Express) => {
@@ -105,8 +104,9 @@ export const confirmAccount = async (id: string) => {
           message: `confirming account ${account.domainEmail}`,
           data: { accountID }
         })
+        
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -129,6 +129,8 @@ export const confirmAccount = async (id: string) => {
           )) as Promise<IAccount>
         } finally {
           await mailbox.relinquishConnection(import.meta.env.MAIN_VITE_AUTHEMAIL)
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -163,8 +165,8 @@ export const upgradeManually = async (id: string) => {
           data: { accountID }
         })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -186,7 +188,8 @@ export const upgradeManually = async (id: string) => {
             }
           )) as Promise<IAccount>
         } finally {
-          /* empty */
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -221,8 +224,8 @@ export const upgradeAutomatically = async (id: string) => {
           data: { accountID }
         })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -240,7 +243,8 @@ export const upgradeAutomatically = async (id: string) => {
             }
           )) as Promise<IAccount>
         } finally {
-          /* empty */
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -275,8 +279,8 @@ export const checkAccount = async (id: string) => {
           data: { accountID }
         })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -293,7 +297,8 @@ export const checkAccount = async (id: string) => {
             }
           )) as Promise<IAccount>
         } finally {
-          /* empty */
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -310,7 +315,8 @@ export const deleteAccount = async (id: string) => {
     const accountID = id
     if (!accountID) throw new Error('Failed to delete account, please provide valid id')
 
-    await AccountModel_.findOneAndDelete({ id: accountID })
+    const deleteAmount = await AccountModel_.findOneAndDelete({ id: accountID })
+    if (!deleteAmount) throw new Error('Failed to delete account')
 
     return { ok: true, message: null, data: null }
   } catch (err: any) {
@@ -342,8 +348,8 @@ export const loginAuto = async (id: string) => {
           data: { accountID }
         })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -362,11 +368,12 @@ export const loginAuto = async (id: string) => {
               })
 
               io.emit('apollo', { taskID, message: 'saving browser cookies in db' })
-              await updateAccount({ id: accountID }, { cookie: JSON.stringify(cookies) })
+              await updateAccount({ id: accountID }, { cookies: JSON.stringify(cookies) })
             }
           )) as Promise<IAccount>
         } finally {
-          /* empty */
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -402,7 +409,7 @@ export const addAccount = async ({
 
     if (addType === 'domain') {
       if (!selectedDomain) throw new Error('Failed to add account, domain not provided')
-      const d = await DomainModel.findOne({ domain: selectedDomain })
+      const d = await DomainModel_.findOne({ domain: selectedDomain })
       if (!d) throw new Error('Failed to add account, domain could not be found')
 
       account = {
@@ -464,8 +471,8 @@ export const addAccount = async ({
           message: `adding ${account.domainEmail}`
         })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -479,7 +486,8 @@ export const addAccount = async ({
             }
           )) as Promise<IAccount>
         } finally {
-          /* empty */
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -493,7 +501,7 @@ export const addAccount = async ({
 export const getAccounts = async () => {
   console.log('getAccounts')
   try {
-    const accounts = await AccountModel_.find({})
+    const accounts = await AccountModel_.findAll()
 
     return { ok: true, message: null, data: accounts }
   } catch (err: any) {
@@ -542,8 +550,8 @@ export const loginManually = async (id: string) => {
           data: { accountID }
         })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX)
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
@@ -559,12 +567,13 @@ export const loginManually = async (id: string) => {
                 'settings page'
               ).then(async () => {
                 const cookies = await getBrowserCookies({ page } as BrowserContext)
-                return await updateAccount({ id: accountID }, { cookie: JSON.stringify(cookies) })
+                return await updateAccount({ id: accountID }, { cookies: JSON.stringify(cookies) })
               })
             }
           )) as Promise<IAccount>
         } finally {
-          /* empty */
+          await browserCTX.idle()
+          await browserCTX.close()
         }
       }
     )
@@ -598,8 +607,8 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
         //   data: { accountID }
         // })
 
+        const browserCTX = await scraper.newBrowser(false)
         try {
-          const browserCTX = await scraper.newBrowser(false)
           if (!browserCTX) {
             throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
           }
@@ -614,11 +623,13 @@ export const demine = async (id: string = '65a50efc3c13f3197ddecf42') => {
                 'settings/account'
               ).then(async () => {
                 const cookies = await getBrowserCookies({ page } as BrowserContext)
-                return await updateAccount({ id: accountID }, { cookie: JSON.stringify(cookies) })
+                return await updateAccount({ id: accountID }, { cookies: JSON.stringify(cookies) })
               })
             }
           )) as Promise<IAccount>
         } finally {
+          await browserCTX.idle()
+          await browserCTX.close()
           /* empty */
         }
       }

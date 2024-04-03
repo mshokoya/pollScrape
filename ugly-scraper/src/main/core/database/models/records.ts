@@ -38,6 +38,11 @@ export type IRecord = {
 
 // @ts-ignore
 export const Record = sequelize.define('record', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   scrapeID: {
     type: DataTypes.STRING,
     allowNull: false // (FIX) should this be allowed ?

@@ -53,7 +53,7 @@ export const selectAccForScrapingFILO = (
   })
 
   const accounts = accs.concat(allAccounts.splice(-accsNeeded))
-  // const accountIDs = accounts.map(a => a._id)
+  // const accountIDs = accounts.map(a => a.id)
 
   // cache.addAccounts(metaID, accountIDs)
 
@@ -81,7 +81,7 @@ const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
 }
 
 export type IAccount = {
-  _id: string
+  id: string
   domain: string
   accountType: string
   trialTime: string
@@ -90,7 +90,7 @@ export type IAccount = {
   loginType: 'default' | 'gmail' | 'outlook'
   email: string
   password: string
-  cookie: string
+  cookies: string
   firstname: string
   lastname: string
   proxy: string

@@ -11,6 +11,11 @@ export type IProxy = {
 }
 
 export const Proxy = sequelize.define('proxy', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   proxy: {
     type: DataTypes.STRING,
     allowNull: false,

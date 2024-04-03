@@ -39,7 +39,7 @@ export const TaskViewPopup = (p: Props) => {
 
         <div>
           <button
-            // disabled={reqInProcess.includes(domain._id)}
+            // disabled={reqInProcess.includes(domain.id)}
             onClick={() => {
               handleRequest('delete')
             }}
