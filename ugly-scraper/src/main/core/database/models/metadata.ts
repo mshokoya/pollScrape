@@ -38,7 +38,7 @@ export const MetaData = sequelize.define('metadata', {
 })
 
 export const MetaDataModel_ = {
-  findAll: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {}, opts?: FindOptions) =>
+  findAll: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {}, opts?: FindOptions): Promise<IMetaData[]> =>
     //@ts-ignore
     (await MetaData.findAll<IMetaData>({ where: filter, raw: true, ...opts })).map((m) => ({
       ...m,
@@ -46,7 +46,7 @@ export const MetaDataModel_ = {
       scrapes: JSON.parse(m.scrapes as any),
       accounts: JSON.parse(m.accounts as any)
     })),
-  create: async (m: Partial<IMetaData> = {}, opts?: SaveOptions) =>
+  create: async (m: Partial<IMetaData> = {}, opts?: SaveOptions): Promise<IMetaData> =>
     //@ts-ignore
     await MetaData.create(
       {
@@ -64,7 +64,7 @@ export const MetaDataModel_ = {
         accounts: JSON.parse(m.dataValues.accounts as any)
       }))
       .catch(() => null),
-  findById: async (id: string, opts?: FindOptions) =>
+  findById: async (id: string, opts?: FindOptions): Promise<IMetaData> =>
     //@ts-ignore
     await MetaData.findByPk<IMetaData>(id, { raw: true, ...opts })
       .then((m) => ({
@@ -77,7 +77,7 @@ export const MetaDataModel_ = {
   findOne: async (
     filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {} as any,
     opts?: FindOptions
-  ) =>
+  ): Promise<IMetaData> =>
     //@ts-ignore
     await MetaData.findOne<IMetaData>({ raw: true, where: filter, ...opts })
       .then((m) => ({
@@ -91,7 +91,7 @@ export const MetaDataModel_ = {
     filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>,
     data: Partial<IMetaData>,
     opts?: SaveOptions & FindOptions
-  ) => {
+  ): Promise<IMetaData> => {
     const meta: Model = await MetaData.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!meta) return null
@@ -116,7 +116,7 @@ export const MetaDataModel_ = {
       }))
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>, opts?: DestroyOptionsOptions) => {
+  findOneAndDelete: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>, opts?: DestroyOptions): Promise<number> => {
     // @ts-ignore
     return await MetaData.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))
@@ -127,7 +127,7 @@ export const MetaDataModel_ = {
     key: 'scrapes' | 'accounts',
     value: any,
     opts?: SaveOptions & FindOptions
-  ) => {
+  ): Promise<IMetaData> => {
     const metadata: Model = await MetaData.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!metadata) return null
@@ -150,7 +150,7 @@ export const MetaDataModel_ = {
     key: 'params',
     value: Record<string, any>,
     opts?: SaveOptions & FindOptions
-  ) => {
+  ): Promise<IMetaData> => {
     const metadata: Model = await MetaData.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!metadata) return null
