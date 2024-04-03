@@ -146,16 +146,20 @@ export const deleteMetaAndRecords = async (metaID: string) => {
       throw new Error('failed to find metadata')
     }
 
-    const deleteLength = await MetaDataModel_.findOneAndDelete({ id: metaID }, { transaction: t })
-    if (!deleteLength) {
+    const metaDeleteLength = await MetaDataModel_.findOneAndDelete({ id: metaID }, { transaction: t })
+    if (!metaDeleteLength) {
       await t.rollback()
-      throw new Error('failed to delete meta data & records')
+      throw new Error('failed to delete metadata')
     }
 
     const scrapeIds = meta.scrapes.map((m) => m.scrapeID)
 
     // https://stackoverflow.com/a/34917715/5252283
-    await RecordModel_.findOneAndDelete({ scrapeID: scrapeIds as any }, { transaction: t })
+    const recordDeleteLength = await RecordModel_.findOneAndDelete({ scrapeID: scrapeIds as any }, { transaction: t })
+    if (!recordDeleteLength) {
+      await t.rollback()
+      throw new Error('failed to delete records')
+    }
 
     await t.commit()
   } catch (error) {
@@ -177,24 +181,12 @@ export const updateDBForNewScrape = async (
   listName: string,
   scrapeID: string
 ) => {
-  const session = await startSession()
+  const t = await sequelize.transaction()
   try {
-    session.startTransaction()
-    const updateOpts = { new: true, session }
-
     // METADATA UPDATE
-    const newMeta = await MetaDataModel_.findOneAndUpdate(
-      { id: meta.id },
-      {
-        $set: {
-          scrapes: [...meta.scrapes, { scrapeID, listName, date: new Date().getTime(), length: 0 }]
-        }
-      },
-      updateOpts
-    )
-
+    const newMeta = await MetaDataModel_.pushToArray({id: meta.id}, 'scrapes', { scrapeID, listName, date: new Date().getTime(), length: 0 }, {transaction: t} )
     if (!newMeta) {
-      await session.abortTransaction()
+      await t.rollback()
       throw new AppError(
         taskID,
         'failed to update meta after scrape, if this continues please contact developer'
@@ -202,27 +194,22 @@ export const updateDBForNewScrape = async (
     }
 
     // ACCOUNT UPDATE
-    const newAccount = await AccountModel_.findOneAndUpdate(
-      { id: account.id },
-      {
-        $set: {
-          history: [...account.history, [null, null, listName, scrapeID]]
-        }
-      },
-      updateOpts
-    )
-
+    const newAccount = await AccountModel_.pushToArray({id: account.id}, 'history', [null, null, listName, scrapeID], {transaction: t})
     if (!newAccount) {
-      await session.abortTransaction()
+      await t.rollback()
       throw new AppError(
         taskID,
         'failed to update account after scrape, if this continues please contact developer'
       )
     }
 
-    await session.commitTransaction()
-  } finally {
-    await session.endSession()
+    await t.commit()
+  } catch (err) {
+    await t.rollback()
+    throw new AppError(
+      taskID,
+      'failed to update account after scrape, if this continues please contact developer'
+    )
   }
 }
 
