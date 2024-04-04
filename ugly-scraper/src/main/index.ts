@@ -5,15 +5,27 @@ import icon from '../../resources/icon.png?asset'
 import { init } from './core/start'
 import {
   WaddAccount,
+  WaddDomain,
+  WaddProxy,
   WcheckAccount,
   WdeleteAccount,
+  WdeleteDomain,
+  WdeleteMetadata,
   Wdemine,
   WgetAccounts,
+  WgetDomains,
+  WgetMetadatas,
+  WgetProxies,
+  WgetRecord,
+  WgetRecords,
   WloginAuto,
   WloginManually,
+  Wscrape,
   WupdateAcc,
+  WupdateMetadata,
   WupgradeAutomatically,
   WupgradeManually,
+  Wverify
   // accountGetAll,
   // accountCreate,
   // accountFindOne,
@@ -22,8 +34,45 @@ import {
   // accountFindOneAndDelete
 } from './core/worker'
 import { IAccount } from './core/database/models/accounts'
+import { IMetaData } from './core/database/models/metadata'
+
+export const CN = {
+  // accounts
+  ad: 'accountDemine',
+  aum: 'accountUpgradeManually',
+  aua: 'accountUpgradeAutomatically',
+  ac: 'accountCheck',
+  adel: 'accountDelete',
+  ala: 'accountLoginAuto',
+  alm: 'accountLoginManually',
+  au: 'accountUpdate',
+  aga: 'accountGetAll',
+  aa: 'accountAdd',
+  // domain
+  da: 'domainAdd',
+  dv: 'domainVerify',
+  dd: 'domainDelete',
+  dga: 'domainGetAll',
+  // metadata
+  mga: 'metadataGetAll',
+  md: 'metadataDelete',
+  mu: 'metadataUpdate',
+  // proxy
+  pga: 'proxyGetAll',
+  pa: 'proxyAdd',
+  // records
+  rga: 'recordsGetAll',
+  rg: 'recordGet',
+  //scrape
+  s: 'scrape'
+}
+
 
 function createWindow(): void {
+  const res = (channel: string, res?: any) => {
+    return mainWindow.webContents.send('fetch', { channel, res })
+  }
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -48,35 +97,45 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // domain
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  // ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-
-  // account
-  ipcMain.handle('demine', async (e, id: string) => await Wdemine(id))
-  ipcMain.handle('upgradeManually', async (e, id: string) => await WupgradeManually(id))
-  ipcMain.handle('upgradeAutomatically', async (e, id: string) => await WupgradeAutomatically(id))
-  ipcMain.handle('checkAccount', async (e, id: string) => await WcheckAccount(id))
-  ipcMain.handle('deleteAccount', async (e, id: string) => await WdeleteAccount(id))
-  ipcMain.handle('loginAuto', async (e, id: string) => await WloginAuto(id))
-  ipcMain.handle('loginManually', async (e, id: string) => await WloginManually(id))
+  //================= account =========================
+  ipcMain.handle(CN.ad, async (e, id: string) => {
+    const r = await Wdemine(id)
+    res(CN.ad, r)
+  })
+  ipcMain.handle(CN.aum, async (e, id: string) => {
+    const r = await WupgradeManually(id)
+    res(CN.aum, r)
+  })
+  ipcMain.handle(CN.aua, async (e, id: string) => {
+    const r = await WupgradeAutomatically(id)
+    res(CN.aua, r)
+  })
+  ipcMain.handle(CN.ac, async (e, id: string) => {
+    const r = await WcheckAccount(id)
+    res(CN.ac, r)
+  })
+  ipcMain.handle(CN.adel, async (e, id: string) => {
+    const r = await WdeleteAccount(id)
+    res(CN.adel, r)
+  })
+  ipcMain.handle(CN.ala, async (e, id: string) => {
+    const r = await WloginAuto(id)
+    res(CN.ala, r)
+  })
+  ipcMain.handle(CN.alm, async (e, id: string) => {
+    const r = await WloginManually(id)
+    res(CN.alm, r)
+  })
+  ipcMain.handle(CN.au, async (e, id: string, account: IAccount) => {
+    const r = await WupdateAcc(id, account)
+    res(CN.au, r)
+  })
+  ipcMain.handle(CN.aga, async () => {
+    const r = await WgetAccounts()
+    res(CN.aga, r)
+  })
   ipcMain.handle(
-    'updateAcc',
-    async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
-  )
-  ipcMain.handle('getAccounts', async () => await WgetAccounts())
-  ipcMain.handle(
-    'addAccount',
+    CN.aa,
     async (
       e,
       email: string,
@@ -85,51 +144,77 @@ function createWindow(): void {
       password: string,
       recoveryEmail: string,
       domainEmail: string
-    ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
+    ) => {
+      const r = await WaddAccount(
+        email,
+        addType,
+        selectedDomain,
+        password,
+        recoveryEmail,
+        domainEmail
+      )
+      res(CN.aa, r)
+    }
   )
 
-  ipcMain.handle('accountCreate', async () => {
-    const res = await accountCreate()
-    mainWindow.webContents.send('accountCreate', res)
+  // =============== domain =====================
+  ipcMain.handle(CN.da, async (e, domain: string) => {
+    const r = await WaddDomain(domain)
+    res(CN.da, r)
+  })
+  ipcMain.handle(CN.dv, async (e, domain: string) => {
+    const r = await Wverify(domain)
+    res(CN.dv, r)
+  })
+  ipcMain.handle(CN.dd, async (e, domainID: string) => {
+    const r = await WdeleteDomain(domainID)
+    res(CN.dd, r)
+  })
+  ipcMain.handle(CN.dga, async () => {
+    const r = await WgetDomains()
+    res(CN.dga, r)
   })
 
-  ipcMain.handle('accountGetAll', async () => {
-    const res = await accountGetAll()
-    mainWindow.webContents.send('accountGetAll', res)
+  // =============== Metadata =====================
+  ipcMain.handle(CN.mga, async () => {
+    const r = await WgetMetadatas()
+    res(CN.mga, r)
+  })
+  ipcMain.handle(CN.md, async (e, id: string) => {
+    const r = await WdeleteMetadata(id)
+    res(CN.md, r)
+  })
+  ipcMain.handle(CN.mu, async (e, meta: IMetaData) => {
+    const r = await WupdateMetadata(meta)
+    res(CN.mu, r)
   })
 
-  // ===================================================================
+  // =============== Proxy =====================
+  ipcMain.handle(CN.pga, async () => {
+    const r = await WgetProxies()
+    res(CN.pga, r)
+  })
+  ipcMain.handle(CN.pa, async (e, url: string, proxy: string) => {
+    const r = await WaddProxy(url, proxy)
+    res(CN.pa, r)
+  })
 
-  // ipcMain.handle('accountFindOne', async () => {
-  //   const testa = await accountFindOne()
-  //   console.log('accountFindOne')
-  //   console.log(testa)
-  //   return testa
-  // })
+  // =============== Record =====================
+  ipcMain.handle(CN.rga, async () => {
+    const r = await WgetRecords()
+    res(CN.rga, r)
+  })
+  ipcMain.handle(CN.rg, async (e, id: string) => {
+    const r = await WgetRecord(id)
+    res(CN.rg, r)
+  })
 
-  // ipcMain.handle('accountFindById', async () => {
-  //   const testa = await accountFindById()
-  //   console.log('accountFindById')
-  //   console.log(testa)
-  //   return testa
-  // })
+  // =============== Scrape =====================
+  ipcMain.handle(CN.s, async (e, id: string, proxy: boolean, url: string) => {
+    const r = await Wscrape(id, proxy, url)
+    res(CN.s, r)
+  })
 
-  // ipcMain.handle('accountFindOneAndUpdate', async () => {
-  //   const testa = await accountFindOneAndUpdate()
-  //   console.log('accountFindOneAndUpdate')
-  //   console.log(testa)
-  //   return testa
-  // })
-
-  // ipcMain.handle('accountFindOneAndDelete', async () => {
-  //   const testa = await accountFindOneAndDelete()
-  //   console.log('accountFindOneAndDelete')
-  //   console.log(testa)
-  //   return testa
-  // })
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -137,17 +222,10 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 init().then(() => {
   app.whenReady().then(() => {
-    // Set app user model id for windows
     electronApp.setAppUserModelId('com.electron')
 
-    // Default open or close DevTools by F12 in development
-    // and ignore CommandOrControl + R in production.
-    // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
     app.on('browser-window-created', (_, window) => {
       optimizer.watchWindowShortcuts(window)
     })
@@ -155,21 +233,53 @@ init().then(() => {
     createWindow()
 
     app.on('activate', function () {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
   })
 
-  // Quit when all windows are closed, except on macOS. There, it's common
-  // for applications and their menu bar to stay active until the user quits
-  // explicitly with Cmd + Q.
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
       app.quit()
     }
   })
-
-  // In this file you can include the rest of your app"s specific main process
-  // code. You can also put them in separate files and require them here.
 })
+
+// ===================================================================
+
+// ipcMain.handle('accountCreate', async () => {
+//   const res = await accountCreate()
+//   mainWindow.webContents.send('accountCreate', res)
+// })
+
+// ipcMain.handle('accountGetAll', async () => {
+//   const res = await accountGetAll()
+//   mainWindow.webContents.send('accountGetAll', res)
+// })
+
+// ipcMain.handle('accountFindOne', async () => {
+//   const testa = await accountFindOne()
+//   console.log('accountFindOne')
+//   console.log(testa)
+//   return testa
+// })
+
+// ipcMain.handle('accountFindById', async () => {
+//   const testa = await accountFindById()
+//   console.log('accountFindById')
+//   console.log(testa)
+//   return testa
+// })
+
+// ipcMain.handle('accountFindOneAndUpdate', async () => {
+//   const testa = await accountFindOneAndUpdate()
+//   console.log('accountFindOneAndUpdate')
+//   console.log(testa)
+//   return testa
+// })
+
+// ipcMain.handle('accountFindOneAndDelete', async () => {
+//   const testa = await accountFindOneAndDelete()
+//   console.log('accountFindOneAndDelete')
+//   console.log(testa)
+//   return testa
+// })

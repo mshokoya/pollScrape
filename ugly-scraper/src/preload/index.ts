@@ -1,5 +1,7 @@
-import { ipcRenderer ,contextBridge } from 'electron'
-import { accountCreate, accountGetAll } from '../main/core/worker'
+import { ipcRenderer, contextBridge } from 'electron'
+import { CN } from '../main'
+import { IAccount } from '../main/core/database/models/accounts'
+import { IMetaData } from '../main/core/database/models/metadata'
 // import { electronAPI } from '@electron-toolkit/preload'
 
 if (!process.contextIsolated) {
@@ -7,59 +9,102 @@ if (!process.contextIsolated) {
 }
 
 contextBridge.exposeInMainWorld('account', {
-  demine: async (id: string) => {
-    return await ipcRenderer.invoke('demine', id)
-    // return await ipcRenderer.send('demine', id)
+  [CN.ad]: async (id: string) => {
+    await ipcRenderer.invoke(CN.ad, id)
   },
-  getAllAccounts: async (id: string) => {
-    return await ipcRenderer.invoke('getAccounts', id)
+  [CN.aum]: async (id: string) => {
+    await ipcRenderer.invoke(CN.aum, id)
   },
-  // ===============
-  accountCreate: async () => {
-    return await ipcRenderer.invoke('accountCreate')
+  [CN.aua]: async (id: string) => {
+    await ipcRenderer.invoke(CN.aua, id)
   },
-  accountGetAll: async () => {
-    const lett = await ipcRenderer.invoke('accountGetAll')
-    console.log('its lett')
-    console.log(lett)
-    return lett
+  [CN.ac]: async (id: string) => {
+    await ipcRenderer.invoke(CN.ac, id)
   },
-  accountFindOne: async () => {
-    const lett = await ipcRenderer.invoke('accountFindOne')
-    console.log('its lett')
-    console.log(lett)
-    return lett
+  [CN.adel]: async (id: string) => {
+    await ipcRenderer.invoke(CN.adel, id)
   },
-  accountFindById: async () => {
-    const lett = await ipcRenderer.invoke('accountFindById')
-    console.log('its lett')
-    console.log(lett)
-    return lett
+  [CN.ala]: async (id: string) => {
+    await ipcRenderer.invoke(CN.ala, id)
   },
-  accountFindOneAndUpdate: async () => {
-    const lett = await ipcRenderer.invoke('accountFindOneAndUpdate')
-    console.log('its lett')
-    console.log(lett)
-    return lett
+  [CN.alm]: async (id: string) => {
+    await ipcRenderer.invoke(CN.alm, id)
   },
-  accountFindOneAndDelete: async () => {
-    const lett = await ipcRenderer.invoke('accountFindOneAndDelete')
-    console.log('its lett')
-    console.log(lett)
-    return lett
+  [CN.au]: async (id: string, account: IAccount) => {
+    await ipcRenderer.invoke(CN.au, id, account)
+  },
+  [CN.aga]: async () => {
+    await ipcRenderer.invoke(CN.aga)
+  },
+  [CN.aa]: async (
+    email: string,
+    addType: string,
+    selectedDomain: string,
+    password: string,
+    recoveryEmail: string,
+    domainEmail: string
+  ) => {
+    await ipcRenderer.invoke(
+      CN.aa,
+      email,
+      addType,
+      selectedDomain,
+      password,
+      recoveryEmail,
+      domainEmail
+    )
+  }
+})
+
+contextBridge.exposeInMainWorld('domain', {
+  [CN.da]: async (domain: string) => {
+    await ipcRenderer.invoke(CN.da, domain)
+  },
+  [CN.dv]: async (domain: string) => {
+    await ipcRenderer.invoke(CN.dv, domain)
+  },
+  [CN.dd]: async (domainID: string) => {
+    await ipcRenderer.invoke(CN.dd, domainID)
+  },
+  [CN.dga]: async () => {
+    await ipcRenderer.invoke(CN.dga)
   }
 })
 
 contextBridge.exposeInMainWorld('meta', {
-  getAllMeta: async () => {}
+  [CN.mga]: async () => {
+    await ipcRenderer.invoke(CN.mga)
+  },
+  [CN.md]: async (id: string) => {
+    await ipcRenderer.invoke(CN.md, id)
+  },
+  [CN.mu]: async (meta: IMetaData) => {
+    await ipcRenderer.invoke(CN.mu, meta)
+  },
+})
+
+contextBridge.exposeInMainWorld('proxy', {
+  [CN.pga]: async () => {
+    await ipcRenderer.invoke(CN.pga)
+  },
+  [CN.pa]: async (url: string, proxy: string) => {
+    await ipcRenderer.invoke(CN.pa, url, proxy)
+  },
 })
 
 contextBridge.exposeInMainWorld('record', {
-  getAllRecords: async () => {}
+  [CN.pga]: async () => {
+    await ipcRenderer.invoke(CN.pga)
+  },
+  [CN.rg]: async (id: string) => {
+    await ipcRenderer.invoke(CN.pa, id)
+  }
 })
 
-contextBridge.exposeInMainWorld('domain', {
-  getAllDomains: async () => {}
+contextBridge.exposeInMainWorld('scrape', {
+  [CN.s]: async (id: string, proxy: boolean, url: string) => {
+    await ipcRenderer.invoke(CN.s, id, proxy, url)
+  }
 })
 
 // ==============================================

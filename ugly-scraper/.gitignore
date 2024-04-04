@@ -4,3 +4,4 @@ out
 .DS_Store
 *.log*
 src/main/**/*.js
+ugly.db
