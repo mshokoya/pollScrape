@@ -1,5 +1,5 @@
 import { ipcRenderer, contextBridge } from 'electron'
-import { CN } from '../main'
+import { CHANNELS } from '../shared/util'
 import { IAccount } from '../main/core/database/models/accounts'
 import { IMetaData } from '../main/core/database/models/metadata'
 // import { electronAPI } from '@electron-toolkit/preload'
@@ -9,34 +9,37 @@ if (!process.contextIsolated) {
 }
 
 contextBridge.exposeInMainWorld('account', {
-  [CN.ad]: async (id: string) => {
-    await ipcRenderer.invoke(CN.ad, id)
+  [CHANNELS.ad]: async () => {
+    return await ipcRenderer.invoke('llooll')
   },
-  [CN.aum]: async (id: string) => {
-    await ipcRenderer.invoke(CN.aum, id)
+  [CHANNELS.ad]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.ad, id)
   },
-  [CN.aua]: async (id: string) => {
-    await ipcRenderer.invoke(CN.aua, id)
+  [CHANNELS.aum]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.aum, id)
   },
-  [CN.ac]: async (id: string) => {
-    await ipcRenderer.invoke(CN.ac, id)
+  [CHANNELS.aua]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.aua, id)
   },
-  [CN.adel]: async (id: string) => {
-    await ipcRenderer.invoke(CN.adel, id)
+  [CHANNELS.ac]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.ac, id)
   },
-  [CN.ala]: async (id: string) => {
-    await ipcRenderer.invoke(CN.ala, id)
+  [CHANNELS.adel]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.adel, id)
   },
-  [CN.alm]: async (id: string) => {
-    await ipcRenderer.invoke(CN.alm, id)
+  [CHANNELS.ala]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.ala, id)
   },
-  [CN.au]: async (id: string, account: IAccount) => {
-    await ipcRenderer.invoke(CN.au, id, account)
+  [CHANNELS.alm]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.alm, id)
   },
-  [CN.aga]: async () => {
-    await ipcRenderer.invoke(CN.aga)
+  [CHANNELS.au]: async (id: string, account: IAccount) => {
+    return await ipcRenderer.invoke(CHANNELS.au, id, account)
   },
-  [CN.aa]: async (
+  [CHANNELS.aga]: async () => {
+    return await ipcRenderer.invoke(CHANNELS.aga)
+  },
+  [CHANNELS.aa]: async (
     email: string,
     addType: string,
     selectedDomain: string,
@@ -44,8 +47,8 @@ contextBridge.exposeInMainWorld('account', {
     recoveryEmail: string,
     domainEmail: string
   ) => {
-    await ipcRenderer.invoke(
-      CN.aa,
+    return await ipcRenderer.invoke(
+      CHANNELS.aa,
       email,
       addType,
       selectedDomain,
@@ -57,53 +60,53 @@ contextBridge.exposeInMainWorld('account', {
 })
 
 contextBridge.exposeInMainWorld('domain', {
-  [CN.da]: async (domain: string) => {
-    await ipcRenderer.invoke(CN.da, domain)
+  [CHANNELS.da]: async (domain: string) => {
+    return await ipcRenderer.invoke(CHANNELS.da, domain)
   },
-  [CN.dv]: async (domain: string) => {
-    await ipcRenderer.invoke(CN.dv, domain)
+  [CHANNELS.dv]: async (domain: string) => {
+    return await ipcRenderer.invoke(CHANNELS.dv, domain)
   },
-  [CN.dd]: async (domainID: string) => {
-    await ipcRenderer.invoke(CN.dd, domainID)
+  [CHANNELS.dd]: async (domainID: string) => {
+    return await ipcRenderer.invoke(CHANNELS.dd, domainID)
   },
-  [CN.dga]: async () => {
-    await ipcRenderer.invoke(CN.dga)
+  [CHANNELS.dga]: async () => {
+    return await ipcRenderer.invoke(CHANNELS.dga)
   }
 })
 
 contextBridge.exposeInMainWorld('meta', {
-  [CN.mga]: async () => {
-    await ipcRenderer.invoke(CN.mga)
+  [CHANNELS.mga]: async () => {
+    return await ipcRenderer.invoke(CHANNELS.mga)
   },
-  [CN.md]: async (id: string) => {
-    await ipcRenderer.invoke(CN.md, id)
+  [CHANNELS.md]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.md, id)
   },
-  [CN.mu]: async (meta: IMetaData) => {
-    await ipcRenderer.invoke(CN.mu, meta)
+  [CHANNELS.mu]: async (meta: IMetaData) => {
+    return await ipcRenderer.invoke(CHANNELS.mu, meta)
   },
 })
 
 contextBridge.exposeInMainWorld('proxy', {
-  [CN.pga]: async () => {
-    await ipcRenderer.invoke(CN.pga)
+  [CHANNELS.pga]: async () => {
+    return await ipcRenderer.invoke(CHANNELS.pga)
   },
-  [CN.pa]: async (url: string, proxy: string) => {
-    await ipcRenderer.invoke(CN.pa, url, proxy)
+  [CHANNELS.pa]: async (url: string, proxy: string) => {
+    return await ipcRenderer.invoke(CHANNELS.pa, url, proxy)
   },
 })
 
 contextBridge.exposeInMainWorld('record', {
-  [CN.pga]: async () => {
-    await ipcRenderer.invoke(CN.pga)
+  [CHANNELS.pga]: async () => {
+    return await ipcRenderer.invoke(CHANNELS.pga)
   },
-  [CN.rg]: async (id: string) => {
-    await ipcRenderer.invoke(CN.pa, id)
+  [CHANNELS.rg]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.pa, id)
   }
 })
 
 contextBridge.exposeInMainWorld('scrape', {
-  [CN.s]: async (id: string, proxy: boolean, url: string) => {
-    await ipcRenderer.invoke(CN.s, id, proxy, url)
+  [CHANNELS.s]: async (id: string, proxy: boolean, url: string) => {
+    return await ipcRenderer.invoke(CHANNELS.s, id, proxy, url)
   }
 })
 

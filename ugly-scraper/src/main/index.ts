@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { init } from './core/start'
 import {
+  accountGetAll,
   WaddAccount,
   WaddDomain,
   WaddProxy,
@@ -35,42 +36,14 @@ import {
 } from './core/worker'
 import { IAccount } from './core/database/models/accounts'
 import { IMetaData } from './core/database/models/metadata'
-
-export const CN = {
-  // accounts
-  ad: 'accountDemine',
-  aum: 'accountUpgradeManually',
-  aua: 'accountUpgradeAutomatically',
-  ac: 'accountCheck',
-  adel: 'accountDelete',
-  ala: 'accountLoginAuto',
-  alm: 'accountLoginManually',
-  au: 'accountUpdate',
-  aga: 'accountGetAll',
-  aa: 'accountAdd',
-  // domain
-  da: 'domainAdd',
-  dv: 'domainVerify',
-  dd: 'domainDelete',
-  dga: 'domainGetAll',
-  // metadata
-  mga: 'metadataGetAll',
-  md: 'metadataDelete',
-  mu: 'metadataUpdate',
-  // proxy
-  pga: 'proxyGetAll',
-  pa: 'proxyAdd',
-  // records
-  rga: 'recordsGetAll',
-  rg: 'recordGet',
-  //scrape
-  s: 'scrape'
-}
-
+import { CHANNELS } from '../shared/util'
 
 function createWindow(): void {
   const res = (channel: string, res?: any) => {
-    return mainWindow.webContents.send('fetch', { channel, res })
+    return mainWindow.webContents.send('response', { channel, res })
+  }
+  const req = (channel: string) => {
+    return mainWindow.webContents.send('request', channel)
   }
 
   // Create the browser window.
@@ -97,45 +70,29 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  mainWindow.webContents.openDevTools()
+
+  // ==========================================================================================
+
+  ipcMain.handle('accountGetAllz', async () => {
+    return await accountGetAll()
+  })
+
   //================= account =========================
-  ipcMain.handle(CN.ad, async (e, id: string) => {
-    const r = await Wdemine(id)
-    res(CN.ad, r)
-  })
-  ipcMain.handle(CN.aum, async (e, id: string) => {
-    const r = await WupgradeManually(id)
-    res(CN.aum, r)
-  })
-  ipcMain.handle(CN.aua, async (e, id: string) => {
-    const r = await WupgradeAutomatically(id)
-    res(CN.aua, r)
-  })
-  ipcMain.handle(CN.ac, async (e, id: string) => {
-    const r = await WcheckAccount(id)
-    res(CN.ac, r)
-  })
-  ipcMain.handle(CN.adel, async (e, id: string) => {
-    const r = await WdeleteAccount(id)
-    res(CN.adel, r)
-  })
-  ipcMain.handle(CN.ala, async (e, id: string) => {
-    const r = await WloginAuto(id)
-    res(CN.ala, r)
-  })
-  ipcMain.handle(CN.alm, async (e, id: string) => {
-    const r = await WloginManually(id)
-    res(CN.alm, r)
-  })
-  ipcMain.handle(CN.au, async (e, id: string, account: IAccount) => {
-    const r = await WupdateAcc(id, account)
-    res(CN.au, r)
-  })
-  ipcMain.handle(CN.aga, async () => {
-    const r = await WgetAccounts()
-    res(CN.aga, r)
-  })
+  ipcMain.handle(CHANNELS.ad, async (e, id: string) => await Wdemine(id))
+  ipcMain.handle(CHANNELS.aum, async (e, id: string) => await WupgradeManually(id))
+  ipcMain.handle(CHANNELS.aua, async (e, id: string) => await WupgradeAutomatically(id))
+  ipcMain.handle(CHANNELS.ac, async (e, id: string) => await WcheckAccount(id))
+  ipcMain.handle(CHANNELS.adel, async (e, id: string) => await WdeleteAccount(id))
+  ipcMain.handle(CHANNELS.ala, async (e, id: string) => await WloginAuto(id))
+  ipcMain.handle(CHANNELS.alm, async (e, id: string) => await WloginManually(id))
   ipcMain.handle(
-    CN.aa,
+    CHANNELS.au,
+    async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
+  )
+  ipcMain.handle(CHANNELS.aga, async () => await WgetAccounts())
+  ipcMain.handle(
+    CHANNELS.aa,
     async (
       e,
       email: string,
@@ -144,76 +101,32 @@ function createWindow(): void {
       password: string,
       recoveryEmail: string,
       domainEmail: string
-    ) => {
-      const r = await WaddAccount(
-        email,
-        addType,
-        selectedDomain,
-        password,
-        recoveryEmail,
-        domainEmail
-      )
-      res(CN.aa, r)
-    }
+    ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
   )
 
   // =============== domain =====================
-  ipcMain.handle(CN.da, async (e, domain: string) => {
-    const r = await WaddDomain(domain)
-    res(CN.da, r)
-  })
-  ipcMain.handle(CN.dv, async (e, domain: string) => {
-    const r = await Wverify(domain)
-    res(CN.dv, r)
-  })
-  ipcMain.handle(CN.dd, async (e, domainID: string) => {
-    const r = await WdeleteDomain(domainID)
-    res(CN.dd, r)
-  })
-  ipcMain.handle(CN.dga, async () => {
-    const r = await WgetDomains()
-    res(CN.dga, r)
-  })
+  ipcMain.handle(CHANNELS.da, async (e, domain: string) => await WaddDomain(domain))
+  ipcMain.handle(CHANNELS.dv, async (e, domain: string) => await Wverify(domain))
+  ipcMain.handle(CHANNELS.dd, async (e, domainID: string) => await WdeleteDomain(domainID))
+  ipcMain.handle(CHANNELS.dga, async () => await WgetDomains())
 
   // =============== Metadata =====================
-  ipcMain.handle(CN.mga, async () => {
-    const r = await WgetMetadatas()
-    res(CN.mga, r)
-  })
-  ipcMain.handle(CN.md, async (e, id: string) => {
-    const r = await WdeleteMetadata(id)
-    res(CN.md, r)
-  })
-  ipcMain.handle(CN.mu, async (e, meta: IMetaData) => {
-    const r = await WupdateMetadata(meta)
-    res(CN.mu, r)
-  })
+  ipcMain.handle(CHANNELS.mga, async () => await WgetMetadatas())
+  ipcMain.handle(CHANNELS.md, async (e, id: string) => await WdeleteMetadata(id))
+  ipcMain.handle(CHANNELS.mu, async (e, meta: IMetaData) => await WupdateMetadata(meta))
 
   // =============== Proxy =====================
-  ipcMain.handle(CN.pga, async () => {
-    const r = await WgetProxies()
-    res(CN.pga, r)
-  })
-  ipcMain.handle(CN.pa, async (e, url: string, proxy: string) => {
-    const r = await WaddProxy(url, proxy)
-    res(CN.pa, r)
-  })
+  ipcMain.handle(CHANNELS.pga, async () => await WgetProxies())
+  ipcMain.handle(CHANNELS.pa, async (e, url: string, proxy: string) => await WaddProxy(url, proxy))
 
   // =============== Record =====================
-  ipcMain.handle(CN.rga, async () => {
-    const r = await WgetRecords()
-    res(CN.rga, r)
-  })
-  ipcMain.handle(CN.rg, async (e, id: string) => {
-    const r = await WgetRecord(id)
-    res(CN.rg, r)
-  })
+  ipcMain.handle(CHANNELS.rga, async () => await WgetRecords())
+  ipcMain.handle(CHANNELS.rg, async (e, id: string) => await WgetRecord(id))
 
   // =============== Scrape =====================
-  ipcMain.handle(CN.s, async (e, id: string, proxy: boolean, url: string) => {
-    const r = await Wscrape(id, proxy, url)
-    res(CN.s, r)
-  })
+  ipcMain.handle(CHANNELS.s, async (e, id: string, proxy: boolean, url: string) => await Wscrape(id, proxy, url))
+
+  // ==========================================================================================
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])

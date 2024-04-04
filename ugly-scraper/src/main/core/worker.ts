@@ -195,7 +195,8 @@ export const accountCreate = async () =>
     accounts: [{ accountID: 'kdjlsaasd', range: [1, 40] }]
   })
 
-export const accountGetAll = async () => await MetaDataModel_.findAll()
+// export const accountGetAll = async () => await MetaDataModel_.findAll()
+export const accountGetAll = async () => await Promise.resolve('hellow world')
 
 export const accountFindOne = async () => await MetaDataModel_.findOne({ url: 'www.apollo.io' })
 
