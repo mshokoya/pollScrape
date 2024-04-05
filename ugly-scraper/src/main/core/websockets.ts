@@ -1,11 +1,11 @@
 import { prompt } from './prompt'
-import { IPC_APP, IPC_EVT_Response } from '../../shared'
-import { IPC_EVT_CHANNEL } from '../../shared/util'
+import { IPC_APP } from '../../shared'
 
 type EmitObj = {
   taskID: string
-  taskType: string
-  message: string
+  taskType?: string
+  message?: string
+  data?: Record<string, any>
 }
 
 type IO = {
@@ -13,32 +13,22 @@ type IO = {
 }
 
 export const SocketIO = (ipc: IPC_APP): IO => {
-  ipc.ipcMain.on(IPC_EVT_CHANNEL, (e, res: IPC_EVT_Response) => {
-    if (res.channel === 'prompt') {
-      switch (res.type) {
-        case 'answer':
-          prompt.answerQuestion(res.metadata.qid, res.metadata.choiceIDX)
-          break
-      }
+  ipc.ipcMain.on('prompt', (e, res: any) => {
+    switch (res.type) {
+      case 'answer':
+        prompt.answerQuestion(res.metadata.qid, res.metadata.choiceIDX)
+        break
     }
   })
-  
 
   return {
-    emit: (channel: string, { taskID, taskType, message }) => {
-      ipc.mainWindow.webContents.send(IPC_EVT_CHANNEL, { channel, taskID, taskType, message })
+    emit: (channel: string, { taskID, taskType, message, data }) => {
+      ipc.mainWindow.webContents.send(channel, { taskID, taskType, message, data })
     }
   }
 }
 
-// io.emit('apollo', {
-//   taskID,
-//   taskType: 'manualLogin',
-//   message: `Login into ${account.domainEmail}`,
-//   data: { accountID }
-// })
-
-export let io: any
+export let io: IO
 
 export const initSocketIO = (ipc: IPC_APP) => {
   io = SocketIO(ipc)

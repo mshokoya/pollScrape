@@ -484,6 +484,7 @@ export const apolloAddLeadsToListAndScrape = async (
   let counter = 0
   let ln = await page.$eval(
     savedListTableRowSelector,
+    // @ts-ignore
     (el) => el.querySelector('[class="zp_aBhrx"]')?.innerText
   )
   while (ln !== listName && counter <= 5) {
@@ -491,6 +492,7 @@ export const apolloAddLeadsToListAndScrape = async (
     await page.waitForSelector(savedListTableRowSelector, { visible: true, timeout: 10000 })
     ln = await page.$eval(
       savedListTableRowSelector,
+      // @ts-ignore
       (el) => el.querySelector('[class="zp_aBhrx"]')?.innerText
     )
     counter++

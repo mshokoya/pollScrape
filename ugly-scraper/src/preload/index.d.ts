@@ -45,6 +45,10 @@ declare global {
     scrape: {
       scrape: (id: string, proxy: boolean, url: string) => Response
     }
+    ipc: {
+      emit: (channel: string, data: Record<string, any>) => void
+      on: <T>(channel: string, func: (res: T) => void) => void
+    }
   }
 }
 

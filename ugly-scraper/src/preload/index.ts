@@ -103,8 +103,8 @@ contextBridge.exposeInMainWorld('scrape', {
 })
 
 contextBridge.exposeInMainWorld('ipc', {
-  emit: (channel: string, data: any) => ipcRenderer.send(IPC_EVT_CHANNEL, { ...data, channel }),
-  on: (channel: string, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
+  emit: (channel: string, data: any) => ipcRenderer.send(channel, { ...data, channel }),
+  on: (channel, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
 })
 
 // ==============================================
