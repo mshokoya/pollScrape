@@ -1,5 +1,5 @@
 import { ipcRenderer, contextBridge } from 'electron'
-import { CHANNELS } from '../shared/util'
+import { CHANNELS, IPC_EVT_CHANNEL } from '../shared/util'
 import { IAccount } from '../main/core/database/models/accounts'
 import { IMetaData } from '../main/core/database/models/metadata'
 // import { electronAPI } from '@electron-toolkit/preload'
@@ -49,25 +49,6 @@ contextBridge.exposeInMainWorld('account', {
   }) => {
     return await ipcRenderer.invoke(CHANNELS.aa, a)
   }
-  // [CHANNELS.aa]: async ({
-  //   email,
-  //   addType,
-  //   selectedDomain,
-  //   password,
-  //   recoveryEmail,
-  //   domainEmail
-  // }) => {
-  //   console.log()
-  //   return await ipcRenderer.invoke(
-  //     CHANNELS.aa,
-  //     email,
-  //     addType,
-  //     selectedDomain,
-  //     password,
-  //     recoveryEmail,
-  //     domainEmail
-  //   )
-  // }
 })
 
 contextBridge.exposeInMainWorld('domain', {
@@ -119,6 +100,11 @@ contextBridge.exposeInMainWorld('scrape', {
   [CHANNELS.s]: async (id: string, proxy: boolean, url: string) => {
     return await ipcRenderer.invoke(CHANNELS.s, id, proxy, url)
   }
+})
+
+contextBridge.exposeInMainWorld('ipc', {
+  emit: (channel: string, data: any) => ipcRenderer.send(IPC_EVT_CHANNEL, { ...data, channel }),
+  on: (channel: string, func) => ipcRenderer.on(channel, (event, ...args) => func(...args))
 })
 
 // ==============================================

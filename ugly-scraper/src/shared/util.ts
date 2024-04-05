@@ -29,3 +29,5 @@ export const CHANNELS = {
   //scrape
   s: 'scrape'
 }
+
+export const IPC_EVT_CHANNEL = 'ipc'

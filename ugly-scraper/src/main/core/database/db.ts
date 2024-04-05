@@ -29,6 +29,6 @@ export const startConnection = async () => {
 }
 
 export const syncDB = () =>
-  sequelize.sync({ force: true }).then(() => {
+  sequelize.sync().then(() => {
     console.log('Database synchronized')
   })

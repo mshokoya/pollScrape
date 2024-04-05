@@ -4,7 +4,6 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { init } from './core/start'
 import {
-  accountGetAll,
   WaddAccount,
   WaddDomain,
   WaddProxy,
@@ -28,40 +27,27 @@ import {
   WupgradeAutomatically,
   WupgradeManually,
   Wverify
-  // accountGetAll,
-  // accountCreate,
-  // accountFindOne,
-  // accountFindById,
-  // accountFindOneAndUpdate,
-  // accountFindOneAndDelete
 } from './core/worker'
 import { IAccount } from './core/database/models/accounts'
 import { IMetaData } from './core/database/models/metadata'
 import { CHANNELS } from '../shared/util'
 
-function createWindow(): void {
-  const res = (channel: string, res?: any) => {
-    return mainWindow.webContents.send('response', { channel, res })
+const mainWindow = new BrowserWindow({
+  width: 900,
+  height: 670,
+  show: false,
+  autoHideMenuBar: true,
+  ...(process.platform === 'linux' ? { icon } : {}),
+  webPreferences: {
+    preload: join(__dirname, '../preload/index.js'),
+    sandbox: false,
+    contextIsolation: true
+    // nodeIntegration: true
   }
-  const req = (channel: string) => {
-    return mainWindow.webContents.send('request', channel)
-  }
+})
 
+function createWindow(mainWindow: BrowserWindow): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-      contextIsolation: true
-      // nodeIntegration: true
-    }
-  })
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -75,9 +61,6 @@ function createWindow(): void {
 
   // ==========================================================================================
 
-  ipcMain.handle('accountGetAllz', async () => {
-    return await accountGetAll()
-  })
 
   //================= account =========================
   ipcMain.handle(CHANNELS.ad, async (e, id: string) => await Wdemine(id))
@@ -129,7 +112,7 @@ function createWindow(): void {
   }
 }
 
-init().then(() => {
+init({ mainWindow, ipcMain }).then(() => {
   app.whenReady().then(() => {
     electronApp.setAppUserModelId('com.electron')
 
@@ -137,10 +120,10 @@ init().then(() => {
       optimizer.watchWindowShortcuts(window)
     })
 
-    createWindow()
+    createWindow(mainWindow)
 
     app.on('activate', function () {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      if (BrowserWindow.getAllWindows().length === 0) createWindow(mainWindow)
     })
   })
 
@@ -150,43 +133,3 @@ init().then(() => {
     }
   })
 })
-
-// ===================================================================
-
-// ipcMain.handle('accountCreate', async () => {
-//   const res = await accountCreate()
-//   mainWindow.webContents.send('accountCreate', res)
-// })
-
-// ipcMain.handle('accountGetAll', async () => {
-//   const res = await accountGetAll()
-//   mainWindow.webContents.send('accountGetAll', res)
-// })
-
-// ipcMain.handle('accountFindOne', async () => {
-//   const testa = await accountFindOne()
-//   console.log('accountFindOne')
-//   console.log(testa)
-//   return testa
-// })
-
-// ipcMain.handle('accountFindById', async () => {
-//   const testa = await accountFindById()
-//   console.log('accountFindById')
-//   console.log(testa)
-//   return testa
-// })
-
-// ipcMain.handle('accountFindOneAndUpdate', async () => {
-//   const testa = await accountFindOneAndUpdate()
-//   console.log('accountFindOneAndUpdate')
-//   console.log(testa)
-//   return testa
-// })
-
-// ipcMain.handle('accountFindOneAndDelete', async () => {
-//   const testa = await accountFindOneAndDelete()
-//   console.log('accountFindOneAndDelete')
-//   console.log(testa)
-//   return testa
-// })

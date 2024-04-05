@@ -1,46 +1,46 @@
-import { Server as IO } from 'socket.io'
 import { prompt } from './prompt'
+import { IPC_APP, IPC_EVT_Response } from '../../shared'
+import { IPC_EVT_CHANNEL } from '../../shared/util'
 
-type SocketResponse<T = Record<string, any>> = {
-  id: string
-  type: string
+type EmitObj = {
+  taskID: string
+  taskType: string
   message: string
-  data: T
-  ok: boolean
 }
 
-export const SocketIO = (server: any) => {
-  const io = new IO(server, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST']
-    }
-  })
+type IO = {
+  emit: (channel: string, { taskID, taskType, message }: EmitObj) => void
+}
 
-  io.on('connection', (socket) => {
-    console.log('A user connected')
-
-    socket.on('prompt', (res) => {
+export const SocketIO = (ipc: IPC_APP): IO => {
+  ipc.ipcMain.on(IPC_EVT_CHANNEL, (e, res: IPC_EVT_Response) => {
+    if (res.channel === 'prompt') {
       switch (res.type) {
         case 'answer':
           prompt.answerQuestion(res.metadata.qid, res.metadata.choiceIDX)
           break
       }
-    })
-
-    socket.on('disconnect', () => {
-      console.log('A user disconnected')
-    })
+    }
   })
+  
 
-  return io
+  return {
+    emit: (channel: string, { taskID, taskType, message }) => {
+      ipc.mainWindow.webContents.send(IPC_EVT_CHANNEL, { channel, taskID, taskType, message })
+    }
+  }
 }
 
-export const socketResponse = <T>(args: SocketResponse) => {}
+// io.emit('apollo', {
+//   taskID,
+//   taskType: 'manualLogin',
+//   message: `Login into ${account.domainEmail}`,
+//   data: { accountID }
+// })
 
-export let io: IO
+export let io: any
 
-export const initSocketIO = (server: unknown) => {
-  io = SocketIO(server)
+export const initSocketIO = (ipc: IPC_APP) => {
+  io = SocketIO(ipc)
   return io
 }

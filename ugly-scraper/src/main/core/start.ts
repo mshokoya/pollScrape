@@ -4,11 +4,16 @@ import { initForwarder } from './forwarder'
 import { initCache } from './cache'
 import { initPrompt } from './prompt'
 import { syncDB } from './database/db'
+import { initSocketIO } from './websockets'
+import { IPC_APP } from '../../shared'
 
-export const init = async (): Promise<void> => {
+export const init = async (ipc: IPC_APP): Promise<void> => {
   await syncDB().then(() => {
     console.log('DB started')
   })
+
+  initSocketIO(ipc)
+  console.log('SocketIO started')
 
   initCache()
   console.log('Cache started')
