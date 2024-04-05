@@ -23,11 +23,10 @@ export const domainRoutes = (app: Express) => {
   })
 }
 
-export const addDomain = async (domainn: string) => {
+export const addDomain = async (domain: string) => {
   console.log('Add new domain')
 
   try {
-    const domain = domainn
     if (!domain) throw new Error('Failed to add domain, invalid domain')
 
     if (!isValidDomain(domain)) throw new Error('Failed to add domain, invalid domain') // (FIX) find lib to do this better
@@ -46,10 +45,9 @@ export const addDomain = async (domainn: string) => {
   }
 }
 
-export const verifyDomain = async (domainn: string) => {
+export const verifyDomain = async (domain: string) => {
   console.log('verify domain')
   try {
-    const domain = domainn
     if (!domain) throw new Error('Failed to verify doamin, valid domain not provided')
 
     const vr = await forwarder.verifyDomain(domain)
@@ -83,10 +81,9 @@ export const verifyDomain = async (domainn: string) => {
   }
 }
 
-export const deleteDomain = async (domainn: string) => {
+export const deleteDomain = async (domain: string) => {
   console.log('delete domain')
   try {
-    const domain = domainn
     if (!domain) throw new Error('Failed to delete doamin, valid domain not provided')
 
     const delRes = await forwarder.deleteDomain(domain)

@@ -32,12 +32,12 @@ export const accountRoutes = (app: Express) => {
   app.post('/account', async (req, res) => {
     res.json(
       await addAccount({
-        emaill: req.body.email,
-        addTypee: req.body.addType,
-        selectedDomainn: req.body.selectedDomain,
-        passwordd: req.body.password,
-        recoveryEmaill: req.body.recoveryEmail,
-        domainEmaill: req.body.domainEmail
+        email: req.body.email,
+        addType: req.body.addType,
+        selectedDomain: req.body.selectedDomain,
+        password: req.body.password,
+        recoveryEmail: req.body.recoveryEmail,
+        domainEmail: req.body.domainEmail
       })
     )
   })
@@ -104,7 +104,7 @@ export const confirmAccount = async (id: string) => {
           message: `confirming account ${account.domainEmail}`,
           data: { accountID }
         })
-        
+
         const browserCTX = await scraper.newBrowser(false)
         try {
           if (!browserCTX)
@@ -385,12 +385,12 @@ export const loginAuto = async (id: string) => {
 }
 
 export const addAccount = async ({
-  selectedDomainn,
-  addTypee,
-  emaill,
-  passwordd,
-  recoveryEmaill,
-  domainEmaill
+  selectedDomain: selectedDomainn,
+  addType: addTypee,
+  email: emaill,
+  password: passwordd,
+  recoveryEmail: recoveryEmaill,
+  domainEmail: domainEmaill
 }) => {
   console.log('addAccount')
 

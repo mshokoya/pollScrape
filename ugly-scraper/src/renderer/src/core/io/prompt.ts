@@ -1,4 +1,4 @@
-import { io } from '../../main'
+// import { io } from '../../main'
 import { PromptState, deletePrompt, promptState } from '../state/prompt'
 
 type PromptEvent<T> = {
@@ -24,7 +24,7 @@ export function handleAPromptEvents(res: PromptEvent<unknown>) {
 }
 
 export const answerPromptEvent = (qid: string, choiceIDX: number) => {
-  io.emit('prompt', { type: 'answer', metadata: { qid, choiceIDX } })
+  // io.emit('prompt', { type: 'answer', metadata: { qid, choiceIDX } })
   deletePrompt(qid)
 }
 

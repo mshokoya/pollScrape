@@ -1,6 +1,14 @@
 import { Schema, model } from 'mongoose'
-import { CreateOptions, DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
+import {
+  CreateOptions,
+  DataTypes,
+  DestroyOptions,
+  FindOptions,
+  Model,
+  SaveOptions
+} from 'sequelize'
 import { sequelize } from '../db'
+import { truncate } from 'original-fs'
 
 export type IAccount = {
   id: string
@@ -80,7 +88,8 @@ export const Account = sequelize.define('account', {
     allowNull: false
   },
   proxy: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    allowNull: true
   },
   emailCreditsUsed: {
     type: DataTypes.INTEGER,
@@ -129,7 +138,10 @@ export const Account = sequelize.define('account', {
 })
 
 export const AccountModel_ = {
-  findAll: async (filter: Partial<Omit<IAccount, 'history'>> = {}, opts?: FindOptions): Promise<IAccount> =>
+  findAll: async (
+    filter: Partial<Omit<IAccount, 'history'>> = {},
+    opts?: FindOptions
+  ): Promise<IAccount> =>
     //@ts-ignore
     (await Account.findAll<IAccount>({ where: filter, raw: true, ...opts })).map((a) => ({
       ...a,
@@ -148,7 +160,10 @@ export const AccountModel_ = {
     await Account.findByPk<IAccount>(id, { raw: true, ...opts })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
       .catch(() => null),
-  findOne: async (filter: Partial<Omit<IAccount, 'history'>> = {} as any, opts?: FindOptions): Promise<IAccount> =>
+  findOne: async (
+    filter: Partial<Omit<IAccount, 'history'>> = {} as any,
+    opts?: FindOptions
+  ): Promise<IAccount> =>
     //@ts-ignore
     await Account.findOne<IAccount>({ raw: true, where: filter, ...opts })
       .then((a1) => ({ ...a1, history: JSON.parse(a1.history as any) }))
@@ -177,7 +192,10 @@ export const AccountModel_ = {
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<Omit<IAccount, 'history'>>, opts?: DestroyOptions): Promise<number> => {
+  findOneAndDelete: async (
+    filter: Partial<Omit<IAccount, 'history'>>,
+    opts?: DestroyOptions
+  ): Promise<number> => {
     // @ts-ignore
     return await Account.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))

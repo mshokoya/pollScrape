@@ -9,14 +9,14 @@ if (!process.contextIsolated) {
 }
 
 contextBridge.exposeInMainWorld('account', {
-  [CHANNELS.ad]: async () => {
-    return await ipcRenderer.invoke('llooll')
-  },
   [CHANNELS.ad]: async (id: string) => {
     return await ipcRenderer.invoke(CHANNELS.ad, id)
   },
   [CHANNELS.aum]: async (id: string) => {
     return await ipcRenderer.invoke(CHANNELS.aum, id)
+  },
+  [CHANNELS.aca]: async (id: string) => {
+    return await ipcRenderer.invoke(CHANNELS.aca, id)
   },
   [CHANNELS.aua]: async (id: string) => {
     return await ipcRenderer.invoke(CHANNELS.aua, id)
@@ -39,24 +39,35 @@ contextBridge.exposeInMainWorld('account', {
   [CHANNELS.aga]: async () => {
     return await ipcRenderer.invoke(CHANNELS.aga)
   },
-  [CHANNELS.aa]: async (
-    email: string,
-    addType: string,
-    selectedDomain: string,
-    password: string,
-    recoveryEmail: string,
-    domainEmail: string
-  ) => {
-    return await ipcRenderer.invoke(
-      CHANNELS.aa,
-      email,
-      addType,
-      selectedDomain,
-      password,
-      recoveryEmail,
-      domainEmail
-    )
+  [CHANNELS.aa]: async (a: {
+    email: string
+    addType: string
+    selectedDomain?: string
+    password: string
+    recoveryEmail?: string
+    domainEmail?: string
+  }) => {
+    return await ipcRenderer.invoke(CHANNELS.aa, a)
   }
+  // [CHANNELS.aa]: async ({
+  //   email,
+  //   addType,
+  //   selectedDomain,
+  //   password,
+  //   recoveryEmail,
+  //   domainEmail
+  // }) => {
+  //   console.log()
+  //   return await ipcRenderer.invoke(
+  //     CHANNELS.aa,
+  //     email,
+  //     addType,
+  //     selectedDomain,
+  //     password,
+  //     recoveryEmail,
+  //     domainEmail
+  //   )
+  // }
 })
 
 contextBridge.exposeInMainWorld('domain', {
@@ -83,7 +94,7 @@ contextBridge.exposeInMainWorld('meta', {
   },
   [CHANNELS.mu]: async (meta: IMetaData) => {
     return await ipcRenderer.invoke(CHANNELS.mu, meta)
-  },
+  }
 })
 
 contextBridge.exposeInMainWorld('proxy', {
@@ -92,7 +103,7 @@ contextBridge.exposeInMainWorld('proxy', {
   },
   [CHANNELS.pa]: async (url: string, proxy: string) => {
     return await ipcRenderer.invoke(CHANNELS.pa, url, proxy)
-  },
+  }
 })
 
 contextBridge.exposeInMainWorld('record', {
@@ -100,7 +111,7 @@ contextBridge.exposeInMainWorld('record', {
     return await ipcRenderer.invoke(CHANNELS.pga)
   },
   [CHANNELS.rg]: async (id: string) => {
-    return await ipcRenderer.invoke(CHANNELS.pa, id)
+    return await ipcRenderer.invoke(CHANNELS.rg, id)
   }
 })
 

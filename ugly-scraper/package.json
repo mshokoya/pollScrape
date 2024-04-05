@@ -25,6 +25,7 @@
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
     "@legendapp/state": "^2.1.8",
+    "@radix-ui/themes": "^3.0.2",
     "advanced-proxy-checker": "^1.1.0",
     "async-mutex": "^0.5.0",
     "electron-rebuild": "^3.2.9",

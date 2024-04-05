@@ -9,6 +9,7 @@ import {
   WaddDomain,
   WaddProxy,
   WcheckAccount,
+  WconfirmAccount,
   WdeleteAccount,
   WdeleteDomain,
   WdeleteMetadata,
@@ -84,6 +85,7 @@ function createWindow(): void {
   ipcMain.handle(CHANNELS.aua, async (e, id: string) => await WupgradeAutomatically(id))
   ipcMain.handle(CHANNELS.ac, async (e, id: string) => await WcheckAccount(id))
   ipcMain.handle(CHANNELS.adel, async (e, id: string) => await WdeleteAccount(id))
+  ipcMain.handle(CHANNELS.aca, async (e, id: string) => await WconfirmAccount(id))
   ipcMain.handle(CHANNELS.ala, async (e, id: string) => await WloginAuto(id))
   ipcMain.handle(CHANNELS.alm, async (e, id: string) => await WloginManually(id))
   ipcMain.handle(
@@ -91,18 +93,7 @@ function createWindow(): void {
     async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
   )
   ipcMain.handle(CHANNELS.aga, async () => await WgetAccounts())
-  ipcMain.handle(
-    CHANNELS.aa,
-    async (
-      e,
-      email: string,
-      addType: string,
-      selectedDomain: string,
-      password: string,
-      recoveryEmail: string,
-      domainEmail: string
-    ) => await WaddAccount(email, addType, selectedDomain, password, recoveryEmail, domainEmail)
-  )
+  ipcMain.handle(CHANNELS.aa, async (e, args) => await WaddAccount(args))
 
   // =============== domain =====================
   ipcMain.handle(CHANNELS.da, async (e, domain: string) => await WaddDomain(domain))
@@ -124,7 +115,10 @@ function createWindow(): void {
   ipcMain.handle(CHANNELS.rg, async (e, id: string) => await WgetRecord(id))
 
   // =============== Scrape =====================
-  ipcMain.handle(CHANNELS.s, async (e, id: string, proxy: boolean, url: string) => await Wscrape(id, proxy, url))
+  ipcMain.handle(
+    CHANNELS.s,
+    async (e, id: string, proxy: boolean, url: string) => await Wscrape(id, proxy, url)
+  )
 
   // ==========================================================================================
 

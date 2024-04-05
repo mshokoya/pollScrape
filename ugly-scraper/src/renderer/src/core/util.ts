@@ -27,18 +27,21 @@ export const delay = (time: number) => {
 export const fmtDate = (n: any) => (n && n !== 'n/a' ? new Date(n).toDateString() : 'N/A')
 
 export const fetchData = async <T>(
-  url: string,
+  entity: string,
   method: string,
-  data?: any
+  ...args: any
 ): Promise<FetchData<T>> => {
-  return await fetch(`http://localhost:4000${url}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept-Encoding': 'gzip'
-    },
-    body: JSON.stringify(data)
-  }).then((res) => res.json())
+  console.log(args)
+  return await window[entity][method](...args)
+    .then((r) => {
+      console.log('in THEN')
+      console.log(r)
+      return r
+    })
+    .catch((r) => {
+      console.log('in Err')
+      console.log(r)
+    })
 }
 
 export const blinkCSS = (reqInProces: boolean = false, color: string = 'text-cyan-600') =>

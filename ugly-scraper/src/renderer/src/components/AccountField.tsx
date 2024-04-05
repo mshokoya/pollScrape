@@ -14,6 +14,7 @@ import {
   AccountReqType
 } from '../core/state/account'
 import { appState$ } from '../core/state'
+import { CHANNELS } from '../../../shared/util'
 
 export const AccountField = observer(() => {
   const s = accountState //useSelector ?
@@ -43,7 +44,7 @@ export const AccountField = observer(() => {
   // (FIX) email verification + get domain to determine login type // also colors
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await fetchData<IAccount>('/account', 'POST', {
+    await fetchData<IAccount>('account', CHANNELS.aa, {
       ...s.input.peek(),
       addType: s.addType.peek(),
       selectedDomain: s.selectedDomain.peek()
@@ -51,30 +52,27 @@ export const AccountField = observer(() => {
   }
 
   const login = async () => {
-    // s.reqType.set('login')
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/login/a/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.ala, accountID)
   }
 
   const manualLogin = async () => {
-    // s.reqType.set('manualLogin')
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/login/m/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.alm, accountID)
   }
 
   const checkAccount = async () => {
-    // s.reqType.set('check')
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/check/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.ac, accountID)
   }
 
   const updateAccount = async (input: Partial<IAccount>) => {
     const accountID = accounts[s.selectedAcc.peek()].id
     accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
-    await fetchData<IAccount>(`/account/${accountID}`, 'PUT', input)
+    await fetchData<IAccount>('account', CHANNELS.au, accountID, input)
       .then((data) => {
         if (data.ok) {
           stateResStatusHelper.add(accountID, ['update', 'ok'])
@@ -97,31 +95,27 @@ export const AccountField = observer(() => {
   }
 
   const upgradeAccount = async () => {
-    // s.reqType.set('upgrade')
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/upgrade/a/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.aua, accountID)
   }
 
   const manualUpgradeAccount = async () => {
-    // s.reqType.set('manualUpgrade')
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/upgrade/m/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.aum, accountID)
   }
 
   const clearMines = async () => {
-    // s.reqType.set('mines')
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/demine/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.ad, accountID)
   }
 
   const confirmAccount = async () => {
-    // s.reqType.set('confirm')
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData(`/account/confirm/${accountID}`, 'GET')
+    await fetchData('account', CHANNELS.aca, accountID)
   }
 
   // (FIX) complete func (dont delete, just archive)
@@ -132,7 +126,7 @@ export const AccountField = observer(() => {
 
     accountTaskHelper.add(accountID, { status: 'processing', type: 'delete' })
 
-    await fetchData<IAccount>(`/account/${accountID}`, 'DELETE')
+    await fetchData<IAccount>('account', CHANNELS.adel, accountID)
       .then((data) => {
         batch(() => {
           data.ok

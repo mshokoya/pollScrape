@@ -5,6 +5,7 @@ import { IProxy } from '../../components/ProxyField'
 import { IMetaData, IRecord } from '../../components/RecordField'
 import { IAccount } from './account'
 import { fetchData } from '../util'
+import { CHANNELS } from '../../../../shared/util'
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok' | 'fail']
 export type ResStatus<T> = { [entityID: string]: Status<T>[] }
@@ -31,19 +32,19 @@ export const appState$ = observable<AppState>({
 })
 
 Promise.all([
-  await fetchData<IAccount[]>('/account', 'GET')
+  await fetchData<IAccount[]>('account', CHANNELS.aga)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IDomain[]>('/domain', 'GET')
+  await fetchData<IDomain[]>('domain', CHANNELS.dga)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IProxy[]>('/proxy', 'GET')
+  await fetchData<IProxy[]>('proxy', CHANNELS.pga)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IMetaData[]>('/metadata', 'GET')
+  await fetchData<IMetaData[]>('metadata', CHANNELS.mga)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IRecord[]>('/records', 'GET')
+  await fetchData<IRecord[]>('records', CHANNELS.rga)
     .then((data) => data.data)
     .catch(() => [])
 ]).then((r) => {

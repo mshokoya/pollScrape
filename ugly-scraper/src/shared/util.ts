@@ -10,6 +10,7 @@ export const CHANNELS = {
   au: 'accountUpdate',
   aga: 'accountGetAll',
   aa: 'accountAdd',
+  aca: 'accountConfirm',
   // domain
   da: 'domainAdd',
   dv: 'domainVerify',
