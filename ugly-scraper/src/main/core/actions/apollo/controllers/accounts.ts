@@ -1,8 +1,12 @@
-import { AccountModel_ } from "../../../database/models/accounts"
-import { scrapeQueue } from "../../../scrape-queue"
-import { taskQueue } from "../../../task-queue"
-import { generateID } from "../../../util"
-import { io } from "../../../websockets"
+import { updateAccount } from '../../../database'
+import { AccountModel_, IAccount } from '../../../database/models/accounts'
+import { DomainModel_ } from '../../../database/models/domain'
+import { accountToMailbox, mailbox, MailboxAuthOptions } from '../../../mailbox'
+import { scrapeQueue } from '../../../scrape-queue'
+import { taskQueue } from '../../../task-queue'
+import { generateID, generateSlug, getDomain } from '../../../util'
+import { io } from '../../../websockets'
+import { apolloConfirmAccountEvent } from '../lib'
 
 export const TconfirmAccount = async (accountID: string) => {
   console.log('confirm')
@@ -28,7 +32,7 @@ export const TconfirmAccount = async (accountID: string) => {
           message: `confirming account ${account.email}`,
           data: { accountID }
         })
-        scrapeQueue.enqueue(taskID, 'apollo', 'ca', { accountID, account })
+        scrapeQueue.enqueue(taskID, 'apollo', 'cfma', { account })
       }
     )
 
@@ -60,8 +64,7 @@ export const TupgradeManually = async (accountID: string) => {
           message: `Upgrading ${account.email} manually`,
           data: { accountID }
         })
-        scrapeQueue.enqueue(taskID, 'apollo', 'um', { accountID })
-        await upgradeManually({ taskID, accountID, account })
+        scrapeQueue.enqueue(taskID, 'apollo', 'um', { account })
       }
     )
 
@@ -93,7 +96,7 @@ export const TupgradeAutomatically = async (accountID: string) => {
           message: `Upgrading ${account.email} automatically`,
           data: { accountID }
         })
-        await upgradeAutomatically(taskID, accountID, account)
+        scrapeQueue.enqueue(taskID, 'apollo', 'ua', { account })
       }
     )
 
@@ -125,7 +128,7 @@ export const TcheckAccount = async (accountID: string) => {
           message: `Getting information on ${account.email} credits`,
           data: { accountID }
         })
-        await checkAccount(taskID, accountID, account)
+        scrapeQueue.enqueue(taskID, 'apollo', 'chka', { account })
       }
     )
 
@@ -171,7 +174,7 @@ export const TloginAuto = async (accountID: string) => {
           message: `Logging into ${account.email} apollo account`,
           data: { accountID }
         })
-        await loginAuto(taskID, accountID, account)
+        scrapeQueue.enqueue(taskID, 'apollo', 'la', { account })
       }
     )
 
@@ -191,6 +194,7 @@ export const TaddAccount = async ({
   console.log('addAccount')
 
   try {
+    // @ts-ignore
     const email = emaill || import.meta.env.MAIN_VITE_AUTHEMAIL
     const domain = email
     let account: Partial<IAccount>
@@ -259,7 +263,7 @@ export const TaddAccount = async ({
           taskType: 'create',
           message: `adding ${account.email}`
         })
-        await addAccount(taskID, account as IAccount)
+        scrapeQueue.enqueue(taskID, 'apollo', 'aa', { account })
       }
     )
 
@@ -318,7 +322,7 @@ export const TloginManually = async (accountID: string) => {
           message: `Login into ${account.email}`,
           data: { accountID }
         })
-        await loginManually(taskID, accountID, account)
+        scrapeQueue.enqueue(taskID, 'apollo', 'lm', { account })
       }
     )
 
@@ -328,10 +332,9 @@ export const TloginManually = async (accountID: string) => {
   }
 }
 
-export const Tdemine = async (id: string = '65a50efc3c13f3197ddecf42') => {
+export const Tdemine = async (accountID: string) => {
   console.log('mines')
   try {
-    const accountID = id
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
 
     const account = await AccountModel_.findById(accountID)
@@ -351,7 +354,7 @@ export const Tdemine = async (id: string = '65a50efc3c13f3197ddecf42') => {
           message: `Demine ${account.email} popups`,
           data: { accountID }
         })
-        await demine(taskID, accountID, account)
+        scrapeQueue.enqueue(taskID, 'apollo', 'dm', { account })
       }
     )
 

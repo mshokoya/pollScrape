@@ -62,11 +62,9 @@ export const upgradeManually = async ({
 
 export const upgradeAutomatically = async ({
   taskID,
-  accountID,
   account
 }: {
   taskID: string
-  accountID: string
   account: IAccount
 }) => {
   const browserCTX = await scraper.newBrowser(false)
@@ -76,42 +74,26 @@ export const upgradeAutomatically = async ({
     // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
     await logIntoApolloAndUpgradeAccount(taskID, browserCTX, account)
     const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-    return await updateAccount({ id: accountID }, creditsInfo) // (FIX)
+    return await updateAccount({ id: account.id }, creditsInfo) // (FIX)
   } finally {
     await scraper.close(browserCTX)
   }
 }
 
-export const checkAccount = async ({
-  taskID,
-  accountID,
-  account
-}: {
-  taskID: string
-  accountID: string
-  account: IAccount
-}) => {
+export const checkAccount = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
   const browserCTX = await scraper.newBrowser(false)
   if (!browserCTX)
     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
   try {
     // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
     const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-    return await updateAccount({ id: accountID }, creditsInfo)
+    return await updateAccount({ id: account.id }, creditsInfo)
   } finally {
     await scraper.close(browserCTX)
   }
 }
 
-export const loginAuto = async ({
-  taskID,
-  accountID,
-  account
-}: {
-  taskID: string
-  accountID: string
-  account: IAccount
-}) => {
+export const loginAuto = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
   const browserCTX = await scraper.newBrowser(false)
 
   if (!browserCTX)
@@ -129,7 +111,7 @@ export const loginAuto = async ({
     })
 
     io.emit('apollo', { taskID, message: 'saving browser cookies in db' })
-    await updateAccount({ id: accountID }, { cookies: JSON.stringify(cookies) })
+    await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
   } finally {
     await scraper.close(browserCTX)
   }
@@ -148,15 +130,7 @@ export const addAccount = async ({ taskID, account }: { taskID: string; account:
   }
 }
 
-export const loginManually = async ({
-  taskID,
-  accountID,
-  account
-}: {
-  taskID: string
-  accountID: string
-  account: IAccount
-}) => {
+export const loginManually = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
   const browserCTX = await scraper.newBrowser(false)
   if (!browserCTX)
     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
@@ -165,7 +139,7 @@ export const loginManually = async ({
     await waitForNavigationTo(taskID, browserCTX, '/settings/account', 'settings page').then(
       async () => {
         const cookies = await getBrowserCookies(browserCTX)
-        return await updateAccount({ id: accountID }, { cookies: JSON.stringify(cookies) })
+        return await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
       }
     )
   } finally {
@@ -173,15 +147,7 @@ export const loginManually = async ({
   }
 }
 
-export const demine = async ({
-  taskID,
-  accountID,
-  account
-}: {
-  taskID: string
-  accountID: string
-  account: IAccount
-}) => {
+export const demine = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
   const browserCTX = await scraper.newBrowser(false)
   if (!browserCTX)
     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
@@ -190,7 +156,7 @@ export const demine = async ({
     await logIntoApollo(taskID, browserCTX, account)
     await waitForNavigationTo(taskID, browserCTX, 'settings/account').then(async () => {
       const cookies = await getBrowserCookies(browserCTX)
-      return await updateAccount({ id: accountID }, { cookies: JSON.stringify(cookies) })
+      return await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
     })
   } finally {
     await scraper.close(browserCTX)
