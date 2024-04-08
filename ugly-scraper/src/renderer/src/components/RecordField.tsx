@@ -115,13 +115,14 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
         //@ts-ignore
         setSelectedMeta(e.target.closest('tr').dataset.idx)
         break
-      case 'check':
+      case 'check': {
         //@ts-ignore
         const idx = parseInt(e.target.closest('tr').dataset.idx)
         metaChecked.includes(idx)
           ? setMetaChecked((p) => p.filter((a) => a !== idx))
           : setMetaChecked([...metaChecked, idx])
         break
+      }
       case 'extend':
         //@ts-ignore
         e.target.closest('tr').nextSibling.classList.toggle('hidden')
@@ -225,7 +226,7 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                                       {
                                         appState$.accounts
                                           .peek()
-                                          .find((a1) => a1.id === a0.accountID)?.domainEmail
+                                          .find((a1) => a1.id === a0.accountID)?.email
                                       }
                                     </td>
                                     <td className="px-2">{a0.range[0]}</td>

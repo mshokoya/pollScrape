@@ -3,7 +3,7 @@ import { ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess } from '../util
 import { appState$ } from '.'
 
 export const accountState = observable<State>({
-  input: { email: '', password: '', recoveryEmail: '', domainEmail: '' },
+  input: { email: '', password: '', recoveryEmail: ''},
   selectedAcc: null,
   reqInProcess: {}, // reqInProcess: [],
   reqType: null,
@@ -94,7 +94,6 @@ export type IAccount = {
   firstname: string
   lastname: string
   proxy: string
-  domainEmail: string
   lastUsed: number // new Date.getTime()
   recoveryEmail: string
   emailCreditsUsed: number
@@ -103,7 +102,6 @@ export type IAccount = {
   renewalStartDate: number | Date
   renewalEndDate: number | Date
   trialDaysLeft: number
-  apolloPassword: string
   history: [
     amountOfLeadsScrapedOnPage: number,
     timeOfScrape: number,

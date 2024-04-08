@@ -45,7 +45,6 @@ contextBridge.exposeInMainWorld('account', {
     selectedDomain?: string
     password: string
     recoveryEmail?: string
-    domainEmail?: string
   }) => {
     return await ipcRenderer.invoke(CHANNELS.aa, a)
   }

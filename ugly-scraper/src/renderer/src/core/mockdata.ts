@@ -41,7 +41,7 @@ export const accountMockData = [
     id: '12345',
     domain: 'domain',
     recoveryEmail: '',
-    domainEmail: 'mike@customdomain.com',
+
     accountType: 'free',
     trialTime: `${new Date('') || 'n/a'}`,
     isSuspended: false,
@@ -55,7 +55,7 @@ export const accountMockData = [
     id: '54321',
     domain: 'domain2',
     recoveryEmail: '',
-    domainEmail: 'mike@customdomain.com',
+
     accountType: 'prem',
     trialTime: new Date(),
     isSuspended: false,
@@ -69,7 +69,7 @@ export const accountMockData = [
     id: '12345',
     domain: 'domain',
     recoveryEmail: '',
-    domainEmail: 'mike@customdomain.com',
+
     accountType: 'free',
     trialTime: new Date(),
     isSuspended: false,
@@ -83,7 +83,7 @@ export const accountMockData = [
     id: '54321',
     domain: 'domain2',
     recoveryEmail: '',
-    domainEmail: 'mike@customdomain.com',
+
     accountType: 'prem',
     trialTime: new Date(),
     isSuspended: false,

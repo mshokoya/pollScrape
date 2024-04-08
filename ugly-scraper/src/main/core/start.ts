@@ -1,4 +1,4 @@
-import { initTaskQueue } from './task_queue'
+import { initTaskQueue } from './task-queue'
 import { initMailBox } from './mailbox'
 import { initForwarder } from './forwarder'
 import { initCache } from './cache'

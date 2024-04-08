@@ -1,18 +1,24 @@
 import puppeteer from 'puppeteer-extra'
-import { Page } from 'puppeteer-extra-plugin/dist/puppeteer'
+import { Browser, Page } from 'puppeteer-extra-plugin/dist/puppeteer'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import StealthUserAgent from 'puppeteer-extra-plugin-anonymize-ua'
 import AdBlockerPlugin from 'puppeteer-extra-plugin-adblocker'
-import Devtools from 'puppeteer-extra-plugin-devtools'
+// import Devtools from 'puppeteer-extra-plugin-devtools'
 import { hideDom } from './util'
-import { AppError } from '../../util'
-import { io } from '../../websockets'
-import { Cluster } from 'puppeteer-cluster'
-import { cpus } from 'node:os'
+import { AppError } from '../../../util'
+import { io } from '../../../websockets'
+import { generate } from 'generate-password'
 
 export type BrowserContext = {
+  id: string
+  context: any
   page: Page
+  type: 'headless' | 'head'
 }
+
+// export type BrowserContext = {
+//   page: Page
+// }
 
 puppeteer.use(StealthPlugin())
 puppeteer.use(
@@ -22,50 +28,128 @@ puppeteer.use(
   })
 )
 puppeteer.use(AdBlockerPlugin({ blockTrackers: true }))
-const dt = Devtools()
-dt.setAuthCredentials('bob', 'swordfish')
-puppeteer.use(dt)
+// const dt = Devtools()
+// dt.setAuthCredentials('bob', 'swordfish')
+// puppeteer.use(dt)
 
 export const scraper = (() => {
-  let headlessBrowser: Cluster | null = null
-  let browser: Cluster | null = null
+  let headlessBrowser: Browser | null = null
+  let browser: Browser | null = null
+  let headlessContextList: BrowserContext[] = []
+  let contextList: BrowserContext[] = []
+  // const _Block = new Mutex()
 
   const newBrowser = async (headless: boolean) => {
+    // @ts-ignore
+    const l: BrowserContext = {}
+    let context: any
+
     if (headless) {
       if (!headlessBrowser) {
-        headlessBrowser = await Cluster.launch({
-          concurrency: Cluster.CONCURRENCY_CONTEXT,
-          maxConcurrency: cpus().length,
-          puppeteer,
-          puppeteerOptions: {
-            headless,
-            defaultViewport: null
-          },
-          timeout: 31536000000
-        })
+        headlessBrowser = await puppeteer.launch({ headless: true })
       }
+      context = await headlessBrowser.createBrowserContext()
+      l.type = 'headless'
     } else {
       if (!browser) {
-        browser = await Cluster.launch({
-          concurrency: Cluster.CONCURRENCY_CONTEXT,
-          maxConcurrency: cpus().length,
-          puppeteer,
-          puppeteerOptions: {
-            headless,
-            defaultViewport: null
-          },
-          timeout: 31536000000
-        })
+        browser = await puppeteer.launch({ headless: false })
       }
+      context = await browser.createBrowserContext()
+      l.type = 'head'
     }
 
-    return headless ? headlessBrowser : browser
+    l.id = generate({ length: 15, numbers: true })
+    l.context = context
+    l.page = await context.newPage()
+
+    headless ? headlessContextList.push(l) : contextList.push(l)
+
+    return l
+  }
+
+  const visit = async (page: Page, url: string): Promise<Page> => {
+    await page.goto(url)
+    return page
+  }
+
+  const close = async (context: BrowserContext) => {
+    await context.page.close()
+    await context.context.close()
+
+    if (context.type === 'headless') {
+      if (headlessContextList.length === 1) {
+        await headlessBrowser
+          ?.close()
+          .catch(() => {})
+          .finally(() => {
+            headlessBrowser = null
+            headlessContextList = []
+          })
+      } else {
+        headlessContextList = headlessContextList.filter((c) => c.id !== context.id)
+      }
+    } else {
+      if (contextList.length === 1) {
+        await browser
+          ?.close()
+          .catch(() => {})
+          .finally(() => {
+            browser = null
+            contextList = []
+          })
+      } else {
+        contextList = contextList.filter((c) => c.id !== context.id)
+      }
+    }
   }
 
   return {
-    newBrowser
+    newBrowser,
+    visit,
+    close
   }
 })()
+
+// export const scraper = (() => {
+//   let headlessBrowser: Cluster | null = null
+//   let browser: Cluster | null = null
+
+//   const newBrowser = async (headless: boolean) => {
+//     if (headless) {
+//       if (!headlessBrowser) {
+//         headlessBrowser = await Cluster.launch({
+//           concurrency: Cluster.CONCURRENCY_CONTEXT,
+//           maxConcurrency: cpus().length,
+//           puppeteer,
+//           puppeteerOptions: {
+//             headless,
+//             defaultViewport: null
+//           },
+//           // timeout: 31536000
+//         })
+//       }
+//     } else {
+//       if (!browser) {
+//         browser = await Cluster.launch({
+//           concurrency: Cluster.CONCURRENCY_CONTEXT,
+//           maxConcurrency: cpus().length,
+//           puppeteer,
+//           puppeteerOptions: {
+//             headless,
+//             defaultViewport: null
+//           },
+//           // timeout: 31536000000
+//         })
+//       }
+//     }
+
+//     return headless ? headlessBrowser : browser
+//   }
+
+//   return {
+//     newBrowser
+//   }
+// })()
 
 export const visitGoogle = async ({ page }: BrowserContext) => {
   await page.goto('https://www.google.com/')

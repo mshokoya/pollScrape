@@ -19,8 +19,7 @@ declare global {
         addType: string,
         selectedDomain: string,
         password: string,
-        recoveryEmail: string,
-        domainEmail: string
+        recoveryEmail: string
       ) => Response
     }
     domain: {
@@ -64,7 +63,6 @@ export type IAccount = {
   password: string
   cookies: string
   proxy: string
-  domainEmail: string
   lastUsed: number // new Date.getTime()
   recoveryEmail: string
   emailCreditsUsed: number
@@ -73,7 +71,6 @@ export type IAccount = {
   renewalStartDate: number | Date
   renewalEndDate: number | Date
   trialDaysLeft: number
-  apolloPassword: string
   history: [
     amountOfLeadsScrapedOnPage: number,
     timeOfScrape: number,

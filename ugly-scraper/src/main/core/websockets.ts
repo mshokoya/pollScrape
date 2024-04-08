@@ -1,15 +1,18 @@
 import { prompt } from './prompt'
 import { IPC_APP } from '../../shared'
 
-type EmitObj = {
-  taskID: string
+type EmitResponse = {
+  taskID?: string
   taskType?: string
   message?: string
   data?: Record<string, any>
+  status?: string
+  metadata?: Record<string, any>
+  ok?: boolean
 }
 
 type IO = {
-  emit: (channel: string, { taskID, taskType, message }: EmitObj) => void
+  emit: (channel: string, { taskID, taskType, message }: EmitResponse) => void
 }
 
 export const SocketIO = (ipc: IPC_APP): IO => {
@@ -22,8 +25,8 @@ export const SocketIO = (ipc: IPC_APP): IO => {
   })
 
   return {
-    emit: (channel: string, { taskID, taskType, message, data }) => {
-      ipc.mainWindow.webContents.send(channel, { taskID, taskType, message, data })
+    emit: (channel: string, args) => {
+      ipc.mainWindow.webContents.send(channel, args)
     }
   }
 }

@@ -16,6 +16,7 @@ import { observer, useObservable } from '@legendapp/state/react'
 import { selectAccForScrapingFILO } from '../core/state/account'
 import { IoMdCloseCircle } from 'react-icons/io'
 import { FaArrowCircleLeft, FaArrowCircleRight } from 'react-icons/fa'
+import { CHANNELS } from '../../../shared/util'
 
 type State = {
   reqInProcess: boolean
@@ -52,18 +53,18 @@ export const ScrapeField = observer(() => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    // s.reqInProcess.set(true)
+    s.reqInProcess.set(true)
 
-    // await fetchData('/scrape', 'POST', {url: s.url.peek(), usingProxy: false})
-    //   .then( (d) => {
-    //     console.log(d)
-    //   })
-    //   .catch((err) => {
-    //     console.error(err)
-    //   })
-    //   .finally(() => {
-    //     s.reqInProcess.set(false)
-    //   })
+    await fetchData('scrape', CHANNELS.s, { url: s.url.peek(), usingProxy: false })
+      .then((d) => {
+        console.log(d)
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+      .finally(() => {
+        s.reqInProcess.set(false)
+      })
   }
 
   const handleInput = (urll: string) => {
@@ -181,7 +182,7 @@ export const ScrapeField = observer(() => {
 
     return {
       chunk,
-      accounts: accounts.map((a) => a.domainEmail)
+      accounts: accounts.map((a) => a.email)
     }
   }
 

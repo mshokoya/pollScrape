@@ -6,6 +6,7 @@ import { DomainPopup } from './DomainPopup'
 import { observer, useSelector } from '@legendapp/state/react'
 import { domainState, domainTaskHelper, domainResStatusHelper } from '../core/state/domain'
 import { appState$ } from '../core/state'
+import { CHANNELS } from '../../../shared/util'
 
 export type IDomain = {
   id: string
@@ -27,11 +28,12 @@ export const DomainField = observer(() => {
     const type = e.target.closest('td')?.dataset.type as string
 
     switch (type) {
-      case 'opt':
+      case 'opt': {
         //@ts-ignore
         const domainIdx = e.target.closest('tr').dataset.idx
         s.selectedDomain.set(domainIdx)
         break
+      }
       case 'extend':
         //@ts-ignore
         e.target.closest('tr').nextSibling.classList.toggle('hidden')
@@ -44,7 +46,7 @@ export const DomainField = observer(() => {
   const addDomain = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     domainTaskHelper.add('domain', { type: 'create', status: 'processing' })
-    await fetchData<IDomain>('/domain', 'POST', s.input.peek())
+    await fetchData<IDomain>('domain', CHANNELS.da, s.input.peek())
       .then((d) => {
         if (d.ok) {
           domainResStatusHelper.add('domain', ['create', 'ok'])
@@ -68,7 +70,7 @@ export const DomainField = observer(() => {
     const domainID = domains[s.selectedDomain.peek()].id
     const domain = domains[s.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, { type: 'delete', status: 'processing' })
-    await fetchData<IDomain>(`/domain/${domain}`, 'DELETE')
+    await fetchData<IDomain>('domain', CHANNELS.dd, domain)
       .then((res) => {
         if (res.ok) {
           closePopup()
@@ -93,7 +95,7 @@ export const DomainField = observer(() => {
     const domainID = domains[s.selectedDomain.peek()].id
     const domain = domains[s.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, { type: 'verify', status: 'processing' })
-    await fetchData<IDomain>(`/domain/verify/${domain}`, 'GET')
+    await fetchData<IDomain>('domain', CHANNELS.dv, domain)
       .then((res) => {
         if (res.ok) {
           domainResStatusHelper.add(domainID, ['verify', 'ok'])

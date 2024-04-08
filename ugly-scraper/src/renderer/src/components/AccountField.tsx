@@ -27,11 +27,12 @@ export const AccountField = observer(() => {
     const type = e.target.closest('td')?.dataset.type as string
 
     switch (type) {
-      case 'opt':
+      case 'opt': {
         //@ts-ignore
         const accIdx = e.target.closest('tr').dataset.idx
         s.selectedAcc.set(accIdx)
         break
+      }
       case 'extend':
         //@ts-ignore
         e.target.closest('tr').nextSibling.classList.toggle('hidden')
@@ -218,7 +219,7 @@ export const AccountField = observer(() => {
             <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%]">
               <thead className="sticky top-0 bg-black">
                 <tr>
-                  <th className="px-2"> Domain Email </th>
+                  <th className="px-2"> Email </th>
                   <th className="px-2"> Credits </th>
                   <th className="px-2"> Verified </th>
                   <th className="px-2"> Suspended </th>
@@ -246,7 +247,7 @@ export const AccountField = observer(() => {
                         key={idx}
                       >
                         <td className="overflow-scroll truncate max-w-2" data-type="extend">
-                          {a.domainEmail}
+                          {a.email}
                         </td>
                         <td className="overflow-scroll truncate" data-type="extend">
                           {fmtCredits(a.emailCreditsLimit, a.emailCreditsUsed)}
@@ -279,13 +280,13 @@ export const AccountField = observer(() => {
                           className={`hidden border-cyan-600 border-y text-[0.7rem] w-[2000px] ${a.emailCreditsUsed !== a.emailCreditsLimit ? 'el-ok' : 'el-no'} opacity-95`}
                         >
                           <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Domain Email:</th>
-                            <td className="px-2">{a.domainEmail}</td>
+                            <th className="whitespace-nowrap px-2 w-4">Email:</th>
+                            <td className="px-2">{a.email}</td>
                           </tr>
 
                           <tr className="hover:border-cyan-600 hover:border-y">
                             <th className="whitespace-nowrap px-2 w-4">Password:</th>
-                            <td className="px-2">{a.apolloPassword}</td>
+                            <td className="px-2">{a.password}</td>
                           </tr>
 
                           <tr className="hover:border-cyan-600 hover:border-y">
@@ -317,11 +318,6 @@ export const AccountField = observer(() => {
                           <tr className="hover:border-cyan-600 hover:border-y">
                             <th className="whitespace-nowrap px-2 w-4">Is Suspended ?:</th>
                             <td className="px-2">{a.suspended ? 'yes' : 'no'}</td>
-                          </tr>
-
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Email:</th>
-                            <td className="px-2">{a.email}</td>
                           </tr>
 
                           <tr className="hover:border-cyan-600 hover:border-y">

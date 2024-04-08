@@ -1,32 +1,8 @@
-import { Express } from 'express'
-import { updateAccount } from '../database'
-import { AccountModel_, IAccount } from '../database/models/accounts'
-import { scraper } from '../actions/apollo/lib/scraper'
-import {
-  apolloConfirmAccountEvent,
-  completeApolloAccountConfimation,
-  logIntoApollo,
-  logIntoApolloAndGetCreditsInfo,
-  logIntoApolloAndUpgradeAccount,
-  logIntoApolloAndUpgradeAccountManually,
-  manuallyLogIntoApollo,
-  signupForApollo
-} from '../actions/apollo/lib'
-import {
-  getBrowserCookies,
-  // logIntoApolloThenVisit,
-  waitForNavigationTo
-} from '../actions/apollo/lib/util'
-import { AppError, generateID, getDomain } from '../util'
-// import { apolloGetCreditsInfo } from '../scraper/apollo';
-import { taskQueue } from '../task-queue'
-import { MailboxAuthOptions, accountToMailbox, mailbox } from '../mailbox'
-import { generateSlug } from 'random-word-slugs'
-import { DomainModel_ } from '../database/models/domain'
-import { io } from '../websockets'
-import { scrapeQueue } from '../scrape-queue'
-
-// ============================================================================================
+import { AccountModel_ } from "../../../database/models/accounts"
+import { scrapeQueue } from "../../../scrape-queue"
+import { taskQueue } from "../../../task-queue"
+import { generateID } from "../../../util"
+import { io } from "../../../websockets"
 
 export const TconfirmAccount = async (accountID: string) => {
   console.log('confirm')
@@ -52,7 +28,7 @@ export const TconfirmAccount = async (accountID: string) => {
           message: `confirming account ${account.email}`,
           data: { accountID }
         })
-        scrapeQueue.enqueue(taskID, 'apollo', 'confirm', { accountID })
+        scrapeQueue.enqueue(taskID, 'apollo', 'ca', { accountID, account })
       }
     )
 
@@ -84,7 +60,8 @@ export const TupgradeManually = async (accountID: string) => {
           message: `Upgrading ${account.email} manually`,
           data: { accountID }
         })
-        await upgradeManually(taskID, accountID, account)
+        scrapeQueue.enqueue(taskID, 'apollo', 'um', { accountID })
+        await upgradeManually({ taskID, accountID, account })
       }
     )
 

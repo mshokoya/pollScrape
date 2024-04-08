@@ -1,9 +1,9 @@
 import { BrowserContext, apolloInitSignup } from './scraper'
-import { IAccount } from '../../database/models/accounts'
+import { IAccount } from '../../../database/models/accounts'
 import { visitApolloLoginPage } from './apollo'
 import { waitForNavHideDom } from './util'
-import { io } from '../../websockets'
-import { AppError, delay } from '../../util'
+import { io } from '../../../websockets'
+import { AppError, delay } from '../../../util'
 
 const verifyGmail = async (taskID: string, browserCTX: BrowserContext, recoverEmail: string) => {
   const page = browserCTX.page

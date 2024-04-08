@@ -1,9 +1,9 @@
 import { logIntoApollo } from '.'
-import { updateAccount } from '../../database'
-import { IAccount } from '../../database/models/accounts'
-import { IRecord } from '../../database/models/records'
-import { AppError, delay } from '../../util'
-import { io } from '../../websockets'
+import { updateAccount } from '../../../database'
+import { IAccount } from '../../../database/models/accounts'
+import { IRecord } from '../../../database/models/records'
+import { AppError, delay } from '../../../util'
+import { io } from '../../../websockets'
 import { apolloDoc } from './dom/scrapeData'
 import { BrowserContext } from './scraper'
 import {
@@ -57,7 +57,7 @@ export const visitApolloDefaultLogin = async (
   const loginInputFieldSelector = '[class="zp_bWS5y zp_J0MYa"]' // [email, password]
   const loginButtonSelector = '[class="zp-button zp_zUY3r zp_H_wRH"]'
 
-  if (!account.domainEmail || !account.apolloPassword)
+  if (!account.email || !account.password)
     throw new AppError(taskID, 'failed to login, credentials missing')
 
   await visitApolloLoginPage(taskID, browserCTX)
@@ -69,8 +69,8 @@ export const visitApolloDefaultLogin = async (
 
   if (!login.length || !submitButton) throw new AppError(taskID, 'failed to login')
 
-  await login[0].type(account.domainEmail)
-  await login[1].type(account.apolloPassword)
+  await login[0].type(account.email)
+  await login[1].type(account.password)
 }
 
 export const apolloDefaultLogin = async (
@@ -86,7 +86,7 @@ export const apolloDefaultLogin = async (
   const popupCloseButtonSelector =
     '[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]' // once click on 'access email'
 
-  if (!account.domainEmail || !account.apolloPassword)
+  if (!account.email || !account.password)
     throw new AppError(taskID, 'failed to login, credentials missing')
 
   const page = browserCTX.page
@@ -102,10 +102,8 @@ export const apolloDefaultLogin = async (
 
   if (!login.length || !submitButton) throw new AppError(taskID, 'failed to login')
 
-  await login[0].type(account.domainEmail)
-  await login[1].type(account.apolloPassword)
-
-  await delay(5000)
+  await login[0].type(account.email)
+  await login[1].type(account.password)
 
   await submitButton?.click()
   // route hit on login - https://app.apollo.io/#/onboarding-hub/queue
@@ -267,7 +265,7 @@ export const apolloDefaultSignup = async (
   { page }: BrowserContext,
   account: Partial<IAccount>
 ) => {
-  if (!account.domainEmail) throw new AppError(taskID, 'failed to login, credentials missing')
+  if (!account.email) throw new AppError(taskID, 'failed to login, credentials missing')
 
   await page.goto('https://www.apollo.io/sign-up').then(() => {
     io.emit('apollo', { taskID, message: 'navigated to the apollo signup page' })
@@ -280,7 +278,7 @@ export const apolloDefaultSignup = async (
     })
     .catch(() => null)
   if (!input) throw new AppError(taskID, 'failed to register for apollo')
-  await input.type(account.domainEmail).then(() => {
+  await input.type(account.email).then(() => {
     io.emit('apollo', { taskID, message: 'entered email into field' })
   })
 
@@ -340,7 +338,7 @@ export const apolloConfirmAccount = async (
   const passwordField = await page.$('input[class="zp_bWS5y zp_J0MYa"][name="password"]')
   if (!passwordField) throw new AppError(taskID, 'Failed to find password field')
   await passwordField
-    .type(account.apolloPassword)
+    .type(account.password)
     .then(() => {
       io.emit('apollo', { taskID, message: "entered password into 'password' field" })
     })
@@ -351,7 +349,7 @@ export const apolloConfirmAccount = async (
   )
   if (!confirmPasswordField) throw new AppError(taskID, 'Failed to find confirm password field')
   await confirmPasswordField
-    .type(account.apolloPassword)
+    .type(account.password)
     .then(() => {
       io.emit('apollo', { taskID, message: "entered password in 'confirm password' field" })
     })

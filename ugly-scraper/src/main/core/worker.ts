@@ -1,17 +1,17 @@
 import { getRecord, getRecords } from './server/record-routes'
 import { addProxy, getProxies } from './server/proxy-routes'
 import {
-  addAccount,
-  checkAccount,
-  confirmAccount,
+  TaddAccount,
+  TcheckAccount,
+  TconfirmAccount,
   deleteAccount,
-  demine,
+  Tdemine,
   getAccounts,
-  loginAuto,
-  loginManually,
+  TloginAuto,
+  TloginManually,
   updateAcc,
-  upgradeAutomatically,
-  upgradeManually
+  TupgradeAutomatically,
+  TupgradeManually
 } from './server/account-routes'
 import { deleteMetadata, getMetadatas, updateMetadata } from './server/metadata-route'
 import { scrapeLeads } from './server/scrape-routes'
@@ -24,17 +24,17 @@ import { IMetaData } from './database/models/metadata'
 // https://geonode.com/free-proxy-list
 
 // Accounts
-export const WconfirmAccount = async (id: string) => await confirmAccount(id)
-export const WupgradeManually = async (id: string) => await upgradeManually(id)
-export const WupgradeAutomatically = async (id: string) => await upgradeAutomatically(id)
-export const WcheckAccount = async (id: string) => await checkAccount(id)
+export const WconfirmAccount = async (id: string) => await TconfirmAccount(id)
+export const WupgradeManually = async (id: string) => await TupgradeManually(id)
+export const WupgradeAutomatically = async (id: string) => await TupgradeAutomatically(id)
+export const WcheckAccount = async (id: string) => await TcheckAccount(id)
 export const WdeleteAccount = async (id: string) => await deleteAccount(id)
-export const WloginAuto = async (id: string) => await loginAuto(id)
-export const Wdemine = async (id: string) => await demine(id)
-export const WloginManually = async (id: string) => await loginManually(id)
+export const WloginAuto = async (id: string) => await TloginAuto(id)
+export const Wdemine = async (id: string) => await Tdemine(id)
+export const WloginManually = async (id: string) => await TloginManually(id)
 export const WupdateAcc = async (id: string, account: IAccount) => await updateAcc(id, account)
 export const WgetAccounts = async () => await getAccounts()
-export const WaddAccount = async (acc) => await addAccount(acc)
+export const WaddAccount = async (acc) => await TaddAccount(acc)
 
 // Domain
 export const WaddDomain = async (domain: string) => await addDomain(domain)
@@ -58,3 +58,7 @@ export const WgetRecords = async () => await getRecords()
 // scrape
 export const Wscrape = async (id: string, proxy: boolean, url: string) =>
   await scrapeLeads(id, proxy, url)
+
+export const l = () => {
+  
+}

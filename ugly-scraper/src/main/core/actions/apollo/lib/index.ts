@@ -4,9 +4,9 @@ import {
   selectAccForScrapingFILO,
   selectProxy,
   totalLeadsScrapedInTimeFrame
-} from '../../database/util'
+} from '../../../database/util'
 import useProxy from 'puppeteer-page-proxy'
-import { AccountModel_, IAccount } from '../../database/models/accounts'
+import { AccountModel_, IAccount } from '../../../database/models/accounts'
 import {
   getAllApolloAccounts,
   saveLeadsFromRecovery,
@@ -14,7 +14,7 @@ import {
   updateAccount,
   updateDBForNewScrape,
   updateMeta
-} from '../../database'
+} from '../../../database'
 import {
   apolloAddLeadsToListAndScrape,
   apolloConfirmAccount,
@@ -30,10 +30,10 @@ import {
 } from './apollo'
 import { apolloOutlookLogin, apolloOutlookSignup, visitOutlookLoginAuthPortal } from './outlook'
 import { apolloGmailLogin, apolloGmailSignup, visitGmailLoginAuthPortal } from './gmail'
-import { MBEventArgs, accountToMailbox, mailbox } from '../../mailbox'
-import { getApolloConfirmationLinksFromMail } from '../../mailbox/apollo'
+import { MBEventArgs, accountToMailbox, mailbox } from '../../../mailbox'
+import { getApolloConfirmationLinksFromMail } from '../../../mailbox/apollo'
 import passwordGenerator from 'generate-password'
-import { io } from '../../websockets'
+import { io } from '../../../websockets'
 import {
   AppError,
   chuckRange,
@@ -44,12 +44,11 @@ import {
   getRangeFromApolloURL,
   setPageInApolloURL,
   setRangeInApolloURL
-} from '../../util'
-import { IMetaData, MetadataModel } from '../../database/models/metadata'
+} from '../../../util'
+import { IMetaData } from '../../../database/models/metadata'
 import { Mutex } from 'async-mutex'
-import { cache } from '../../cache'
-import { prompt } from '../../prompt'
-import { init } from '../../start'
+import { cache } from '../../../cache'
+import { prompt } from '../../../prompt'
 
 // (FIX) FINISH
 export const logIntoApollo = async (
@@ -100,7 +99,7 @@ export const signupForApollo = async (
           io.emit('apollo', { taskID, message: 'successfully created apollo account' })
         })
         .then(() => {
-          updateAccount({ domainEmail: account.domainEmail }, { verified: 'yes' })
+          updateAccount({ email: account.email }, { verified: 'yes' })
         })
       break
     case 'gmail':
@@ -109,7 +108,7 @@ export const signupForApollo = async (
           io.emit('apollo', { taskID, message: 'successfully created apollo account' })
         })
         .then(() => {
-          updateAccount({ domainEmail: account.domainEmail }, { verified: 'yes' })
+          updateAccount({ email: account.email }, { verified: 'yes' })
         })
       break
     default:
@@ -118,7 +117,7 @@ export const signupForApollo = async (
           io.emit('apollo', { taskID, message: 'successfully created apollo account' })
         })
         .then(() => {
-          updateAccount({ domainEmail: account.domainEmail }, { verified: 'confirm' })
+          updateAccount({ email: account.email }, { verified: 'confirm' })
         })
       break
   }
@@ -206,7 +205,7 @@ export const logIntoApolloAndUpgradeAccountManually = async (
       })
 
       return await apolloGetCreditsInfo(taskID, browserCTX).then((_) => {
-        io.emit('apollo', { taskID, message: `obtained ${account.domainEmail} credits info` })
+        io.emit('apollo', { taskID, message: `obtained ${account.email} credits info` })
         return _
       })
     })
@@ -231,7 +230,7 @@ export const logIntoApolloAndGetCreditsInfo = async (
   return await apolloGetCreditsInfo(taskID, browserCTX).then((_) => {
     io.emit('apollo', {
       taskID,
-      message: `successfully obtained ${account.domainEmail} credits info`
+      message: `successfully obtained ${account.email} credits info`
     })
     return _
   })
@@ -256,7 +255,7 @@ export const completeApolloAccountConfimation = async (
     const fromAddress = mail.envelope.from[0].address
     const fromName = mail.envelope.from[0].name
     if (
-      toAddress === account.domainEmail &&
+      toAddress === account.email &&
       (fromAddress?.includes('apollo') || fromName?.includes('apollo'))
     ) {
       const links = await getApolloConfirmationLinksFromMail(mail).then((_) => {
@@ -270,22 +269,22 @@ export const completeApolloAccountConfimation = async (
           'Failed to confirm apollo account, could not find confimation link'
         )
 
-      account.apolloPassword = passwordGenerator.generate({
+      account.password = passwordGenerator.generate({
         length: 20,
         numbers: true
       })
 
       await apolloConfirmAccount(taskID, browserCTX, links[0], account).then(() =>
-        io.emit('apollo', { taskID, message: `confirmed account ${account.domainEmail}` })
+        io.emit('apollo', { taskID, message: `confirmed account ${account.email}` })
       )
 
       const cookies = await getBrowserCookies(browserCTX)
       const newAccount = await updateAccount(
-        { domainEmail: toAddress },
+        { email: toAddress },
         {
           cookies: JSON.stringify(cookies),
           verified: 'yes',
-          apolloPassword: account.apolloPassword
+          password: account.password
         }
       )
       return newAccount
@@ -334,10 +333,10 @@ export const apolloConfirmAccountEvent = async (
         'Failed to confirm apollo account, could not find confimation link'
       )
 
-    const account = await AccountModel_.findOne({ domainEmail: toAddress })
+    const account = await AccountModel_.findOne({ email: toAddress })
     if (!account) throw new AppError(taskID, 'Failed to find account (new mail)')
 
-    account.apolloPassword = passwordGenerator.generate({
+    account.password = passwordGenerator.generate({
       length: 20,
       numbers: true
     })
@@ -352,16 +351,16 @@ export const apolloConfirmAccountEvent = async (
     //   async ({ page, data: { taskID, account, accountID } }) => {
     //     await init()
     //     await apolloConfirmAccount(taskID, browserCTX, links[0], account).then(() =>
-    //       io.emit('apollo', { taskID, message: `confirmed ${account.domainEmail}` })
+    //       io.emit('apollo', { taskID, message: `confirmed ${account.email}` })
     //     )
     //     const cookies = await getBrowserCookies(browserCTX)
     //     await scraper.close(browserCTX)
     //     await updateAccount(
-    //       { domainEmail: toAddress },
+    //       { email: toAddress },
     //       {
     //         cookies: JSON.stringify(cookies),
     //         verified: 'yes',
-    //         apolloPassword: account.apolloPassword
+    //         password: account.password
     //       }
     //     )
     //     console.log('heeemail id')

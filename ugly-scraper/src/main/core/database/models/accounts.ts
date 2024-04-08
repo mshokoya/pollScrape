@@ -22,7 +22,6 @@ export type IAccount = {
   password: string
   cookies: string
   proxy: string
-  domainEmail: string
   lastUsed: number // new Date.getTime()
   recoveryEmail: string
   emailCreditsUsed: number
@@ -31,7 +30,6 @@ export type IAccount = {
   renewalStartDate: number | Date
   renewalEndDate: number | Date
   trialDaysLeft: number
-  apolloPassword: string
   history: [
     amountOfLeadsScrapedOnPage: number,
     timeOfScrape: number,
@@ -141,7 +139,7 @@ export const AccountModel_ = {
   findAll: async (
     filter: Partial<Omit<IAccount, 'history'>> = {},
     opts?: FindOptions
-  ): Promise<IAccount> =>
+  ): Promise<IAccount[]> =>
     //@ts-ignore
     (await Account.findAll<IAccount>({ where: filter, raw: true, ...opts })).map((a) => ({
       ...a,
@@ -232,12 +230,10 @@ const accountSchema = new Schema<IAccount>({
   trialTime: { type: String, default: '' }, // should be trial end date & time
   suspended: { type: Boolean, default: false },
   loginType: { type: String, default: 'default' }, // (FIX) remove and switch with domain
-  domainEmail: { type: String, default: '' },
   verified: { type: String, default: 'no' },
   email: { type: String, default: '' },
   password: { type: String, default: '' },
   cookies: { type: String, default: '' },
-  apolloPassword: { type: String, default: '' },
   proxy: { type: String, default: '' },
   emailCreditsUsed: { type: Number, default: -1 },
   emailCreditsLimit: { type: Number, default: -1 },

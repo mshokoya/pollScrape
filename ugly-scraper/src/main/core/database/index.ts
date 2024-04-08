@@ -5,7 +5,7 @@ import { generateSlug } from 'random-word-slugs'
 import { IRecord, IRecords, RecordModel_, } from './models/records'
 import { IMetaData, MetaDataModel_ } from './models/metadata'
 import { v4 as uuidv4 } from 'uuid'
-import { CreditsInfo } from '../scraper/apollo/util'
+import { CreditsInfo } from '../actions/apollo/lib/util'
 import { AppError } from '../util'
 import { sequelize } from './db'
 
@@ -132,7 +132,7 @@ export const initMeta = async (url: string): Promise<IMetaData> => {
 }
 
 export const getAllApolloAccounts = async (): Promise<IAccount[]> => {
-  return (await AccountModel_.findAll()) as IAccount[]
+  return await AccountModel_.findAll()
 }
 
 export const deleteMetaAndRecords = async (metaID: string) => {

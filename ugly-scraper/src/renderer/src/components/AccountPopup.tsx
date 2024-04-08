@@ -73,7 +73,7 @@ export const AccountPopup = (p: Props) => {
         <IoMdClose className="absolute top-0 right-0 bg-cyan-600" onClick={handleClose} />
         <div className="text-center border-b-2 border-cyan-600 mb-2">
           <h1>
-            <span className="text-cyan-600">{p.account.domainEmail || ''}</span> Settings
+            <span className="text-cyan-600">{p.account.email || ''}</span> Settings
           </h1>
         </div>
         {obs.page.get() === 'update' ? (
@@ -279,19 +279,6 @@ export const UpdateFields = ({ obs, handleRequest, account }: UFProps) => {
           />
         </div>
 
-        <div className="mb-3">
-          <label className="mr-2 border-cyan-600 border-b-2" htmlFor="domain">
-            Domain Email:
-          </label>
-          <input
-            type="text"
-            id="domain"
-            value={obs.input.domainEmail.get()}
-            onChange={(e) => {
-              obs.input.set((p) => ({ ...p, domainEmail: e.target.value }))
-            }}
-          />
-        </div>
 
         <div className="mb-3">
           <label className="mr-2 border-cyan-600 border-b-2" htmlFor="recovery">

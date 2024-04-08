@@ -1,10 +1,10 @@
 import { Page } from 'puppeteer-extra-plugin/dist/puppeteer'
 import { BrowserContext, visitGoogle } from './scraper'
 import { logIntoApollo } from '.'
-import { updateAccount } from '../../database'
-import { IAccount } from '../../database/models/accounts'
-import { io } from '../../websockets'
-import { delay } from '../../util'
+import { updateAccount } from '../../../database'
+import { IAccount } from '../../../database/models/accounts'
+import { io } from '../../../websockets'
+import { delay } from '../../../util'
 
 export type CreditsInfo = {
   emailCreditsUsed: number
