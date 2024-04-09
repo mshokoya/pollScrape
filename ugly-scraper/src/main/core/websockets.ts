@@ -2,11 +2,11 @@ import { prompt } from './prompt'
 import { IPC_APP } from '../../shared'
 
 type EmitResponse = {
-  taskID?: string
-  taskType?: string
-  message?: string
+  taskID: string
+  taskType: string
+  message: string
   data?: Record<string, any>
-  status?: string
+  status: string
   metadata?: Record<string, any>
   ok?: boolean
 }

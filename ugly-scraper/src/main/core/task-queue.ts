@@ -3,6 +3,7 @@ import { Mutex } from 'async-mutex'
 import AbortablePromise from 'promise-abortable'
 import { generateID } from './util'
 import { io } from './websockets'
+import { ipcMain } from 'electron'
 // import { Piscina } from 'piscina';
 // import path from 'path'
 
@@ -37,7 +38,7 @@ const TaskQueue = () => {
   // let pool;
 
   const enqueue = async <T = Record<string, any>>(
-    id = generateID(),
+    taskID = generateID(),
     taskGroup: string,
     taskType: string,
     message: string,
@@ -48,14 +49,15 @@ const TaskQueue = () => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
-        taskQueue.push({ id, action, args, taskGroup, taskType, message, metadata })
+        taskQueue.push({ taskID, action, args, taskGroup, taskType, message, metadata })
       })
       .then(() => {
         io.emit('taskQueue', {
+          taskID,
           message: 'new task added to queue',
           status: 'enqueue',
           taskType: 'enqueue',
-          metadata: { taskID: id, taskGroup, taskType, metadata }
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
       .finally(() => {
@@ -72,6 +74,7 @@ const TaskQueue = () => {
       .then((t) => {
         if (!t) return
         io.emit('taskQueue', {
+          taskID: t.id,
           message: 'moving from queue to processing',
           status: 'passing',
           taskType: 'dequeue',
@@ -93,6 +96,7 @@ const TaskQueue = () => {
       })
       .then(() => {
         io.emit('taskQueue', {
+          taskID: id,
           message: 'deleting task from queue',
           status: 'removed',
           taskType: 'remove',
@@ -108,6 +112,7 @@ const TaskQueue = () => {
       })
       .then(() => {
         io.emit('processQueue', {
+          taskID: item[0],
           message: 'new task added to processing queue',
           status: 'start',
           taskType: 'enqueue',
@@ -126,6 +131,7 @@ const TaskQueue = () => {
       })
       .then(() => {
         io.emit('processQueue', {
+          taskID: id,
           message: 'removed completed task from queue',
           status: 'end',
           taskType: 'dequeue',
@@ -143,6 +149,7 @@ const TaskQueue = () => {
       })
       .then(() => {
         io.emit('processQueue', {
+          taskID: id,
           message: 'cancelled',
           status: 'stopped',
           taskType: 'stop',
@@ -199,11 +206,13 @@ const TaskQueue = () => {
         .then(async (r) => {
           console.log('in tq then')
           console.log(r)
+          // @ts-ignore
           io.emit(task.taskGroup, { ...taskIOArgs, ok: true, metadata: r })
         })
         .catch(async (err) => {
           console.log('in tq err')
           console.log(err)
+          // @ts-ignore
           io.emit(task.taskGroup, { ...taskIOArgs, ok: false, message: err.message })
         })
         .finally(() => {
@@ -220,6 +229,12 @@ const TaskQueue = () => {
   function init() {
     maxWorkers = Math.round(cpus().length / 2)
   }
+
+  ipcMain.on('scrapeProcessQueue', ({ taskID, taskGroup, ok, message, metadata }) => {
+    io.emit(taskGroup, { ok, message, taskID })
+    _TIP_Dequeue(taskID)
+    exec()
+  })
 
   return {
     enqueue,

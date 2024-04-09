@@ -1,32 +1,31 @@
 import { cpus } from 'os'
 import { Mutex } from 'async-mutex'
-import AbortablePromise from 'promise-abortable'
 import { generateID } from './util'
 import { io } from './websockets'
-import { MessageChannelMain, MessagePortMain, UtilityProcess, utilityProcess } from 'electron/main'
+import {
+  ipcMain,
+  MessageChannelMain,
+  MessagePortMain,
+  UtilityProcess,
+  utilityProcess
+} from 'electron/main'
 import path from 'path'
-import { IAccount } from './database/models/accounts'
-// import { Piscina } from 'piscina';
-// import path from 'path'
+import { P2cBalancer } from 'load-balancers'
 
-// const piscina = new Piscina({
-//   filename: path.resolve(__dirname, 'worker.js')
-// });
-
-type QueueItem = {
+type TQueueItem = {
+  pid: string
   taskID: string
   taskGroup: string
-  jobType: string
-  scrapeID: string
-  jobArgs: Record<string, any> & { scrapeID: string }
+  taskType: string
+  taskArgs: Record<string, any> & { taskID: string }
 }
 
-type TIP_Item = [
-  id: string,
-  args: Record<string, any> | undefined,
-  AbortablePromise<unknown>,
-  QueueItem
-]
+// type PQueueItem = [
+//   id: string,
+//   args: Record<string, any> | undefined,
+//   // AbortablePromise<unknown>,
+//   TQueueItem
+// ]
 
 type Forks = {
   [key: string]: {
@@ -45,10 +44,13 @@ const ScrapeQueue = () => {
   const _Plock = new Mutex()
   const exec_lock = new Mutex()
   let maxJobs: number
-  const taskQueue: QueueItem[] = []
-  let processQueue: TIP_Item[] = []
+  const taskQueue: TQueueItem[] = []
+  let processQueue: PQueueItem[] = []
   const maxForks = cpus().length
   const forks: Forks = {}
+  let forkKeys: string[]
+  let lb: P2cBalancer
+  const tasks = {}
 
   const createProcess = () => {
     const id = generateID()
@@ -67,6 +69,8 @@ const ScrapeQueue = () => {
   }
 
   const handleProcessResponse = (evt: { data: Record<string, any> }) => {
+    console.log('eevvtt')
+    console.log(evt)
     switch (evt.data.type) {
       case 'pong': {
         forks[evt.data.id].status = 'ready'
@@ -74,12 +78,62 @@ const ScrapeQueue = () => {
       }
       case 'started': {
         forks[evt.data.id].TIP.push(evt.data.taskID)
+        tasks[evt.data.taskID] = tasks[evt.data.taskID]
+          ? [].concat(tasks[evt.data.taskID], [evt.data.id])
+          : [evt.data.id]
+        io.emit('scrapeProcessQueue', {
+          taskID: evt.data.taskID,
+          message: 'moving from queue to processing',
+          status: 'start',
+          taskType: 'enqueue',
+          metadata: {
+            taskID: evt.data.taskID,
+            scrapeID: evt.data.scrapeID,
+            taskGroup: evt.data.taskGroup
+          }
+        })
+        P_Enqueue(evt.data.scrapeID)
         break
       }
       case 'completed': {
         forks[evt.data.id].TIP = forks[evt.data.id].TIP.filter(
           (taskID: string) => taskID !== evt.data.taskID
         )
+        // this is for when all scapes completes for single task
+        if (tasks[evt.data.taskID].length === 1) {
+          delete tasks[evt.data.taskID]
+          io.emit('scrapeProcessQueue', {
+            taskID: evt.data.taskID,
+            message: 'task completed',
+            status: 'completed',
+            taskType: 'enqueue',
+            metadata: {
+              ok: evt.data.ok,
+              taskID: evt.data.taskID,
+              scrapeID: evt.data.scrapeID,
+              taskGroup: evt.data.taskGroup
+            }
+          })
+          ipcMain.emit('scrapeProcessQueue', {
+            taskID: evt.data.taskID,
+            ok: evt.data.ok,
+            metadata: evt.data.metadata
+          })
+        } else {
+          tasks[evt.data.taskID].filter((taskID: string) => taskID !== evt.data.taskID)
+          io.emit('scrapeProcessQueue', {
+            taskID: evt.data.taskID,
+            message: 'job completed',
+            status: 'finish',
+            taskType: 'enqueue',
+            metadata: {
+              taskID: evt.data.taskID,
+              scrapeID: evt.data.scrapeID,
+              taskGroup: evt.data.taskGroup
+            }
+          })
+        }
+        P_Dequeue(evt.data.scrapeID)
         break
       }
       case 'message': {
@@ -94,31 +148,41 @@ const ScrapeQueue = () => {
   //   forks[id].fork.kill()
   // }
 
-  const enqueue = async (
-    taskID: string,
-    taskGroup: string,
-    jobType: string,
-    jobArgs: Record<string, any>
-  ) => {
+  const enqueue = async ({
+    pid,
+    taskID = generateID(),
+    taskGroup,
+    taskType,
+    taskArgs
+  }: {
+    pid: string
+    taskID: string
+    taskGroup: string
+    taskType: string
+    taskArgs: Record<string, any> & { taskID: string }
+  }) => {
     return _Qlock
       .runExclusive(() => {
-        const scrapeID = generateID()
-        // @ts-ignore
         taskQueue.push({
+          pid,
           taskID,
-          scrapeID,
           taskGroup,
-          jobType,
-          jobArgs: { ...jobArgs, scrapeID }
+          taskType,
+          taskArgs: { ...taskArgs, taskID }
         })
-        return { scrapeID }
       })
-      .then(({ scrapeID }) => {
+      .then(() => {
         io.emit('scrapeQueue', {
-          message: 'new scrape added to queue',
+          taskID,
+          message: 'New scrape added to queue',
           status: 'enqueue',
           taskType: 'enqueue',
-          metadata: { taskID, scrapeID, taskGroup, metadata: jobArgs, jobType }
+          metadata: {
+            taskID,
+            taskGroup,
+            metadata: taskArgs,
+            taskType
+          }
         })
       })
       .finally(() => {
@@ -134,12 +198,12 @@ const ScrapeQueue = () => {
       .then((t) => {
         if (!t) return
         io.emit('scrapeQueue', {
+          taskID: t.taskID,
           message: 'moving from queue to processing',
           status: 'passing',
           taskType: 'dequeue',
           metadata: {
             taskID: t.taskID,
-            scrapeID: t.scrapeID,
             taskGroup: t.taskGroup
           }
         })
@@ -147,33 +211,24 @@ const ScrapeQueue = () => {
       })
   }
 
-  // const remove = async (id: string) => {
-  //   return _Qlock
-  //     .runExclusive(() => {
-  //       // (FIX) filter not saved
-  //       taskQueue.filter((task) => task.scrapeID !== id)
-  //     })
-  //     .then(() => {
-  //       io.emit('scrapeQueue', {
-  //         message: 'deleting task from queue',
-  //         status: 'removed',
-  //         taskType: 'remove',
-  //         metadata: { scrape: id, }
-  //       })
-  //     })
-  // }
 
-  const _TIP_Enqueue = async (item: TIP_Item) => {
+  const P_Enqueue = async (item: TQueueItem) => {
     return _Plock
       .runExclusive(() => {
         processQueue.push(item)
       })
       .then(() => {
-        io.emit('scrapeProcessQueue', {
+        io.emit('scrapeQueue', {
+          taskID: item.taskID,
           message: 'new task added to processing queue',
-          status: 'start',
+          status: 'processing',
           taskType: 'enqueue',
-          metadata: { taskID: item[0] }
+          metadata: {
+            taskID: item.taskID,
+            taskGroup: item.taskGroup,
+            metadata: item.taskArgs,
+            taskType: item.taskType
+          }
         })
       })
       .finally(() => {
@@ -181,13 +236,14 @@ const ScrapeQueue = () => {
       })
   }
 
-  const _TIP_Dequeue = async (id: string) => {
+  const P_Dequeue = async (id: string) => {
     return _Plock
       .runExclusive(() => {
         processQueue = processQueue.filter((task) => task[0] !== id)
       })
       .then(() => {
         io.emit('scrapeProcessQueue', {
+          taskID: id,
           message: 'removed completed task from queue',
           status: 'end',
           taskType: 'dequeue',
@@ -205,6 +261,7 @@ const ScrapeQueue = () => {
       })
       .then(() => {
         io.emit('scrapeProcessQueue', {
+          taskID: id,
           message: 'cancelled',
           status: 'stopped',
           taskType: 'stop',
@@ -223,40 +280,28 @@ const ScrapeQueue = () => {
       const task = await dequeue()
       if (!task) return
 
-      const taskIOArgs = {
-        taskGroup: task.taskGroup,
-        taskID: task.id,
-        metadata: task.metadata
-      }
-
-      const tsk = new Promise((resolve, reject) => {
-        task
-          .action()
-          .then((r) => {
-            resolve(r)
-          })
-          .catch((err) => {
-            reject(err)
-          })
-      })
-        .then(async (r) => {
-          io.emit(task.taskGroup, { ...taskIOArgs, ok: true, metadata: r })
-        })
-        .catch(async (err) => {
-          io.emit(task.taskGroup, { ...taskIOArgs, ok: false, message: err.message })
-        })
-        .finally(() => {
-          _TIP_Dequeue(task.id)
-          exec()
-        }) as AbortablePromise<unknown>
-
-      _TIP_Enqueue([task.id, task.args, tsk, task])
+      const fork = randomFork()
+      fork.fork.postMessage(task.taskArgs, [fork.channel.port2])
     } finally {
       exec_lock.release()
     }
   }
 
+  const init = () => {
+    for (let i = 0; i < maxForks; i++) {
+      createProcess()
+    }
+    forkKeys = Object.keys(forks)
+    lb = new P2cBalancer(forkKeys.length)
+  }
+
+  const randomFork = () => {
+    const key = forkKeys[lb.pick() - 1]
+    return forks[key]
+  }
+
   return {
+    init,
     createProcess,
     enqueue,
     remove,
