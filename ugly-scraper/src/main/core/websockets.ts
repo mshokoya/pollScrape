@@ -12,6 +12,8 @@ type EmitResponse = {
 }
 
 type IO = {
+  on: (channel: string, fn: (event: Electron.IpcMainEvent, ...args: any[]) => void) => void
+  send: (channel: string, ...args: any) => void
   emit: (channel: string, { taskID, taskType, message }: EmitResponse) => void
 }
 
@@ -25,7 +27,13 @@ export const SocketIO = (ipc: IPC_APP): IO => {
   })
 
   return {
-    emit: (channel: string, args) => {
+    on: (channel, fn) => {
+      ipc.ipcMain.on(channel, fn)
+    },
+    send: (channel, ...args) => {
+      ipc.ipcMain.emit(channel, ...args)
+    },
+    emit: (channel, args) => {
       ipc.mainWindow.webContents.send(channel, args)
     }
   }

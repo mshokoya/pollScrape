@@ -31,8 +31,8 @@ type Forks = {
   [key: string]: {
     fork: UtilityProcess
     channel: {
-      port1: MessagePortMain
-      port2: MessagePortMain
+      mainPort: MessagePortMain
+      forkPort: MessagePortMain
     }
     status: 'started' | 'ready'
     TIP: string[] // ids
@@ -54,15 +54,14 @@ const ScrapeQueue = () => {
 
   const createProcess = () => {
     const id = generateID()
-    const { port1, port2 } = new MessageChannelMain()
-    const fork = utilityProcess.fork(path.join(__dirname, '_____________'))
-
-    fork.on('message', handleProcessResponse)
-    fork.postMessage({ id, type: 'ping' }, [port2])
-
-    forks['_____1______'] = {
+    const { port1: mainPort, port2: forkPort } = new MessageChannelMain()
+    const fork = utilityProcess.fork(path.join(__dirname))
+    fork.postMessage({ message: 'ping' }, [forkPort])
+    mainPort.on('message', handleProcessResponse)
+    mainPort.start()
+    forks[id] = {
       fork,
-      channel: { port1, port2 },
+      channel: { mainPort, forkPort },
       status: 'started',
       TIP: []
     }
