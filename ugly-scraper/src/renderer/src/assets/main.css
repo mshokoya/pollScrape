@@ -1,0 +1,117 @@
+@import './base.css';
+
+html {
+  background-color: black;
+  height: 100vh;
+  width: 100vw;
+}
+
+* {
+  color: white;
+}
+
+body {
+  height: 100vh;
+}
+
+input, select {
+  color: black
+}
+
+#root {
+  background-color: black;
+  height: 100vh;
+}
+
+svg {
+  display: inline;
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+}
+
+.rowhide {
+  visibility: hidden;
+}
+
+.el-ok:hover {
+  background-color: rgba(0, 199, 0, 0.5);
+}
+
+.el-no:hover {
+  background-color: rgba(255, 0, 0, 0.5);
+}
+
+.blink {
+  animation: blinkMe 1s linear infinite;
+}
+@keyframes blinkMe {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.fieldBlink {
+  animation: fieldBlinkMe .7s linear infinite;
+}
+@keyframes fieldBlinkMe {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(251, 191, 36, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.resOK {
+  animation: fieldBlinkOK .5s linear infinite;
+}
+@keyframes fieldBlinkOK {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(0, 199, 0, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.resFail {
+  animation: fieldBlinkFAIL .5s linear infinite;
+}
+@keyframes fieldBlinkFAIL {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(255, 0, 0, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.ghost > * { fill: #9f1239; }
+.ghost-float { animation: floating 1s infinite ease-in-out;}
+@keyframes floating {
+  50% {
+    transform: translateY(-6px)
+  }
+}
+
+.rainbow-text {
+  background-image: linear-gradient(to bottom, violet, indigo, blue, green, yellow, orange, red);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
