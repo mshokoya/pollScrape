@@ -9,6 +9,8 @@ import { initScrapeQueue } from './scrape-queue'
 import { IPC_APP } from '../../shared'
 
 export const init = async (ipc?: IPC_APP, wrk: boolean = false): Promise<void> => {
+  global.isWorker = wrk
+
   await syncDB().then(() => {
     console.log('DB started')
   })

@@ -3,33 +3,42 @@ import { init } from './core'
 
 console.log('WE IN DA WORKER')
 
-// process.parentPort.on('message', (evt) => {
-//   console.log('mmaaiinn')
-//   console.log(evt)
-//   console.log(ipcMain)
-// })
-
-// export const worker = (evt) => {
-
-//   console.log('mmaaiinn')
-//   console.log(evt)
-//   console.log(ipcMain)
-
-//   // const action = actions[evt.data.jobType]
-
-//   // if (!action) {}
-// }
-
-// fork.ts
 process.parentPort.on('message', (e) => {
-  init().then(() => {
+  init(null, true).then(() => {
     const [port] = e.ports
+
+    global.port = port
+
     port.on('message', (e) => {
-      console.log(`Message from parent: ${e.data}`)
-      // console.log(ipcMain)
+      console.log(`Message from parent`)
+      // if (e.data.jobType) {
+
+      // }
     })
     port.start()
+
+    port.postMessage({channel: 'pong', args: {}})
   })
-  
-  // port.postMessage('hello')
 })
+
+// process.parentPort.on('message', (e) => {
+//   // init(null, true).then(() => {
+//     const [port] = e.ports
+
+//     global.port = port
+
+//     port.on('message', (e) => {
+//       console.log(`Message from parent`)
+//       // if (e.data.jobType) {
+
+//       // }
+//     })
+
+//     port.on('telly', () => {
+//       console.log('inna de telly')
+//     })
+
+//     port.start()
+//   })
+//   // port.postMessage('hello')
+// // })

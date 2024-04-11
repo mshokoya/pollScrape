@@ -1,7 +1,7 @@
 import { cpus } from 'os'
 import { Mutex } from 'async-mutex'
 import { generateID } from './util'
-import { io } from './websockets'
+import { EmitResponse, io } from './websockets'
 import {
   ipcMain,
   MessageChannelMain,
@@ -11,6 +11,7 @@ import {
 } from 'electron/main'
 import path from 'path'
 import { P2cBalancer } from 'load-balancers'
+import { fork } from 'child_process'
 
 type TQueueItem = {
   pid: string
@@ -56,7 +57,7 @@ const ScrapeQueue = () => {
     const id = generateID()
     const { port1: mainPort, port2: forkPort } = new MessageChannelMain()
     const fork = utilityProcess.fork(path.join(__dirname))
-    fork.postMessage({ message: 'ping' }, [forkPort])
+    fork.postMessage({ message: 'ping', forkID: id }, [forkPort])
     mainPort.on('message', handleProcessResponse)
     mainPort.start()
     forks[id] = {
@@ -67,37 +68,41 @@ const ScrapeQueue = () => {
     }
   }
 
-  const handleProcessResponse = (evt: { data: Record<string, any> }) => {
+  const handleProcessResponse = (evt: {
+    data: { channel: string; args: EmitResponse & { evtType: string } & {forkID: string} }
+  }) => {
     console.log('eevvtt')
     console.log(evt)
-    switch (evt.data.type) {
-      case 'pong': {
-        forks[evt.data.id].status = 'ready'
-        break
-      }
-      case 'started': {
-        forks[evt.data.id].TIP.push(evt.data.taskID)
-        tasks[evt.data.taskID] = tasks[evt.data.taskID]
-          ? [].concat(tasks[evt.data.taskID], [evt.data.id])
-          : [evt.data.id]
-        io.emit('scrapeProcessQueue', {
-          taskID: evt.data.taskID,
-          message: 'moving from queue to processing',
-          status: 'start',
-          taskType: 'enqueue',
-          metadata: {
-            taskID: evt.data.taskID,
-            scrapeID: evt.data.scrapeID,
-            taskGroup: evt.data.taskGroup
-          }
-        })
-        P_Enqueue(evt.data.scrapeID)
-        break
-      }
+
+    if (evt.data.args.evtType === 'pong') {
+      forks[evt.data.args.forkID].status = 'ready'
+      return
+    } else if (evt.data.args.evtType === 'started') {
+      forks[evt.data.id].TIP.push(evt.data.taskID)
+      tasks[evt.data.args.taskID] = tasks[evt.data.args.taskID]
+        ? [].concat(tasks[evt.data.args.taskID], [evt.data.tid])
+        : [evt.data.tid]
+      io.emit('scrapeProcessQueue', {
+        taskID: evt.data.args.taskID,
+        message: 'moving from queue to processing',
+        status: 'start',
+        taskType: 'enqueue',
+        metadata: {
+          taskID: evt.data.args.taskID,
+          scrapeID: evt.data.scrapeID,
+          taskGroup: evt.data.args.taskGroup
+        }
+      })
+      P_Enqueue(evt.data.scrapeID)
+      return
+    }
+
+    const fork = findFork(evt.data.args.taskID)
+    if (!fork) return
+
+    switch (evt.data.args.evtType) {
       case 'completed': {
-        forks[evt.data.id].TIP = forks[evt.data.id].TIP.filter(
-          (taskID: string) => taskID !== evt.data.taskID
-        )
+        fork.TIP = fork.TIP.filter((taskID: string) => taskID !== evt.data.args.taskID)
         // this is for when all scapes completes for single task
         if (tasks[evt.data.taskID].length === 1) {
           delete tasks[evt.data.taskID]
@@ -136,7 +141,7 @@ const ScrapeQueue = () => {
         break
       }
       case 'message': {
-        io.emit(evt.data.channel, evt.data.metadata)
+        io.emit(evt.data.channel, evt.data.args)
         // io message to frontend (unless ipcmain works in fork)
         break
       }
@@ -155,10 +160,10 @@ const ScrapeQueue = () => {
     taskArgs
   }: {
     pid: string
-    taskID: string
+    taskID?: string
     taskGroup: string
     taskType: string
-    taskArgs: Record<string, any> & { taskID: string }
+    taskArgs: Record<string, any>
   }) => {
     return _Qlock
       .runExclusive(() => {
@@ -209,7 +214,6 @@ const ScrapeQueue = () => {
         return t
       })
   }
-
 
   const P_Enqueue = async (item: TQueueItem) => {
     return _Plock
@@ -280,7 +284,7 @@ const ScrapeQueue = () => {
       if (!task) return
 
       const fork = randomFork()
-      fork.fork.postMessage(task.taskArgs, [fork.channel.port2])
+      fork.fork.postMessage(task.taskArgs, [fork.channel.forkPort])
     } finally {
       exec_lock.release()
     }
@@ -297,6 +301,12 @@ const ScrapeQueue = () => {
   const randomFork = () => {
     const key = forkKeys[lb.pick() - 1]
     return forks[key]
+  }
+
+  const findFork = (taskID: string) => {
+    for (const i in forks) {
+      if (forks[i].TIP.includes(taskID)) return forks[i]
+    }
   }
 
   return {
