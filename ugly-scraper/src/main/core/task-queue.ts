@@ -4,6 +4,7 @@ import AbortablePromise from 'promise-abortable'
 import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
 import { ipcMain } from 'electron'
+import { TaskEnqueue } from '../../shared'
 // import { Piscina } from 'piscina';
 // import path from 'path'
 
@@ -63,10 +64,9 @@ const TaskQueue = () => {
         taskQueue.push({ pid, taskID, action, args, taskGroup, taskType, message, metadata })
       })
       .then(() => {
-        io.emit('taskQueue', {
+        io.emit<TaskEnqueue>('taskQueue', {
           pid,
           taskID,
-          evtType: 'enqueue',
           message: 'new task added to queue',
           status: 'enqueue',
           taskType: 'enqueue',

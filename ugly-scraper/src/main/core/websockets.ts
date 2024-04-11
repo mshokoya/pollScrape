@@ -16,7 +16,7 @@ export type EmitResponse = {
 type IO = {
   on: (channel: string, fn: (event: Electron.IpcMainEvent, ...args: any[]) => void) => void
   send: (channel: string, ...args: any) => void
-  emit: (channel: string, args: EmitResponse) => void
+  emit: <T = EmitResponse>(channel: string, args: T) => void
 }
 
 export const SocketIO = (ipc?: IPC_APP): IO => {

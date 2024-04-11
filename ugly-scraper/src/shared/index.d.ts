@@ -12,3 +12,17 @@ type IPC_EVT_Response<T = Record<string, any>> = {
   data: T
   ok: boolean
 }
+
+type TaskEnqueue = {
+  pid: string
+  taskID: string
+  message: string
+  status: string
+  taskType: string
+  metadata: {
+    taskID: string
+    taskGroup: string
+    taskType: string
+    metadata: Record<string, any>
+  }
+}

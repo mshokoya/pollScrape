@@ -12,6 +12,7 @@ import {
 import path from 'path'
 import { P2cBalancer } from 'load-balancers'
 import { fork } from 'child_process'
+import { TaskEnqueue } from '../../shared'
 
 type TQueueItem = {
   pid: string
@@ -69,35 +70,23 @@ const ScrapeQueue = () => {
   }
 
   const handleProcessResponse = (evt: {
-    data: { channel: string; args: EmitResponse & { evtType: string } & {forkID: string} }
+    data: { channel: string; args: EmitResponse & { evtType: string } & { forkID: string } }
   }) => {
-    console.log('eevvtt')
-    console.log(evt)
-
     if (evt.data.args.evtType === 'pong') {
       forks[evt.data.args.forkID].status = 'ready'
       return
-    } else if (evt.data.args.evtType === 'started') {
-      forks[evt.data.id].TIP.push(evt.data.taskID)
-      tasks[evt.data.args.taskID] = tasks[evt.data.args.taskID]
-        ? [].concat(tasks[evt.data.args.taskID], [evt.data.tid])
-        : [evt.data.tid]
-      io.emit('scrapeProcessQueue', {
-        taskID: evt.data.args.taskID,
-        message: 'moving from queue to processing',
-        status: 'start',
-        taskType: 'enqueue',
-        metadata: {
-          taskID: evt.data.args.taskID,
-          scrapeID: evt.data.scrapeID,
-          taskGroup: evt.data.args.taskGroup
-        }
-      })
-      P_Enqueue(evt.data.scrapeID)
-      return
-    }
+    } else if (evt.data.channel === 'taskQueue' && evt.data.args.taskType === 'enqueue') {
+      // if scrape job in taskqueue in worker
+      forks[evt.data.args.forkID].TIP.push(evt.data.args.taskID)
+      tasks[evt.data.args.pid]
+        ? tasks[evt.data.args.pid].push(evt.data.args.taskID)
+        : (tasks[evt.data.args.pid] = [evt.data.args.taskID])
 
-    const fork = findFork(evt.data.args.taskID)
+      io.emit('scrapeQueue', evt.data)
+      P_Enqueue(evt.data.args as unknown as TaskEnqueue)
+      return
+    } else if (evt.data.channel === 'processQueue' && evt.data.args.taskType === 'enqueue')
+      const fork = findFork(evt.data.args.taskID)
     if (!fork) return
 
     switch (evt.data.args.evtType) {
@@ -152,129 +141,6 @@ const ScrapeQueue = () => {
   //   forks[id].fork.kill()
   // }
 
-  const enqueue = async ({
-    pid,
-    taskID = generateID(),
-    taskGroup,
-    taskType,
-    taskArgs
-  }: {
-    pid: string
-    taskID?: string
-    taskGroup: string
-    taskType: string
-    taskArgs: Record<string, any>
-  }) => {
-    return _Qlock
-      .runExclusive(() => {
-        taskQueue.push({
-          pid,
-          taskID,
-          taskGroup,
-          taskType,
-          taskArgs: { ...taskArgs, taskID }
-        })
-      })
-      .then(() => {
-        io.emit('scrapeQueue', {
-          taskID,
-          message: 'New scrape added to queue',
-          status: 'enqueue',
-          taskType: 'enqueue',
-          metadata: {
-            taskID,
-            taskGroup,
-            metadata: taskArgs,
-            taskType
-          }
-        })
-      })
-      .finally(() => {
-        exec()
-      })
-  }
-
-  const dequeue = async () => {
-    return _Qlock
-      .runExclusive(() => {
-        return taskQueue.shift()
-      })
-      .then((t) => {
-        if (!t) return
-        io.emit('scrapeQueue', {
-          taskID: t.taskID,
-          message: 'moving from queue to processing',
-          status: 'passing',
-          taskType: 'dequeue',
-          metadata: {
-            taskID: t.taskID,
-            taskGroup: t.taskGroup
-          }
-        })
-        return t
-      })
-  }
-
-  const P_Enqueue = async (item: TQueueItem) => {
-    return _Plock
-      .runExclusive(() => {
-        processQueue.push(item)
-      })
-      .then(() => {
-        io.emit('scrapeQueue', {
-          taskID: item.taskID,
-          message: 'new task added to processing queue',
-          status: 'processing',
-          taskType: 'enqueue',
-          metadata: {
-            taskID: item.taskID,
-            taskGroup: item.taskGroup,
-            metadata: item.taskArgs,
-            taskType: item.taskType
-          }
-        })
-      })
-      .finally(() => {
-        exec()
-      })
-  }
-
-  const P_Dequeue = async (id: string) => {
-    return _Plock
-      .runExclusive(() => {
-        processQueue = processQueue.filter((task) => task[0] !== id)
-      })
-      .then(() => {
-        io.emit('scrapeProcessQueue', {
-          taskID: id,
-          message: 'removed completed task from queue',
-          status: 'end',
-          taskType: 'dequeue',
-          metadata: { taskID: id }
-        })
-      })
-  }
-
-  const stop = async (id: string) => {
-    return _Plock
-      .runExclusive(async () => {
-        const process = processQueue.find((p) => p[0] === id)
-        if (!process) return null
-        return await process[2].abort()
-      })
-      .then(() => {
-        io.emit('scrapeProcessQueue', {
-          taskID: id,
-          message: 'cancelled',
-          status: 'stopped',
-          taskType: 'stop',
-          metadata: { taskID: id }
-        })
-      })
-      .finally(() => {
-        exec()
-      })
-  }
 
   const exec = async () => {
     try {
@@ -326,3 +192,132 @@ export const initScrapeQueue = () => {
   scrapeQueue = ScrapeQueue()
   return scrapeQueue
 }
+
+
+
+
+
+
+// const enqueue = async ({
+//   pid,
+//   taskID = generateID(),
+//   taskGroup,
+//   taskType,
+//   taskArgs
+// }: {
+//   pid: string
+//   taskID?: string
+//   taskGroup: string
+//   taskType: string
+//   taskArgs: Record<string, any>
+// }) => {
+//   return _Qlock
+//     .runExclusive(() => {
+//       taskQueue.push({
+//         pid,
+//         taskID,
+//         taskGroup,
+//         taskType,
+//         taskArgs: { ...taskArgs, taskID }
+//       })
+//     })
+//     .then(() => {
+//       io.emit('scrapeQueue', {
+//         taskID,
+//         message: 'New scrape added to queue',
+//         status: 'enqueue',
+//         taskType: 'enqueue',
+//         metadata: {
+//           taskID,
+//           taskGroup,
+//           metadata: taskArgs,
+//           taskType
+//         }
+//       })
+//     })
+//     .finally(() => {
+//       exec()
+//     })
+// }
+
+// const dequeue = async () => {
+//   return _Qlock
+//     .runExclusive(() => {
+//       return taskQueue.shift()
+//     })
+//     .then((t) => {
+//       if (!t) return
+//       io.emit('scrapeQueue', {
+//         taskID: t.taskID,
+//         message: 'moving from queue to processing',
+//         status: 'passing',
+//         taskType: 'dequeue',
+//         metadata: {
+//           taskID: t.taskID,
+//           taskGroup: t.taskGroup
+//         }
+//       })
+//       return t
+//     })
+// }
+
+// const P_Enqueue = async (item: TaskEnqueue) => {
+//   return _Plock
+//     .runExclusive(() => {
+//       processQueue.push(item)
+//     })
+//     .then(() => {
+//       io.emit('scrapeQueue', {
+//         taskID: item.taskID,
+//         message: 'new task added to processing queue',
+//         status: 'processing',
+//         taskType: 'enqueue',
+//         metadata: {
+//           taskID: item.taskID,
+//           taskGroup: item.taskGroup,
+//           metadata: item.taskArgs,
+//           taskType: item.taskType
+//         }
+//       })
+//     })
+//     .finally(() => {
+//       exec()
+//     })
+// }
+
+// const P_Dequeue = async (id: string) => {
+//   return _Plock
+//     .runExclusive(() => {
+//       processQueue = processQueue.filter((task) => task[0] !== id)
+//     })
+//     .then(() => {
+//       io.emit('scrapeProcessQueue', {
+//         taskID: id,
+//         message: 'removed completed task from queue',
+//         status: 'end',
+//         taskType: 'dequeue',
+//         metadata: { taskID: id }
+//       })
+//     })
+// }
+
+// const stop = async (id: string) => {
+//   return _Plock
+//     .runExclusive(async () => {
+//       const process = processQueue.find((p) => p[0] === id)
+//       if (!process) return null
+//       return await process[2].abort()
+//     })
+//     .then(() => {
+//       io.emit('scrapeProcessQueue', {
+//         taskID: id,
+//         message: 'cancelled',
+//         status: 'stopped',
+//         taskType: 'stop',
+//         metadata: { taskID: id }
+//       })
+//     })
+//     .finally(() => {
+//       exec()
+//     })
+// }

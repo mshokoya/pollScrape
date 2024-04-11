@@ -24,17 +24,31 @@ import { IMetaData } from '../../database/models/metadata'
 // https://geonode.com/free-proxy-list
 
 // Accounts
-export const WconfirmAccount = async (id: string) => await TconfirmAccount(id)
-export const WupgradeManually = async (id: string) => await TupgradeManually(id)
-export const WupgradeAutomatically = async (id: string) => await TupgradeAutomatically(id)
-export const WcheckAccount = async (id: string) => await TcheckAccount(id)
-export const WdeleteAccount = async (id: string) => await TdeleteAccount(id)
-export const WloginAuto = async (id: string) => await TloginAuto(id)
-export const Wdemine = async (id: string) => await Tdemine(id)
-export const WloginManually = async (id: string) => await TloginManually(id)
-export const WupdateAcc = async (id: string, account: IAccount) => await TupdateAcc(id, account)
+export const WconfirmAccount = async ({ accountID, pid }: { accountID: string; pid: string }) =>
+  await TconfirmAccount({ accountID, pid })
+export const WupgradeManually = async ({ accountID, pid }: { accountID: string; pid: string }) =>
+  await TupgradeManually({ accountID, pid })
+export const WupgradeAutomatically = async ({
+  accountID,
+  pid
+}: {
+  accountID: string
+  pid: string
+}) => await TupgradeAutomatically({ accountID, pid })
+export const WcheckAccount = async ({ accountID, pid }: { accountID: string; pid: string }) =>
+  await TcheckAccount({ accountID, pid })
+export const WdeleteAccount = async (accountID: string) => await TdeleteAccount(accountID)
+export const WloginAuto = async ({ accountID, pid }: { accountID: string; pid: string }) =>
+  await TloginAuto({ accountID, pid })
+export const Wdemine = async ({ accountID, pid }: { accountID: string; pid: string }) =>
+  await Tdemine({ accountID, pid })
+export const WloginManually = async ({ accountID, pid }: { accountID: string; pid: string }) =>
+  await TloginManually({ accountID, pid })
+export const WupdateAcc = async ({ accountID, fields }: { accountID: string; fields: IAccount }) =>
+  await TupdateAcc({ accountID, fields })
 export const WgetAccounts = async () => await TgetAccounts()
-export const WaddAccount = async (acc) => await TaddAccount(acc)
+// @ts-ignore
+export const WaddAccount = async (acc: IAccount, pid: string) => await TaddAccount({ ...acc, pid })
 
 // Domain
 export const WaddDomain = async (domain: string) => await addDomain(domain)

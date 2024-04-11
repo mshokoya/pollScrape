@@ -20,10 +20,12 @@ import { apolloConfirmAccountEvent } from '../lib'
 
 export const TconfirmAccount = async ({
   taskID,
-  accountID
+  accountID,
+  pid
 }: {
   taskID?: string
   accountID: string
+  pid: string
 }) => {
   console.log('confirm')
 
@@ -36,6 +38,7 @@ export const TconfirmAccount = async ({
 
     taskID = taskID || generateID()
     taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'confirm',
@@ -69,10 +72,12 @@ export const TconfirmAccount = async ({
 
 export const TupgradeManually = async ({
   taskID,
-  accountID
+  accountID,
+  pid
 }: {
   taskID?: string
   accountID: string
+  pid: string
 }) => {
   console.log('upgradeAccountManual')
   try {
@@ -83,6 +88,7 @@ export const TupgradeManually = async ({
 
     taskID = taskID || generateID()
     taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualUpgrade',
@@ -116,10 +122,12 @@ export const TupgradeManually = async ({
 
 export const TupgradeAutomatically = async ({
   taskID,
-  accountID
+  accountID,
+  pid
 }: {
   taskID?: string
   accountID: string
+  pid: string
 }) => {
   console.log('upgradeAccounts')
   try {
@@ -130,6 +138,7 @@ export const TupgradeAutomatically = async ({
 
     taskID = taskID || generateID()
     taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'upgrade',
@@ -163,10 +172,12 @@ export const TupgradeAutomatically = async ({
 
 export const TcheckAccount = async ({
   taskID,
-  accountID
+  accountID,
+  pid
 }: {
   taskID?: string
   accountID: string
+  pid: string
 }) => {
   console.log('checkAccounts')
   try {
@@ -177,6 +188,7 @@ export const TcheckAccount = async ({
 
     taskID = taskID || generateID()
     taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'check',
@@ -208,7 +220,7 @@ export const TcheckAccount = async ({
   }
 }
 
-export const TdeleteAccount = async ({ accountID }: { accountID: string }) => {
+export const TdeleteAccount = async (accountID: string) => {
   console.log('deleteAccounts')
   try {
     if (!accountID) throw new Error('Failed to delete account, please provide valid id')
@@ -222,7 +234,15 @@ export const TdeleteAccount = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const TloginAuto = async ({ taskID, accountID }: { taskID?: string; accountID: string }) => {
+export const TloginAuto = async ({
+  taskID,
+  accountID,
+  pid
+}: {
+  taskID?: string
+  accountID: string
+  pid: string
+}) => {
   console.log('loginauto')
   try {
     if (!accountID) throw new Error('Failed to login, invalid id')
@@ -232,6 +252,7 @@ export const TloginAuto = async ({ taskID, accountID }: { taskID?: string; accou
 
     taskID = taskID || generateID()
     taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'login',
@@ -264,12 +285,13 @@ export const TloginAuto = async ({ taskID, accountID }: { taskID?: string; accou
 }
 
 export const TaddAccount = async ({
-  selectedDomain: selectedDomain,
+  selectedDomain,
   addType,
   email: emaill,
   password,
   recoveryEmail,
-  taskID
+  taskID,
+  pid
 }: {
   taskID?: string
   addType: string
@@ -277,6 +299,7 @@ export const TaddAccount = async ({
   email: string
   password: string
   recoveryEmail: string
+  pid: string
 }) => {
   console.log('addAccount')
 
@@ -339,6 +362,7 @@ export const TaddAccount = async ({
     }
 
     await taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'create',
@@ -403,10 +427,12 @@ export const TupdateAcc = async ({
 
 export const TloginManually = async ({
   taskID,
-  accountID
+  accountID,
+  pid
 }: {
   taskID?: string
   accountID: string
+  pid: string
 }) => {
   console.log('loginManually')
   try {
@@ -418,6 +444,7 @@ export const TloginManually = async ({
 
     taskID = taskID || generateID()
     await taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualLogin',
@@ -449,7 +476,15 @@ export const TloginManually = async ({
   }
 }
 
-export const Tdemine = async ({ taskID, accountID }: { taskID?: string; accountID: string }) => {
+export const Tdemine = async ({
+  taskID,
+  accountID,
+  pid
+}: {
+  taskID?: string
+  accountID: string
+  pid?: string
+}) => {
   console.log('mines')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -459,6 +494,7 @@ export const Tdemine = async ({ taskID, accountID }: { taskID?: string; accountI
 
     taskID = taskID || generateID()
     await taskQueue.enqueue({
+      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'demine',
