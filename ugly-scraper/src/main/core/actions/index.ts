@@ -21,6 +21,7 @@ import {
   addProxy
 } from './apollo/actions'
 
+// keys are type = ForkActions
 export const actions = {
   // account
   a_a_cfma: confirmAccount,

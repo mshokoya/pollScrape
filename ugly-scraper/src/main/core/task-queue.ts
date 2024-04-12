@@ -5,6 +5,8 @@ import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
 import { ipcMain } from 'electron'
 import { TaskEnqueue } from '../../shared'
+import { MessageChannelMain, utilityProcess } from 'electron/main'
+import path from 'node:path/posix'
 // import { Piscina } from 'piscina';
 // import path from 'path'
 
@@ -34,13 +36,15 @@ const TaskQueue = () => {
   const _Qlock = new Mutex()
   const _Plock = new Mutex()
   const exec_lock = new Mutex()
-  let maxWorkers: number
   const taskQueue: QueueItem[] = []
   let processQueue: TIP_Item[] = []
-  // let pool;
+  let useFork = true
+  const maxForks = cpus().length
+  const forks: Forks = {}
+  let forkKeys: string[]
+  let lb: P2cBalancer
 
   const enqueue = async <T = Record<string, any>>({
-    pid,
     taskID = generateID(),
     taskGroup,
     taskType,
@@ -49,7 +53,6 @@ const TaskQueue = () => {
     action,
     args
   }: {
-    pid?: string
     taskID: string
     taskGroup: string
     taskType: string
@@ -65,7 +68,6 @@ const TaskQueue = () => {
       })
       .then(() => {
         io.emit<TaskEnqueue>('taskQueue', {
-          pid,
           taskID,
           message: 'new task added to queue',
           status: 'enqueue',
@@ -118,7 +120,7 @@ const TaskQueue = () => {
       })
   }
 
-  const _TIP_Enqueue = async (item: TIP_Item) => {
+  const p_enqueue = async (item: TIP_Item) => {
     return _Plock
       .runExclusive(() => {
         processQueue.push(item)
@@ -137,7 +139,7 @@ const TaskQueue = () => {
       })
   }
 
-  const _TIP_Dequeue = async (id: string) => {
+  const p_dequeue = async (id: string) => {
     return _Plock
       .runExclusive(() => {
         processQueue = processQueue.filter((task) => task[0] !== id)
@@ -174,15 +176,6 @@ const TaskQueue = () => {
       })
   }
 
-  const setMaxWorkers = (n: number) => {
-    if (n > maxWorkers) {
-      for (let i = maxWorkers; i < n; i++) {
-        exec()
-      }
-    }
-    maxWorkers = n
-  }
-
   const exec = async () => {
     try {
       await exec_lock.acquire()
@@ -215,57 +208,90 @@ const TaskQueue = () => {
             reject(err)
           })
       })
-        .then(async (r: Record<string, any>) => {
-          console.log('in tq then')
-          console.log(r)
-          // @ts-ignore
+        .then(async (r: Record<string, any> | -1) => {
+          if (r === -1) return
           io.emit(task.taskGroup, {
             ...taskIOArgs,
             ok: true,
             metadata: { ...taskIOArgs.metadata, ...r },
             evtType: 'completed'
           })
+          p_dequeue(task.id)
         })
         .catch(async (err) => {
-          console.log('in tq err')
-          console.log(err)
-          // @ts-ignore
+          if (err === -1) return
           io.emit(task.taskGroup, {
             ...taskIOArgs,
             ok: false,
             message: err.message,
             evtType: 'completed'
           })
+          p_dequeue(task.id)
         })
         .finally(() => {
-          _TIP_Dequeue(task.id)
           exec()
         }) as AbortablePromise<unknown>
 
-      _TIP_Enqueue([task.id, task.args, tsk, task])
+      p_enqueue([task.id, task.args, tsk, task])
     } finally {
       exec_lock.release()
     }
   }
 
-  function init() {
-    maxWorkers = cpus().length
+  const setUseFork = (i: boolean) => {
+    useFork = i
   }
 
-  ipcMain.on('scrapeProcessQueue', (e, args: EmitResponse) => {
-    io.emit(args.channel, args.arg)
-    if (args.taskType === '')
-    _TIP_Dequeue(args.arg.pid)
-    exec()
-  })
+  const execInFork = (task: {
+    pid: string
+    taskID?: string
+    taskGroup: string
+    taskType: string
+    taskArgs: Record<string, any>
+  }) => {
+    const fork = randomFork()
+    fork.fork.postMessage(task, [fork.channel.forkPort])
+  }
+
+  const createProcess = () => {
+    const id = generateID()
+    const { port1: mainPort, port2: forkPort } = new MessageChannelMain()
+    const fork = utilityProcess.fork(path.join(__dirname))
+    fork.postMessage({ message: 'ping', forkID: id }, [forkPort])
+    mainPort.on('message', handleProcessResponse)
+    mainPort.start()
+    forks[id] = {
+      fork,
+      channel: { mainPort, forkPort },
+      status: 'started',
+      TIP: []
+    }
+  }
+
+  const handleProcessResponse = (evt: {
+    data: { channel: string; args: EmitResponse & { evtType: string } & { forkID: string } }
+  }) => {
+    console.log('TODO')
+    console.log(evt.data)
+  }
+
+  const randomFork = () => {
+    const key = forkKeys[lb.pick() - 1]
+    return forks[key]
+  }
+
+  function init() {
+    createProcess()
+  }
 
   return {
+    execInFork,
+    useFork,
+    setUseFork,
     enqueue,
     remove,
     stop,
     init,
-    setMaxWorkers,
-    maxWorkers: () => maxWorkers,
     queues: () => ({ taskQueue, processQueue }),
     tasksInProcess: () => processQueue
   }

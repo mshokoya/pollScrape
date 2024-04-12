@@ -20,9 +20,9 @@ type IO = {
 }
 
 export const SocketIO = (ipc?: IPC_APP): IO => {
-  const on = global.isWorker ? global.port.on : ipc.ipcMain.on
-  const send = global.isWorker ? global.port.postMessage : ipc.ipcMain.emit
-  const emit = global.isWorker ? global.port.postMessage : ipc.mainWindow.webContents.send
+  const on = global.forkID ? global.port.on : ipc.ipcMain.on
+  const send = global.forkID ? global.port.postMessage : ipc.ipcMain.emit
+  const emit = global.forkID ? global.port.postMessage : ipc.mainWindow.webContents.send
 
   if (ipc) {
     ipc.ipcMain.on('prompt', (e, res: any) => {
@@ -38,7 +38,7 @@ export const SocketIO = (ipc?: IPC_APP): IO => {
     on: (channel, fn) => on(channel, fn),
     send: (channel, ...args) => send(channel, ...args),
     emit: (channel, args) => {
-      global.isWorker
+      global.forkID
         ? emit('message', { channel, args: { evtType: 'message', ...args } })
         : emit(channel, args)
     }

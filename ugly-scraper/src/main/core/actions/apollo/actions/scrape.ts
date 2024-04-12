@@ -1,6 +1,7 @@
 import { cache } from '../../../cache'
 import { IMetaData } from '../../../database/models/metadata'
 import { AppError } from '../../../util'
+import { apolloScrape } from '../lib'
 import { scraper } from '../lib/scraper'
 
 export const scrape = async ({

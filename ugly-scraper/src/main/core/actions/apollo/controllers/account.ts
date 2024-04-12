@@ -1,3 +1,4 @@
+import { TaskEnqueue } from '../../../../../shared'
 import { updateAccount } from '../../../database'
 import { AccountModel_, IAccount } from '../../../database/models/accounts'
 import { DomainModel_ } from '../../../database/models/domain'
@@ -51,7 +52,7 @@ export const TconfirmAccount = async ({
           message: `confirming account ${account.email}`,
           data: { accountID }
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           return await confirmAccount({ taskID, account })
         } else {
           scrapeQueue.enqueue({
@@ -101,7 +102,7 @@ export const TupgradeManually = async ({
           message: `Upgrading ${account.email} manually`,
           data: { accountID }
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           return await upgradeManually({ taskID, account })
         } else {
           scrapeQueue.enqueue({
@@ -151,7 +152,7 @@ export const TupgradeAutomatically = async ({
           message: `Upgrading ${account.email} automatically`,
           data: { accountID }
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           return await upgradeAutomatically({ taskID, account })
         } else {
           scrapeQueue.enqueue({
@@ -201,7 +202,7 @@ export const TcheckAccount = async ({
           message: `Getting information on ${account.email} credits`,
           data: { accountID }
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           return await checkAccount({ taskID, account })
         } else {
           scrapeQueue.enqueue({
@@ -265,7 +266,7 @@ export const TloginAuto = async ({
           message: `Logging into ${account.email} apollo account`,
           data: { accountID }
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           return await loginAuto({ taskID, account })
         } else {
           scrapeQueue.enqueue({
@@ -374,7 +375,7 @@ export const TaddAccount = async ({
           taskType: 'create',
           message: `adding ${account.email}`
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           // @ts-ignore
           return await addAccount({ taskID, account })
         } else {
@@ -425,15 +426,7 @@ export const TupdateAcc = async ({
   }
 }
 
-export const TloginManually = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid: string
-}) => {
+export const TloginManually = async ({ accountID }: { accountID: string }) => {
   console.log('loginManually')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -442,9 +435,8 @@ export const TloginManually = async ({
     if (!account) throw new Error("Failed to start demining, couldn't find account")
     if (account.domain === 'default') throw new Error('Failed to start manual login, invalid email')
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     await taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualLogin',
@@ -457,14 +449,13 @@ export const TloginManually = async ({
           message: `Login into ${account.email}`,
           data: { accountID }
         })
-        if (global.isWorker) {
+        if (global.forkID) {
           return await loginManually({ taskID, account })
         } else {
           scrapeQueue.enqueue({
             pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'lm',
-            taskArgs: { account }
+            action: loginManually,
+            args: { account }
           })
         }
       }
@@ -476,15 +467,7 @@ export const TloginManually = async ({
   }
 }
 
-export const Tdemine = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid?: string
-}) => {
+export const Tdemine = async ({ accountID }: { accountID: string }) => {
   console.log('mines')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -492,29 +475,28 @@ export const Tdemine = async ({
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error("Failed to start demining, couldn't find account")
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     await taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'demine',
       message: `Demine ${account.email} popups`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'demine',
-          message: `Demine ${account.email} popups`,
-          data: { accountID }
-        })
-        if (global.isWorker) {
+        // (FIX) MOVE TO DEMINE FUNC.. i this its used to disable account in add "in use" colors on fronend
+        // io.emit<TaskEnqueue>('apollo', {
+        //   taskID,
+        //   taskType: 'demine',
+        //   message: `Demine ${account.email} popups`,
+        //   metadata: { accountID }
+        // })
+        if (!global.forkID) {
           return await demine({ taskID, account })
         } else {
           scrapeQueue.enqueue({
             pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'dm',
-            taskArgs: { account }
+            action: demine,
+            args: { account }
           })
         }
       }

@@ -1,24 +1,24 @@
 import { initMeta } from '../../../database'
 import { IMetaData, MetaDataModel_ } from '../../../database/models/metadata'
-import { scrapeQueue } from '../../../scrape-queue'
 import { taskQueue } from '../../../task-queue'
 import { generateID } from '../../../util'
 import { io } from '../../../websockets'
 
-export const scrape = async (metaID: string, proxy: boolean, url: string) => {
+export const scrape = async ({
+  metaID,
+  url,
+  tasks
+}: {
+  metaID: string
+  url: string
+  tasks: { url: string; accountID: string }[]
+}) => {
   console.log('scrape')
 
   let metadata: IMetaData
   const useProxy = proxy || false
 
   try {
-    // (FIX) test if works
-    if (!url) {
-      throw new Error(
-        'failed to start scraper, invalid scrape parameters, please provide a valid start and end page'
-      )
-    }
-
     if (!metaID) {
       metadata = await initMeta(url)
     } else {
@@ -27,19 +27,30 @@ export const scrape = async (metaID: string, proxy: boolean, url: string) => {
         return m
       })
     }
+    metaID = metadata.id
 
     const taskID = generateID()
-    await taskQueue.enqueue(
+    await taskQueue.enqueue({
       taskID,
-      'apollo',
-      'scrape',
-      `scrape leads from apollo`,
-      { metaID: metaID },
-      async () => {
+      taskGroup: 'apollo',
+      taskType: 'scrape',
+      message: `scrape leads from apollo`,
+      metadata: { metaID: metaID },
+      action: async () => {
         io.emit('apollo', { taskID, taskType: 'scrape', message: 'starting lead scraper' })
-        scrapeQueue.enqueue(taskID, 'apollo', 's', { metadata, useProxy })
+
+        taskQueue.useFork
+          ? tasks.forEach((t) =>
+              taskQueue.execInFork({
+                pid: taskID,
+                taskGroup: 'apollo',
+                taskType: 'a_s',
+                taskArgs: { url: t.url, accountID: t.accountID }
+              })
+            )
+          : tasks.forEach((t) => scrape({ url: t.url, accountID: t.accountID }))
       }
-    )
+    })
 
     return { ok: true, message: null, data: null }
   } catch (err: any) {
