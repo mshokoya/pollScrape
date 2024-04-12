@@ -1,14 +1,15 @@
+// values are type = ForkActions too
 export const CHANNELS = {
   // accounts
   a_accountDemine: 'a_ad',
   a_accountUpgradeManually: 'a_aum',
   a_accountUpgradeAutomatically: 'a_aua',
   a_accountCheck: 'a_ac',
-  a_accountDelete: 'a_adel',
-  a_accountLoginAuto: '',
+  a_accountDelete: 'a_adel', // (FIX) * need to make actions
+  a_accountLoginAuto: 'a_ala',
   a_accountLoginManually: 'a_alm',
-  a_accountUpdate: 'a_au',
-  a_accountGetAll: 'a_aga',
+  a_accountUpdate: 'a_au', // (FIX) * need to make actions
+  a_accountGetAll: 'a_aga', // (FIX) * need to make actions
   a_accountAdd: 'a_aa',
   a_accountConfirm: 'a_aca',
   // domain

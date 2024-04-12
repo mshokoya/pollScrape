@@ -4,9 +4,16 @@ import AbortablePromise from 'promise-abortable'
 import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
 import { ipcMain } from 'electron'
-import { TaskEnqueue } from '../../shared'
+import {
+  ForkEvent,
+  ForkScrapeEvent,
+  ForkScrapeEventArgs,
+  Forks,
+  TaskQueueEvent
+} from '../../shared'
 import { MessageChannelMain, utilityProcess } from 'electron/main'
 import path from 'node:path/posix'
+import { P2cBalancer } from 'load-balancers'
 // import { Piscina } from 'piscina';
 // import path from 'path'
 
@@ -67,7 +74,7 @@ const TaskQueue = () => {
         taskQueue.push({ pid, taskID, action, args, taskGroup, taskType, message, metadata })
       })
       .then(() => {
-        io.emit<TaskEnqueue>('taskQueue', {
+        io.emit<TaskQueueEvent>('taskQueue', {
           taskID,
           message: 'new task added to queue',
           status: 'enqueue',
@@ -88,7 +95,7 @@ const TaskQueue = () => {
       })
       .then((t) => {
         if (!t) return
-        io.emit('taskQueue', {
+        io.emit<TaskQueueEvent>('taskQueue', {
           taskID: t.id,
           message: 'moving from queue to processing',
           status: 'passing',
@@ -110,7 +117,7 @@ const TaskQueue = () => {
         taskQueue.filter((task) => task.id !== id)
       })
       .then(() => {
-        io.emit('taskQueue', {
+        io.emit<TaskQueueEvent>('taskQueue', {
           taskID: id,
           message: 'deleting task from queue',
           status: 'removed',
@@ -126,7 +133,7 @@ const TaskQueue = () => {
         processQueue.push(item)
       })
       .then(() => {
-        io.emit('processQueue', {
+        io.emit<TaskQueueEvent>('processQueue', {
           taskID: item[0],
           message: 'new task added to processing queue',
           status: 'start',
@@ -145,7 +152,7 @@ const TaskQueue = () => {
         processQueue = processQueue.filter((task) => task[0] !== id)
       })
       .then(() => {
-        io.emit('processQueue', {
+        io.emit<TaskQueueEvent>('processQueue', {
           taskID: id,
           message: 'removed completed task from queue',
           status: 'end',
@@ -163,7 +170,7 @@ const TaskQueue = () => {
         return await process[2].abort()
       })
       .then(() => {
-        io.emit('processQueue', {
+        io.emit<TaskQueueEvent>('processQueue', {
           taskID: id,
           message: 'cancelled',
           status: 'stopped',
@@ -185,14 +192,14 @@ const TaskQueue = () => {
 
       // taskType
       const taskIOArgs = {
-        pid: task.pid,
         taskGroup: task.taskGroup,
         taskID: task.id,
-        metadata: task.metadata
+        metadata: task.metadata,
+        taskType: 'end'
       }
 
       const tsk = new Promise((resolve, reject) => {
-        io.emit('processQueue', {
+        io.emit<TaskQueueEvent>('processQueue', {
           taskID: task.id,
           message: `starting ${task.id} processing`,
           taskType: 'processing',
@@ -210,21 +217,19 @@ const TaskQueue = () => {
       })
         .then(async (r: Record<string, any> | -1) => {
           if (r === -1) return
-          io.emit(task.taskGroup, {
+          io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOArgs,
             ok: true,
-            metadata: { ...taskIOArgs.metadata, ...r },
-            evtType: 'completed'
+            metadata: { ...taskIOArgs.metadata, ...r }
           })
           p_dequeue(task.id)
         })
         .catch(async (err) => {
           if (err === -1) return
-          io.emit(task.taskGroup, {
+          io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOArgs,
             ok: false,
-            message: err.message,
-            evtType: 'completed'
+            message: err.message
           })
           p_dequeue(task.id)
         })
@@ -242,15 +247,16 @@ const TaskQueue = () => {
     useFork = i
   }
 
-  const execInFork = (task: {
-    pid: string
-    taskID?: string
-    taskGroup: string
-    taskType: string
-    taskArgs: Record<string, any>
-  }) => {
+  const execScrapeInFork = (task: ForkScrapeEventArgs) => {
+    postToFork({
+      taskType: 'scrape',
+      meta: task
+    })
+  }
+
+  const postToFork = (arg: ForkScrapeEvent) => {
     const fork = randomFork()
-    fork.fork.postMessage(task, [fork.channel.forkPort])
+    fork.fork.postMessage(arg, [fork.channel.forkPort])
   }
 
   const createProcess = () => {
@@ -285,7 +291,7 @@ const TaskQueue = () => {
   }
 
   return {
-    execInFork,
+    execScrapeInFork,
     useFork,
     setUseFork,
     enqueue,
