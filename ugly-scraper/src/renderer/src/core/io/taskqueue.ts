@@ -4,7 +4,7 @@ import { handleApolloTaskQueueEvents } from './apollo'
 export type TaskQueueSocketEvent<T = Record<string, any>, ReqType = string> = {
   taskType: ReqType
   message: string
-  status?: string
+  // status?: string
   metadata: {
     taskID: string
     taskGroup: string

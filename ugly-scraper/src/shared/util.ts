@@ -35,5 +35,5 @@ export const QUEUE_CHANNELS = {
   scrapeProcessQueue: 'sqp',
   scrapeQueue: 'sq',
   taskQueue: 'tq',
-  taskProcessQueue: 'tpq'
+  processQueue: 'pq'
 }

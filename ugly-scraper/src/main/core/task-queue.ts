@@ -12,6 +12,7 @@ import {
 import { MessageChannelMain, utilityProcess } from 'electron/main'
 import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
+import { QUEUE_CHANNELS as QC } from '../../shared/util'
 // import { Piscina } from 'piscina';
 // import path from 'path'
 
@@ -72,7 +73,7 @@ const TaskQueue = () => {
         taskQueue.push({ pid, taskID, action, args, taskGroup, taskType, message, metadata })
       })
       .then(() => {
-        io.emit<TaskQueueEvent>('taskQueue', {
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID,
           message: 'new task added to queue',
           // status: 'enqueue',
@@ -93,7 +94,7 @@ const TaskQueue = () => {
       })
       .then((t) => {
         if (!t) return
-        io.emit<TaskQueueEvent>('taskQueue', {
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID: t.taskID,
           message: 'moving from queue to processing',
           // status: 'passing',
@@ -117,7 +118,7 @@ const TaskQueue = () => {
         return task
       })
       .then((t) => {
-        io.emit<TaskQueueEvent>('taskQueue', {
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID,
           message: 'deleting task from queue',
           // status: 'removed',
@@ -138,7 +139,7 @@ const TaskQueue = () => {
         processQueue.push(item)
       })
       .then(() => {
-        io.emit<TaskQueueEvent>('processQueue', {
+        io.emit<TaskQueueEvent>(QC.processQueue, {
           taskID: item.task.taskID,
           message: 'new task added to processing queue',
           // status: 'start',
@@ -164,7 +165,7 @@ const TaskQueue = () => {
         return task
       })
       .then((t) => {
-        io.emit<TaskQueueEvent>('processQueue', {
+        io.emit<TaskQueueEvent>(QC.processQueue, {
           taskID: t.task.taskID,
           message: 'removed completed task from queue',
           // status: 'end',
@@ -188,7 +189,7 @@ const TaskQueue = () => {
         return task
       })
       .then((t) => {
-        io.emit<TaskQueueEvent>('processQueue', {
+        io.emit<TaskQueueEvent>(QC.processQueue, {
           taskID,
           message: 'cancelled',
           // status: 'stopped',
@@ -226,7 +227,7 @@ const TaskQueue = () => {
       }
 
       const tsk = new Promise((resolve, reject) => {
-        io.emit<TaskQueueEvent>('processQueue', {
+        io.emit<TaskQueueEvent>(QC.processQueue, {
           taskID: task.taskID,
           message: `starting ${task.taskID} processing`,
           taskType: 'processing',
@@ -249,7 +250,7 @@ const TaskQueue = () => {
       })
         .then(async (r: any) => {
           if (r === EXEC_FORK) return
-          io.emit<TaskQueueEvent>('processQueue', {
+          io.emit<TaskQueueEvent>(QC.processQueue, {
             ...taskIOEmitArgs,
             ok: true,
             metadata: {
@@ -261,7 +262,7 @@ const TaskQueue = () => {
         })
         .catch(async (err) => {
           if (err === EXEC_FORK) return
-          io.emit<TaskQueueEvent>('processQueue', {
+          io.emit<TaskQueueEvent>(QC.processQueue, {
             ...taskIOEmitArgs,
             ok: false,
             message: err.message,
