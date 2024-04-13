@@ -52,7 +52,6 @@ type SProcessQueueItem = {
 
 type ForkScrapeEventArgs = {
   pid: string
-  taskID: string
   action: ForkActions
   args: Records<string, any>
 }
@@ -68,31 +67,34 @@ type ForkEvent<T = ForkScrapeEvent> = {
 
 type ForkActions =
   // account
-  | 'a_a_cfma'
-  | 'a_a_um'
-  | 'a_a_ua'
-  | 'a_a_ca'
-  | 'a_a_la'
-  | 'a_a_aa'
-  | 'a_a_lm'
-  | 'a_a_d'
+  | 'a_aum'
+  | 'a_aua'
+  | 'a_ala'
+  | 'a_adel'
+  | 'a_alm'
+  | 'a_ad'
+  | 'a_ac'
+  | 'a_au'
+  | 'a_aga'
+  | 'a_aa'
+  | 'a_aca'
   // domain
-  | 'a_d_ad'
-  | 'a_d_vd'
-  | 'a_d_dd'
-  | 'a_d_gd'
+  | 'a_da'
+  | 'a_dv'
+  | 'a_dd'
+  | 'a_dga'
   // metadata
-  | 'a_m_um'
-  | 'a_m_dm'
-  | 'a_m_gm'
+  | 'a_mga'
+  | 'a_md'
+  | 'a_mu'
   // records
-  | 'a_r_grs'
-  | 'a_r_gr'
+  | 'a_rga'
+  | 'a_rg'
   // scrape
-  | 'a_s_s'
+  | 'a_s'
   // proxy
-  | 'a_p_gp'
-  | 'a_p_ap'
+  | 'a_pga'
+  | 'a_pa'
 
 type Forks = {
   [key: string]: {

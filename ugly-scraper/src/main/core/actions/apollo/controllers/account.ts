@@ -1,4 +1,4 @@
-import { TaskEnqueue } from '../../../../../shared'
+import { CHANNELS } from '../../../../../shared/util'
 import { updateAccount } from '../../../database'
 import { AccountModel_, IAccount } from '../../../database/models/accounts'
 import { DomainModel_ } from '../../../database/models/domain'
@@ -493,9 +493,9 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
         if (!global.forkID) {
           return await demine({ taskID, account })
         } else {
-          scrapeQueue.enqueue({
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            action: demine,
+            action: CHANNELS.a_accountDemine,
             args: { account }
           })
         }

@@ -114,7 +114,7 @@ const ScrapeQueue = () => {
             taskID: task.taskID,
             ok: true,
             metadata: r,
-            taskType: 'complete'
+            taskType: 'end'
           })
           p_dequeue(task.taskID)
         })
@@ -124,7 +124,7 @@ const ScrapeQueue = () => {
             taskID: task.taskID,
             ok: false,
             message: err.message,
-            taskType: 'complete'
+            taskType: 'end'
           })
           p_dequeue(task.taskID)
         })
