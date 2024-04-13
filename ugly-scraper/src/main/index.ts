@@ -3,34 +3,22 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { init } from './core'
-// import {
-//   WaddAccount,
-//   WaddDomain,
-//   WaddProxy,
-//   WcheckAccount,
-//   WconfirmAccount,
-//   WdeleteAccount,
-//   WdeleteDomain,
-//   WdeleteMetadata,
-//   Wdemine,
-//   WgetAccounts,
-//   WgetDomains,
-//   WgetMetadatas,
-//   WgetProxies,
-//   WgetRecord,
-//   WgetRecords,
-//   WloginAuto,
-//   WloginManually,
-//   Wscrape,
-//   WupdateAcc,
-//   WupdateMetadata,
-//   WupgradeAutomatically,
-//   WupgradeManually,
-//   Wverify
-// } from './core/actions/apollo/controllers'
-// import { IAccount } from './core/database/models/accounts'
-// import { IMetaData } from './core/database/models/metadata'
-// import { CHANNELS } from '../shared/util'
+import {
+  TconfirmAccount,
+  TupgradeManually,
+  TupgradeAutomatically,
+  TcheckAccount,
+  TdeleteAccount,
+  TloginAuto,
+  TaddAccount,
+  TgetAccounts,
+  TupdateAcc,
+  TloginManually,
+  Tdemine
+} from './core/actions/apollo'
+import { IAccount } from './core/database/models/accounts'
+import { IMetaData } from './core/database/models/metadata'
+import { CHANNELS } from '../shared/util'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -62,49 +50,79 @@ function createWindow(): void {
 
     // ==========================================================================================
 
-    // //================= account =========================
-    // ipcMain.handle(CHANNELS.ad, async (e, id: string) => await Wdemine(id))
-    // ipcMain.handle(CHANNELS.aum, async (e, id: string) => await WupgradeManually(id))
-    // ipcMain.handle(CHANNELS.aua, async (e, id: string) => await WupgradeAutomatically(id))
-    // ipcMain.handle(CHANNELS.ac, async (e, id: string) => await WcheckAccount(id))
-    // ipcMain.handle(CHANNELS.adel, async (e, id: string) => await WdeleteAccount(id))
-    // ipcMain.handle(CHANNELS.aca, async (e, id: string) => await WconfirmAccount(id))
-    // ipcMain.handle(CHANNELS.ala, async (e, id: string) => await WloginAuto(id))
-    // ipcMain.handle(CHANNELS.alm, async (e, id: string) => await WloginManually(id))
-    // ipcMain.handle(
-    //   CHANNELS.au,
-    //   async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
-    // )
-    // ipcMain.handle(CHANNELS.aga, async () => await WgetAccounts())
-    // ipcMain.handle(CHANNELS.aa, async (e, args) => await WaddAccount(args))
+    //================= account =========================
+    ipcMain.handle(
+      CHANNELS.a_accountDemine,
+      async (e, accountID: string) => await Tdemine({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountUpgradeManually,
+      async (e, accountID: string) => await TupgradeManually({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountUpgradeAutomatically,
+      async (e, accountID: string) => await TupgradeAutomatically({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountCheck,
+      async (e, accountID: string) => await TcheckAccount({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountDelete,
+      async (e, accountID: string) => await TdeleteAccount({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountConfirm,
+      async (e, accountID: string) => await TconfirmAccount({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountLoginAuto,
+      async (e, accountID: string) => await TloginAuto({ accountID })
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountLoginManually,
+      async (e, id: string) => await WloginManually(id)
+    )
+    ipcMain.handle(
+      CHANNELS.a_accountUpdate,
+      async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
+    )
+    ipcMain.handle(CHANNELS.a_accountGetAll, async () => await WgetAccounts())
+    ipcMain.handle(CHANNELS.a_accountAdd, async (e, args) => await WaddAccount(args))
 
-    // // =============== domain =====================
-    // ipcMain.handle(CHANNELS.da, async (e, domain: string) => await WaddDomain(domain))
-    // ipcMain.handle(CHANNELS.dv, async (e, domain: string) => await Wverify(domain))
-    // ipcMain.handle(CHANNELS.dd, async (e, domainID: string) => await WdeleteDomain(domainID))
-    // ipcMain.handle(CHANNELS.dga, async () => await WgetDomains())
+    // =============== domain =====================
+    ipcMain.handle(CHANNELS.a_domainAdd, async (e, domain: string) => await WaddDomain(domain))
+    ipcMain.handle(CHANNELS.a_domainVerify, async (e, domain: string) => await Wverify(domain))
+    ipcMain.handle(
+      CHANNELS.a_domainDelete,
+      async (e, domainID: string) => await WdeleteDomain(domainID)
+    )
+    ipcMain.handle(CHANNELS.a_domainGetAll, async () => await WgetDomains())
 
-    // // =============== Metadata =====================
-    // ipcMain.handle(CHANNELS.mga, async () => await WgetMetadatas())
-    // ipcMain.handle(CHANNELS.md, async (e, id: string) => await WdeleteMetadata(id))
-    // ipcMain.handle(CHANNELS.mu, async (e, meta: IMetaData) => await WupdateMetadata(meta))
+    // =============== Metadata =====================
+    ipcMain.handle(CHANNELS.a_metadataGetAll, async () => await WgetMetadatas())
+    ipcMain.handle(CHANNELS.a_metadataDelete, async (e, id: string) => await WdeleteMetadata(id))
+    ipcMain.handle(
+      CHANNELS.a_metadataUpdate,
+      async (e, meta: IMetaData) => await WupdateMetadata(meta)
+    )
 
-    // // =============== Proxy =====================
-    // ipcMain.handle(CHANNELS.pga, async () => await WgetProxies())
-    // ipcMain.handle(
-    //   CHANNELS.pa,
-    //   async (e, url: string, proxy: string) => await WaddProxy(url, proxy)
-    // )
+    // =============== Proxy =====================
+    ipcMain.handle(CHANNELS.a_proxyGetAll, async () => await WgetProxies())
+    ipcMain.handle(
+      CHANNELS.a_proxyAdd,
+      async (e, url: string, proxy: string) => await WaddProxy(url, proxy)
+    )
 
-    // // =============== Record =====================
-    // ipcMain.handle(CHANNELS.rga, async () => await WgetRecords())
-    // ipcMain.handle(CHANNELS.rg, async (e, id: string) => await WgetRecord(id))
+    // =============== Record =====================
+    ipcMain.handle(CHANNELS.a_recordsGetAll, async () => await WgetRecords())
+    ipcMain.handle(CHANNELS.a_recordGet, async (e, id: string) => await WgetRecord(id))
 
-    // // =============== Scrape =====================
-    // ipcMain.handle(
-    //   CHANNELS.s,
-    //   async (e, id: string, proxy: boolean, url: string) => await Wscrape(id, proxy, url)
-    // )
+    // =============== Scrape =====================
+    ipcMain.handle(
+      CHANNELS.a_scrape,
+      async (e, id: string, proxy: boolean, url: string) => await Wscrape(id, proxy, url)
+    )
 
     // ==========================================================================================
 

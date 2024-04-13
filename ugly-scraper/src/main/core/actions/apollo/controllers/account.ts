@@ -184,7 +184,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const TdeleteAccount = async (accountID: string) => {
+export const TdeleteAccount = async ({ accountID }: { accountID: string }) => {
   console.log('deleteAccounts')
   try {
     if (!accountID) throw new Error('Failed to delete account, please provide valid id')

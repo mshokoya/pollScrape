@@ -21,6 +21,20 @@ import {
   addProxy
 } from './apollo/actions'
 
+export {
+  TconfirmAccount,
+  TupgradeManually,
+  TupgradeAutomatically,
+  TcheckAccount,
+  TdeleteAccount,
+  TloginAuto,
+  TaddAccount,
+  TgetAccounts,
+  TupdateAcc,
+  TloginManually,
+  Tdemine
+} from './apollo/controllers/account'
+
 // keys are type = ForkActions
 export const actions = {
   // account
