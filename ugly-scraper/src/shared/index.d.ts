@@ -20,7 +20,7 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   taskID: string
   message?: string
   ok?: boolean
-  // status: string
+  status?: string
   taskType: ReqType
   metadata: {
     taskID: string
@@ -110,4 +110,12 @@ type Forks = {
     status: 'started' | 'ready'
     TIP: string[] // ids
   }
+}
+
+type ApolloSocketEvent<T = Record<string, any>> = {
+  taskID: string
+  taskType: string
+  message: string
+  ok?: boolean
+  metadata: T
 }

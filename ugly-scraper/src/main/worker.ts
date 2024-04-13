@@ -1,5 +1,5 @@
 // import { actions } from './actions'
-import { ForkEvent, SQueueItem } from '../shared'
+import { ForkEvent } from '../shared'
 import { init } from './core'
 import { actions } from './core/actions'
 import { scrapeQueue } from './core/scrape-queue'

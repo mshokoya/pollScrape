@@ -1,16 +1,8 @@
 import { batch } from '@legendapp/state'
 import { AccountReqType, IAccount, accountTaskHelper, stateResStatusHelper } from '../state/account'
-import { TaskQueueSocketEvent } from './taskqueue'
 import { appState$ } from '../state/index'
 import { taskQueue } from './taskqueue'
-
-export type ApolloSocketEvent<T = Record<string, any>> = {
-  taskID: string
-  taskType: string
-  message: string
-  ok?: boolean
-  metadata: T
-}
+import { ApolloSocketEvent, TaskQueueEvent } from 'src/shared'
 
 export function handleApolloEvent(res: ApolloSocketEvent<IAccount>) {
   const [accountID, idx, task] = accountTaskHelper.getTaskByTaskID(res.taskID)
@@ -52,15 +44,15 @@ function processApolloEventData(taskType: string, msg: ApolloSocketEvent<IAccoun
   }
 }
 
-export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{ accountID: string }>) {
+export function handleApolloTaskQueueEvents(res: TaskQueueEvent<{ accountID: string }>) {
   switch (res.taskType) {
     case 'enqueue':
       batch(() => {
         taskQueue.queue.push(res)
-        const accountID = res.metadata.metadata.accountID!
+        const accountID = res.metadata.metadata!.accountID
         accountTaskHelper.add(accountID, {
           status: 'queue',
-          type: res.metadata.taskType! as AccountReqType,
+          type: res.metadata.taskType as AccountReqType,
           taskID: res.metadata.taskID
         })
       })
@@ -115,7 +107,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueSocketEvent<{ accountI
   }
 }
 
-export function handleApolloProcessQueueEvents(res: TaskQueueSocketEvent<{ accountID: string }>) {
+export function handleApolloProcessQueueEvents(res: TaskQueueEvent<{ accountID: string }>) {
   switch (res.taskType) {
     case 'enqueue':
       batch(() => {
