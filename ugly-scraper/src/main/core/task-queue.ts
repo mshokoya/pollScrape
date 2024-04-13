@@ -75,7 +75,7 @@ const TaskQueue = () => {
         io.emit<TaskQueueEvent>('taskQueue', {
           taskID,
           message: 'new task added to queue',
-          status: 'enqueue',
+          // status: 'enqueue',
           taskType: 'enqueue',
           metadata: { taskID, taskGroup, taskType, metadata }
         })
@@ -96,7 +96,7 @@ const TaskQueue = () => {
         io.emit<TaskQueueEvent>('taskQueue', {
           taskID: t.taskID,
           message: 'moving from queue to processing',
-          status: 'passing',
+          // status: 'passing',
           taskType: 'dequeue',
           metadata: {
             taskID: t.taskID,
@@ -120,7 +120,7 @@ const TaskQueue = () => {
         io.emit<TaskQueueEvent>('taskQueue', {
           taskID,
           message: 'deleting task from queue',
-          status: 'removed',
+          // status: 'removed',
           taskType: 'remove',
           metadata: {
             taskID: t.taskID,
@@ -141,7 +141,7 @@ const TaskQueue = () => {
         io.emit<TaskQueueEvent>('processQueue', {
           taskID: item.task.taskID,
           message: 'new task added to processing queue',
-          status: 'start',
+          // status: 'start',
           taskType: 'enqueue',
           metadata: {
             taskID: item.task.taskID,
@@ -167,7 +167,7 @@ const TaskQueue = () => {
         io.emit<TaskQueueEvent>('processQueue', {
           taskID: t.task.taskID,
           message: 'removed completed task from queue',
-          status: 'end',
+          // status: 'end',
           taskType: 'dequeue',
           metadata: {
             taskID: t.task.taskID,
@@ -191,7 +191,7 @@ const TaskQueue = () => {
         io.emit<TaskQueueEvent>('processQueue', {
           taskID,
           message: 'cancelled',
-          status: 'stopped',
+          // status: 'stopped',
           taskType: 'stop',
           metadata: {
             taskID: t.task.taskID,
@@ -217,7 +217,7 @@ const TaskQueue = () => {
       const taskIOEmitArgs = {
         taskID: task.taskID,
         taskType: 'end',
-        status: 'end',
+        // status: 'end',
         metadata: {
           taskID: task.taskID,
           taskGroup: task.taskGroup,
@@ -230,7 +230,7 @@ const TaskQueue = () => {
           taskID: task.taskID,
           message: `starting ${task.taskID} processing`,
           taskType: 'processing',
-          status: 'processing',
+          // status: 'processing',
           metadata: {
             taskID: task.taskID,
             taskGroup: task.taskGroup,
@@ -253,7 +253,7 @@ const TaskQueue = () => {
             ...taskIOEmitArgs,
             ok: true,
             metadata: {
-              ...task,
+              ...taskIOEmitArgs.metadata,
               metadata: r
             }
           })
@@ -264,7 +264,10 @@ const TaskQueue = () => {
           io.emit<TaskQueueEvent>('processQueue', {
             ...taskIOEmitArgs,
             ok: false,
-            message: err.message
+            message: err.message,
+            metadata: {
+              ...taskIOEmitArgs.metadata
+            }
           })
           p_dequeue(task.taskID)
         })

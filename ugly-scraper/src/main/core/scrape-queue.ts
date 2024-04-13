@@ -23,7 +23,10 @@ const ScrapeQueue = () => {
           pid,
           taskID,
           taskType: 'enqueue',
-          message: 'new task added to queue'
+          message: 'new task added to queue',
+          metadata: {
+            args
+          }
         })
       })
       .finally(() => {
@@ -113,7 +116,9 @@ const ScrapeQueue = () => {
             pid: task.pid,
             taskID: task.taskID,
             ok: true,
-            metadata: r,
+            metadata: {
+              response: r
+            },
             taskType: 'end'
           })
           p_dequeue(task.taskID)

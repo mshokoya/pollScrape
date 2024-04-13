@@ -20,7 +20,7 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   taskID: string
   message?: string
   ok?: boolean
-  status: string
+  // status: string
   taskType: ReqType
   metadata: {
     taskID: string
@@ -30,13 +30,16 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   }
 }
 
-type ScrapeQueueEvent = {
+type ScrapeQueueEvent<A = Record<string, any>, R = Record<string, any>> = {
   pid: string
   ok?: bookean
   taskID: string
   taskType: string
   message?: string
-  metadata?: Record<string, any>
+  metadata?: {
+    args?: A
+    response?: R
+  }
 }
 
 type SQueueItem<T = Record<string, any>> = {
