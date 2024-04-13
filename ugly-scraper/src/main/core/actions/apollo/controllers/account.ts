@@ -1,3 +1,4 @@
+import { AddAccount } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
 import { updateAccount } from '../../../database'
 import { AccountModel_, IAccount } from '../../../database/models/accounts'
@@ -245,13 +246,7 @@ export const TaddAccount = async ({
   email: emaill,
   password,
   recoveryEmail
-}: {
-  addType: string
-  selectedDomain: string
-  email: string
-  password: string
-  recoveryEmail: string
-}) => {
+}: AddAccount) => {
   console.log('addAccount')
 
   try {

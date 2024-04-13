@@ -14,11 +14,24 @@ import {
   TgetAccounts,
   TupdateAcc,
   TloginManually,
-  Tdemine
-} from './core/actions/apollo'
+  Tdemine,
+  addDomain,
+  verifyDomain,
+  deleteDomain,
+  getDomains,
+  updateMetadata,
+  deleteMetadata,
+  getMetadatas,
+  getRecords,
+  getRecord,
+  scrape,
+  getProxies,
+  addProxy
+} from './core/actions'
 import { IAccount } from './core/database/models/accounts'
 import { IMetaData } from './core/database/models/metadata'
 import { CHANNELS } from '../shared/util'
+import { AddAccountArgs } from '../shared'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -81,47 +94,50 @@ function createWindow(): void {
     )
     ipcMain.handle(
       CHANNELS.a_accountLoginManually,
-      async (e, id: string) => await WloginManually(id)
+      async (e, accountID: string) => await TloginManually({ accountID })
     )
     ipcMain.handle(
       CHANNELS.a_accountUpdate,
-      async (e, id: string, account: IAccount) => await WupdateAcc(id, account)
+      async (e, accountID: string, fields: IAccount) => await TupdateAcc({ accountID, fields })
     )
-    ipcMain.handle(CHANNELS.a_accountGetAll, async () => await WgetAccounts())
-    ipcMain.handle(CHANNELS.a_accountAdd, async (e, args) => await WaddAccount(args))
+    ipcMain.handle(CHANNELS.a_accountGetAll, async () => await TgetAccounts())
+    ipcMain.handle(
+      CHANNELS.a_accountAdd,
+      async (e, args: AddAccountArgs) => await TaddAccount(args)
+    )
 
     // =============== domain =====================
-    ipcMain.handle(CHANNELS.a_domainAdd, async (e, domain: string) => await WaddDomain(domain))
-    ipcMain.handle(CHANNELS.a_domainVerify, async (e, domain: string) => await Wverify(domain))
+    ipcMain.handle(CHANNELS.a_domainAdd, async (e, domain: string) => await addDomain(domain))
+    ipcMain.handle(CHANNELS.a_domainVerify, async (e, domain: string) => await verifyDomain(domain))
     ipcMain.handle(
       CHANNELS.a_domainDelete,
-      async (e, domainID: string) => await WdeleteDomain(domainID)
+      async (e, domainID: string) => await deleteDomain(domainID)
     )
-    ipcMain.handle(CHANNELS.a_domainGetAll, async () => await WgetDomains())
+    ipcMain.handle(CHANNELS.a_domainGetAll, async () => await getDomains())
 
     // =============== Metadata =====================
-    ipcMain.handle(CHANNELS.a_metadataGetAll, async () => await WgetMetadatas())
-    ipcMain.handle(CHANNELS.a_metadataDelete, async (e, id: string) => await WdeleteMetadata(id))
+    ipcMain.handle(CHANNELS.a_metadataGetAll, async () => await getMetadatas())
+    ipcMain.handle(CHANNELS.a_metadataDelete, async (e, id: string) => await deleteMetadata(id))
     ipcMain.handle(
       CHANNELS.a_metadataUpdate,
-      async (e, meta: IMetaData) => await WupdateMetadata(meta)
+      async (e, meta: IMetaData) => await updateMetadata(meta)
     )
 
     // =============== Proxy =====================
-    ipcMain.handle(CHANNELS.a_proxyGetAll, async () => await WgetProxies())
+    ipcMain.handle(CHANNELS.a_proxyGetAll, async () => await getProxies())
     ipcMain.handle(
       CHANNELS.a_proxyAdd,
-      async (e, url: string, proxy: string) => await WaddProxy(url, proxy)
+      async (e, url: string, proxy: string) => await addProxy(url, proxy)
     )
 
     // =============== Record =====================
-    ipcMain.handle(CHANNELS.a_recordsGetAll, async () => await WgetRecords())
-    ipcMain.handle(CHANNELS.a_recordGet, async (e, id: string) => await WgetRecord(id))
+    ipcMain.handle(CHANNELS.a_recordsGetAll, async () => await getRecords())
+    ipcMain.handle(CHANNELS.a_recordGet, async (e, id: string) => await getRecord(id))
 
     // =============== Scrape =====================
     ipcMain.handle(
       CHANNELS.a_scrape,
-      async (e, id: string, proxy: boolean, url: string) => await Wscrape(id, proxy, url)
+      async (e, id: string, proxy: boolean, url: string) => await scrape(id, proxy, url)
     )
 
     // ==========================================================================================

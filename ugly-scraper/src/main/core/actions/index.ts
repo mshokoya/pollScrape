@@ -21,6 +21,7 @@ import {
   addProxy
 } from './apollo/actions'
 
+// Accounts
 export {
   TconfirmAccount,
   TupgradeManually,
@@ -34,6 +35,21 @@ export {
   TloginManually,
   Tdemine
 } from './apollo/controllers/account'
+
+export {
+  addDomain,
+  verifyDomain,
+  deleteDomain,
+  getDomains,
+  updateMetadata,
+  deleteMetadata,
+  getMetadatas,
+  getRecords,
+  getRecord,
+  scrape,
+  getProxies,
+  addProxy
+}
 
 // keys are type = ForkActions
 export const actions = {

@@ -5,6 +5,14 @@ type IPC_APP = {
   ipcMain: IpcMain
 }
 
+type AddAccountArgs = {
+  addType: string
+  selectedDomain: string
+  email: string
+  password: string
+  recoveryEmail: string
+}
+
 type IPC_EVT_Response<T = Record<string, any>> = {
   channel: string
   id: string
