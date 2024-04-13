@@ -47,7 +47,7 @@ const TaskQueue = () => {
   const _Qlock = new Mutex()
   const _Plock = new Mutex()
   const exec_lock = new Mutex()
-  const taskQueue: QueueItem[] = []
+  let taskQueue: QueueItem[] = []
   let processQueue: ProcessQueueItem[] = []
   let useFork = true
   let maxProcesses = 10
@@ -112,15 +112,22 @@ const TaskQueue = () => {
   const remove = async (taskID: string) => {
     return _Qlock
       .runExclusive(() => {
-        taskQueue.filter((task) => task.taskID !== taskID)
+        const task = taskQueue.find((t) => t.taskID === taskID)
+        taskQueue = taskQueue.filter((t) => t.taskID !== taskID)
+        return task
       })
-      .then(() => {
+      .then((t) => {
         io.emit<TaskQueueEvent>('taskQueue', {
           taskID,
           message: 'deleting task from queue',
           status: 'removed',
           taskType: 'remove',
-          metadata: { taskID }
+          metadata: {
+            taskID: t.taskID,
+            taskGroup: t.taskGroup,
+            taskType: t.taskType,
+            metadata: t.metadata
+          }
         })
       })
   }
@@ -132,11 +139,16 @@ const TaskQueue = () => {
       })
       .then(() => {
         io.emit<TaskQueueEvent>('processQueue', {
-          taskID: item[0],
+          taskID: item.task.taskID,
           message: 'new task added to processing queue',
           status: 'start',
           taskType: 'enqueue',
-          metadata: { taskID: item[0] }
+          metadata: {
+            taskID: item.task.taskID,
+            taskGroup: item.task.taskGroup,
+            taskType: item.task.taskType,
+            metadata: item.task.metadata
+          }
         })
       })
       .finally(() => {
@@ -144,36 +156,49 @@ const TaskQueue = () => {
       })
   }
 
-  const p_dequeue = async (id: string) => {
+  const p_dequeue = async (taskID: string) => {
     return _Plock
       .runExclusive(() => {
-        processQueue = processQueue.filter((task) => task[0] !== id)
+        const task = processQueue.find((t) => t.task.taskID === taskID)
+        processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
+        return task
       })
-      .then(() => {
+      .then((t) => {
         io.emit<TaskQueueEvent>('processQueue', {
-          taskID: id,
+          taskID: t.task.taskID,
           message: 'removed completed task from queue',
           status: 'end',
           taskType: 'dequeue',
-          metadata: { taskID: id }
+          metadata: {
+            taskID: t.task.taskID,
+            taskGroup: t.task.taskGroup,
+            taskType: t.task.taskType,
+            metadata: t.task.metadata
+          }
         })
       })
   }
 
+  // (FIX) make abortable
   const stop = async (taskID: string) => {
     return _Plock
       .runExclusive(async () => {
-        const process = processQueue.find((p) => p[0] === taskID)
-        if (!process) return null
-        return await process[2].abort()
+        const task = processQueue.find((t) => t.task.taskID === taskID)
+        processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
+        return task
       })
-      .then(() => {
+      .then((t) => {
         io.emit<TaskQueueEvent>('processQueue', {
           taskID,
           message: 'cancelled',
           status: 'stopped',
           taskType: 'stop',
-          metadata: { taskID }
+          metadata: {
+            taskID: t.task.taskID,
+            taskGroup: t.task.taskGroup,
+            taskType: t.task.taskType,
+            metadata: t.task.metadata
+          }
         })
       })
       .finally(() => {
@@ -189,11 +214,15 @@ const TaskQueue = () => {
       if (!task) return
 
       // taskType
-      const taskIOArgs = {
-        taskGroup: task.taskGroup,
+      const taskIOEmitArgs = {
         taskID: task.taskID,
-        metadata: task.metadata,
-        taskType: 'end'
+        taskType: 'end',
+        status: 'end',
+        metadata: {
+          taskID: task.taskID,
+          taskGroup: task.taskGroup,
+          taskType: task.taskType
+        }
       }
 
       const tsk = new Promise((resolve, reject) => {
@@ -201,7 +230,12 @@ const TaskQueue = () => {
           taskID: task.taskID,
           message: `starting ${task.taskID} processing`,
           taskType: 'processing',
-          metadata: { taskID: task.taskID }
+          status: 'processing',
+          metadata: {
+            taskID: task.taskID,
+            taskGroup: task.taskGroup,
+            taskType: task.taskType
+          }
         })
 
         task
@@ -215,17 +249,20 @@ const TaskQueue = () => {
       })
         .then(async (r: any) => {
           if (r === EXEC_FORK) return
-          io.emit<TaskQueueEvent>(task.taskGroup, {
-            ...taskIOArgs,
+          io.emit<TaskQueueEvent>('processQueue', {
+            ...taskIOEmitArgs,
             ok: true,
-            metadata: { ...taskIOArgs.metadata, ...r }
+            metadata: {
+              ...task,
+              metadata: r
+            }
           })
           p_dequeue(task.taskID)
         })
         .catch(async (err) => {
           if (err === EXEC_FORK) return
-          io.emit<TaskQueueEvent>(task.taskGroup, {
-            ...taskIOArgs,
+          io.emit<TaskQueueEvent>('processQueue', {
+            ...taskIOEmitArgs,
             ok: false,
             message: err.message
           })

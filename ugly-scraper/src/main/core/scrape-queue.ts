@@ -70,7 +70,7 @@ const ScrapeQueue = () => {
   const p_dequeue = async (taskID: string) => {
     return _Plock
       .runExclusive(() => {
-        const task = processQueue.find((t) => t.task.taskID !== taskID)
+        const task = processQueue.find((t) => t.task.taskID === taskID)
         processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
         return task.task
       })

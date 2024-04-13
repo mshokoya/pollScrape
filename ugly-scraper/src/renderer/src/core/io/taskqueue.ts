@@ -2,7 +2,7 @@ import { observable } from '@legendapp/state'
 import { handleApolloTaskQueueEvents } from './apollo'
 
 export type TaskQueueSocketEvent<T = Record<string, any>, ReqType = string> = {
-  taskType?: ReqType
+  taskType: ReqType
   message: string
   status?: string
   metadata: {

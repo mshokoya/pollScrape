@@ -16,17 +16,17 @@ type IPC_EVT_Response<T = Record<string, any>> = {
 
 type _DDD_ = {}
 
-type TaskQueueEvent = {
+type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   taskID: string
   message?: string
   ok?: boolean
-  status?: string
-  taskType: string
-  metadata?: {
-    taskID?: string
-    taskGroup?: string
-    taskType?: string
-    metadata?: Record<string, any>
+  status: string
+  taskType: ReqType
+  metadata: {
+    taskID: string
+    taskGroup: string
+    taskType: string
+    metadata?: T
   }
 }
 
