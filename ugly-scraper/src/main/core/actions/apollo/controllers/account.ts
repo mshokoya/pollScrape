@@ -19,15 +19,7 @@ import {
 } from '../actions'
 import { apolloConfirmAccountEvent } from '../lib'
 
-export const TconfirmAccount = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid: string
-}) => {
+export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
   console.log('confirm')
 
   try {
@@ -37,30 +29,29 @@ export const TconfirmAccount = async ({
     if (!account) throw new Error('Failed to find account')
     // if (account.verified) throw new Error('Request Failed, account is already verified');
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'confirm',
       message: `confirming account ${account.email}`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'confirm',
-          message: `confirming account ${account.email}`,
-          data: { accountID }
-        })
-        if (global.forkID) {
-          return await confirmAccount({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'confirm',
+        //   message: `confirming account ${account.email}`,
+        //   data: { accountID }
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'cfma',
-            taskArgs: { account }
+            action: CHANNELS.a_accountConfirm,
+            args: { account }
           })
+        } else {
+          // @ts-ignore
+          return await confirmAccount({ taskID, account })
         }
       }
     })
@@ -71,15 +62,7 @@ export const TconfirmAccount = async ({
   }
 }
 
-export const TupgradeManually = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid: string
-}) => {
+export const TupgradeManually = async ({ accountID }: { accountID: string }) => {
   console.log('upgradeAccountManual')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -87,30 +70,29 @@ export const TupgradeManually = async ({
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualUpgrade',
       message: `Upgrading ${account.email} manually`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'manualUpgrade',
-          message: `Upgrading ${account.email} manually`,
-          data: { accountID }
-        })
-        if (global.forkID) {
-          return await upgradeManually({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'manualUpgrade',
+        //   message: `Upgrading ${account.email} manually`,
+        //   data: { accountID }
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'um',
-            taskArgs: { account }
+            action: CHANNELS.a_accountUpgradeManually,
+            args: { account }
           })
+        } else {
+          // @ts-ignore
+          return await upgradeManually({ taskID, account })
         }
       }
     })
@@ -121,15 +103,7 @@ export const TupgradeManually = async ({
   }
 }
 
-export const TupgradeAutomatically = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid: string
-}) => {
+export const TupgradeAutomatically = async ({ accountID }: { accountID: string }) => {
   console.log('upgradeAccounts')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -137,30 +111,29 @@ export const TupgradeAutomatically = async ({
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'upgrade',
       message: `Upgrading ${account.email} automatically`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'upgrade',
-          message: `Upgrading ${account.email} automatically`,
-          data: { accountID }
-        })
-        if (global.forkID) {
-          return await upgradeAutomatically({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'upgrade',
+        //   message: `Upgrading ${account.email} automatically`,
+        //   data: { accountID }
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'ua',
-            taskArgs: { account }
+            action: CHANNELS.a_accountUpgradeAutomatically,
+            args: { account }
           })
+        } else {
+          // @ts-ignore
+          return await upgradeAutomatically({ taskID, account })
         }
       }
     })
@@ -171,15 +144,7 @@ export const TupgradeAutomatically = async ({
   }
 }
 
-export const TcheckAccount = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid: string
-}) => {
+export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
   console.log('checkAccounts')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -187,30 +152,29 @@ export const TcheckAccount = async ({
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to find account')
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'check',
       message: `Getting information on ${account.email} credits`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'check',
-          message: `Getting information on ${account.email} credits`,
-          data: { accountID }
-        })
-        if (global.forkID) {
-          return await checkAccount({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'check',
+        //   message: `Getting information on ${account.email} credits`,
+        //   data: { accountID }
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            taskType: 'apollo',
-            taskGroup: 'chka',
-            taskArgs: { account }
+            action: CHANNELS.a_accountCheck,
+            args: { account }
           })
+        } else {
+          // @ts-ignore
+          return await checkAccount({ taskID, account })
         }
       }
     })
@@ -235,15 +199,7 @@ export const TdeleteAccount = async (accountID: string) => {
   }
 }
 
-export const TloginAuto = async ({
-  taskID,
-  accountID,
-  pid
-}: {
-  taskID?: string
-  accountID: string
-  pid: string
-}) => {
+export const TloginAuto = async ({ accountID }: { accountID: string }) => {
   console.log('loginauto')
   try {
     if (!accountID) throw new Error('Failed to login, invalid id')
@@ -251,30 +207,29 @@ export const TloginAuto = async ({
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error('Failed to login, cannot find account')
 
-    taskID = taskID || generateID()
+    const taskID = generateID()
     taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'login',
       message: `Logging into ${account.email} apollo account`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'login',
-          message: `Logging into ${account.email} apollo account`,
-          data: { accountID }
-        })
-        if (global.forkID) {
-          return await loginAuto({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'login',
+        //   message: `Logging into ${account.email} apollo account`,
+        //   data: { accountID }
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'la',
-            taskArgs: { account }
+            action: CHANNELS.a_accountLoginAuto,
+            args: { account }
           })
+        } else {
+          // @ts-ignore
+          return await loginAuto({ taskID, account })
         }
       }
     })
@@ -290,17 +245,13 @@ export const TaddAccount = async ({
   addType,
   email: emaill,
   password,
-  recoveryEmail,
-  taskID,
-  pid
+  recoveryEmail
 }: {
-  taskID?: string
   addType: string
   selectedDomain: string
   email: string
   password: string
   recoveryEmail: string
-  pid: string
 }) => {
   console.log('addAccount')
 
@@ -309,7 +260,7 @@ export const TaddAccount = async ({
     const email = emaill || import.meta.env.MAIN_VITE_AUTHEMAIL
     const domain = email
     let account: Partial<IAccount>
-    taskID = taskID || generateID()
+    const taskID = generateID()
 
     if (!addType) throw new Error('Failed to add account, invalid request params')
 
@@ -329,7 +280,7 @@ export const TaddAccount = async ({
       // (FIX) remove aliasEmail.. use env email
       await mailbox.getConnection(
         {
-          ...accountToMailbox('', account as IAccount),
+          ...accountToMailbox(taskID, account as IAccount),
           aliasEmail: account.email
         } as MailboxAuthOptions,
         async (args) => {
@@ -363,28 +314,26 @@ export const TaddAccount = async ({
     }
 
     await taskQueue.enqueue({
-      pid,
       taskID,
       taskGroup: 'apollo',
       taskType: 'create',
       message: `adding ${account.email}`,
       metadata: { email: account.email },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'create',
-          message: `adding ${account.email}`
-        })
-        if (global.forkID) {
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'create',
+        //   message: `adding ${account.email}`
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
+            pid: taskID,
+            action: CHANNELS.a_accountAdd,
+            args: { account }
+          })
+        } else {
           // @ts-ignore
           return await addAccount({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
-            pid: taskID,
-            taskGroup: 'apollo',
-            taskType: 'aa',
-            taskArgs: { account }
-          })
         }
       }
     })
@@ -430,7 +379,6 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
   console.log('loginManually')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
-
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error("Failed to start demining, couldn't find account")
     if (account.domain === 'default') throw new Error('Failed to start manual login, invalid email')
@@ -443,20 +391,20 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
       message: `Login into ${account.email}`,
       metadata: { accountID },
       action: async () => {
-        io.emit('apollo', {
-          taskID,
-          taskType: 'manualLogin',
-          message: `Login into ${account.email}`,
-          data: { accountID }
-        })
-        if (global.forkID) {
-          return await loginManually({ taskID, account })
-        } else {
-          scrapeQueue.enqueue({
+        // io.emit('apollo', {
+        //   taskID,
+        //   taskType: 'manualLogin',
+        //   message: `Login into ${account.email}`,
+        //   data: { accountID }
+        // })
+        if (taskQueue.useFork) {
+          return taskQueue.execScrapeInFork({
             pid: taskID,
-            action: loginManually,
+            action: CHANNELS.a_accountLoginManually,
             args: { account }
           })
+        } else {
+          return await loginManually({ taskID, account })
         }
       }
     })
@@ -490,14 +438,14 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
         //   message: `Demine ${account.email} popups`,
         //   metadata: { accountID }
         // })
-        if (!global.forkID) {
-          return await demine({ taskID, account })
-        } else {
+        if (taskQueue.useFork) {
           return taskQueue.execScrapeInFork({
             pid: taskID,
             action: CHANNELS.a_accountDemine,
             args: { account }
           })
+        } else {
+          return await demine({ taskID, account })
         }
       }
     })

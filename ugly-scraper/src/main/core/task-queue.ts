@@ -19,14 +19,14 @@ import { P2cBalancer } from 'load-balancers'
 //   filename: path.resolve(__dirname, 'worker.js')
 // });
 
-type QueueItem = {
+type QueueItem<T = Record<string, any>> = {
   taskID: string
   taskGroup: string
   taskType: string
   message: string
-  metadata: Record<string, string | number> & { taskID: string }
-  action: () => Promise<any>
-  args?: Record<string, any>
+  metadata: Record<string, string | number>
+  action: (args: T) => Promise<any>
+  args?: T
 }
 
 type ProcessQueueItem = {
@@ -50,6 +50,7 @@ const TaskQueue = () => {
   const taskQueue: QueueItem[] = []
   let processQueue: ProcessQueueItem[] = []
   let useFork = true
+  let maxProcesses = 10
   const maxForks = cpus().length
   const forks: Forks = {}
   let forkKeys: string[]
@@ -64,7 +65,7 @@ const TaskQueue = () => {
     metadata,
     action,
     args
-  }: QueueItem) => {
+  }: QueueItem<T>) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
@@ -183,7 +184,7 @@ const TaskQueue = () => {
   const exec = async () => {
     try {
       await exec_lock.acquire()
-      if (processQueue.length >= maxWorkers) return
+      if (processQueue.length >= maxProcesses) return
       const task = await dequeue()
       if (!task) return
 
@@ -204,7 +205,7 @@ const TaskQueue = () => {
         })
 
         task
-          .action()
+          .action(task.args)
           .then((r) => {
             resolve(r)
           })
@@ -309,6 +310,10 @@ const TaskQueue = () => {
     return forks[key]
   }
 
+  const setMaxProcesses = (n: number) => {
+    maxProcesses = n
+  }
+
   function init() {
     for (let i = 0; i < maxForks; i++) {
       createProcess()
@@ -316,6 +321,7 @@ const TaskQueue = () => {
   }
 
   return {
+    setMaxProcesses,
     execScrapeInFork,
     useFork,
     setUseFork,

@@ -1,4 +1,5 @@
 import { BrowserWindow, IpcMain } from 'electron'
+import { CHANNELS } from './util'
 type IPC_APP = {
   mainWindow: BrowserWindow
   ipcMain: IpcMain
@@ -52,7 +53,7 @@ type SProcessQueueItem = {
 
 type ForkScrapeEventArgs = {
   pid: string
-  action: ForkActions
+  action: (typeof CHANNELS)[keyof typeof CHANNELS]
   args: Records<string, any>
 }
 

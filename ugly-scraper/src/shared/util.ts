@@ -1,7 +1,5 @@
-import { ForkActions } from '.'
-
 // values are type = ForkActions too
-export const CHANNELS: Record<string, ForkActions> = {
+export const CHANNELS = {
   // accounts
   a_accountDemine: 'a_ad',
   a_accountUpgradeManually: 'a_aum',
