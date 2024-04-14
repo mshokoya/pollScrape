@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { ObservableObject } from '@legendapp/state'
+import { TQTask, TaskQueue } from 'src/shared'
+import { batch } from '@legendapp/state'
 
 export const cn = (...args: ClassValue[]) => {
   return twMerge(clsx(...args))
@@ -252,3 +254,55 @@ export const removeLeadColInApolloURL = (url: string) => {
   params.delete('prospectedByCurrentTeam[]')
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
+
+export const TaskQueueHelper = (tq: ObservableObject<TaskQueue>) => ({
+  add: (t: Omit<TQTask, 'processes'>) => {
+    tq.queue.push({ ...t, processes: [] })
+  },
+  move: (taskID: string, from: keyof typeof tq, to: keyof typeof tq) => {
+    batch(() => {
+      // @ts-ignore
+      const task = tq[from].find((t) => t.taskID.peek() === taskID)
+      if (!task) return
+      // @ts-ignore
+      tq[to].push(task.peek())
+      task.delete()
+    })
+  },
+  delete: (taskID: string) => {
+    console.log('inn da delete of TaskQueueHelper')
+    // @ts-ignore
+    console.log(this.findTask)
+    // @ts-ignore
+    this.findTask(taskID)?.delete()
+  },
+  findTask: (taskID: string): ObservableObject<TQTask> | void => {
+    for (const queues in Object.keys(tq)) {
+      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
+      if (t) {
+        return t.get()
+      }
+    }
+  },
+  findTaskViaProcessID: (taskID: string): ObservableObject<TQTask> | void => {
+    for (const queues in Object.keys(tq)) {
+      for (const task of tq[queues]) {
+        if (task.processes.peek().includes(taskID)) {
+          return task
+        }
+      }
+    }
+  },
+  addProcess: (taskID: string, PtaskID: string) => {
+    console.log('inn da addProcess of TaskQueueHelper')
+    // @ts-ignore
+    console.log(this.findTask)
+    // @ts-ignore
+    this.findTask(taskID)?.processes.push(PtaskID)
+  },
+  deleteProcess: (taskID: string) => {
+    console.log('inn da addProcess of TaskQueueHelper')
+    // @ts-ignore
+    this.findTaskViaProcessID(taskID)?.set((t) => t.filter((t0) => t0 !== taskID))
+  }
+})

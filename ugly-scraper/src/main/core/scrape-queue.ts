@@ -12,16 +12,17 @@ const ScrapeQueue = () => {
   const scrapeQueue: SQueueItem[] = []
   let processQueue: SProcessQueueItem[] = []
 
-  const enqueue = async <T>({ pid, action, args }: Omit<SQueueItem<T>, 'taskID'>) => {
+  const enqueue = async <T>({ pid, action, args, taskGroup }: Omit<SQueueItem<T>, 'taskID'>) => {
     const taskID = generateID()
     return _Qlock
       .runExclusive(() => {
-        scrapeQueue.push({ pid, taskID, action, args: { ...args, taskID } })
+        scrapeQueue.push({ pid, taskID, action, taskGroup, args: { ...args, taskID } })
       })
       .then(() => {
         io.emit<ScrapeQueueEvent>(QC.scrapeQueue, {
           pid,
           taskID,
+          taskGroup,
           taskType: 'enqueue',
           message: 'new task added to queue',
           metadata: {
@@ -44,6 +45,7 @@ const ScrapeQueue = () => {
         if (!t) return
         io.emit<ScrapeQueueEvent>(QC.scrapeQueue, {
           pid: t.pid,
+          taskGroup: t.taskGroup,
           taskID: t.taskID,
           message: 'moving from queue to processing',
           taskType: 'dequeue'
@@ -60,6 +62,7 @@ const ScrapeQueue = () => {
       .then(() => {
         io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
           pid: item.task.pid,
+          taskGroup: item.task.taskGroup,
           taskID: item.task.taskID,
           message: 'new task added to processing queue',
           taskType: 'enqueue',
@@ -84,6 +87,7 @@ const ScrapeQueue = () => {
         io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
           pid: t.pid,
           taskID: t.taskID,
+          taskGroup: t.taskGroup,
           message: 'removed completed task from queue',
           taskType: 'dequeue'
         })
@@ -101,6 +105,7 @@ const ScrapeQueue = () => {
         io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
           pid: task.pid,
           taskID: task.taskID,
+          taskGroup: task.taskGroup,
           message: `starting ${task.taskID} processing`,
           taskType: 'processing'
         })
@@ -118,6 +123,7 @@ const ScrapeQueue = () => {
           io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
             pid: task.pid,
             taskID: task.taskID,
+            taskGroup: task.taskGroup,
             ok: true,
             metadata: {
               response: r
@@ -130,6 +136,7 @@ const ScrapeQueue = () => {
           io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
             pid: task.pid,
             taskID: task.taskID,
+            taskGroup: task.taskGroup,
             ok: false,
             message: err.message,
             taskType: 'end'

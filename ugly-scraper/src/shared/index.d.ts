@@ -48,6 +48,7 @@ type ScrapeQueueEvent<A = Record<string, any>, R = Record<string, any>> = {
   pid: string
   ok?: boolean
   taskID: string
+  taskGroup: string
   taskType: string
   message?: string
   metadata?: {
@@ -59,6 +60,7 @@ type ScrapeQueueEvent<A = Record<string, any>, R = Record<string, any>> = {
 type SQueueItem<T = Record<string, any>> = {
   pid: string
   taskID: string
+  taskGroup: string
   action: (a: T) => Promise<void>
   args: Omit<T, 'taskID'>
 }
@@ -70,8 +72,9 @@ type SProcessQueueItem = {
 
 type ForkScrapeEventArgs = {
   pid: string
+  taskGroup: string
   action: (typeof CHANNELS)[keyof typeof CHANNELS]
-  args: Records<string, any>
+  args: Record<string, any>
 }
 
 type ForkScrapeEvent = {
@@ -132,4 +135,10 @@ type ApolloSocketEvent<T = Record<string, any>> = {
   message: string
   ok?: boolean
   metadata: T
+}
+
+type TaskQueue = {
+  queue: TQTask[]
+  processing: TQTask[]
+  timeout: TQTask[]
 }
