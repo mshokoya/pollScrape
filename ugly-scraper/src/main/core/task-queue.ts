@@ -294,7 +294,11 @@ const TaskQueue = () => {
   const createProcess = () => {
     const id = generateID()
     const { port1: mainPort, port2: forkPort } = new MessageChannelMain()
-    const fork = utilityProcess.fork(path.join(__dirname))
+    const fork = utilityProcess.fork(
+      `${path.join(__dirname)}/core.js`,
+      ['--experimental-specifier-resolution=node'],
+      { execArgv: ['--experimental-specifier-resolution=node'] }
+    )
     fork.postMessage({ message: 'ping', forkID: id }, [forkPort])
     mainPort.on('message', handleProcessResponse)
     mainPort.start()
