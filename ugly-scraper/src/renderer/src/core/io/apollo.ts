@@ -48,7 +48,7 @@ export function handleApolloTaskQueueEvents(res: TaskQueueEvent<{ accountID: str
   switch (res.taskType) {
     case 'enqueue':
       batch(() => {
-        taskQueue.queue.push(res)
+        taskQueue.queue.push({ ...res, processes: [] })
         const accountID = res.metadata.metadata!.accountID
         accountTaskHelper.add(accountID, {
           status: 'queue',
@@ -135,3 +135,95 @@ export function handleApolloProcessQueueEvents(res: TaskQueueEvent<{ accountID: 
       break
   }
 }
+
+// export function handleApolloTaskQueueEvents(res: TaskQueueEvent<{ accountID: string }>) {
+//   switch (res.taskType) {
+//     case 'enqueue':
+//       batch(() => {
+//         taskQueue.queue.push(res)
+//         const accountID = res.metadata.metadata!.accountID
+//         accountTaskHelper.add(accountID, {
+//           status: 'queue',
+//           type: res.metadata.taskType as AccountReqType,
+//           taskID: res.metadata.taskID
+//         })
+//       })
+//       break
+//     case 'remove':
+//       batch(() => {
+//         const tsk = taskQueue.queue.find((t) => t.metadata.taskID.get() === res.metadata.taskID)
+//         if (!tsk) return
+//         const t2 = tsk.peek()
+//         accountTaskHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
+//         tsk.delete()
+//       })
+//       break
+//     case 'dequeue':
+//       batch(() => {
+//         const tsk = taskQueue.queue.find((t) => t.metadata.taskID.get() === res.metadata.taskID)
+//         if (!tsk) return
+//         tsk.status.set('passing')
+//         accountTaskHelper.updateTask(
+//           tsk.metadata.metadata.accountID.peek(),
+//           tsk.metadata.taskID.peek(),
+//           { status: 'passing' }
+//         )
+//       })
+//       break
+//     case 'timeout':
+//       batch(() => {
+//         const tsk = taskQueue.processing
+//           .peek()
+//           .find((t) => t.metadata.taskID === res.metadata.taskID)
+//         if (!tsk) return
+//         taskQueue.timeout.set((q) => q.filter((q) => q.metadata.taskID !== tsk.metadata.taskID))
+//         tsk.status = 'timeout'
+//         taskQueue.timeout.push(tsk)
+//         accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {
+//           status: 'timeout'
+//         })
+//       })
+//       break
+//     case 'continue':
+//       batch(() => {
+//         const tsk = taskQueue.timeout.peek().find((t) => t.metadata.taskID === res.metadata.taskID)
+//         if (!tsk) return
+//         taskQueue.processing.set((q) => q.filter((q) => q.metadata.taskID !== tsk.metadata.taskID))
+//         tsk.status = 'processing'
+//         taskQueue.processing.push(tsk)
+//         accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {
+//           status: 'processing'
+//         })
+//       })
+//       break
+//   }
+// }
+
+// export function handleApolloProcessQueueEvents(res: TaskQueueEvent<{ accountID: string }>) {
+//   switch (res.taskType) {
+//     case 'enqueue':
+//       batch(() => {
+//         const tsk = taskQueue.queue.peek().find((t) => t.metadata.taskID === res.metadata.taskID)
+//         if (!tsk) return
+//         taskQueue.queue.set((q) => q.filter((q) => q.metadata.taskID !== tsk.metadata.taskID))
+//         tsk.status = 'processing'
+//         taskQueue.processing.push(tsk)
+//         accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {
+//           status: 'processing'
+//         })
+//       })
+//       break
+//     case 'dequeue':
+//       batch(() => {
+//         console.log('process dequeue')
+//         const tsk = taskQueue.processing.find(
+//           (t) => t.metadata.taskID.get() === res.metadata.taskID
+//         )
+//         if (!tsk) return
+//         const t2 = tsk.peek()
+//         accountTaskHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
+//         tsk.delete()
+//       })
+//       break
+//   }
+// }

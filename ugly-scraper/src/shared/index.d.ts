@@ -24,6 +24,12 @@ type IPC_EVT_Response<T = Record<string, any>> = {
 
 type _DDD_ = {}
 
+type TQTask = {
+  taskGroup: string
+  taskID: string
+  processes: []
+}
+
 type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   taskID: string
   message?: string
@@ -40,7 +46,7 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
 
 type ScrapeQueueEvent<A = Record<string, any>, R = Record<string, any>> = {
   pid: string
-  ok?: bookean
+  ok?: boolean
   taskID: string
   taskType: string
   message?: string

@@ -30,11 +30,13 @@ type QueueItem<T = Record<string, any>> = {
   args?: T
 }
 
+type STQ = 'stq' | 'spq'
+
 type ProcessQueueItem = {
   task: QueueItem
   process: Promise<void>
   type: 'fork' | 'main'
-  processes: { forkID: string; taskID: string; status: 'taskQueue' | 'processQueue' }[]
+  processes: { forkID: string; taskID: string; status: STQ }[]
 }
 
 // type TIP_Item = [
@@ -294,11 +296,7 @@ const TaskQueue = () => {
   const createProcess = () => {
     const id = generateID()
     const { port1: mainPort, port2: forkPort } = new MessageChannelMain()
-    const fork = utilityProcess.fork(
-      `${path.join(__dirname)}/core.js`,
-      ['--experimental-specifier-resolution=node'],
-      { execArgv: ['--experimental-specifier-resolution=node'] }
-    )
+    const fork = utilityProcess.fork(`${path.join(__dirname)}/core.js`)
     fork.postMessage({ message: 'ping', forkID: id }, [forkPort])
     mainPort.on('message', handleProcessResponse)
     mainPort.start()
@@ -313,33 +311,28 @@ const TaskQueue = () => {
   const handleProcessResponse = (evt: {
     data: { channel: string; args: EmitResponse & { forkID: string } }
   }) => {
-    if (evt.data.channel === 'taskQueue' && evt.data.args.taskType === 'enqueue') {
+    if (evt.data.channel === QC.scrapeQueue && evt.data.args.taskType === 'enqueue') {
       // if scrape job in taskqueue in worker
       processQueue
         .find((t) => t.task.taskID === evt.data.args.pid)
         ?.processes.push({
           forkID: evt.data.args.forkID,
           taskID: evt.data.args.taskID,
-          status: evt.data.channel
+          status: evt.data.channel as STQ
         })
-      io.emit(evt.data.channel, evt.data.args)
-      return
-    } else if (evt.data.channel === 'processQueue' && evt.data.args.taskType === 'enqueue') {
+    } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'enqueue') {
       const process = processQueue
         .find((t) => t.task.taskID === evt.data.args.pid)
         ?.processes.find((p) => p.taskID === evt.data.args.taskID)
-      if (process) process.status = evt.data.channel
-      io.emit(evt.data.channel, evt.data.args)
-      return
-    } else if (evt.data.channel === 'processQueue' && evt.data.args.taskType === 'end') {
+      if (process) process.status = evt.data.channel as STQ
+    } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'end') {
       io.emit<ScrapeQueueEvent>(evt.data.channel, evt.data.args as any)
       const processes = processQueue.find((t) => t.task.taskID === evt.data.args.pid)?.processes
         .length
       if (processes <= 1) io.emit<TaskQueueEvent>(evt.data.channel, evt.data.args as any)
       p_dequeue(evt.data.args.pid)
-    } else {
-      io.emit(evt.data.channel, evt.data.args)
     }
+    io.emit(evt.data.channel, evt.data.args)
   }
 
   const randomFork = () => {

@@ -62,7 +62,10 @@ const ScrapeQueue = () => {
           pid: item.task.pid,
           taskID: item.task.taskID,
           message: 'new task added to processing queue',
-          taskType: 'enqueue'
+          taskType: 'enqueue',
+          metadata: {
+            args: item.task.args
+          }
         })
       })
       .finally(() => {
