@@ -141,12 +141,9 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
   },
   delete: (entityID: string, reqType: RT) => {
     const rsl = resStatus[entityID]
-    console.log(rsl.get() && rsl.get().length > 1)
     if (rsl.get() && rsl.get().length > 1) {
       const rs = rsl.find((rs1) => rs1[0].get() === reqType)
-      if (rs) {
-        rs.delete()
-      }
+      if (rs) rs.delete()
     } else {
       resStatus[entityID].delete()
     }
@@ -255,9 +252,10 @@ export const removeLeadColInApolloURL = (url: string) => {
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
 
-export const TaskQueueHelper = (tq: ObservableObject<TaskQueue>) => ({
-  add: (t: Omit<TQTask, 'processes'>) => {
-    tq.queue.push({ ...t, processes: [] })
+export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
+  addToQueue: (queueName: keyof typeof tq, t: T) => {
+    // @ts-ignore
+    tq[queueName].push({ ...t, processes: [] })
   },
   move: (taskID: string, from: keyof typeof tq, to: keyof typeof tq) => {
     batch(() => {

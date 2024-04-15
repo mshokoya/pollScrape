@@ -2,13 +2,7 @@ import { cpus } from 'os'
 import { Mutex } from 'async-mutex'
 import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
-import {
-  ForkScrapeEvent,
-  ForkScrapeEventArgs,
-  Forks,
-  ScrapeQueueEvent,
-  TaskQueueEvent
-} from '../../shared'
+import { ForkScrapeEvent, ForkScrapeEventArgs, Forks, TaskQueueEvent } from '../../shared'
 import { MessageChannelMain, utilityProcess } from 'electron/main'
 import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
@@ -244,7 +238,7 @@ const TaskQueue = () => {
       })
         .then(async (r: any) => {
           if (r === EXEC_FORK) return
-          io.emit<TaskQueueEvent>(QC.processQueue, {
+          io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: true,
             metadata: {
@@ -256,13 +250,11 @@ const TaskQueue = () => {
         })
         .catch(async (err) => {
           if (err === EXEC_FORK) return
-          io.emit<TaskQueueEvent>(QC.processQueue, {
+          io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,
             message: err.message,
-            metadata: {
-              ...taskIOEmitArgs.metadata
-            }
+            metadata: taskIOEmitArgs.metadata
           })
           p_dequeue(task.taskID)
         })
@@ -325,12 +317,13 @@ const TaskQueue = () => {
         .find((t) => t.task.taskID === evt.data.args.pid)
         ?.processes.find((p) => p.taskID === evt.data.args.taskID)
       if (process) process.status = evt.data.channel as STQ
-    } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'end') {
-      io.emit<ScrapeQueueEvent>(evt.data.channel, evt.data.args as any)
-      const processes = processQueue.find((t) => t.task.taskID === evt.data.args.pid)?.processes
-        .length
-      if (processes <= 1) io.emit<TaskQueueEvent>(evt.data.channel, evt.data.args as any)
-      p_dequeue(evt.data.args.pid)
+    } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'dequeue') {
+      const process = processQueue.find((t) => t.task.taskID === evt.data.args.pid)
+      if (process.processes.length <= 1) {
+        p_dequeue(evt.data.args.pid)
+      } else {
+        process.processes = process.processes.filter((p) => p.taskID !== evt.data.args.taskID)
+      }
     }
     io.emit(evt.data.channel, evt.data.args)
   }

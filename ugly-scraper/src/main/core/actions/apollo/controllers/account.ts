@@ -1,4 +1,4 @@
-import { AddAccount } from '../../../../../shared'
+import { AddAccountArgs } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
 import { updateAccount } from '../../../database'
 import { AccountModel_, IAccount } from '../../../database/models/accounts'
@@ -6,7 +6,7 @@ import { DomainModel_ } from '../../../database/models/domain'
 import { accountToMailbox, mailbox, MailboxAuthOptions } from '../../../mailbox'
 import { taskQueue } from '../../../task-queue'
 import { generateID, generateSlug, getDomain } from '../../../util'
-import { io } from '../../../websockets'
+// import { io } from '../../../websockets'
 import {
   addAccount,
   checkAccount,
@@ -35,7 +35,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
       taskGroup: 'apollo',
       taskType: 'confirm',
       message: `confirming account ${account.email}`,
-      metadata: { accountID },
+      metadata: { accountID, taskType: 'confirm' },
       action: async () => {
         // io.emit('apollo', {
         //   taskID,
@@ -48,7 +48,12 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountConfirm,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'confirm',
+              metadata: { accountID }
+            }
           })
         } else {
           // @ts-ignore
@@ -77,7 +82,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
       taskGroup: 'apollo',
       taskType: 'manualUpgrade',
       message: `Upgrading ${account.email} manually`,
-      metadata: { accountID },
+      metadata: { accountID, taskType: 'manualUpgrade' },
       action: async () => {
         // io.emit('apollo', {
         //   taskID,
@@ -90,7 +95,12 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountUpgradeManually,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'manualUpgrade',
+              metadata: { accountID }
+            }
           })
         } else {
           // @ts-ignore
@@ -132,7 +142,12 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountUpgradeAutomatically,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'upgrade',
+              metadata: { accountID }
+            }
           })
         } else {
           // @ts-ignore
@@ -161,7 +176,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
       taskGroup: 'apollo',
       taskType: 'check',
       message: `Getting information on ${account.email} credits`,
-      metadata: { accountID },
+      metadata: { accountID, taskType: 'check' },
       action: async () => {
         // io.emit('apollo', {
         //   taskID,
@@ -174,7 +189,12 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountCheck,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'check',
+              metadata: { accountID }
+            }
           })
         } else {
           // @ts-ignore
@@ -217,7 +237,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
       taskGroup: 'apollo',
       taskType: 'login',
       message: `Logging into ${account.email} apollo account`,
-      metadata: { accountID },
+      metadata: { accountID, taskType: 'login' },
       action: async () => {
         // io.emit('apollo', {
         //   taskID,
@@ -230,7 +250,12 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountLoginAuto,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'login',
+              metadata: { accountID }
+            }
           })
         } else {
           // @ts-ignore
@@ -251,7 +276,7 @@ export const TaddAccount = async ({
   email: emaill,
   password,
   recoveryEmail
-}: AddAccount) => {
+}: AddAccountArgs) => {
   console.log('addAccount')
 
   try {
@@ -312,12 +337,13 @@ export const TaddAccount = async ({
       if (accountExists) throw new Error('Failed to create new account, account already exists')
     }
 
+    const dummyAccountID = generateID()
     await taskQueue.enqueue({
       taskID,
       taskGroup: 'apollo',
       taskType: 'create',
       message: `adding ${account.email}`,
-      metadata: { email: account.email },
+      metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
       action: async () => {
         // io.emit('apollo', {
         //   taskID,
@@ -329,7 +355,15 @@ export const TaddAccount = async ({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountAdd,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'create',
+              metadata: {
+                email: account.email,
+                accountID: dummyAccountID
+              }
+            }
           })
         } else {
           // @ts-ignore
@@ -389,7 +423,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
       taskGroup: 'apollo',
       taskType: 'manualLogin',
       message: `Login into ${account.email}`,
-      metadata: { accountID },
+      metadata: { accountID, taskType: 'manualLogin' },
       action: async () => {
         // io.emit('apollo', {
         //   taskID,
@@ -402,7 +436,12 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountLoginManually,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskGroup: 'apollo',
+              taskType: 'manualLogin',
+              metadata: { accountID }
+            }
           })
         } else {
           return await loginManually({ taskID, account })
@@ -430,7 +469,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
       taskGroup: 'apollo',
       taskType: 'demine',
       message: `Demine ${account.email} popups`,
-      metadata: { accountID },
+      metadata: { accountID, taskType: 'demine' },
       action: async () => {
         // (FIX) MOVE TO DEMINE FUNC.. i this its used to disable account in add "in use" colors on fronend
         // io.emit<TaskEnqueue>('apollo', {
@@ -444,7 +483,12 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountDemine,
-            args: { account }
+            args: { account },
+            metadata: {
+              taskType: 'demine',
+              taskGroup: 'apollo',
+              metadata: { accountID }
+            }
           })
         } else {
           return await demine({ taskID, account })

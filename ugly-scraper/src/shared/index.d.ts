@@ -22,12 +22,19 @@ type IPC_EVT_Response<T = Record<string, any>> = {
   ok: boolean
 }
 
-type _DDD_ = {}
+// type _DDD_ = {}
 
 type TQTask = {
   taskGroup: string
   taskID: string
+  status?: string
   processes: []
+}
+
+type STQTask = {
+  taskGroup: string
+  taskID: string
+  pid: string
 }
 
 type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
@@ -44,7 +51,7 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   }
 }
 
-type ScrapeQueueEvent<A = Record<string, any>, R = Record<string, any>> = {
+type ScrapeQueueEvent<T = Record<string, any>> = {
   pid: string
   ok?: boolean
   taskID: string
@@ -52,9 +59,10 @@ type ScrapeQueueEvent<A = Record<string, any>, R = Record<string, any>> = {
   taskType: string
   message?: string
   metadata?: {
-    args?: A
-    response?: R
-  }
+    taskID: string
+    taskGroup: string
+    taskType: string
+  } & { metadata?: T }
 }
 
 type SQueueItem<T = Record<string, any>> = {
@@ -63,6 +71,7 @@ type SQueueItem<T = Record<string, any>> = {
   taskGroup: string
   action: (a: T) => Promise<void>
   args: Omit<T, 'taskID'>
+  metadata: Record<string, any>
 }
 
 type SProcessQueueItem = {
@@ -75,6 +84,12 @@ type ForkScrapeEventArgs = {
   taskGroup: string
   action: (typeof CHANNELS)[keyof typeof CHANNELS]
   args: Record<string, any>
+  metadata: {
+    taskID?: string
+    taskGroup: string
+    taskType: string
+    metadata?: Record<string, any>
+  }
 }
 
 type ForkScrapeEvent = {
@@ -129,13 +144,13 @@ type Forks = {
   }
 }
 
-type ApolloSocketEvent<T = Record<string, any>> = {
-  taskID: string
-  taskType: string
-  message: string
-  ok?: boolean
-  metadata: T
-}
+// type ApolloSocketEvent<T = Record<string, any>> = {
+//   taskID: string
+//   taskType: string
+//   message: string
+//   ok?: boolean
+//   metadata: T
+// }
 
 type TaskQueue = {
   queue: TQTask[]

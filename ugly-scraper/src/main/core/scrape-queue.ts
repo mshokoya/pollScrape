@@ -12,11 +12,24 @@ const ScrapeQueue = () => {
   const scrapeQueue: SQueueItem[] = []
   let processQueue: SProcessQueueItem[] = []
 
-  const enqueue = async <T>({ pid, action, args, taskGroup }: Omit<SQueueItem<T>, 'taskID'>) => {
+  const enqueue = async <T>({
+    pid,
+    action,
+    args,
+    taskGroup,
+    metadata
+  }: Omit<SQueueItem<T>, 'taskID'>) => {
     const taskID = generateID()
     return _Qlock
       .runExclusive(() => {
-        scrapeQueue.push({ pid, taskID, action, taskGroup, args: { ...args, taskID } })
+        scrapeQueue.push({
+          pid,
+          taskID,
+          action,
+          taskGroup,
+          args: { ...args, taskID },
+          metadata: { ...metadata, taskID }
+        })
       })
       .then(() => {
         io.emit<ScrapeQueueEvent>(QC.scrapeQueue, {
@@ -25,9 +38,7 @@ const ScrapeQueue = () => {
           taskGroup,
           taskType: 'enqueue',
           message: 'new task added to queue',
-          metadata: {
-            args
-          }
+          metadata: { ...metadata, taskID } as ScrapeQueueEvent['metadata']
         })
       })
       .finally(() => {
@@ -48,7 +59,8 @@ const ScrapeQueue = () => {
           taskGroup: t.taskGroup,
           taskID: t.taskID,
           message: 'moving from queue to processing',
-          taskType: 'dequeue'
+          taskType: 'dequeue',
+          metadata: t.metadata as ScrapeQueueEvent['metadata']
         })
         return t
       })
@@ -66,9 +78,7 @@ const ScrapeQueue = () => {
           taskID: item.task.taskID,
           message: 'new task added to processing queue',
           taskType: 'enqueue',
-          metadata: {
-            args: item.task.args
-          }
+          metadata: item.task.metadata as ScrapeQueueEvent['metadata']
         })
       })
       .finally(() => {
@@ -89,7 +99,8 @@ const ScrapeQueue = () => {
           taskID: t.taskID,
           taskGroup: t.taskGroup,
           message: 'removed completed task from queue',
-          taskType: 'dequeue'
+          taskType: 'dequeue',
+          metadata: t.metadata as ScrapeQueueEvent['metadata']
         })
       })
   }
@@ -107,7 +118,8 @@ const ScrapeQueue = () => {
           taskID: task.taskID,
           taskGroup: task.taskGroup,
           message: `starting ${task.taskID} processing`,
-          taskType: 'processing'
+          taskType: 'processing',
+          metadata: task.metadata as ScrapeQueueEvent['metadata']
         })
 
         task
@@ -120,26 +132,27 @@ const ScrapeQueue = () => {
           })
       })
         .then(async (r: Record<string, any>) => {
-          io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
+          io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
             taskGroup: task.taskGroup,
+            taskType: 'end',
             ok: true,
             metadata: {
-              response: r
-            },
-            taskType: 'end'
+              ...task.metadata,
+              metadata: r
+            } as ScrapeQueueEvent['metadata']
           })
           p_dequeue(task.taskID)
         })
         .catch(async (err) => {
-          io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
+          io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
             taskGroup: task.taskGroup,
+            taskType: 'end',
             ok: false,
-            message: err.message,
-            taskType: 'end'
+            message: err.message
           })
           p_dequeue(task.taskID)
         })

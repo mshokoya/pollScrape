@@ -1,7 +1,6 @@
 import { observable } from '@legendapp/state'
-import { handleApolloTaskQueueEvents } from './apollo'
-import { TaskQueue, TaskQueueEvent } from 'src/shared'
-import { batch } from '@legendapp/state'
+import { handleApolloProcessQueueEvents, handleApolloTaskQueueEvents } from './apollo'
+import { TQTask, TaskQueue, TaskQueueEvent } from 'src/shared'
 import { TaskQueueHelper } from '../util'
 
 export const taskQueue = observable<TaskQueue>({
@@ -10,55 +9,54 @@ export const taskQueue = observable<TaskQueue>({
   timeout: []
 })
 
-const taskQueueHelper = TaskQueueHelper(taskQueue)
+const taskQueueHelper = TaskQueueHelper<TQTask>(taskQueue)
 
-export const handleTaskQueueEvent = (res: TaskQueueEvent<unknown>) => {
+export const handleTaskQueueEvent = (res: TaskQueueEvent<any>) => {
   switch (res.taskType) {
     case 'enqueue':
-      taskQueueHelper.add({
+      taskQueueHelper.addToQueue('queue', {
         taskID: res.taskID,
-        taskGroup: res.metadata.taskGroup
+        taskGroup: res.metadata.taskGroup,
+        processes: []
       })
       break
 
-    case 'end':
     case 'dequeue':
       taskQueueHelper.delete(res.taskID)
       break
   }
 
-  switch (res.metadata.taskGroup) {
-    case 'apollo':
-      handleApolloTaskQueueEvents(res as TaskQueueEvent<{ accountID: string }>)
-      break
+  if (!res.fork) {
+    switch (res.metadata.taskGroup) {
+      case 'apollo':
+        handleApolloTaskQueueEvents(res as TaskQueueEvent<{ accountID: string; taskType: string }>)
+        break
+    }
   }
 }
 
-export function handleApolloProcessQueueEvents(res: TaskQueueEvent<{ accountID: string }>) {
+export function handleProcessQueueEvent(res: TaskQueueEvent<any>) {
   switch (res.taskType) {
     case 'enqueue':
-      batch(() => {
-        const tsk = taskQueue.queue.peek().find((t) => t.metadata.taskID === res.metadata.taskID)
-        if (!tsk) return
-        taskQueue.queue.set((q) => q.filter((q) => q.metadata.taskID !== tsk.metadata.taskID))
-        tsk.status = 'processing'
-        taskQueue.processing.push(tsk)
-        accountTaskHelper.updateTask(tsk.metadata.metadata.accountID, tsk.metadata.taskID, {
-          status: 'processing'
-        })
+      taskQueueHelper.addToQueue('processing', {
+        taskID: res.taskID,
+        taskGroup: res.metadata.taskGroup,
+        processes: []
       })
       break
+
     case 'dequeue':
-      batch(() => {
-        console.log('process dequeue')
-        const tsk = taskQueue.processing.find(
-          (t) => t.metadata.taskID.get() === res.metadata.taskID
-        )
-        if (!tsk) return
-        const t2 = tsk.peek()
-        accountTaskHelper.deleteTaskByTaskID(t2.metadata.metadata.accountID, t2.metadata.taskID)
-        tsk.delete()
-      })
+      taskQueueHelper.delete(res.taskID)
       break
+  }
+
+  if (!res.fork) {
+    switch (res.metadata.taskGroup) {
+      case 'apollo':
+        handleApolloProcessQueueEvents(
+          res as TaskQueueEvent<{ accountID: string; taskType: string }>
+        )
+        break
+    }
   }
 }
