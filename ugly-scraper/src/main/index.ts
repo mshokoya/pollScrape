@@ -101,6 +101,7 @@ function createWindow(): void {
       async (e, accountID: string, fields: IAccount) => await TupdateAcc({ accountID, fields })
     )
     ipcMain.handle(CHANNELS.a_accountGetAll, async () => await TgetAccounts())
+
     ipcMain.handle(
       CHANNELS.a_accountAdd,
       async (e, args: AddAccountArgs) => await TaddAccount(args)
