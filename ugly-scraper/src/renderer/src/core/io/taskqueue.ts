@@ -26,7 +26,7 @@ export const handleTaskQueueEvent = (res: TaskQueueEvent<any>) => {
       break
   }
 
-  if (!res.fork) {
+  if (!res.useFork) {
     switch (res.metadata.taskGroup) {
       case 'apollo':
         handleApolloTaskQueueEvents(res as TaskQueueEvent<{ accountID: string; taskType: string }>)
@@ -50,7 +50,7 @@ export function handleProcessQueueEvent(res: TaskQueueEvent<any>) {
       break
   }
 
-  if (!res.fork) {
+  if (!res.useFork) {
     switch (res.metadata.taskGroup) {
       case 'apollo':
         handleApolloProcessQueueEvents(

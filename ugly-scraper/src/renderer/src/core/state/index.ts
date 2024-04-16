@@ -32,19 +32,19 @@ export const appState$ = observable<AppState>({
 })
 
 Promise.all([
-  await fetchData<IAccount[]>('account', CHANNELS.aga)
+  fetchData<IAccount[]>('account', CHANNELS.a_accountGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IDomain[]>('domain', CHANNELS.dga)
+  fetchData<IDomain[]>('domain', CHANNELS.a_domainGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IProxy[]>('proxy', CHANNELS.pga)
+  fetchData<IProxy[]>('proxy', CHANNELS.a_proxyGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IMetaData[]>('metadata', CHANNELS.mga)
+  fetchData<IMetaData[]>('metadata', CHANNELS.a_metadataGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IRecord[]>('records', CHANNELS.rga)
+  fetchData<IRecord[]>('records', CHANNELS.a_recordsGetAll)
     .then((data) => data.data)
     .catch(() => [])
 ]).then((r) => {

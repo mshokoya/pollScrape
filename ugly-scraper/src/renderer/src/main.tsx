@@ -6,14 +6,14 @@ import App from './App'
 // import './index.css'
 import { enableReactTracking } from '@legendapp/state/config/enableReactTracking'
 import { handleProcessQueueEvent, handleTaskQueueEvent } from './core/io/taskqueue'
-import { handleApolloEvent } from './core/io/apollo'
 import { handleAPromptEvents } from './core/io/prompt'
+import { handleApolloScrapeEndEvent } from './core/io/apollo'
 
 enableReactTracking({
   auto: true
 })
 
-window.ipc.on('apollo', handleApolloEvent)
+window.ipc.on('apollo', handleApolloScrapeEndEvent)
 window.ipc.on('taskQueue', handleTaskQueueEvent)
 window.ipc.on('processQueue', handleProcessQueueEvent)
 window.ipc.on('prompt', handleAPromptEvents)

@@ -34,6 +34,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'confirm',
+      useFork: taskQueue.useFork,
       message: `confirming account ${account.email}`,
       metadata: { accountID, taskType: 'confirm' },
       action: async () => {
@@ -81,6 +82,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualUpgrade',
+      useFork: taskQueue.useFork,
       message: `Upgrading ${account.email} manually`,
       metadata: { accountID, taskType: 'manualUpgrade' },
       action: async () => {
@@ -128,6 +130,7 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
       taskID,
       taskGroup: 'apollo',
       taskType: 'upgrade',
+      useFork: taskQueue.useFork,
       message: `Upgrading ${account.email} automatically`,
       metadata: { accountID },
       action: async () => {
@@ -175,6 +178,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'check',
+      useFork: taskQueue.useFork,
       message: `Getting information on ${account.email} credits`,
       metadata: { accountID, taskType: 'check' },
       action: async () => {
@@ -236,6 +240,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'login',
+      useFork: taskQueue.useFork,
       message: `Logging into ${account.email} apollo account`,
       metadata: { accountID, taskType: 'login' },
       action: async () => {
@@ -246,6 +251,12 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
         //   data: { accountID }
         // })
         if (taskQueue.useFork) {
+          console.log(`
+
+
+            exec in fork
+
+            `)
           return taskQueue.execScrapeInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -342,6 +353,7 @@ export const TaddAccount = async ({
       taskID,
       taskGroup: 'apollo',
       taskType: 'create',
+      useFork: taskQueue.useFork,
       message: `adding ${account.email}`,
       metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
       action: async () => {
@@ -422,6 +434,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualLogin',
+      useFork: taskQueue.useFork,
       message: `Login into ${account.email}`,
       metadata: { accountID, taskType: 'manualLogin' },
       action: async () => {
@@ -468,6 +481,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'demine',
+      useFork: taskQueue.useFork,
       message: `Demine ${account.email} popups`,
       metadata: { accountID, taskType: 'demine' },
       action: async () => {

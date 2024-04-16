@@ -3,10 +3,11 @@ import { Mutex } from 'async-mutex'
 import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
 import { ForkScrapeEvent, ForkScrapeEventArgs, Forks, TaskQueueEvent } from '../../shared'
-import { MessageChannelMain, utilityProcess } from 'electron/main'
+// import { MessageChannelMain, utilityProcess } from 'electron/main'
 import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
 import { QUEUE_CHANNELS as QC } from '../../shared/util'
+import { fork } from 'node:child_process'
 // import { Piscina } from 'piscina';
 // import path from 'path'
 
@@ -16,6 +17,7 @@ import { QUEUE_CHANNELS as QC } from '../../shared/util'
 
 type QueueItem<T = Record<string, any>> = {
   taskID: string
+  useFork: boolean
   taskGroup: string
   taskType: string
   message: string
@@ -58,6 +60,7 @@ const TaskQueue = () => {
     taskID = generateID(),
     taskGroup,
     taskType,
+    useFork,
     message,
     metadata,
     action,
@@ -66,18 +69,18 @@ const TaskQueue = () => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
-        taskQueue.push({ pid, taskID, action, args, taskGroup, taskType, message, metadata })
+        taskQueue.push({ useFork, taskID, action, args, taskGroup, taskType, message, metadata })
       })
       .then(() => {
         io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID,
+          useFork,
           message: 'new task added to queue',
           taskType: 'enqueue',
           metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
       .finally(() => {
-        console.log('task added')
         exec()
       })
   }
@@ -91,6 +94,7 @@ const TaskQueue = () => {
         if (!t) return
         io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID: t.taskID,
+          useFork: t.useFork,
           message: 'moving from queue to processing',
           taskType: 'dequeue',
           metadata: {
@@ -116,6 +120,7 @@ const TaskQueue = () => {
           taskID,
           message: 'deleting task from queue',
           taskType: 'remove',
+          useFork: t.useFork,
           metadata: {
             taskID: t.taskID,
             taskGroup: t.taskGroup,
@@ -136,6 +141,7 @@ const TaskQueue = () => {
           taskID: item.task.taskID,
           message: 'new task added to processing queue',
           taskType: 'enqueue',
+          useFork: item.task.useFork,
           metadata: {
             taskID: item.task.taskID,
             taskGroup: item.task.taskGroup,
@@ -161,6 +167,7 @@ const TaskQueue = () => {
           taskID: t.task.taskID,
           message: 'removed completed task from queue',
           taskType: 'dequeue',
+          useFork: t.task.useFork,
           metadata: {
             taskID: t.task.taskID,
             taskGroup: t.task.taskGroup,
@@ -184,6 +191,7 @@ const TaskQueue = () => {
           taskID,
           message: 'cancelled',
           taskType: 'stop',
+          useFork: t.task.useFork,
           metadata: {
             taskID: t.task.taskID,
             taskGroup: t.task.taskGroup,
@@ -207,6 +215,7 @@ const TaskQueue = () => {
       // taskType
       const taskIOEmitArgs = {
         taskID: task.taskID,
+        useFork: task.useFork,
         taskType: 'end',
         metadata: {
           taskID: task.taskID,
@@ -220,6 +229,7 @@ const TaskQueue = () => {
           taskID: task.taskID,
           message: `starting ${task.taskID} processing`,
           taskType: 'processing',
+          useFork: task.useFork,
           metadata: {
             taskID: task.taskID,
             taskGroup: task.taskGroup,
@@ -273,6 +283,8 @@ const TaskQueue = () => {
   }
 
   const execScrapeInFork = (task: ForkScrapeEventArgs) => {
+    // @ts-ignore
+    task.useFork = true
     postToFork({
       taskType: 'scrape',
       meta: task
@@ -281,55 +293,83 @@ const TaskQueue = () => {
   }
 
   const postToFork = (arg: ForkScrapeEvent) => {
-    const fork = randomFork()
-    fork.fork.postMessage(arg, [fork.channel.forkPort])
+    // const fork = randomFork()
+    const fork = forks[forkKeys[0]]
+    fork.fork.send(arg)
   }
 
   const createProcess = () => {
     const id = generateID()
-    const { port1: mainPort, port2: forkPort } = new MessageChannelMain()
-    const fork = utilityProcess.fork(`${path.join(__dirname)}/core.js`)
-    fork.postMessage({ message: 'ping', forkID: id }, [forkPort])
-    mainPort.on('message', handleProcessResponse)
-    mainPort.start()
+
+    const f = fork(`${path.join(__dirname)}/core.js`)
+    f.send({ taskType: 'init' })
+    f.on('message', handleProcessResponse)
     forks[id] = {
-      fork,
-      channel: { mainPort, forkPort },
-      status: 'started',
+      fork: f,
       TIP: []
     }
   }
 
   const handleProcessResponse = (evt: {
-    data: { channel: string; args: EmitResponse & { forkID: string } }
+    channel: string
+    args: EmitResponse & { forkID: string }
   }) => {
-    if (evt.data.channel === QC.scrapeQueue && evt.data.args.taskType === 'enqueue') {
+    console.log(evt)
+    if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
       // if scrape job in taskqueue in worker
       processQueue
-        .find((t) => t.task.taskID === evt.data.args.pid)
+        .find((t) => t.task.taskID === evt.args.pid)
         ?.processes.push({
-          forkID: evt.data.args.forkID,
-          taskID: evt.data.args.taskID,
-          status: evt.data.channel as STQ
+          forkID: evt.args.forkID,
+          taskID: evt.args.taskID,
+          status: evt.channel as STQ
         })
-    } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'enqueue') {
+    } else if (evt.channel === QC.scrapeProcessQueue && evt.args.taskType === 'enqueue') {
       const process = processQueue
-        .find((t) => t.task.taskID === evt.data.args.pid)
-        ?.processes.find((p) => p.taskID === evt.data.args.taskID)
-      if (process) process.status = evt.data.channel as STQ
-    } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'dequeue') {
-      const process = processQueue.find((t) => t.task.taskID === evt.data.args.pid)
+        .find((t) => t.task.taskID === evt.args.pid)
+        ?.processes.find((p) => p.taskID === evt.args.taskID)
+      if (process) process.status = evt.channel as STQ
+    } else if (evt.channel === QC.scrapeProcessQueue && evt.args.taskType === 'dequeue') {
+      const process = processQueue.find((t) => t.task.taskID === evt.args.pid)
       if (process.processes.length <= 1) {
-        p_dequeue(evt.data.args.pid)
+        p_dequeue(evt.args.pid)
       } else {
-        process.processes = process.processes.filter((p) => p.taskID !== evt.data.args.taskID)
+        process.processes = process.processes.filter((p) => p.taskID !== evt.args.taskID)
       }
     }
-    io.emit(evt.data.channel, evt.data.args)
+    io.emit(evt.channel, evt.args)
   }
 
+  // const handleProcessResponse = (evt: {
+  //   data: { channel: string; args: EmitResponse & { forkID: string } }
+  // }) => {
+  //   if (evt.data.channel === QC.scrapeQueue && evt.data.args.taskType === 'enqueue') {
+  //     // if scrape job in taskqueue in worker
+  //     processQueue
+  //       .find((t) => t.task.taskID === evt.data.args.pid)
+  //       ?.processes.push({
+  //         forkID: evt.data.args.forkID,
+  //         taskID: evt.data.args.taskID,
+  //         status: evt.data.channel as STQ
+  //       })
+  //   } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'enqueue') {
+  //     const process = processQueue
+  //       .find((t) => t.task.taskID === evt.data.args.pid)
+  //       ?.processes.find((p) => p.taskID === evt.data.args.taskID)
+  //     if (process) process.status = evt.data.channel as STQ
+  //   } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'dequeue') {
+  //     const process = processQueue.find((t) => t.task.taskID === evt.data.args.pid)
+  //     if (process.processes.length <= 1) {
+  //       p_dequeue(evt.data.args.pid)
+  //     } else {
+  //       process.processes = process.processes.filter((p) => p.taskID !== evt.data.args.taskID)
+  //     }
+  //   }
+  //   io.emit(evt.data.channel, evt.data.args)
+  // }
+
   const randomFork = () => {
-    const key = forkKeys[lb.pick() - 1]
+    const key = forkKeys[lb.pick()]
     return forks[key]
   }
 
@@ -338,9 +378,10 @@ const TaskQueue = () => {
   }
 
   function init() {
-    for (let i = 0; i < maxForks; i++) {
-      createProcess()
-    }
+    // for (let i = 0; i < maxForks; i++) {
+    createProcess()
+    // }
+    forkKeys = Object.keys(forks)
   }
 
   return {

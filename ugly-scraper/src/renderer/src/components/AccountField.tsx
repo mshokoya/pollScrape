@@ -45,7 +45,7 @@ export const AccountField = observer(() => {
   // (FIX) email verification + get domain to determine login type // also colors
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await fetchData<IAccount>('account', CHANNELS.aa, {
+    await fetchData<IAccount>('account', CHANNELS.a_accountAdd, {
       ...s.input.peek(),
       addType: s.addType.peek(),
       selectedDomain: s.selectedDomain.peek()
@@ -55,25 +55,25 @@ export const AccountField = observer(() => {
   const login = async () => {
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.ala, accountID)
+    await fetchData('account', CHANNELS.a_accountLoginAuto, accountID)
   }
 
   const manualLogin = async () => {
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.alm, accountID)
+    await fetchData('account', CHANNELS.a_accountLoginManually, accountID)
   }
 
   const checkAccount = async () => {
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.ac, accountID)
+    await fetchData('account', CHANNELS.a_accountCheck, accountID)
   }
 
   const updateAccount = async (input: Partial<IAccount>) => {
     const accountID = accounts[s.selectedAcc.peek()].id
     accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
-    await fetchData<IAccount>('account', CHANNELS.au, accountID, input)
+    await fetchData<IAccount>('account', CHANNELS.a_accountUpdate, accountID, input)
       .then((data) => {
         if (data.ok) {
           stateResStatusHelper.add(accountID, ['update', 'ok'])
@@ -98,25 +98,25 @@ export const AccountField = observer(() => {
   const upgradeAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.aua, accountID)
+    await fetchData('account', CHANNELS.a_accountUpgradeAutomatically, accountID)
   }
 
   const manualUpgradeAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.aum, accountID)
+    await fetchData('account', CHANNELS.a_accountUpgradeManually, accountID)
   }
 
   const clearMines = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.ad, accountID)
+    await fetchData('account', CHANNELS.a_accountDemine, accountID)
   }
 
   const confirmAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.aca, accountID)
+    await fetchData('account', CHANNELS.a_accountConfirm, accountID)
   }
 
   // (FIX) complete func (dont delete, just archive)
@@ -127,7 +127,7 @@ export const AccountField = observer(() => {
 
     accountTaskHelper.add(accountID, { status: 'processing', type: 'delete' })
 
-    await fetchData<IAccount>('account', CHANNELS.adel, accountID)
+    await fetchData<IAccount>('account', CHANNELS.a_accountDelete, accountID)
       .then((data) => {
         batch(() => {
           data.ok
@@ -210,6 +210,7 @@ export const AccountField = observer(() => {
                 addAccount={addAccount}
                 accountTaskHelper={accountTaskHelper}
                 stateResStatusHelper={stateResStatusHelper}
+                //@ts-ignore
                 selectedDomain={s.selectedDomain}
               />
             )}
@@ -447,7 +448,7 @@ export const EmailForm = (props: EmailProps) => {
         {/* <div>
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
-            <input 
+            <input
               disabled={isCreateReq}
               className={`
                 ${ props.accountTaskHelper.getTaskByReqType('create')[0] ? 'fieldBlink' : '' }
@@ -459,7 +460,7 @@ export const EmailForm = (props: EmailProps) => {
 
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
-            <input 
+            <input
               disabled={isCreateReq}
               className={`
                 ${ props.accountTaskHelper.getTaskByReqType('create')[0] ? 'fieldBlink' : '' }

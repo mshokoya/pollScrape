@@ -1,5 +1,6 @@
 import { prompt } from './prompt'
 import { IPC_APP } from '../../shared'
+import { get } from '../window'
 
 export type EmitResponse = {
   pid?: string
@@ -20,10 +21,6 @@ type IO = {
 }
 
 export const SocketIO = (ipc?: IPC_APP): IO => {
-  const on = global.forkID ? global.port.on : ipc.ipcMain.on
-  const send = global.forkID ? global.port.postMessage : ipc.ipcMain.emit
-  const emit = global.forkID ? global.port.postMessage : ipc.mainWindow.webContents.send
-
   if (ipc) {
     ipc.ipcMain.on('prompt', (e, res: any) => {
       switch (res.type) {
@@ -35,12 +32,18 @@ export const SocketIO = (ipc?: IPC_APP): IO => {
   }
 
   return {
-    on: (channel, fn) => on(channel, fn),
-    send: (channel, ...args) => send(channel, ...args),
+    on: (channel, fn) => {
+      global.forkID ? process.on(channel, fn) : ipc.ipcMain.on(channel, fn)
+    },
+    send: (channel, ...args) => {
+      global.forkID
+        ? process.send({ channel, args: { evtType: 'message', ...args } })
+        : ipc.ipcMain.emit(channel, ...args)
+    },
     emit: (channel, args) => {
       global.forkID
-        ? emit('message', { channel, args: { evtType: 'message', ...args } })
-        : emit(channel, args)
+        ? process.send({ channel, args: { evtType: 'message', args } })
+        : get().webContents.send(channel, args)
     }
   }
 }

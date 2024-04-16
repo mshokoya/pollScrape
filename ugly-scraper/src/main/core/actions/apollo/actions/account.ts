@@ -96,6 +96,13 @@ export const checkAccount = async ({ taskID, account }: { taskID: string; accoun
 export const loginAuto = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
   const browserCTX = await scraper.newBrowser(false)
 
+  console.log(`
+
+
+    we in the login
+
+    `)
+
   if (!browserCTX)
     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
   try {

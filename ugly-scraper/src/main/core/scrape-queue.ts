@@ -42,7 +42,6 @@ const ScrapeQueue = () => {
         })
       })
       .finally(() => {
-        console.log('task added')
         exec()
       })
   }
@@ -121,7 +120,6 @@ const ScrapeQueue = () => {
           taskType: 'processing',
           metadata: task.metadata as ScrapeQueueEvent['metadata']
         })
-
         task
           .action(task.args)
           .then((r) => {

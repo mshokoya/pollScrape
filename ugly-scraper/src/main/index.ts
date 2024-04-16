@@ -1,7 +1,5 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { app, BrowserWindow, ipcMain } from 'electron'
+import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { init } from './core'
 import {
   TconfirmAccount,
@@ -24,7 +22,7 @@ import {
   getMetadatas,
   getRecords,
   getRecord,
-  scrape,
+  // scrape,
   getProxies,
   addProxy
 } from './core/actions'
@@ -32,34 +30,13 @@ import { IAccount } from './core/database/models/accounts'
 import { IMetaData } from './core/database/models/metadata'
 import { CHANNELS } from '../shared/util'
 import { AddAccountArgs } from '../shared'
+import { create } from './window'
+
+let window
 
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-      contextIsolation: true
-      // nodeIntegration: true
-    }
-  })
-
-  init({ mainWindow, ipcMain }).then(() => {
+  init({ ipcMain }).then(() => {
     // Create the browser window.
-    mainWindow.on('ready-to-show', () => {
-      mainWindow.show()
-    })
-
-    mainWindow.webContents.setWindowOpenHandler((details) => {
-      shell.openExternal(details.url)
-      return { action: 'deny' }
-    })
-
-    mainWindow.webContents.openDevTools()
 
     // ==========================================================================================
 
@@ -136,22 +113,17 @@ function createWindow(): void {
     ipcMain.handle(CHANNELS.a_recordGet, async (e, id: string) => await getRecord(id))
 
     // =============== Scrape =====================
-    ipcMain.handle(
-      CHANNELS.a_scrape,
-      async (e, id: string, proxy: boolean, url: string) => await scrape(id, proxy, url)
-    )
+    // ipcMain.handle(
+    //   CHANNELS.a_scrape,
+    //   async (e, id: string, proxy: boolean, url: string) => await scrape(id, proxy, url)
+    // )
 
     // ==========================================================================================
-
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-    } else {
-      mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-    }
   })
 }
 
 app.whenReady().then(() => {
+  window = create()
   electronApp.setAppUserModelId('com.electron')
 
   app.on('browser-window-created', (_, window) => {

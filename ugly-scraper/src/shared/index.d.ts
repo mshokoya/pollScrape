@@ -1,7 +1,8 @@
-import { BrowserWindow, IpcMain } from 'electron'
+import { IpcMain } from 'electron'
 import { CHANNELS } from './util'
+import { MessagePortMain, UtilityProcess } from 'electron/main'
+import { ChildProcess } from 'child_process'
 type IPC_APP = {
-  mainWindow: BrowserWindow
   ipcMain: IpcMain
 }
 
@@ -42,6 +43,7 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   message?: string
   ok?: boolean
   status?: string
+  useFork: boolean
   taskType: ReqType
   metadata: {
     taskID: string
@@ -134,12 +136,7 @@ type ForkActions =
 
 type Forks = {
   [key: string]: {
-    fork: UtilityProcess
-    channel: {
-      mainPort: MessagePortMain
-      forkPort: MessagePortMain
-    }
-    status: 'started' | 'ready'
+    fork: ChildProcess
     TIP: string[] // ids
   }
 }

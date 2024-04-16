@@ -33,7 +33,6 @@ export const fetchData = async <T>(
   method: string,
   ...args: any
 ): Promise<FetchData<T>> => {
-  console.log(args)
   return await window[entity][method](...args)
     .then((r) => {
       console.log('in THEN')

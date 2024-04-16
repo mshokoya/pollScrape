@@ -6,35 +6,54 @@ import { initPrompt } from './prompt'
 import { syncDB } from './database/db'
 import { initSocketIO } from './websockets'
 import { initScrapeQueue, scrapeQueue } from './scrape-queue'
-import { ForkEvent, IPC_APP } from '../../shared'
+import { IPC_APP } from '../../shared'
 import { generateID } from './util'
 import { actions } from './actions'
 
-process.parentPort?.on('message', (e) => {
-  console.log('WE WYYAAA')
-  global.forkID = generateID()
-  const [port] = e.ports
-
-  global.port = port
-
-  port.on('message', (e: ForkEvent) => {
-    switch (e.data.taskType) {
-      case 'scrape': {
-        const args = e.data.meta
-        const action = actions[args.action]
-        scrapeQueue.enqueue({ ...args, action })
-        break
-      }
+process.on('message', (e) => {
+  console.log('wi in dis bihh')
+  switch (e.taskType) {
+    case 'init': {
+      console.log('WE WYYAAA')
+      global.forkID = generateID()
+      init(null, true)
+      break
     }
-  })
-
-  port.start()
-
-  init(null, true)
+    case 'scrape': {
+      const args = e.meta
+      const action = actions[args.action]
+      scrapeQueue.enqueue({ ...args, action })
+      break
+    }
+  }
 })
+
+// process.parentPort?.on('message', (e) => {
+//   console.log('WE WYYAAA')
+//   global.forkID = generateID()
+//   const [port] = e.ports
+
+//   global.port = port
+
+//   port.on('message', (e: ForkEvent) => {
+//     switch (e.data.taskType) {
+//       case 'scrape': {
+//         const args = e.data.meta
+//         const action = actions[args.action]
+//         scrapeQueue.enqueue({ ...args, action })
+//         break
+//       }
+//     }
+//   })
+
+//   port.start()
+
+//   init(null, true)
+// })
 
 export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void> => {
   // global.isWorker = wrk
+  //
 
   await syncDB().then(() => {
     console.log('DB started')
