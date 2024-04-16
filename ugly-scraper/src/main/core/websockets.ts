@@ -40,9 +40,9 @@ export const SocketIO = (ipc?: IPC_APP): IO => {
         ? process.send({ channel, args: { evtType: 'message', ...args } })
         : ipc.ipcMain.emit(channel, ...args)
     },
-    emit: (channel, args) => {
+    emit: (channel, args: Record<string, any>) => {
       global.forkID
-        ? process.send({ channel, args: { evtType: 'message', args } })
+        ? process.send({ channel, args: { evtType: 'message', ...args } })
         : get().webContents.send(channel, args)
     }
   }

@@ -314,7 +314,6 @@ const TaskQueue = () => {
     channel: string
     args: EmitResponse & { forkID: string }
   }) => {
-    console.log(evt)
     if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
       // if scrape job in taskqueue in worker
       processQueue
@@ -330,6 +329,7 @@ const TaskQueue = () => {
         ?.processes.find((p) => p.taskID === evt.args.taskID)
       if (process) process.status = evt.channel as STQ
     } else if (evt.channel === QC.scrapeProcessQueue && evt.args.taskType === 'dequeue') {
+      console.log('IN THE IF')
       const process = processQueue.find((t) => t.task.taskID === evt.args.pid)
       if (process.processes.length <= 1) {
         p_dequeue(evt.args.pid)
@@ -337,6 +337,8 @@ const TaskQueue = () => {
         process.processes = process.processes.filter((p) => p.taskID !== evt.args.taskID)
       }
     }
+
+    // if ()
     io.emit(evt.channel, evt.args)
   }
 

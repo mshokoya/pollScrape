@@ -7,22 +7,20 @@ export function handleApolloScrapeEndEvent(
     | TaskQueueEvent<{ accountID: string; taskType: string }>
     | ScrapeQueueEvent<{ accountID: string; taskType: string }>
 ) {
+  if (res.ok === undefined) return
   const [accountID, idx, task] = accountTaskHelper.getTaskByTaskID(res.taskID)
   if (!accountID || idx === -1 || !task) return
 
-  if (res.ok === undefined) {
-    console.log(res.message)
-  } else {
-    res.ok
-      ? stateResStatusHelper.add(accountID, [task.type, 'ok'])
-      : stateResStatusHelper.add(accountID, [task.type, 'fail'])
+  accountTaskHelper.deleteTaskByTaskID(accountID, task.taskID!)
 
-    processApolloEventData(task.type, res)
+  const c = res.ok ? 'ok' : 'fail'
+  stateResStatusHelper.add(accountID, [task.type, c])
 
-    setTimeout(() => {
-      stateResStatusHelper.delete(accountID, task.type)
-    }, 1700)
-  }
+  processApolloEventData(task.type, res)
+
+  setTimeout(() => {
+    stateResStatusHelper.delete(accountID, task.type)
+  }, 1700)
 }
 
 function processApolloEventData(taskType: string, msg: TaskQueueEvent | ScrapeQueueEvent) {
@@ -32,15 +30,15 @@ function processApolloEventData(taskType: string, msg: TaskQueueEvent | ScrapeQu
     // case 'mines':
     // case 'update':
     case 'new':
-      if (msg.ok) appState$.accounts.push(msg.metadata.metadata as IAccount)
+      if (msg.ok) appState$.accounts.push(msg.metadata!.metadata as IAccount)
       break
     case 'confirm':
     case 'manualUpgrade':
     case 'upgrade':
     case 'check':
       if (msg.ok) {
-        const acc = appState$.accounts.find((a) => a.id.get() === msg.metadata.metadata.accountID)
-        if (acc) acc.set(msg.metadata.metadata as IAccount)
+        const acc = appState$.accounts.find((a) => a.id.get() === msg.metadata!.metadata!.accountID)
+        if (acc) acc.set(msg.metadata!.metadata as IAccount)
       }
       break
   }
@@ -54,7 +52,7 @@ export function handleApolloTaskQueueEvents(
 ) {
   switch (res.taskType) {
     case 'enqueue': {
-      const accountID = res.metadata.metadata.accountID
+      const accountID = res.metadata!.metadata!.accountID
       accountTaskHelper.add(accountID, {
         status: 'queue',
         type: res.taskType as AccountReqType,
@@ -63,7 +61,7 @@ export function handleApolloTaskQueueEvents(
       break
     }
     case 'dequeue':
-      accountTaskHelper.updateTask(res.metadata.metadata.accountID, res.taskID, {
+      accountTaskHelper.updateTask(res.metadata!.metadata!.accountID, res.taskID, {
         status: 'passing'
       })
       break
@@ -75,12 +73,12 @@ export function handleApolloProcessQueueEvents(
 ) {
   switch (res.taskType) {
     case 'enqueue':
-      accountTaskHelper.updateTask(res.metadata.metadata.accountID, res.taskID, {
+      accountTaskHelper.updateTask(res.metadata!.metadata!.accountID, res.taskID, {
         status: 'processing'
       })
       break
     case 'dequeue':
-      accountTaskHelper.deleteTaskByTaskID(res.metadata.metadata.accountID, res.taskID)
+      accountTaskHelper.deleteTaskByTaskID(res.metadata!.metadata!.accountID, res.taskID)
       break
   }
 }
@@ -88,16 +86,16 @@ export function handleApolloProcessQueueEvents(
 export const handleApolloScrapeTaskQueueEvents = (res: ScrapeQueueEvent<{ accountID: string }>) => {
   switch (res.taskType) {
     case 'enqueue': {
-      const accountID = res.metadata.metadata.accountID
+      const accountID = res.metadata!.metadata!.accountID
       accountTaskHelper.add(accountID, {
         status: 'queue',
-        type: res.metadata.taskType as AccountReqType,
-        taskID: res.metadata.taskID
+        type: res.metadata!.taskType as AccountReqType,
+        taskID: res.metadata!.taskID
       })
       break
     }
     case 'dequeue':
-      accountTaskHelper.updateTask(res.metadata.metadata.accountID, res.taskID, {
+      accountTaskHelper.updateTask(res.metadata!.metadata!.accountID, res.taskID, {
         status: 'passing'
       })
       break
@@ -109,16 +107,16 @@ export const handleApolloScrapeProcessQueueEvents = (
 ) => {
   switch (res.taskType) {
     case 'enqueue': {
-      const accountID = res.metadata.metadata.accountID
+      const accountID = res.metadata!.metadata!.accountID
       accountTaskHelper.add(accountID, {
         status: 'queue',
-        type: res.metadata.taskType as AccountReqType,
-        taskID: res.metadata.taskID
+        type: res.metadata!.taskType as AccountReqType,
+        taskID: res.metadata!.taskID
       })
       break
     }
     case 'dequeue':
-      accountTaskHelper.updateTask(res.metadata.metadata.accountID, res.taskID, {
+      accountTaskHelper.updateTask(res.metadata!.metadata!.accountID, res.taskID, {
         status: 'passing'
       })
       break

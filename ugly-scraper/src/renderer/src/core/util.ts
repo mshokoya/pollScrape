@@ -63,6 +63,9 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
   return {
     getTaskByTaskID: (taskID: string): [entityID: string, idx: number, task?: Task<T>] => {
       for (const [k, v] of Object.entries(taskInProcess.get())) {
+        console.log('IN getTaskByTaskID  V & TaskID')
+        console.log(v)
+        console.log(taskID)
         const taskIdx = v.findIndex((_) => _.taskID === taskID)
         if (taskIdx > -1) return [k, taskIdx, v[taskIdx]]
       }
@@ -100,6 +103,9 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     },
     deleteTaskByTaskID: (entityID: string, taskID: string) => {
       const tip = taskInProcess[entityID].get()
+      console.log('IN deleteTaskByTaskID  TIP')
+      console.log(tip)
+      console.log(entityID, taskID)
       const idx = tip.findIndex((t1) => t1.taskID === taskID)
       if (tip && idx > -1 && tip.length > 1) {
         taskInProcess[entityID][idx].delete()
@@ -267,14 +273,17 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
     })
   },
   delete: (taskID: string) => {
-    console.log('inn da delete of TaskQueueHelper')
-    // @ts-ignore
-    console.log(this.findTask)
-    // @ts-ignore
-    this.findTask(taskID)?.delete()
+    console.log('IN DELETE')
+    for (const queues in tq) {
+      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
+      if (t) {
+        tq[queues].set(tq[queues].get().filter((t) => t.taskID !== taskID))
+        break
+      }
+    }
   },
   findTask: (taskID: string): ObservableObject<TQTask> | void => {
-    for (const queues in Object.keys(tq)) {
+    for (const queues in tq) {
       const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
       if (t) {
         return t.get()
@@ -282,7 +291,7 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
     }
   },
   findTaskViaProcessID: (taskID: string): ObservableObject<TQTask> | void => {
-    for (const queues in Object.keys(tq)) {
+    for (const queues in tq) {
       for (const task of tq[queues]) {
         if (task.processes.peek().includes(taskID)) {
           return task
@@ -291,15 +300,20 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
     }
   },
   addProcess: (taskID: string, PtaskID: string) => {
-    console.log('inn da addProcess of TaskQueueHelper')
-    // @ts-ignore
-    console.log(this.findTask)
-    // @ts-ignore
-    this.findTask(taskID)?.processes.push(PtaskID)
+    for (const queues in tq) {
+      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
+      if (t) {
+        return t.processes.push(PtaskID)
+      }
+    }
   },
   deleteProcess: (taskID: string) => {
-    console.log('inn da addProcess of TaskQueueHelper')
-    // @ts-ignore
-    this.findTaskViaProcessID(taskID)?.set((t) => t.filter((t0) => t0 !== taskID))
+    for (const queues in tq) {
+      for (const task of tq[queues]) {
+        if (task.processes.peek().includes(taskID)) {
+          return task.set((t) => t.filter((t0) => t0 !== taskID))
+        }
+      }
+    }
   }
 })

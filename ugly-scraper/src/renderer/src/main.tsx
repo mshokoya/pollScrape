@@ -8,14 +8,18 @@ import { enableReactTracking } from '@legendapp/state/config/enableReactTracking
 import { handleProcessQueueEvent, handleTaskQueueEvent } from './core/io/taskqueue'
 import { handleAPromptEvents } from './core/io/prompt'
 import { handleApolloScrapeEndEvent } from './core/io/apollo'
+import { QUEUE_CHANNELS as QC } from '../../shared/util'
+import { handleScrapeProcessQueueEvent, handleScrapeQueueEvent } from './core/io/scrapequeue'
 
 enableReactTracking({
   auto: true
 })
 
 window.ipc.on('apollo', handleApolloScrapeEndEvent)
-window.ipc.on('taskQueue', handleTaskQueueEvent)
-window.ipc.on('processQueue', handleProcessQueueEvent)
+window.ipc.on(QC.taskQueue, handleTaskQueueEvent)
+window.ipc.on(QC.processQueue, handleProcessQueueEvent)
+window.ipc.on(QC.scrapeQueue, handleScrapeQueueEvent)
+window.ipc.on(QC.scrapeProcessQueue, handleScrapeProcessQueueEvent)
 window.ipc.on('prompt', handleAPromptEvents)
 
 createRoot(document.getElementById('root')!).render(<App />)
