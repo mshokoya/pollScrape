@@ -368,49 +368,50 @@ export const apolloConfirmAccountEvent = async (
     //     await mailbox.deleteMailByID(authEmail, uid)
     //   }
     // )) as Promise<IAccount>
-
   } catch (err: any) {
     io.emit('apollo', { taskID, message: err.message, ok: false })
   }
 }
 
-export const apolloScrape = async (
-  taskID: string,
-  browserCTX: BrowserContext,
-  meta: IMetaData,
-  usingProxy: boolean
-) => {
-  let employeeRangeMin
-  let employeeRangeMax
-  const employeeRange = getRangeFromApolloURL(meta.url)
-  if (employeeRange.length > 1) throw new AppError(taskID, 'can only have one range set')
+// export const apolloScrape = async (
+//   taskID: string,
+//   browserCTX: BrowserContext,
+//   meta: IMetaData,
+//   usingProxy: boolean
+// ) => {
+//   let employeeRangeMin
+//   let employeeRangeMax
+//   const employeeRange = getRangeFromApolloURL(meta.url)
+//   if (employeeRange.length > 1) throw new AppError(taskID, 'can only have one range set')
 
-  if (!employeeRange.length) {
-    employeeRangeMin = 1
-    employeeRangeMax = 3
-  } else {
-    employeeRangeMin = parseInt(employeeRange[0][0])
-    employeeRangeMax = parseInt(employeeRange[0][1])
-  }
+//   if (!employeeRange.length) {
+//     employeeRangeMin = 1
+//     employeeRangeMax = 3
+//   } else {
+//     employeeRangeMin = parseInt(employeeRange[0][0])
+//     employeeRangeMax = parseInt(employeeRange[0][1])
+//   }
 
-  // (FIX) low ranges may fuckup - make parts dynamic (lowest min/max difference must be 3)
-  const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
+//   // (FIX) low ranges may fuckup - make parts dynamic (lowest min/max difference must be 3)
+//   const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
 
-  // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
-  await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
-}
+//   // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
+//   await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
+// }
 
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
 const _SALock = new Mutex()
 // (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
 // (FIX) put mutex of selectAccForScrapingFILO() call and not inside the func, this way we can acc in use in global obj/list
 // (FIX) handle account errors like suspension
-export const ssa = async (
+export const apolloScrape = async (
   taskID: string,
   browserCTX: BrowserContext,
   meta: IMetaData,
   usingProxy: boolean,
+  account: IAccount,
   range: [number, number]
+  metaName?: string
 ) => {
   let proxy: string | null = null
   let account: SAccount
@@ -454,8 +455,8 @@ export const ssa = async (
     // (FIX calculate time left to scrape limit reset)
     const answer = await prompt.askQuestion(
       `
-      The max amount of leads you can scrape right now is 
-      ${amountAccountCanScrape}/minLeadScrapeLimit. if you wait 30 minutes / 1hour accounts will reset. 
+      The max amount of leads you can scrape right now is
+      ${amountAccountCanScrape}/${minLeadScrapeLimit}. if you wait 30 minutes / 1hour scrape limit will reset.
       do you want to continue anyway ?
       `,
       ['yes', 'no'],

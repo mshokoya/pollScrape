@@ -22,7 +22,7 @@ import {
   getMetadatas,
   getRecords,
   getRecord,
-  // scrape,
+  scrape,
   getProxies,
   addProxy
 } from './core/actions'
@@ -113,10 +113,19 @@ function createWindow(): void {
     ipcMain.handle(CHANNELS.a_recordGet, async (e, id: string) => await getRecord(id))
 
     // =============== Scrape =====================
-    // ipcMain.handle(
-    //   CHANNELS.a_scrape,
-    //   async (e, id: string, proxy: boolean, url: string) => await scrape(id, proxy, url)
-    // )
+    ipcMain.handle(
+      CHANNELS.a_scrape,
+      async (
+        e,
+        args: {
+          name: string
+          url: string
+          chunk: [number, number][]
+          accounts: string[]
+          metaID?: string
+        }
+      ) => await scrape(args)
+    )
 
     // ==========================================================================================
   })
