@@ -19,6 +19,7 @@ import { FaArrowCircleLeft, FaArrowCircleRight } from 'react-icons/fa'
 import { CHANNELS } from '../../../shared/util'
 
 type State = {
+  name: string
   reqInProcess: boolean
   url: string
   min?: number
@@ -35,6 +36,7 @@ type State = {
 export const ScrapeField = observer(() => {
   console.log('ScrapeField')
   const defaultState = {
+    name: '',
     reqInProcess: false,
     url: '',
     min: 1,
@@ -52,10 +54,17 @@ export const ScrapeField = observer(() => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
     s.reqInProcess.set(true)
 
-    await fetchData('scrape', CHANNELS.a_scrape, { url: s.url.peek(), usingProxy: false })
+    const state = s.peek()
+
+    await fetchData('scrape', CHANNELS.a_scrape, {
+      name: state.name,
+      url: state.url,
+      chunk: state.aar.chunk,
+      accounts: state.aar.accounts,
+      usingProxy: false
+    })
       .then((d) => {
         console.log(d)
       })
