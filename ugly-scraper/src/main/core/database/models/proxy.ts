@@ -1,14 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
-
-export type IProxy = {
-  id: string
-  proxy: string
-  protocol: string
-  host: string
-  port: string
-}
+import { IProxy } from '../../../../shared'
 
 export const Proxy = sequelize.define('proxy', {
   id: {
@@ -50,7 +43,11 @@ export const ProxyModel_ = {
   findOne: async (filter: Partial<IProxy> = {} as any, opts?: FindOptions) =>
     // @ts-ignore
     await Proxy.findOne<IProxy>({ raw: true, where: filter, ...opts }).catch(() => null),
-  findOneAndUpdate: async (filter: Partial<IProxy>, data: Partial<IProxy>, opts?: SaveOptions & FindOptions) => {
+  findOneAndUpdate: async (
+    filter: Partial<IProxy>,
+    data: Partial<IProxy>,
+    opts?: SaveOptions & FindOptions
+  ) => {
     const proxy: Model = await Proxy.findOne({ where: filter, ...opts }).catch(() => null)
 
     if (!proxy) return null

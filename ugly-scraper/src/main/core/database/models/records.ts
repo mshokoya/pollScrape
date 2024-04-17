@@ -8,35 +8,8 @@ import {
   SaveOptions
 } from 'sequelize'
 import { sequelize } from '../db'
+import { IRecords } from '../../../../shared'
 
-export type IRecords = {
-  id: string
-  scrapeID: string
-  url: string
-  data: IRecord
-}
-
-export type IRecord = {
-  Name: string
-  Firstname: string
-  Lastname: string
-  Linkedin: string
-  Title: string
-  'Company Name': string
-  'Company Website': string
-  'Comapny Linkedin': string
-  'Company Twitter': string
-  'Company Facebook': string
-  Email: string
-  isVerified: boolean
-  'Company Location': string
-  Employees: string
-  Phone: string
-  Industry: string
-  Keywords: string[]
-}
-
-// @ts-ignore
 export const Record = sequelize.define('record', {
   id: {
     type: DataTypes.UUID,

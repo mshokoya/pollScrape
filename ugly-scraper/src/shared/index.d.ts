@@ -154,3 +154,86 @@ type TaskQueue = {
   processing: TQTask[]
   timeout: TQTask[]
 }
+
+export type IAccount = {
+  id: string
+  domain: string
+  accountType: 'free' | 'premium'
+  trialTime: string
+  suspended: boolean
+  verified: 'no' | 'confirm' | 'yes' // confirm = conformation email sent
+  loginType: 'default' | 'gmail' | 'outlook'
+  email: string
+  password: string
+  cookies: string
+  proxy: string
+  lastUsed: number // new Date.getTime()
+  recoveryEmail: string
+  emailCreditsUsed: number
+  emailCreditsLimit: number
+  renewalDateTime: number | Date
+  renewalStartDate: number | Date
+  renewalEndDate: number | Date
+  trialDaysLeft: number
+  history: [
+    amountOfLeadsScrapedOnPage: number,
+    timeOfScrape: number,
+    listName: string,
+    scrapeID: string
+  ][]
+}
+
+export type IDomain = {
+  id: string
+  domain: string
+  authEmail: string
+  authPassword: string
+  verified: boolean
+  MXRecords: boolean
+  TXTRecords: boolean
+  VerifyMessage: string
+}
+
+export type IMetaData = {
+  id: string
+  url: string
+  params: { [key: string]: string }
+  name: string
+  scrapes: { scrapeID: string; listName: string; length: number; date: number }[]
+  accounts: { accountID: string; range: [min: number, max: number] }[]
+}
+
+export type IProxy = {
+  id: string
+  proxy: string
+  protocol: string
+  host: string
+  port: string
+}
+
+export type IRecords = {
+  id: string
+  scrapeID: string
+  url: string
+  data: IRecord
+}
+
+export type IRecord = {
+  Name: string
+  Firstname: string
+  Lastname: string
+  Linkedin: string
+  Title: string
+  'Company Name': string
+  'Company Website': string
+  'Comapny Linkedin': string
+  'Company Twitter': string
+  'Company Facebook': string
+  Email: string
+  isVerified: boolean
+  'Company Location': string
+  Employees: string
+  Phone: string
+  Industry: string
+  Keywords: string[]
+}

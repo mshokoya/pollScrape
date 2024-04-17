@@ -409,62 +409,14 @@ export const apolloScrape = async (
   browserCTX: BrowserContext,
   meta: IMetaData,
   usingProxy: boolean,
-  account: IAccount,
+  account: SAccount,
   range: [number, number]
-  metaName?: string
 ) => {
   let proxy: string | null = null
-  let account: SAccount
+  // let account: SAccount
   const maxLeadScrapeLimit = 1000 // max amount of leads 1 account can scrape before protentially 24hr ban
-  const minLeadScrapeLimit = 100
+  // const minLeadScrapeLimit = 100
   const maxLeadsOnPage = 25 // apollo has 25 leads per page MAX
-
-  const acc4Scrape = meta.accounts.find((a) => a.range[0] === range[0] && a.range[1] === range[1])
-
-  if (!acc4Scrape) {
-    // (FIX) move mutex to the function instead
-    account = await _SALock.runExclusive(
-      async () => (await selectAccForScrapingFILO(meta.id, 1))[0]
-    )
-    // if (!account) throw new AppError(taskID, 'failed to find account for scraping')
-    if (!account) return
-  } else {
-    let acc = (await AccountModel_.findById(acc4Scrape.accountID)) as SAccount
-    if (!acc) {
-      // (FIX) move mutex to the function instead
-      acc = await _SALock.runExclusive(async () => (await selectAccForScrapingFILO(meta.id, 1))[0])
-      // if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
-      if (!acc) return
-    } else {
-      !acc.history.length
-        ? (acc.totalScrapedInLast30Mins = 0)
-        : (acc.totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(acc))
-    }
-    account = acc
-  }
-
-  if (
-    account.totalScrapedInLast30Mins === undefined ||
-    account.totalScrapedInLast30Mins >= maxLeadScrapeLimit
-  )
-    return
-
-  const amountAccountCanScrape = maxLeadScrapeLimit - account.totalScrapedInLast30Mins
-
-  if (amountAccountCanScrape <= minLeadScrapeLimit) {
-    // (FIX calculate time left to scrape limit reset)
-    const answer = await prompt.askQuestion(
-      `
-      The max amount of leads you can scrape right now is
-      ${amountAccountCanScrape}/${minLeadScrapeLimit}. if you wait 30 minutes / 1hour scrape limit will reset.
-      do you want to continue anyway ?
-      `,
-      ['yes', 'no'],
-      0
-    )
-
-    if (answer === 'no') return
-  }
 
   if (usingProxy) {
     // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
@@ -484,7 +436,7 @@ export const apolloScrape = async (
   const credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
   // (FIX) ============ PUT INTO FUNC =====================
-  // leads recover (is account has listName and no date or numOfLeadsScraped)
+  // leads recovery (if account has listName and no date or numOfLeadsScraped)
   // (FIX) test to see if it works
   const metasWithEmptyList = meta.scrapes.filter((l) => {
     const history = account.history.find((h) => h[2] === l.listName)

@@ -8,17 +8,7 @@ import {
   SaveOptions
 } from 'sequelize'
 import { sequelize } from '../db'
-
-export type IDomain = {
-  id: string
-  domain: string
-  authEmail: string
-  authPassword: string
-  verified: boolean
-  MXRecords: boolean
-  TXTRecords: boolean
-  VerifyMessage: string
-}
+import { IDomain } from '../../../../shared'
 
 export const Domain = sequelize.define('domain', {
   id: {

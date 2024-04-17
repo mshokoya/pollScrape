@@ -1,15 +1,7 @@
 import { Schema, model } from 'mongoose'
 import { DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
-
-export type IMetaData = {
-  id: string
-  url: string
-  params: { [key: string]: string }
-  name: string
-  scrapes: { scrapeID: string; listName: string; length: number; date: number }[]
-  accounts: { accountID: string; range: [min: number, max: number] }[]
-}
+import { IMetaData } from '../../../../shared'
 
 export const MetaData = sequelize.define('metadata', {
   id: {
@@ -43,7 +35,10 @@ export const MetaData = sequelize.define('metadata', {
 })
 
 export const MetaDataModel_ = {
-  findAll: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {}, opts?: FindOptions): Promise<IMetaData[]> =>
+  findAll: async (
+    filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>> = {},
+    opts?: FindOptions
+  ): Promise<IMetaData[]> =>
     //@ts-ignore
     (await MetaData.findAll<IMetaData>({ where: filter, raw: true, ...opts })).map((m) => ({
       ...m,
@@ -121,7 +116,10 @@ export const MetaDataModel_ = {
       }))
       .catch(() => null)
   },
-  findOneAndDelete: async (filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>, opts?: DestroyOptions): Promise<number> => {
+  findOneAndDelete: async (
+    filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>,
+    opts?: DestroyOptions
+  ): Promise<number> => {
     // @ts-ignore
     return await MetaData.destroy({ where: filter, ...opts })
       .then((n) => (n === 0 ? null : n))
