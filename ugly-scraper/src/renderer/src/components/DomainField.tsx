@@ -46,7 +46,7 @@ export const DomainField = observer(() => {
   const addDomain = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     domainTaskHelper.add('domain', { type: 'create', status: 'processing' })
-    await fetchData<IDomain>('domain', CHANNELS.da, s.input.peek())
+    await fetchData<IDomain>('domain', CHANNELS.a_domainAdd, s.input.peek())
       .then((d) => {
         if (d.ok) {
           domainResStatusHelper.add('domain', ['create', 'ok'])
@@ -70,7 +70,7 @@ export const DomainField = observer(() => {
     const domainID = domains[s.selectedDomain.peek()].id
     const domain = domains[s.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, { type: 'delete', status: 'processing' })
-    await fetchData<IDomain>('domain', CHANNELS.dd, domain)
+    await fetchData<IDomain>('domain', CHANNELS.a_domainDelete, domain)
       .then((res) => {
         if (res.ok) {
           closePopup()
@@ -95,7 +95,7 @@ export const DomainField = observer(() => {
     const domainID = domains[s.selectedDomain.peek()].id
     const domain = domains[s.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, { type: 'verify', status: 'processing' })
-    await fetchData<IDomain>('domain', CHANNELS.dv, domain)
+    await fetchData<IDomain>('domain', CHANNELS.a_domainVerify, domain)
       .then((res) => {
         if (res.ok) {
           domainResStatusHelper.add(domainID, ['verify', 'ok'])
@@ -183,7 +183,7 @@ export const DomainField = observer(() => {
                   <>
                     <tr
                       className={`
-                          ${a.verified ? 'el-ok' : 'el-no'} 
+                          ${a.verified ? 'el-ok' : 'el-no'}
                           ${domainTaskHelper.isEntityPiplineEmpty(a.id) ? '' : 'fieldBlink'}
                           ${domainResStatusHelper.getByID(a.id, 0)[1] === 'ok' ? 'resOK' : ''}
                           ${domainResStatusHelper.getByID(a.id, 0)[1] === 'fail' ? 'resFail' : ''}

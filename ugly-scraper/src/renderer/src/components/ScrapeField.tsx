@@ -55,7 +55,7 @@ export const ScrapeField = observer(() => {
 
     s.reqInProcess.set(true)
 
-    await fetchData('scrape', CHANNELS.s, { url: s.url.peek(), usingProxy: false })
+    await fetchData('scrape', CHANNELS.a_scrape, { url: s.url.peek(), usingProxy: false })
       .then((d) => {
         console.log(d)
       })

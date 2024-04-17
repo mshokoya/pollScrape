@@ -1,7 +1,7 @@
 import { observable } from '@legendapp/state'
 
 import { IDomain } from '../../components/DomainField'
-import { IProxy } from '../../components/ProxyField'
+// import { IProxy } from '../../components/ProxyField'
 import { IMetaData, IRecord } from '../../components/RecordField'
 import { IAccount } from './account'
 import { fetchData } from '../util'
@@ -18,7 +18,7 @@ export type TaskInProcess<T> = { [id: string]: Task<T>[] }
 type AppState = {
   accounts: IAccount[]
   domains: IDomain[]
-  proxies: IProxy[]
+  // proxies: IProxy[]
   metas: IMetaData[]
   records: IRecord[]
 }
@@ -26,7 +26,7 @@ type AppState = {
 export const appState$ = observable<AppState>({
   accounts: [],
   domains: [],
-  proxies: [],
+  // proxies: [],
   metas: [],
   records: []
 })
@@ -38,9 +38,9 @@ Promise.all([
   fetchData<IDomain[]>('domain', CHANNELS.a_domainGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  fetchData<IProxy[]>('proxy', CHANNELS.a_proxyGetAll)
-    .then((data) => data.data)
-    .catch(() => []),
+  // fetchData<IProxy[]>('proxy', CHANNELS.a_proxyGetAll)
+  //   .then((data) => data.data)
+  //   .catch(() => []),
   fetchData<IMetaData[]>('metadata', CHANNELS.a_metadataGetAll)
     .then((data) => data.data)
     .catch(() => []),
@@ -52,8 +52,8 @@ Promise.all([
   appState$.set({
     accounts: r[0],
     domains: r[1],
-    proxies: r[2],
-    metas: r[3],
-    records: r[4]
+    // proxies: r[2],
+    metas: r[2],
+    records: r[3]
   })
 })

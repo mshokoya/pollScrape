@@ -3,17 +3,10 @@ import { Mutex } from 'async-mutex'
 import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
 import { ForkScrapeEvent, ForkScrapeEventArgs, Forks, TaskQueueEvent } from '../../shared'
-// import { MessageChannelMain, utilityProcess } from 'electron/main'
 import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
 import { QUEUE_CHANNELS as QC } from '../../shared/util'
 import { fork } from 'node:child_process'
-// import { Piscina } from 'piscina';
-// import path from 'path'
-
-// const piscina = new Piscina({
-//   filename: path.resolve(__dirname, 'worker.js')
-// });
 
 type QueueItem<T = Record<string, any>> = {
   taskID: string
@@ -34,13 +27,6 @@ type ProcessQueueItem = {
   type: 'fork' | 'main'
   processes: { forkID: string; taskID: string; status: STQ }[]
 }
-
-// type TIP_Item = [
-//   id: string,
-//   args: Record<string, any> | undefined,
-//   AbortablePromise<unknown>,
-//   QueueItem
-// ]
 
 const TaskQueue = () => {
   const _Qlock = new Mutex()
@@ -293,8 +279,7 @@ const TaskQueue = () => {
   }
 
   const postToFork = (arg: ForkScrapeEvent) => {
-    // const fork = randomFork()
-    const fork = forks[forkKeys[0]]
+    const fork = randomFork()
     fork.fork.send(arg)
   }
 
@@ -342,34 +327,6 @@ const TaskQueue = () => {
     io.emit(evt.channel, evt.args)
   }
 
-  // const handleProcessResponse = (evt: {
-  //   data: { channel: string; args: EmitResponse & { forkID: string } }
-  // }) => {
-  //   if (evt.data.channel === QC.scrapeQueue && evt.data.args.taskType === 'enqueue') {
-  //     // if scrape job in taskqueue in worker
-  //     processQueue
-  //       .find((t) => t.task.taskID === evt.data.args.pid)
-  //       ?.processes.push({
-  //         forkID: evt.data.args.forkID,
-  //         taskID: evt.data.args.taskID,
-  //         status: evt.data.channel as STQ
-  //       })
-  //   } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'enqueue') {
-  //     const process = processQueue
-  //       .find((t) => t.task.taskID === evt.data.args.pid)
-  //       ?.processes.find((p) => p.taskID === evt.data.args.taskID)
-  //     if (process) process.status = evt.data.channel as STQ
-  //   } else if (evt.data.channel === QC.scrapeProcessQueue && evt.data.args.taskType === 'dequeue') {
-  //     const process = processQueue.find((t) => t.task.taskID === evt.data.args.pid)
-  //     if (process.processes.length <= 1) {
-  //       p_dequeue(evt.data.args.pid)
-  //     } else {
-  //       process.processes = process.processes.filter((p) => p.taskID !== evt.data.args.taskID)
-  //     }
-  //   }
-  //   io.emit(evt.data.channel, evt.data.args)
-  // }
-
   const randomFork = () => {
     const key = forkKeys[lb.pick()]
     return forks[key]
@@ -380,10 +337,11 @@ const TaskQueue = () => {
   }
 
   function init() {
-    // for (let i = 0; i < maxForks; i++) {
-    createProcess()
-    // }
+    for (let i = 0; i < maxForks; i++) {
+      createProcess()
+    }
     forkKeys = Object.keys(forks)
+    lb = new P2cBalancer(forkKeys.length)
   }
 
   return {
