@@ -268,7 +268,7 @@ const TaskQueue = () => {
     useFork = i
   }
 
-  const execScrapeInFork = (task: ForkScrapeEventArgs) => {
+  const execInFork = (task: ForkScrapeEventArgs) => {
     // @ts-ignore
     task.useFork = true
     postToFork({
@@ -346,13 +346,14 @@ const TaskQueue = () => {
 
   return {
     setMaxProcesses,
-    execScrapeInFork,
+    execInFork,
     useFork,
     setUseFork,
     enqueue,
     remove,
     stop,
     init,
+    EXEC_FORK,
     queues: () => ({ taskQueue, processQueue }),
     tasksInProcess: () => processQueue
   }

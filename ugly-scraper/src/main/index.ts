@@ -123,6 +123,7 @@ function createWindow(): void {
           chunk: [number, number][]
           accounts: string[]
           metaID?: string
+          useProxy: boolean
         }
       ) => await scrape(args)
     )

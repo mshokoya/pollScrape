@@ -24,12 +24,13 @@ type State = {
   url: string
   min?: number
   max?: number
+  maxScrapeLimit: number
   checkedStatus: string[]
   leadCol: string
   chunkParts: number
   aar: {
     chunk: [number, number][]
-    accounts: string[]
+    accounts: { email: string; totalScrapedInTimeFrame: number }[]
   }
 }
 
@@ -41,6 +42,7 @@ export const ScrapeField = observer(() => {
     url: '',
     min: 1,
     max: 1000000,
+    maxScrapeLimit: 1000,
     checkedStatus: [],
     leadCol: 'total',
     chunkParts: 3,
@@ -49,7 +51,7 @@ export const ScrapeField = observer(() => {
       accounts: []
     }
   }
-
+  // @ts-ignore
   const s = useObservable<State>(defaultState)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -58,11 +60,14 @@ export const ScrapeField = observer(() => {
 
     const state = s.peek()
 
+    // (FIX) throw error or warning to user the not enough accounts or chunk too high etc
+    if (s.aar.chunk.length !== s.aar.accounts.length) return
+
     await fetchData('scrape', CHANNELS.a_scrape, {
       name: state.name,
       url: state.url,
       chunk: state.aar.chunk,
-      accounts: state.aar.accounts,
+      accounts: state.aar.accounts.map((a) => a.email),
       usingProxy: false
     })
       .then((d) => {
@@ -77,7 +82,6 @@ export const ScrapeField = observer(() => {
   }
 
   const handleInput = (urll: string) => {
-    console.log('handleInput')
     if (!urll.includes('https://app.apollo.io/#/people?finderViewId=')) {
       return
     }
@@ -106,9 +110,7 @@ export const ScrapeField = observer(() => {
   }
 
   const handleRange = (v: string, rng: 'min' | 'max') => {
-    console.log('handleRange')
     const val = parseInt(v)
-    console.log(val)
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
 
     const min = rng === 'min' ? (Number.isNaN(val) ? 1 : val) : s.min.peek()
@@ -128,7 +130,6 @@ export const ScrapeField = observer(() => {
 
   const handleEmailStatus = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
-    console.log('handleEmailStatus')
 
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
 
@@ -153,8 +154,6 @@ export const ScrapeField = observer(() => {
   }
 
   const handleLeadCol = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
-    console.log('handleLeadCol')
-
     e.stopPropagation()
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
 
@@ -184,20 +183,19 @@ export const ScrapeField = observer(() => {
   const aar = (min: number, max: number, chunkParts: number) => {
     if (!min || !max || !chunkParts) return { chunk: [], accounts: [] }
 
-    console.log(min, max, chunkParts)
-
     const chunk = chuckRange(min, max, chunkParts)
     const accounts = selectAccForScrapingFILO(chunkParts)
 
     return {
       chunk,
-      accounts: accounts.map((a) => a.email)
+      accounts: accounts.map((a) => ({
+        email: a.email,
+        totalScrapedInTimeFrame: a.totalScrapedInLast30Mins
+      }))
     }
   }
 
   const resetState = () => {
-    console.log('resetState')
-
     s.set(defaultState)
   }
 
@@ -246,38 +244,54 @@ export const ScrapeField = observer(() => {
       </div>
 
       <div className="mb-3 flex gap-5">
-        <div className="mb-3 text-left">
-          <div className="mb-2 text-cyan-600"> ------- Employee Range ------- </div>
-
-          <div className="mb-3">
-            <label className="mr-2" htmlFor="scrapeFrom">
-              Min:{' '}
-            </label>
-            <input
-              required
-              id="scrapeFrom"
-              type="number"
-              value={s.min.get()}
-              onChange={(e: any) => {
-                handleRange(e.target.value, 'min')
-              }}
-            />
+        <div className="mb-3">
+          <div className="mb-3 flex gap-5">
+            <div className="mb-3 text-center">
+              <div className="mb-2 text-cyan-600"> ------- Scrape Name ------- </div>
+              <input
+                required
+                className="mr-2"
+                value={s.name.get()}
+                onChange={(e: any) => {
+                  s.name.set(e.target.value)
+                }}
+              />
+            </div>
           </div>
 
-          <div className="mb-3">
-            <label className="mr-2" htmlFor="scrapeTo">
-              Max:{' '}
-            </label>
-            <input
-              required
-              id="scrapeTo"
-              className="mr-2"
-              type="number"
-              value={s.max.get()}
-              onChange={(e: any) => {
-                handleRange(e.target.value, 'max')
-              }}
-            />
+          <div className="mb-3 text-left">
+            <div className="mb-2 text-cyan-600"> ------- Employee Range ------- </div>
+
+            <div className="mb-3">
+              <label className="mr-2" htmlFor="scrapeFrom">
+                Min:{' '}
+              </label>
+              <input
+                required
+                id="scrapeFrom"
+                type="number"
+                value={s.min.get()}
+                onChange={(e: any) => {
+                  handleRange(e.target.value, 'min')
+                }}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="mr-2" htmlFor="scrapeTo">
+                Max:{' '}
+              </label>
+              <input
+                required
+                id="scrapeTo"
+                className="mr-2"
+                type="number"
+                value={s.max.get()}
+                onChange={(e: any) => {
+                  handleRange(e.target.value, 'max')
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -346,6 +360,7 @@ export const ScrapeField = observer(() => {
           <div className="">
             <div className="mb-1 text-cyan-600"> ------- Accounts For Scrape ------- </div>
             <ChunkComp
+              maxScrapeLimit={s.maxScrapeLimit.get()}
               aar={s.aar.get()}
               chunkParts={s.chunkParts.get()}
               handleChunkPart={handleChunkPart}
@@ -359,14 +374,15 @@ export const ScrapeField = observer(() => {
 
 type ChunkCompProps = {
   aar: {
-    accounts: string[]
+    accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }
+  maxScrapeLimit: number
   chunkParts: number
   handleChunkPart: (val: 'inc' | 'dec') => void
 }
 
-const ChunkComp = ({ aar, chunkParts, handleChunkPart }: ChunkCompProps) => {
+const ChunkComp = ({ aar, chunkParts, handleChunkPart, maxScrapeLimit }: ChunkCompProps) => {
   if (!aar.chunk.length) return <div></div>
 
   return (
@@ -402,19 +418,26 @@ const ChunkComp = ({ aar, chunkParts, handleChunkPart }: ChunkCompProps) => {
               <tr className="border-b-2 border-cyan-600">
                 <th className="mr-4"> Accounts </th>
                 <th className="mr-4"> Range </th>
+                <th className="mr-4"> Estimated Scrape </th>
               </tr>
             </thead>
             <tbody>
               {aar.chunk.map((aar0, idx) =>
                 aar.accounts[idx] ? (
                   <tr key={idx} className="">
-                    <td className="pr-7 overflow-scroll truncate max-w-2">{aar.accounts[idx]}</td>
+                    <td className="pr-7 overflow-scroll truncate max-w-2">
+                      {aar.accounts[idx].email}
+                    </td>
                     <td className="pr-7 overflow-scroll truncate">{`${aar0[0]} - ${aar0[1]}`}</td>
+                    <td className="">
+                      {maxScrapeLimit - aar.accounts[idx].totalScrapedInTimeFrame}
+                    </td>
                   </tr>
                 ) : (
                   <tr key={idx} className="">
                     <td className="overflow-scroll truncate max-w-2">No Account Available</td>
                     <td className="overflow-scroll truncate">{`${aar0[0]} - ${aar0[1]}`}</td>
+                    <td className="overflow-scroll truncate"> - </td>
                   </tr>
                 )
               )}

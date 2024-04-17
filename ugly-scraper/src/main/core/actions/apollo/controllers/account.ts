@@ -493,13 +493,13 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
         //   metadata: { accountID }
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountDemine,
             args: { account },
             metadata: {
-              taskType: 'demine',
+              taskType: CHANNELS.a_accountDemine,
               taskGroup: 'apollo',
               metadata: { accountID }
             }

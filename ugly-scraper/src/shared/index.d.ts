@@ -85,7 +85,7 @@ type ForkScrapeEventArgs = {
   pid: string
   taskGroup: string
   action: (typeof CHANNELS)[keyof typeof CHANNELS]
-  args: Record<string, any>
+  args: Omit<Record<string, any>, taskID>
   metadata: {
     taskID?: string
     taskGroup: string

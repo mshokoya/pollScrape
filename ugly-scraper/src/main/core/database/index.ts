@@ -2,7 +2,7 @@ import { AccountModel_, IAccount } from './models/accounts'
 import { IProxy, ProxyModel_ } from './models/proxy'
 import { parseProxy, apolloGetParamsFromURL } from './util'
 import { generateSlug } from 'random-word-slugs'
-import { IRecord, IRecords, RecordModel_, } from './models/records'
+import { IRecord, IRecords, RecordModel_ } from './models/records'
 import { IMetaData, MetaDataModel_ } from './models/metadata'
 import { v4 as uuidv4 } from 'uuid'
 import { CreditsInfo } from '../actions/apollo/lib/util'
@@ -119,11 +119,12 @@ export const saveScrapeToDB = async (
   }
 }
 
-export const initMeta = async (url: string): Promise<IMetaData> => {
+export const initMeta = async (name: string, url: string): Promise<IMetaData> => {
   const params = apolloGetParamsFromURL(url) // sets page to 1
 
   const newMeta = await MetaDataModel_.create({
-    name: generateSlug(),
+    name,
+    // name: generateSlug(),
     url,
     params: params
   })

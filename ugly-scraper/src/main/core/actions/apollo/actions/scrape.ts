@@ -7,14 +7,12 @@ import { scraper } from '../lib/scraper'
 
 export const scrape = async ({
   taskID,
-  name,
   chunk,
   accountID,
   metadata,
   useProxy
 }: {
   taskID: string
-  name: string
   chunk: [number, number]
   accountID: string
   metadata: IMetaData
@@ -25,7 +23,19 @@ export const scrape = async ({
     if (!browserCTX) throw new AppError(taskID, 'Failed to scrape, browser could not be started')
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new AppError(taskID, 'Failed to scrape, account could not be found')
-    await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk, name)
+    console.log(`
+
+      IN DA SCRAPER LOGIC
+
+      ${taskID}
+      ${chunk}
+      ${accountID}
+      ${metadata}
+      ${useProxy}
+
+
+      `)
+    // await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk)
   } finally {
     // (FIX) CACHE NOW IN DB
     // await cache.deleteMeta(metadata.id)

@@ -102,6 +102,7 @@ contextBridge.exposeInMainWorld('scrape', {
     chunk: [number, number][]
     accounts: string[]
     metaID?: string
+    useProxy: boolean
   }) => {
     return await ipcRenderer.invoke(CHANNELS.a_scrape, args)
   }

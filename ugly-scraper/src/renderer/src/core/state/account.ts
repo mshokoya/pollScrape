@@ -1,9 +1,10 @@
 import { observable } from '@legendapp/state'
 import { ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess } from '../util'
 import { appState$ } from '.'
+import { IMetaData } from 'src/shared'
 
 export const accountState = observable<State>({
-  input: { email: '', password: '', recoveryEmail: ''},
+  input: { email: '', password: '', recoveryEmail: '' },
   selectedAcc: null,
   reqInProcess: {}, // reqInProcess: [],
   reqType: null,
@@ -14,6 +15,28 @@ export const accountState = observable<State>({
 
 export const accountTaskHelper = TaskHelpers(accountState.reqInProcess)
 export const stateResStatusHelper = ResStatusHelpers(accountState.resStatus)
+
+export const accountsForScrapeInfo = () => {
+  // if (
+  //   account.totalScrapedInLast30Mins === undefined ||
+  //   account.totalScrapedInLast30Mins >= maxLeadScrapeLimit
+  // )
+  //   return
+  // const amountAccountCanScrape = maxLeadScrapeLimit - account.totalScrapedInLast30Mins
+  // if (amountAccountCanScrape <= minLeadScrapeLimit) {
+  //   // (FIX calculate time left to scrape limit reset)
+  //   const answer = await prompt.askQuestion(
+  //     `
+  //     The max amount of leads you can scrape right now is
+  //     ${amountAccountCanScrape}/${minLeadScrapeLimit}. if you wait 30 minutes / 1hour scrape limit will reset.
+  //     do you want to continue anyway ?
+  //     `,
+  //     ['yes', 'no'],
+  //     0
+  //   )
+  //   if (answer === 'no') return
+  // }
+}
 
 export const selectAccForScrapingFILO = (
   accsNeeded: number
