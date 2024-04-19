@@ -9,12 +9,13 @@ export const Sidebar = () => {
   return (
     <div className="h-full bg-black">
       <div
-        className={`${toggle && 'hidden'} absolute top-0 bottom-0 left-0 right-[41.25rem] w-[68.75rem]`}
+        className={`${toggle && 'hidden'} absolute top-0 bottom-0 left-0 right-0`}
+        style={{ background: 'rgba(0,0,0,.70)' }}
         onClick={(_) => setToggle(!toggle)}
       />
 
       <div
-        className={`${toggle && 'hidden'} overflow-scroll bg-black absolute top-0 bottom-0 right-[1.25rem] w-[40rem] z-20 flex flex-col p-2 gap-2 border-l-4 border-cyan-500`}
+        className={`${toggle && 'hidden'} overflow-scroll bg-[#111111] absolute top-0 bottom-0 right-[1.25rem] w-[40rem] z-200 flex flex-col p-2 gap-2 border-l-4 border-cyan-500`}
       >
         {/* ACCOUNTS */}
         <div className="flex flex-col basis-[60%]">
@@ -35,7 +36,7 @@ export const Sidebar = () => {
         </div> */}
       </div>
 
-      <div className="h-full w-5 bg-cyan-500 z-300" onClick={(_) => setToggle(!toggle)} />
+      <div className="h-full w-5 bg-cyan-500 z-3000" onClick={() => setToggle(!toggle)} />
     </div>
   )
 }

@@ -167,13 +167,13 @@ export const DomainField = observer(() => {
           </div>
 
           <div className="border-cyan-600 border rounded grow overflow-auto">
-            <table className="text-[0.7rem] font-light m-auto table-fixed w-[120%]">
-              <thead className="sticky top-0 bg-black">
+            <table className="text-[0.7rem]  m-auto w-[150%] table-fixed overflow-auto">
+              <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
                 <tr>
-                  <th>Domain</th>
-                  <th>Email</th>
-                  <th>Is Verified</th>
-                  <th className="w-[7%] sticky bg-black right-0">
+                  <th className="p-2">Domain</th>
+                  <th className="p-2">Email</th>
+                  <th className="p-2">Is Verified</th>
+                  <th className="w-7 sticky bg-[#202226] right-0">
                     <IoOptionsOutline className="inline" />
                   </th>
                 </tr>
@@ -192,22 +192,22 @@ export const DomainField = observer(() => {
                       data-idx={idx}
                       key={idx}
                     >
-                      <td className="overflow-scroll truncate" data-type="extend">
+                      <td className="overflow-scroll truncate  p-1" data-type="extend">
                         {a.domain}
                       </td>
-                      <td className="overflow-scroll truncate" data-type="extend">
+                      <td className="overflow-scroll truncate  p-1" data-type="extend">
                         {a.authEmail}
                       </td>
-                      <td className="overflow-scroll truncate" data-type="extend">
+                      <td className="overflow-scroll truncate  p-1" data-type="extend">
                         {a.verified ? 'yes' : 'no'}
                       </td>
-                      <td className="overflow-scroll truncate" data-type="extend">
+                      <td className="overflow-scroll truncate  p-1" data-type="extend">
                         {a.MXRecords}
                       </td>
-                      <td className="overflow-scroll truncate" data-type="extend">
+                      <td className="overflow-scroll truncate  p-1" data-type="extend">
                         {a.TXTRecords}
                       </td>
-                      <td className="overflow-scroll sticky bg-black right-0" data-type="opt">
+                      <td className="overflow-scroll sticky bg-[#111111] right-0" data-type="opt">
                         <button>
                           <SlOptionsVertical className="inline" />
                         </button>

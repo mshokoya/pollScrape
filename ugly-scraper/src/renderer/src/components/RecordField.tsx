@@ -13,7 +13,7 @@ import { metaMockData, recordMockData } from '../core/mockdata'
 import { appState$ } from '../core/state'
 import { useSelector } from '@legendapp/state/react'
 import { IMetaData, IRecords } from 'src/shared'
-import { Text } from '@radix-ui/themes'
+import { ScrollArea, Text } from '@radix-ui/themes'
 
 // type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
 type MetaSubCompArgs = {
@@ -40,7 +40,7 @@ export const RecordField = () => {
 
   return (
     <div className="flex relative grow">
-      <div className="flex gap-3 grow absolute inset-x-0 inset-y-0">
+      <div className="flex gap-3 absolute inset-x-0 inset-y-0">
         <Meta meta={meta} metaChecked={metaChecked} setMetaChecked={setMetaChecked} />
         <Record
           records={records}
@@ -92,9 +92,9 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
     selectedMeta ? <MetaPopup setPopup={setSelectedMeta} meta={meta[selectedMeta]} /> : null
 
   return (
-    <>
+    <div className="border rounded border-cyan-600 flex-none w-[30%]">
       <PopupComp />
-      <div className="border rounded overflow-auto">
+      <ScrollArea type="always">
         <table className="text-[0.7rem]  m-auto w-[150%] table-fixed overflow-auto">
           <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
             <tr className="p-9">
@@ -105,12 +105,8 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                   <MdCheckBoxOutlineBlank className="inline" />
                 )}
               </th>
-              <th className="w-[25%] p-2">
-                <Text>Name</Text>
-              </th>
-              <th className="w-[70%] p-2">
-                <Text>URL</Text>
-              </th>
+              <th className="w-[25%] p-2">Name</th>
+              <th className="w-[70%] p-2">URL</th>
               <th className="w-[2.5%] sticky bg-[#202226] right-0">
                 <IoOptionsOutline className="inline" />
               </th>
@@ -148,51 +144,33 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                   {/* META OTHER TABLE */}
                   <div className="text-left hidden w-[47.4rem] overflow-hidden">
                     <tr>
-                      <table className="border-cyan-600 border-y text-[0.7rem] opacity-95 table-fixed">
+                      <table className="border-cyan-600 border-y text-[0.9rem] opacity-95 table-fixed">
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">
-                            <Text>URL:</Text>
-                          </th>
+                          <th className="whitespace-nowrap px-2">URL:</th>
                           <td className="px-2">
-                            <div className="w-[30%]">
-                              <Text>{a.url}</Text>
-                            </div>
+                            <div className="w-[30%]">{a.url}</div>
                           </td>
                         </tr>
 
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">
-                            <Text>params:</Text>
-                          </th>
+                          <th className="whitespace-nowrap px-2 w-4">params:</th>
                           <td className="px-2"></td>
                         </tr>
 
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">
-                            <Text>Name:</Text>
-                          </th>
-                          <td className="px-2">
-                            <Text>{a.name}</Text>
-                          </td>
+                          <th className="whitespace-nowrap px-2 w-4">Name:</th>
+                          <td className="px-2">{a.name}</td>
                         </tr>
 
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">
-                            <Text>Accounts:</Text>
-                          </th>
+                          <th className="whitespace-nowrap px-2 w-4">Accounts:</th>
                           <td className="px-2">
                             <table>
                               <thead className="sticky top-0 bg-black">
                                 <tr>
-                                  <th className="px-2">
-                                    <Text> Account Used </Text>
-                                  </th>
-                                  <th className="px-2">
-                                    <Text> Min Employee Range </Text>
-                                  </th>
-                                  <th className="px-2">
-                                    <Text> Max Employee Range </Text>
-                                  </th>
+                                  <th className="px-2">Account Used</th>
+                                  <th className="px-2">Min Employee Range</th>
+                                  <th className="px-2">Max Employee Range</th>
                                 </tr>
                               </thead>
                               <tbody className="text-[0.5rem] text-center">
@@ -200,20 +178,14 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                                   a.accounts.map((a0, idx) => (
                                     <tr key={idx} className="hover:border-cyan-600 hover:border-y">
                                       <td className="px-2">
-                                        <Text>
-                                          {
-                                            appState$.accounts
-                                              .peek()
-                                              .find((a1) => a1.id === a0.accountID)?.email
-                                          }
-                                        </Text>
+                                        {
+                                          appState$.accounts
+                                            .peek()
+                                            .find((a1) => a1.id === a0.accountID)?.email
+                                        }
                                       </td>
-                                      <td className="px-2">
-                                        <Text>{a0.range[0]}</Text>
-                                      </td>
-                                      <td className="px-2">
-                                        <Text>{a0.range[1]}</Text>
-                                      </td>
+                                      <td className="px-2">{a0.range[0]}</td>
+                                      <td className="px-2">{a0.range[1]}</td>
                                     </tr>
                                   ))}
                               </tbody>
@@ -222,43 +194,31 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                         </tr>
 
                         <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">
-                            <Text>Scrapes:</Text>
-                          </th>
+                          <th className="whitespace-nowrap px-2 w-4">Scrapes:</th>
                           <td className="px-2">
                             <table>
                               <thead className="sticky top-0 bg-black">
                                 <tr>
-                                  <th className="px-2">
-                                    <Text> Length</Text>{' '}
-                                  </th>
-                                  <th className="px-2">
-                                    <Text> Date </Text>
-                                  </th>
+                                  <th className="px-2">Length </th>
+                                  <th className="px-2">Date</th>
                                 </tr>
                               </thead>
                               <tbody className="text-[0.5rem] text-center">
                                 {a.scrapes?.length &&
                                   a.scrapes.map((a0, idx) => (
                                     <tr key={idx} className="hover:border-cyan-600 hover:border-y">
-                                      <td className="px-2">
-                                        <Text>{a0.length}</Text>
-                                      </td>
-                                      <td className="px-2">
-                                        <Text>{fmtDate(a0.date)}</Text>
-                                      </td>
+                                      <td className="px-2">{a0.length}</td>
+                                      <td className="px-2">{fmtDate(a0.date)}</td>
                                     </tr>
                                   ))}
                                 <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
-                                  <Text>
-                                    {a.scrapes.reduce((acc, cur) => {
-                                      const o = typeof cur.length !== 'number' ? 0 : cur.length
-                                      return acc + o
-                                    }, 0)}
-                                  </Text>
+                                  {a.scrapes.reduce((acc, cur) => {
+                                    const o = typeof cur.length !== 'number' ? 0 : cur.length
+                                    return acc + o
+                                  }, 0)}
                                 </td>
                                 <div className="bg-cyan-500/90 font-bold border-t-2">
-                                  <Text>TOTAL LEADS SCRAPED</Text>
+                                  TOTAL LEADS SCRAPED
                                 </div>
                               </tbody>
                             </table>
@@ -271,8 +231,8 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
               ))}
           </tbody>
         </table>
-      </div>
-    </>
+      </ScrollArea>
+    </div>
   )
 }
 
@@ -309,18 +269,18 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
 
   return (
     <div className="border-cyan-600 border rounded grow overflow-auto">
-      <table className=" w-[150%] font-light text-left table-fixed border-spacing-x-2 border-collapse">
-        <thead className="top-0 bg-black text-sm z-50">
+      <table className="text-[0.7rem]  m-auto w-[180%] table-fixed overflow-auto">
+        <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
           <tr>
-            <th className="px-2 sticky left-0 bg-black">Name</th>
-            <th className="px-2">Title</th>
-            <th className="px-2">Company</th>
-            <th className="px-2">Email</th>
-            <th className="px-2">Location</th>
-            <th className="px-2"># Employees</th>
-            <th className="px-2">Phone</th>
-            <th className="px-2">Industry</th>
-            <th className="px-2">Keywords</th>
+            <th className="p-2 sticky left-0 bg-[#202226]">Name</th>
+            <th className="p-2">Title</th>
+            <th className="p-2">Company</th>
+            <th className="p-2">Email</th>
+            <th className="p-2">Location</th>
+            <th className="p-2"># Employees</th>
+            <th className="p-2">Phone</th>
+            <th className="p-2">Industry</th>
+            <th className="p-2">Keywords</th>
           </tr>
         </thead>
         <tbody className="relative" onClick={handleExtendRow}>
@@ -384,7 +344,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
                     {a.data['Company Location']}
                   </td>
 
-                  <td className="py-3 px-2 truncate" data-type="extend">
+                  <td className="py-3 px-2 truncate text-center" data-type="extend">
                     {a.data.Employees}
                   </td>
 
@@ -401,7 +361,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
                   </td>
                 </tr>
 
-                <tr className="hidden">
+                <tr className="hidden text-[0.9rem]">
                   <table className="hidden border-cyan-600 border-y">
                     <tr className="hover:border-cyan-600 hover:border-y">
                       <th className="whitespace-nowrap px-2">Name:</th>
