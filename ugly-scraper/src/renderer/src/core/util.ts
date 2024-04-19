@@ -34,15 +34,6 @@ export const fetchData = async <T>(
   ...args: any
 ): Promise<FetchData<T>> => {
   return await window[entity][method](...args)
-    .then((r) => {
-      console.log('in THEN')
-      console.log(r)
-      return r
-    })
-    .catch((r) => {
-      console.log('in Err')
-      console.log(r)
-    })
 }
 
 export const blinkCSS = (reqInProces: boolean = false, color: string = 'text-cyan-600') =>
@@ -148,6 +139,7 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
     const rsl = resStatus[entityID]
     if (rsl.get() && rsl.get().length > 1) {
       const rs = rsl.find((rs1) => rs1[0].get() === reqType)
+      // (FIX) check how the array look, when deleting from an array, it leave a empty space rather that shrinking array
       if (rs) rs.delete()
     } else {
       resStatus[entityID].delete()
@@ -181,9 +173,8 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 // min - 1 / max - 3 // lowest
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
-  //@ts-ignore
-  const result: [number, number][] = [[]]
-  const delta = Math.round((max - min) / (parts - 1))
+  var result = [[]],
+    delta = Math.round((max - min) / parts)
 
   while (min < max) {
     const l = result.length - 1
@@ -192,16 +183,47 @@ export const chuckRange = (min: number, max: number, parts: number): [number, nu
       result[l].push(min)
     } else {
       //@ts-ignore
-      result.push([result[l][1] + 1, min])
+      const s = result[l]
+      const val = s[1] ? s[1] + 1 : s[0] + 1
+      result.push([val, min])
     }
     min += delta
   }
 
   //@ts-ignore
-  const l = result[result.length - 1][1] + 1
+  const l = result[result.length - 1]
+  const s = l[1] ? l[1] + 1 : l[0] + 1
+
   //@ts-ignore
-  result.push([l, l === max ? max + 1 : max])
+  if (l.length === 1) l.push(l[0] + 1)
+  result.push([s, s === max ? max + 1 : max])
   return result
+
+  //   var result= [[]],
+  //       delta = Math.round((max - min) / parts);
+
+  //   while (min < max) {
+  //       const l = result.length-1
+  //       if (result.length === 1 && result[l].length < 2) {
+  //         //@ts-ignore
+  //         result[l].push(min)
+  //       } else {
+  //         //@ts-ignore
+  //         const s = result[l]
+  //         const val = s[1]?s[1]+1:s[0]+1
+  //         result.push([val, min])
+  //       }
+  //       min += delta;
+  //   }
+
+  //   //@ts-ignore
+  //   const l = result[result.length-1]
+  //   const s = l[1]?l[1]+1:l[0]+1
+
+  //   //@ts-ignore
+  //   if (s[l].length === 1) s[l].push(l[0]+1)
+  //   result.push([s, (s===max)?max+1:max]);
+  //   return result;
 }
 
 // (FIX) infinate is defined as undefined
@@ -273,7 +295,6 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
     })
   },
   delete: (taskID: string) => {
-    console.log('IN DELETE')
     for (const queues in tq) {
       const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
       if (t) {

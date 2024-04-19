@@ -13,6 +13,8 @@ export {
   TupgradeAutomatically,
   TupgradeManually
 } from './controllers/account'
+export { Tscrape } from './controllers/scrape'
+export { scrape } from './actions/scrape'
 export { deleteMetadata, getMetadatas, updateMetadata } from './actions/metadata'
 // import { scrape } from './actions/scrape'
 export { addDomain, deleteDomain, getDomains, verifyDomain } from './actions/domain'

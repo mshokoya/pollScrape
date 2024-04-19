@@ -16,6 +16,10 @@ export function handleApolloScrapeEndEvent(
   const c = res.ok ? 'ok' : 'fail'
   stateResStatusHelper.add(accountID, [task.type, c])
 
+  console.log('INNA TASK')
+  console.log(task)
+  console.log(res)
+
   processApolloEventData(task.type, res)
 
   setTimeout(() => {
@@ -38,7 +42,7 @@ function processApolloEventData(taskType: string, msg: TaskQueueEvent | ScrapeQu
     case 'check':
       if (msg.ok) {
         const acc = appState$.accounts.find((a) => a.id.get() === msg.metadata!.metadata!.accountID)
-        if (acc) acc.set(msg.metadata!.metadata as IAccount)
+        if (acc) acc.set({ ...acc.get(), ...(msg.metadata!.metadata as IAccount) })
       }
       break
   }

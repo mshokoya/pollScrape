@@ -1,5 +1,5 @@
 import { updateAccount } from '../../../database'
-import { AccountModel_, IAccount } from '../../../database/models/accounts'
+import { AccountModel_ } from '../../../database/models/accounts'
 import { scraper } from '../lib/scraper'
 import {
   completeApolloAccountConfimation,
@@ -18,6 +18,7 @@ import {
 import { AppError } from '../../../util'
 import { io } from '../../../websockets'
 import { mailbox } from '../../../mailbox'
+import { IAccount } from '../../../../../shared'
 
 export const confirmAccount = async ({
   taskID,
@@ -87,7 +88,14 @@ export const checkAccount = async ({ taskID, account }: { taskID: string; accoun
   try {
     // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
     const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-    return await updateAccount({ id: account.id }, creditsInfo)
+
+    const acc = await AccountModel_.findOneAndUpdate(
+      { id: account.id },
+      { ...creditsInfo, verified: 'yes' }
+    )
+    if (!acc) throw new AppError(taskID, 'failed to confirm account, update failed')
+
+    return acc
   } finally {
     await scraper.close(browserCTX)
   }
@@ -95,13 +103,6 @@ export const checkAccount = async ({ taskID, account }: { taskID: string; accoun
 
 export const loginAuto = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
   const browserCTX = await scraper.newBrowser(false)
-
-  console.log(`
-
-
-    we in the login
-
-    `)
 
   if (!browserCTX)
     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')

@@ -123,13 +123,19 @@ const ScrapeQueue = () => {
         task
           .action(task.args)
           .then((r) => {
+            console.log('in the THEN')
+            console.log(r)
             resolve(r)
           })
           .catch((err) => {
+            console.log('in the ERR')
+            console.log(err)
             reject(err)
           })
       })
-        .then(async (r: Record<string, any>) => {
+        .then((r: Record<string, any>) => {
+          console.log('in scrape rr')
+          console.log(r)
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
@@ -138,12 +144,15 @@ const ScrapeQueue = () => {
             ok: true,
             metadata: {
               ...task.metadata,
-              metadata: r
+              metadata: {
+                ...task.metadata.metadata,
+                ...r
+              }
             } as ScrapeQueueEvent['metadata']
           })
           p_dequeue(task.taskID)
         })
-        .catch(async (err) => {
+        .catch((err) => {
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,

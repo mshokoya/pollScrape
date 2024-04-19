@@ -45,7 +45,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
         //   data: { accountID }
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountConfirm,
@@ -93,7 +93,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
         //   data: { accountID }
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountUpgradeManually,
@@ -141,7 +141,7 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
         //   data: { accountID }
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountUpgradeAutomatically,
@@ -189,7 +189,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
         //   data: { accountID }
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountCheck,
@@ -257,7 +257,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
             exec in fork
 
             `)
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountLoginAuto,
@@ -363,7 +363,7 @@ export const TaddAccount = async ({
         //   message: `adding ${account.email}`
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountAdd,
@@ -445,7 +445,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
         //   data: { accountID }
         // })
         if (taskQueue.useFork) {
-          return taskQueue.execScrapeInFork({
+          return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
             action: CHANNELS.a_accountLoginManually,

@@ -11,41 +11,9 @@ import { FaFacebookF } from 'react-icons/fa'
 import { MetaPopup } from './MetaPopup'
 import { metaMockData, recordMockData } from '../core/mockdata'
 import { appState$ } from '../core/state'
-
-export type IMetaData = {
-  id: string
-  url: string
-  params: { [key: string]: string }
-  name: string
-  scrapes: { scrapeID: string; listName: string; length: number; date: number }[]
-  accounts: { accountID: string; range: [min: number, max: number] }[]
-}
-
-export type IRecords = {
-  id: string
-  scrapeID: string
-  url: string
-  page: number
-  data: IRecord
-}
-
-export type IRecord = {
-  Name: string
-  Linkedin: string
-  Title: string
-  'Company Name': string
-  'Company Website': string
-  'Company Linkedin': string
-  'Company Twitter': string
-  'Company Facebook': string
-  Email: string
-  isVerified: boolean
-  'Company Location': string
-  Employees: string
-  Phone: string
-  Industry: string
-  Keywords: string[]
-}
+import { useSelector } from '@legendapp/state/react'
+import { IMetaData, IRecords } from 'src/shared'
+import { Text } from '@radix-ui/themes'
 
 // type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
 type MetaSubCompArgs = {
@@ -65,26 +33,10 @@ type RecordsSubCompArgs = {
 export const RecordField = () => {
   const [metaChecked, setMetaChecked] = useState<number[]>([])
   const [recordsChecked, setRecordsChecked] = useState<number[]>([])
-  const [meta, setMeta] = useState<IMetaData[]>(metaMockData)
-  const [records, setRecords] = useState<IRecords[]>(recordMockData)
-
-  useEffect(() => {
-    // eslint-disable-next-line no-async-promise-executor
-    new Promise(async (resolve) => {
-      const meta = await fetchData('/metadata', 'GET')
-      const records = await fetchData('/records', 'GET')
-      resolve({ meta, records })
-    })
-      .then((data: any) => {
-        console.log(data.meta.data)
-        setMeta(data.meta.data)
-        setRecords(data.records.data)
-      })
-      .catch((err: any) => {
-        console.log('error')
-        console.log(err.message)
-      })
-  }, [])
+  const meta = useSelector(appState$.metas) as IMetaData[]
+  const records = useSelector(appState$.records) as IRecords[]
+  // const [meta, setMeta] = useState<IMetaData[]>(metaMockData)
+  // const [records, setRecords] = useState<IRecords[]>(recordMockData)
 
   return (
     <div className="flex relative grow">
@@ -142,47 +94,51 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
   return (
     <>
       <PopupComp />
-      <div className=" border-cyan-600 min-w-[30%] max-w-[30%] border rounded overflow-auto ">
-        <table className="text-[0.7rem] font-light m-auto w-[150%] table-fixed">
-          <thead className="sticky top-0 bg-black text text-[0.8rem]">
-            <tr>
-              <th className="w-[7%]" onClick={handleMetaToggle}>
+      <div className="border rounded overflow-auto">
+        <table className="text-[0.7rem]  m-auto w-[150%] table-fixed overflow-auto">
+          <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
+            <tr className="p-9">
+              <th className="sticky left-0 p-1.5 w-[2.5%] bg-[#202226]" onClick={handleMetaToggle}>
                 {metaChecked.length === meta.length ? (
                   <MdCheckBox className="inline" />
                 ) : (
                   <MdCheckBoxOutlineBlank className="inline" />
                 )}
               </th>
-              <th>Name</th>
-              <th>URL</th>
-              <th className="w-7 sticky bg-black right-0">
+              <th className="w-[25%] p-2">
+                <Text>Name</Text>
+              </th>
+              <th className="w-[70%] p-2">
+                <Text>URL</Text>
+              </th>
+              <th className="w-[2.5%] sticky bg-[#202226] right-0">
                 <IoOptionsOutline className="inline" />
               </th>
             </tr>
           </thead>
-          <tbody className="text-[0.8rem] " onClick={handleExtendRow}>
+          <tbody className="text-[0.9rem]" onClick={handleExtendRow}>
             {meta.length &&
               meta.map((a, idx) => (
                 <>
                   <tr
-                    className="text-center hover:border-cyan-600 hover:border"
+                    className="text-center hover:border-cyan-600 hover:border my-3"
                     data-idx={idx}
                     key={idx}
                   >
-                    <td data-type="check" data-idx={idx}>
+                    <td className="sticky left-0 bg-[#111111] p-1" data-type="check" data-idx={idx}>
                       {metaChecked.includes(idx) ? (
                         <MdCheckBox className="inline" />
                       ) : (
                         <MdCheckBoxOutlineBlank className="inline" />
                       )}
                     </td>
-                    <td className="overflow-scroll truncate" data-type="extend">
+                    <td className="overflow-scroll truncate  p-1" data-type="extend">
                       {a.name}
                     </td>
-                    <td className="overflow-scroll truncate" data-type="extend">
+                    <td className="overflow-scroll truncate text-[0.6rem]  p-1" data-type="extend">
                       {a.url}
                     </td>
-                    <td className="overflow-scroll sticky bg-black right-0" data-type="opt">
+                    <td className="overflow-scroll sticky bg-[#111111] right-0" data-type="opt">
                       <button>
                         <SlOptionsVertical className="inline" />
                       </button>
@@ -190,87 +146,127 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                   </tr>
 
                   {/* META OTHER TABLE */}
-                  <tr className="text-left w-auto h-full overflow-hidden hidden ">
-                    <table className={` border-cyan-600 border-y text-[0.7rem] opacity-95`}>
-                      <tr className="hover:border-cyan-600 hover:border-y">
-                        <th className="whitespace-nowrap px-2 w-4">URL:</th>
-                        <td className="px-2">{a.url}</td>
-                      </tr>
+                  <div className="text-left hidden w-[47.4rem] overflow-hidden">
+                    <tr>
+                      <table className="border-cyan-600 border-y text-[0.7rem] opacity-95 table-fixed">
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2">
+                            <Text>URL:</Text>
+                          </th>
+                          <td className="px-2">
+                            <div className="w-[30%]">
+                              <Text>{a.url}</Text>
+                            </div>
+                          </td>
+                        </tr>
 
-                      <tr className="hover:border-cyan-600 hover:border-y">
-                        <th className="whitespace-nowrap px-2 w-4">params:</th>
-                        <td className="px-2"></td>
-                      </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">
+                            <Text>params:</Text>
+                          </th>
+                          <td className="px-2"></td>
+                        </tr>
 
-                      <tr className="hover:border-cyan-600 hover:border-y">
-                        <th className="whitespace-nowrap px-2 w-4">Name:</th>
-                        <td className="px-2">{a.name}</td>
-                      </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">
+                            <Text>Name:</Text>
+                          </th>
+                          <td className="px-2">
+                            <Text>{a.name}</Text>
+                          </td>
+                        </tr>
 
-                      <tr className="hover:border-cyan-600 hover:border-y">
-                        <th className="whitespace-nowrap px-2 w-4">Accounts:</th>
-                        <td className="px-2">
-                          <table>
-                            <thead className="sticky top-0 bg-black">
-                              <tr>
-                                <th className="px-2"> Account Used </th>
-                                <th className="px-2"> Min Employee Range </th>
-                                <th className="px-2"> Max Employee Range </th>
-                              </tr>
-                            </thead>
-                            <tbody className="text-[0.5rem] text-center">
-                              {a.accounts?.length &&
-                                a.accounts.map((a0, idx) => (
-                                  <tr key={idx} className="hover:border-cyan-600 hover:border-y">
-                                    <td className="px-2">
-                                      {
-                                        appState$.accounts
-                                          .peek()
-                                          .find((a1) => a1.id === a0.accountID)?.email
-                                      }
-                                    </td>
-                                    <td className="px-2">{a0.range[0]}</td>
-                                    <td className="px-2">{a0.range[1]}</td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">
+                            <Text>Accounts:</Text>
+                          </th>
+                          <td className="px-2">
+                            <table>
+                              <thead className="sticky top-0 bg-black">
+                                <tr>
+                                  <th className="px-2">
+                                    <Text> Account Used </Text>
+                                  </th>
+                                  <th className="px-2">
+                                    <Text> Min Employee Range </Text>
+                                  </th>
+                                  <th className="px-2">
+                                    <Text> Max Employee Range </Text>
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[0.5rem] text-center">
+                                {a.accounts?.length &&
+                                  a.accounts.map((a0, idx) => (
+                                    <tr key={idx} className="hover:border-cyan-600 hover:border-y">
+                                      <td className="px-2">
+                                        <Text>
+                                          {
+                                            appState$.accounts
+                                              .peek()
+                                              .find((a1) => a1.id === a0.accountID)?.email
+                                          }
+                                        </Text>
+                                      </td>
+                                      <td className="px-2">
+                                        <Text>{a0.range[0]}</Text>
+                                      </td>
+                                      <td className="px-2">
+                                        <Text>{a0.range[1]}</Text>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
 
-                      <tr className="hover:border-cyan-600 hover:border-y">
-                        <th className="whitespace-nowrap px-2 w-4">Scrapes:</th>
-                        <td className="px-2">
-                          <table>
-                            <thead className="sticky top-0 bg-black">
-                              <tr>
-                                <th className="px-2"> Length </th>
-                                <th className="px-2"> Date </th>
-                              </tr>
-                            </thead>
-                            <tbody className="text-[0.5rem] text-center">
-                              {a.scrapes?.length &&
-                                a.scrapes.map((a0, idx) => (
-                                  <tr key={idx} className="hover:border-cyan-600 hover:border-y">
-                                    <td className="px-2">{a0.length}</td>
-                                    <td className="px-2">{fmtDate(a0.date)}</td>
-                                  </tr>
-                                ))}
-                              <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
-                                {a.scrapes.reduce((acc, cur) => {
-                                  const o = typeof cur.length !== 'number' ? 0 : cur.length
-                                  return acc + o
-                                }, 0)}
-                              </td>
-                              <div className="bg-cyan-500/90 font-bold border-t-2">
-                                TOTAL LEADS SCRAPED
-                              </div>
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </tr>
+                        <tr className="hover:border-cyan-600 hover:border-y">
+                          <th className="whitespace-nowrap px-2 w-4">
+                            <Text>Scrapes:</Text>
+                          </th>
+                          <td className="px-2">
+                            <table>
+                              <thead className="sticky top-0 bg-black">
+                                <tr>
+                                  <th className="px-2">
+                                    <Text> Length</Text>{' '}
+                                  </th>
+                                  <th className="px-2">
+                                    <Text> Date </Text>
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[0.5rem] text-center">
+                                {a.scrapes?.length &&
+                                  a.scrapes.map((a0, idx) => (
+                                    <tr key={idx} className="hover:border-cyan-600 hover:border-y">
+                                      <td className="px-2">
+                                        <Text>{a0.length}</Text>
+                                      </td>
+                                      <td className="px-2">
+                                        <Text>{fmtDate(a0.date)}</Text>
+                                      </td>
+                                    </tr>
+                                  ))}
+                                <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
+                                  <Text>
+                                    {a.scrapes.reduce((acc, cur) => {
+                                      const o = typeof cur.length !== 'number' ? 0 : cur.length
+                                      return acc + o
+                                    }, 0)}
+                                  </Text>
+                                </td>
+                                <div className="bg-cyan-500/90 font-bold border-t-2">
+                                  <Text>TOTAL LEADS SCRAPED</Text>
+                                </div>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </tr>
+                  </div>
                 </>
               ))}
           </tbody>

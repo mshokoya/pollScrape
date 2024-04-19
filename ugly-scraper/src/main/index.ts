@@ -13,6 +13,7 @@ import {
   TupdateAcc,
   TloginManually,
   Tdemine,
+  Tscrape,
   addDomain,
   verifyDomain,
   deleteDomain,
@@ -22,14 +23,11 @@ import {
   getMetadatas,
   getRecords,
   getRecord,
-  scrape,
   getProxies,
   addProxy
 } from './core/actions'
-import { IAccount } from './core/database/models/accounts'
-import { IMetaData } from './core/database/models/metadata'
 import { CHANNELS } from '../shared/util'
-import { AddAccountArgs } from '../shared'
+import { AddAccountArgs, IAccount, IMetaData } from '../shared'
 import { create } from './window'
 
 let window
@@ -125,7 +123,7 @@ function createWindow(): void {
           metaID?: string
           useProxy: boolean
         }
-      ) => await scrape(args)
+      ) => await Tscrape(args)
     )
 
     // ==========================================================================================

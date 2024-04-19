@@ -120,12 +120,12 @@ export const AccountModel_ = {
     })),
   create: async (a: Partial<IAccount> = {}, opts?: CreateOptions): Promise<IAccount> =>
     //@ts-ignore
-    await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true, ...opts })
-      .then((a1) => ({
+    await Account.create({ ...a, history: JSON.stringify(a.history) }, { raw: true, ...opts }).then(
+      (a1) => ({
         ...a1.dataValues,
         history: JSON.parse(a1.dataValues.history as any)
-      }))
-      .catch(() => null),
+      })
+    ),
   findById: async (id: string, opts: FindOptions = {}): Promise<IAccount> =>
     //@ts-ignore
     await Account.findByPk<IAccount>(id, { raw: true, ...opts })
@@ -145,11 +145,12 @@ export const AccountModel_ = {
     opts?: SaveOptions & FindOptions
   ): Promise<IAccount> => {
     const account: Model = await Account.findOne({ where: filter, ...opts }).catch(() => null)
-
     if (!account) return null
 
     for (const [key, value] of Object.entries(data)) {
-      if (key === 'history') {
+      if (value === undefined || value === null) {
+        continue
+      } else if (key === 'history') {
         // @ts-ignore
         account[key] = JSON.stringify(value)
       } else {
@@ -161,16 +162,13 @@ export const AccountModel_ = {
       .save(opts)
       // @ts-ignore
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
-      .catch(() => null)
   },
   findOneAndDelete: async (
     filter: Partial<Omit<IAccount, 'history'>>,
     opts?: DestroyOptions
   ): Promise<number> => {
     // @ts-ignore
-    return await Account.destroy({ where: filter, ...opts })
-      .then((n) => (n === 0 ? null : n))
-      .catch(() => null)
+    return await Account.destroy({ where: filter, ...opts }).then((n) => (n === 0 ? null : n))
   },
   pushToArray: async (
     filter: Partial<Omit<IAccount, 'history'>>,
@@ -193,7 +191,6 @@ export const AccountModel_ = {
       .save(opts)
       // @ts-ignore
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
-      .catch(() => null)
   }
 }
 

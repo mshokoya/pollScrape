@@ -6,6 +6,7 @@ import { IMetaData, IRecord } from '../../components/RecordField'
 import { IAccount } from './account'
 import { fetchData } from '../util'
 import { CHANNELS } from '../../../../shared/util'
+import { IRecords } from 'src/shared'
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok' | 'fail']
 export type ResStatus<T> = { [entityID: string]: Status<T>[] }
@@ -20,7 +21,7 @@ type AppState = {
   domains: IDomain[]
   // proxies: IProxy[]
   metas: IMetaData[]
-  records: IRecord[]
+  records: IRecords[]
 }
 
 export const appState$ = observable<AppState>({
@@ -41,10 +42,10 @@ Promise.all([
   // fetchData<IProxy[]>('proxy', CHANNELS.a_proxyGetAll)
   //   .then((data) => data.data)
   //   .catch(() => []),
-  fetchData<IMetaData[]>('metadata', CHANNELS.a_metadataGetAll)
+  fetchData<IMetaData[]>('meta', CHANNELS.a_metadataGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  fetchData<IRecord[]>('records', CHANNELS.a_recordsGetAll)
+  fetchData<IRecords[]>('record', CHANNELS.a_recordsGetAll)
     .then((data) => data.data)
     .catch(() => [])
 ]).then((r) => {

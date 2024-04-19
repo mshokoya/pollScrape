@@ -30,10 +30,11 @@ type State = {
   chunkParts: number
   aar: {
     chunk: [number, number][]
-    accounts: { email: string; totalScrapedInTimeFrame: number }[]
+    accounts: { id: string; email: string; totalScrapedInTimeFrame: number }[]
   }
 }
 
+// (FIX) SELECT CHUNK SHOULD NOT ALLOW TO CLICK LOWER THAT 1
 export const ScrapeField = observer(() => {
   console.log('ScrapeField')
   const defaultState = {
@@ -45,7 +46,7 @@ export const ScrapeField = observer(() => {
     maxScrapeLimit: 1000,
     checkedStatus: [],
     leadCol: 'total',
-    chunkParts: 3,
+    chunkParts: 1,
     aar: {
       chunk: [],
       accounts: []
@@ -61,13 +62,19 @@ export const ScrapeField = observer(() => {
     const state = s.peek()
 
     // (FIX) throw error or warning to user the not enough accounts or chunk too high etc
+
+    s.aar.set({
+      chunk: [[50, 500]],
+      accounts: [state.aar.accounts[0]]
+    })
+
     if (s.aar.chunk.length !== s.aar.accounts.length) return
 
     await fetchData('scrape', CHANNELS.a_scrape, {
       name: state.name,
       url: state.url,
       chunk: state.aar.chunk,
-      accounts: state.aar.accounts.map((a) => a.email),
+      accounts: state.aar.accounts.map((a) => a.id),
       usingProxy: false
     })
       .then((d) => {
@@ -189,6 +196,7 @@ export const ScrapeField = observer(() => {
     return {
       chunk,
       accounts: accounts.map((a) => ({
+        id: a.id,
         email: a.email,
         totalScrapedInTimeFrame: a.totalScrapedInLast30Mins
       }))

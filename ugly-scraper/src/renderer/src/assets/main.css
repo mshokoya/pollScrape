@@ -1,4 +1,5 @@
 @import './base.css';
+@import '@radix-ui/themes/styles.css';
 
 html {
   background-color: black;
@@ -14,8 +15,9 @@ body {
   height: 100vh;
 }
 
-input, select {
-  color: black
+input,
+select {
+  color: black;
 }
 
 #root {
@@ -58,7 +60,7 @@ svg {
 }
 
 .fieldBlink {
-  animation: fieldBlinkMe .7s linear infinite;
+  animation: fieldBlinkMe 0.7s linear infinite;
 }
 @keyframes fieldBlinkMe {
   0% {
@@ -73,7 +75,7 @@ svg {
 }
 
 .resOK {
-  animation: fieldBlinkOK .5s linear infinite;
+  animation: fieldBlinkOK 0.5s linear infinite;
 }
 @keyframes fieldBlinkOK {
   0% {
@@ -88,7 +90,7 @@ svg {
 }
 
 .resFail {
-  animation: fieldBlinkFAIL .5s linear infinite;
+  animation: fieldBlinkFAIL 0.5s linear infinite;
 }
 @keyframes fieldBlinkFAIL {
   0% {
@@ -102,11 +104,15 @@ svg {
   }
 }
 
-.ghost > * { fill: #9f1239; }
-.ghost-float { animation: floating 1s infinite ease-in-out;}
+.ghost > * {
+  fill: #9f1239;
+}
+.ghost-float {
+  animation: floating 1s infinite ease-in-out;
+}
 @keyframes floating {
   50% {
-    transform: translateY(-6px)
+    transform: translateY(-6px);
   }
 }
 

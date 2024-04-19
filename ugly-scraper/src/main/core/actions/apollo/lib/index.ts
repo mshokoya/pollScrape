@@ -373,32 +373,6 @@ export const apolloConfirmAccountEvent = async (
   }
 }
 
-// export const apolloScrape = async (
-//   taskID: string,
-//   browserCTX: BrowserContext,
-//   meta: IMetaData,
-//   usingProxy: boolean
-// ) => {
-//   let employeeRangeMin
-//   let employeeRangeMax
-//   const employeeRange = getRangeFromApolloURL(meta.url)
-//   if (employeeRange.length > 1) throw new AppError(taskID, 'can only have one range set')
-
-//   if (!employeeRange.length) {
-//     employeeRangeMin = 1
-//     employeeRangeMax = 3
-//   } else {
-//     employeeRangeMin = parseInt(employeeRange[0][0])
-//     employeeRangeMax = parseInt(employeeRange[0][1])
-//   }
-
-//   // (FIX) low ranges may fuckup - make parts dynamic (lowest min/max difference must be 3)
-//   const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
-
-//   // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
-//   await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
-// }
-
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
 const _SALock = new Mutex()
 // (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
@@ -498,7 +472,7 @@ export const apolloScrape = async (
 
     if (!data || !data.length) return
 
-    delay(3000) // randomise between 3 - 5
+    delay(2000) // randomise between 3 - 5
 
     const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
@@ -523,7 +497,6 @@ export const apolloScrape = async (
     })
 
     const nextPage = getPageInApolloURL(url) + 1
-    // (FIX) make sure it works
     url = setPageInApolloURL(url, nextPage > apolloMaxPage ? 1 : nextPage)
     meta = save.meta
     account = { ...account, ...save.account }

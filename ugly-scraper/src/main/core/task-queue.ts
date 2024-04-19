@@ -206,7 +206,8 @@ const TaskQueue = () => {
         metadata: {
           taskID: task.taskID,
           taskGroup: task.taskGroup,
-          taskType: task.taskType
+          taskType: task.taskType,
+          metadata: { ...task.metadata }
         }
       }
 
@@ -239,7 +240,7 @@ const TaskQueue = () => {
             ok: true,
             metadata: {
               ...taskIOEmitArgs.metadata,
-              metadata: r
+              metadata: { ...task.metadata, ...r }
             }
           })
           p_dequeue(task.taskID)

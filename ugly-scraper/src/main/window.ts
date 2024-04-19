@@ -7,8 +7,10 @@ let window: BrowserWindow
 
 function create() {
   window = new BrowserWindow({
-    width: 900,
-    height: 670,
+    minWidth: 1063,
+    minHeight: 700,
+    height: 700,
+    width: 1063,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -16,7 +18,6 @@ function create() {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       contextIsolation: true
-      // nodeIntegration: true
     }
   })
 

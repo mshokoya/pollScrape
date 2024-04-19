@@ -4,6 +4,7 @@ import { IAccount } from '../../../database/models/accounts'
 import { IRecord } from '../../../database/models/records'
 import { AppError, delay } from '../../../util'
 import { io } from '../../../websockets'
+import { eval_delay, waitForElement, waitForElementHide } from '../../util'
 import { apolloDoc } from './dom/scrapeData'
 import { BrowserContext } from './scraper'
 import {
@@ -40,6 +41,7 @@ export const goToApolloSearchUrl = async (
   apolloSearchURL: string
 ) => {
   await page.goto(apolloSearchURL)
+  // (FIX) table mey be visible but contents are not loaded... leading to error
   await page.waitForSelector(apolloTableRowSelector, { visible: true })
 }
 
@@ -431,17 +433,19 @@ export const apolloAddLeadsToListAndScrape = async (
   listName: string
 ) => {
   const page = browserCTX.page
+
   const tableRowsSelector = '[class="zp_RFed0"]'
   const checkboxSelector = '[class="zp_fwjCX"]'
   const addToListInputSelector = '[class="Select-input "]'
   const saveListButtonSelector = '[class="zp-button zp_zUY3r"][type="submit"]'
   const SLPopupSelector = '[class="zp_lMRYw zp_yHIi8"]'
   const savedListTableRowSelector = '[class="zp_cWbgJ"]'
+  const paginationInfoSelector = '[class="zp_VVYZh"]'
 
-  await page.waitForSelector(tableRowsSelector, { visible: true, timeout: 10000 })
+  await page.waitForSelector(paginationInfoSelector, { visible: true, timeout: 10000 })
+
   const rows = await page.$$(tableRowsSelector)
 
-  // Math.min(limit, rows.length)
   for (let i = 0; i < 1; i++) {
     const check = await rows[i].$(checkboxSelector)
     if (!check) continue
@@ -451,22 +455,23 @@ export const apolloAddLeadsToListAndScrape = async (
   const l = await page.$$(
     '[class="zp-button zp_zUY3r zp_hLUWg zp_n9QPr zp_B5hnZ zp_MCSwB zp_ML2Jn"]'
   )
-  if (!l) throw new Error('failed to find list button')
+
+  if (!l) throw new AppError(taskID, 'failed to find list button')
   await l[1].click()
 
   const b = await page.waitForSelector('[class="zp-menu-item zp_fZtsJ zp_pEvFx"]', {
     visible: true,
     timeout: 5000
   })
-  if (!b) throw new Error('failed to find doo to list button')
+  if (!b) throw new AppError(taskID, 'failed to find doo to list button')
   await b.click()
 
   await delay(3000)
 
   const addToListInput = await page.$$(addToListInputSelector)
-  if (!addToListInput[2]) throw new Error('add to list fail')
+  if (!addToListInput[1]) throw new Error('add to list fail')
   await page.keyboard.type(listName)
-  await addToListInput[2].focus()
+  await addToListInput[1].focus()
 
   const saveListButton = await page.$(saveListButtonSelector)
   if (!saveListButton) throw new Error('save list button fail')

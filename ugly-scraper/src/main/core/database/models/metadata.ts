@@ -56,14 +56,12 @@ export const MetaDataModel_ = {
         accounts: JSON.stringify(m.accounts as any)
       },
       { raw: true, ...opts }
-    )
-      .then((m) => ({
-        ...m.dataValues,
-        params: JSON.parse(m.dataValues.params as any),
-        scrapes: JSON.parse(m.dataValues.scrapes as any),
-        accounts: JSON.parse(m.dataValues.accounts as any)
-      }))
-      .catch(() => null),
+    ).then((m) => ({
+      ...m.dataValues,
+      params: JSON.parse(m.dataValues.params as any),
+      scrapes: JSON.parse(m.dataValues.scrapes as any),
+      accounts: JSON.parse(m.dataValues.accounts as any)
+    })),
   findById: async (id: string, opts?: FindOptions): Promise<IMetaData> =>
     //@ts-ignore
     await MetaData.findByPk<IMetaData>(id, { raw: true, ...opts })
@@ -114,16 +112,13 @@ export const MetaDataModel_ = {
         scrapes: JSON.parse(m.dataValues.scrapes as any),
         accounts: JSON.parse(m.dataValues.accounts as any)
       }))
-      .catch(() => null)
   },
   findOneAndDelete: async (
     filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>,
     opts?: DestroyOptions
   ): Promise<number> => {
     // @ts-ignore
-    return await MetaData.destroy({ where: filter, ...opts })
-      .then((n) => (n === 0 ? null : n))
-      .catch(() => null)
+    return await MetaData.destroy({ where: filter, ...opts }).then((n) => (n === 0 ? null : n))
   },
   pushToArray: async (
     filter: Partial<Omit<IMetaData, 'scrapes' | 'accounts'>>,
@@ -133,11 +128,12 @@ export const MetaDataModel_ = {
   ): Promise<IMetaData> => {
     const metadata: Model = await MetaData.findOne({ where: filter, ...opts }).catch(() => null)
 
-    if (!metadata) return null
+    // (FIX) throw better error
+    if (!metadata) throw new Error('no md')
 
     const meta = JSON.parse(metadata[key])
 
-    if (!Array.isArray(meta)) return null
+    if (!Array.isArray(meta)) throw new Error('no arr')
 
     meta.push(value)
     metadata[key] = JSON.stringify(meta)
@@ -145,8 +141,12 @@ export const MetaDataModel_ = {
     return await metadata
       .save(opts)
       // @ts-ignore
-      .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
-      .catch(() => null)
+      .then((m) => ({
+        ...m.dataValues,
+        params: JSON.parse(m.dataValues.params as any),
+        scrapes: JSON.parse(m.dataValues.scrapes as any),
+        accounts: JSON.parse(m.dataValues.accounts as any)
+      }))
   },
   addToObj: async (
     filter: Partial<Omit<IMetaData, 'params' | 'scrapes' | 'accounts'>>,
@@ -168,15 +168,12 @@ export const MetaDataModel_ = {
 
     metadata[key] = JSON.stringify(meta)
 
-    return await metadata
-      .save(opts)
-      .then((m1) => ({
-        ...m1.dataValues,
-        params: JSON.parse(m1.dataValues.params as any),
-        scrapes: JSON.parse(m1.dataValues.scrapes as any),
-        accounts: JSON.parse(m1.dataValues.accounts as any)
-      }))
-      .catch(() => null)
+    return await metadata.save(opts).then((m1) => ({
+      ...m1.dataValues,
+      params: JSON.parse(m1.dataValues.params as any),
+      scrapes: JSON.parse(m1.dataValues.scrapes as any),
+      accounts: JSON.parse(m1.dataValues.accounts as any)
+    }))
   }
 }
 

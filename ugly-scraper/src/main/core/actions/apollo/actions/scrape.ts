@@ -1,6 +1,6 @@
+import { IMetaData } from '../../../../../shared'
 import { cache } from '../../../cache'
-import { AccountModel, AccountModel_, IAccount } from '../../../database/models/accounts'
-import { IMetaData } from '../../../database/models/metadata'
+import { AccountModel_ } from '../../../database/models/accounts'
 import { AppError } from '../../../util'
 import { apolloScrape } from '../lib'
 import { scraper } from '../lib/scraper'
@@ -18,26 +18,15 @@ export const scrape = async ({
   metadata: IMetaData
   useProxy: boolean
 }) => {
+  const browserCTX = await scraper.newBrowser(false)
   try {
-    const browserCTX = await scraper.newBrowser(false)
     if (!browserCTX) throw new AppError(taskID, 'Failed to scrape, browser could not be started')
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new AppError(taskID, 'Failed to scrape, account could not be found')
-    console.log(`
-
-      IN DA SCRAPER LOGIC
-
-      ${taskID}
-      ${chunk}
-      ${accountID}
-      ${metadata}
-      ${useProxy}
-
-
-      `)
-    // await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk)
+    await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk)
   } finally {
     // (FIX) CACHE NOW IN DB
     // await cache.deleteMeta(metadata.id)
+    await scraper.close(browserCTX)
   }
 }

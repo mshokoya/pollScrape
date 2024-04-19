@@ -33,8 +33,9 @@ export {
   TgetAccounts,
   TupdateAcc,
   TloginManually,
-  Tdemine
-} from './apollo/controllers/account'
+  Tdemine,
+  Tscrape
+} from './apollo'
 
 export {
   addDomain,
