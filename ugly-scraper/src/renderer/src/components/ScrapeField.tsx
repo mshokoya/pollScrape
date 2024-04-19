@@ -18,6 +18,7 @@ import { IoMdCloseCircle } from 'react-icons/io'
 import { FaArrowCircleLeft, FaArrowCircleRight } from 'react-icons/fa'
 import { CHANNELS } from '../../../shared/util'
 import { Box, Checkbox, Flex, Heading, Text, TextField } from '@radix-ui/themes'
+import { Diagram } from './Diagram'
 
 type State = {
   name: string
@@ -220,164 +221,172 @@ export const ScrapeField = observer(() => {
   }
 
   return (
-    <form className="w-full bg-[#111111]" onSubmit={handleSubmit}>
-      <div className="mb-3 text-left flex items-center">
-        <label className="mr-2" htmlFor="startScrape">
-          URL:{' '}
-        </label>
-        <textarea
-          className="mr-1 w-[50%] rounded"
-          required
-          id="startScrape"
-          disabled={!!s.url.get()}
-          value={s.url.get()}
-          onChange={(e) => {
-            handleInput(e.target.value)
-          }}
-        />
-        <div
-          className={`mx-1 inline text-cyan-600 text-xl ${!s.get().url ? 'hidden' : ''}`}
-          onClick={() => {
-            resetState()
-          }}
-        >
-          {' '}
-          <IoMdCloseCircle fill="rgb(8 145 178 / 1)" />{' '}
+    <div className="flex ">
+      <form className="w-full bg-[#111111]" onSubmit={handleSubmit}>
+        <div className="mb-3 text-left flex items-center">
+          <label className="mr-2" htmlFor="startScrape">
+            URL:{' '}
+          </label>
+          <textarea
+            className="mr-1 w-[50%] rounded"
+            required
+            id="startScrape"
+            disabled={!!s.url.get()}
+            value={s.url.get()}
+            onChange={(e) => {
+              handleInput(e.target.value)
+            }}
+          />
+          <div
+            className={`mx-1 inline text-cyan-600 text-xl ${!s.get().url ? 'hidden' : ''}`}
+            onClick={() => {
+              resetState()
+            }}
+          >
+            {' '}
+            <IoMdCloseCircle fill="rgb(8 145 178 / 1)" />{' '}
+          </div>
+          <input
+            disabled={!s.url.get()}
+            className="overflow-scroll ml-1 text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500"
+            type="submit"
+            value="Start Scraping"
+          />
         </div>
-        <input
-          disabled={!s.url.get()}
-          className="overflow-scroll ml-1 text-cyan-600 border-cyan-600 border rounded p-1 disabled:border-neutral-500 disabled:text-neutral-500"
-          type="submit"
-          value="Start Scraping"
-        />
+
+        <div className="mb-3 flex gap-5">
+          <div className="mb-3">
+            <div className="mb-3 flex gap-5">
+              <div className="mb-3 text-center">
+                <div className="mb-2 text-cyan-600"> ------- Scrape Name ------- </div>
+                <input
+                  required
+                  className="mr-2"
+                  value={s.name.get()}
+                  onChange={(e: any) => {
+                    s.name.set(e.target.value)
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="mb-3 text-left">
+              <div className="mb-2 text-cyan-600"> ------- Employee Range ------- </div>
+
+              <div className="mb-3">
+                <label className="mr-2" htmlFor="scrapeFrom">
+                  Min:{' '}
+                </label>
+                <input
+                  required
+                  id="scrapeFrom"
+                  type="number"
+                  value={s.min.get()}
+                  onChange={(e: any) => {
+                    handleRange(e.target.value, 'min')
+                  }}
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="mr-2" htmlFor="scrapeTo">
+                  Max:{' '}
+                </label>
+                <input
+                  required
+                  id="scrapeTo"
+                  className="mr-2"
+                  type="number"
+                  value={s.max.get()}
+                  onChange={(e: any) => {
+                    handleRange(e.target.value, 'max')
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="mb-5">
+              <div className="mb-1 text-cyan-600"> ------- Email Status ------- </div>
+              <div className="email" onClick={handleEmailStatus}>
+                <div className="w-[12rem] text-[0.7rem]">
+                  * Leave all boxes unchecked to include all types{' '}
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="email"
+                    name="email"
+                    value="verified"
+                    data-status="verified"
+                    checked={s.checkedStatus.get().includes('verified')}
+                  />{' '}
+                  Verified{' '}
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="email"
+                    name="email"
+                    value="guessed"
+                    data-status="guessed"
+                    checked={s.checkedStatus.get().includes('guessed')}
+                  />{' '}
+                  Guessed{' '}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1 text-cyan-600"> ------- Lead Column ------- </div>
+              <div className="lead" onClick={handleLeadCol}>
+                <div>
+                  {' '}
+                  <input
+                    type="checkbox"
+                    id="lead"
+                    name="lead"
+                    value="total"
+                    data-status="total"
+                    checked={s.leadCol.get().includes('total')}
+                  />{' '}
+                  Total{' '}
+                </div>
+                <div>
+                  {' '}
+                  <input
+                    type="checkbox"
+                    id="lead"
+                    name="lead"
+                    value="new"
+                    data-status="new"
+                    checked={s.leadCol.get().includes('new')}
+                  />{' '}
+                  Net New{' '}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className=" text-sm">
+            <div className="">
+              <div className="mb-1 text-cyan-600"> ------- Accounts For Scrape ------- </div>
+              <ChunkComp
+                maxScrapeLimit={s.maxScrapeLimit.get()}
+                aar={s.aar.get()}
+                chunkParts={s.chunkParts.get()}
+                handleChunkPart={handleChunkPart}
+              />
+            </div>
+          </div>
+        </div>
+      </form>
+      {/* REACT FLOW */}
+      <div className="w-[25rem] h-[17rem]">
+        <Diagram />
       </div>
-
-      <div className="mb-3 flex gap-5">
-        <div className="mb-3">
-          <div className="mb-3 flex gap-5">
-            <div className="mb-3 text-center">
-              <div className="mb-2 text-cyan-600"> ------- Scrape Name ------- </div>
-              <input
-                required
-                className="mr-2"
-                value={s.name.get()}
-                onChange={(e: any) => {
-                  s.name.set(e.target.value)
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="mb-3 text-left">
-            <div className="mb-2 text-cyan-600"> ------- Employee Range ------- </div>
-
-            <div className="mb-3">
-              <label className="mr-2" htmlFor="scrapeFrom">
-                Min:{' '}
-              </label>
-              <input
-                required
-                id="scrapeFrom"
-                type="number"
-                value={s.min.get()}
-                onChange={(e: any) => {
-                  handleRange(e.target.value, 'min')
-                }}
-              />
-            </div>
-
-            <div className="mb-3">
-              <label className="mr-2" htmlFor="scrapeTo">
-                Max:{' '}
-              </label>
-              <input
-                required
-                id="scrapeTo"
-                className="mr-2"
-                type="number"
-                value={s.max.get()}
-                onChange={(e: any) => {
-                  handleRange(e.target.value, 'max')
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-3">
-          <div className="mb-5">
-            <div className="mb-1 text-cyan-600"> ------- Email Status ------- </div>
-            <div className="email" onClick={handleEmailStatus}>
-              <div>* Leave all boxes unchecked to include all types </div>
-              <div>
-                <input
-                  type="checkbox"
-                  id="email"
-                  name="email"
-                  value="verified"
-                  data-status="verified"
-                  checked={s.checkedStatus.get().includes('verified')}
-                />{' '}
-                Verified{' '}
-              </div>
-              <div>
-                <input
-                  type="checkbox"
-                  id="email"
-                  name="email"
-                  value="guessed"
-                  data-status="guessed"
-                  checked={s.checkedStatus.get().includes('guessed')}
-                />{' '}
-                Guessed{' '}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-1 text-cyan-600"> ------- Lead Column ------- </div>
-            <div className="lead" onClick={handleLeadCol}>
-              <div>
-                {' '}
-                <input
-                  type="checkbox"
-                  id="lead"
-                  name="lead"
-                  value="total"
-                  data-status="total"
-                  checked={s.leadCol.get().includes('total')}
-                />{' '}
-                Total{' '}
-              </div>
-              <div>
-                {' '}
-                <input
-                  type="checkbox"
-                  id="lead"
-                  name="lead"
-                  value="new"
-                  data-status="new"
-                  checked={s.leadCol.get().includes('new')}
-                />{' '}
-                Net New{' '}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className=" text-sm">
-          <div className="">
-            <div className="mb-1 text-cyan-600"> ------- Accounts For Scrape ------- </div>
-            <ChunkComp
-              maxScrapeLimit={s.maxScrapeLimit.get()}
-              aar={s.aar.get()}
-              chunkParts={s.chunkParts.get()}
-              handleChunkPart={handleChunkPart}
-            />
-          </div>
-        </div>
-      </div>
-    </form>
+    </div>
   )
 })
 

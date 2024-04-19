@@ -1,15 +1,6 @@
-import { observable } from '@legendapp/state'
+import { taskQueueHelper } from '../state/taskQueue'
 import { handleApolloProcessQueueEvents, handleApolloTaskQueueEvents } from './apollo'
-import { TQTask, TaskQueue, TaskQueueEvent } from 'src/shared'
-import { TaskQueueHelper } from '../util'
-
-export const taskQueue = observable<TaskQueue>({
-  queue: [],
-  processing: [],
-  timeout: []
-})
-
-const taskQueueHelper = TaskQueueHelper<TQTask>(taskQueue)
+import { TaskQueueEvent } from 'src/shared'
 
 export function handleTaskQueueEvent(res: TaskQueueEvent<any>) {
   switch (res.taskType) {

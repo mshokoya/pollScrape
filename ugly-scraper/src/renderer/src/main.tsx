@@ -1,6 +1,7 @@
 import './assets/main.css'
 import 'react-tooltip/dist/react-tooltip.css'
 import '@radix-ui/themes/styles.css'
+import 'reactflow/dist/style.css'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 // import './index.css'

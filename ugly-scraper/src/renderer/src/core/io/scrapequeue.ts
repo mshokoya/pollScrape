@@ -1,15 +1,6 @@
-import { observable } from '@legendapp/state'
-import { STQTask, ScrapeQueueEvent, TaskQueue } from 'src/shared'
-import { TaskQueueHelper } from '../util'
+import { ScrapeQueueEvent } from 'src/shared'
 import { handleApolloScrapeProcessQueueEvents, handleApolloScrapeTaskQueueEvents } from './apollo'
-
-export const scrapeTaskQueue = observable<TaskQueue>({
-  queue: [],
-  processing: [],
-  timeout: []
-})
-
-const scrapeTaskQueueHelper = TaskQueueHelper<STQTask>(scrapeTaskQueue)
+import { scrapeTaskQueueHelper } from '../state/scrapeQueue'
 
 export function handleScrapeQueueEvent(res: ScrapeQueueEvent<unknown>) {
   switch (res.taskType) {
