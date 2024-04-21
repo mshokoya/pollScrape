@@ -1,14 +1,15 @@
 import { RiGhostLine } from 'react-icons/ri'
 import { BiSolidGhost } from 'react-icons/bi'
-import { TaskQueueSocketEvent, taskQueue } from '../core/io/taskqueue'
 import { useObservable, useSelector } from '@legendapp/state/react'
 import { Tooltip } from 'react-tooltip'
 import { TaskViewPopup } from './TaskViewPopup'
+import { taskQueue } from '@renderer/core/state/taskQueue'
+import { TaskQueueEvent } from 'src/shared'
 
 // https://react-tooltip.com/docs/options#available-props
 
 type TaskViewState = {
-  selectedTask: TaskQueueSocketEvent | null
+  selectedTask: TaskQueueEvent | null
   popup: boolean
 }
 
@@ -33,7 +34,7 @@ export const TaskView = () => {
   return (
     <>
       <PopupComp />
-      <div className="w-full h-[5.5%] mb-4 bg-cyan-600">
+      <div className="w-full h-[5.5%] mb-2 bg-cyan-600">
         {tq.timeout &&
           tq.timeout.map((t, idx) => (
             <div

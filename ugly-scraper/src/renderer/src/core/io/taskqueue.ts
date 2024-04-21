@@ -1,32 +1,55 @@
-import { observable } from '@legendapp/state'
-import { handleApolloTaskQueueEvents } from './apollo'
+import { taskQueueHelper } from '../state/taskQueue'
+import { handleApolloProcessQueueEvents, handleApolloTaskQueueEvents } from './apollo'
+import { TaskQueueEvent } from 'src/shared'
 
-export type TaskQueueSocketEvent<T = Record<string, any>, ReqType = string> = {
-  taskType?: ReqType
-  message: string
-  status?: string
-  metadata: {
-    taskID: string
-    taskGroup: string
-    taskType: string
-    metadata: T
+export function handleTaskQueueEvent(res: TaskQueueEvent<any>) {
+  switch (res.taskType) {
+    case 'enqueue':
+      taskQueueHelper.addToQueue('queue', {
+        taskID: res.taskID,
+        taskGroup: res.metadata.taskGroup,
+        taskType: res.taskType,
+        processes: []
+      })
+      break
+
+    case 'dequeue':
+      taskQueueHelper.delete(res.taskID)
+      break
+  }
+
+  if (!res.useFork) {
+    switch (res.metadata.taskGroup) {
+      case 'apollo':
+        handleApolloTaskQueueEvents(res as TaskQueueEvent<{ accountID: string; taskType: string }>)
+        break
+    }
   }
 }
 
-export const taskQueue = observable<{
-  queue: TaskQueueSocketEvent<any>[]
-  processing: TaskQueueSocketEvent<any>[]
-  timeout: TaskQueueSocketEvent<any>[]
-}>({
-  queue: [],
-  processing: [],
-  timeout: []
-})
-
-export function handleTaskQueueEvent(res: TaskQueueSocketEvent<any>) {
-  switch (res.metadata.taskGroup) {
-    case 'apollo':
-      handleApolloTaskQueueEvents(res)
+export function handleProcessQueueEvent(res: TaskQueueEvent<any>) {
+  switch (res.taskType) {
+    case 'enqueue':
+      taskQueueHelper.addToQueue('processing', {
+        taskID: res.taskID,
+        taskGroup: res.metadata.taskGroup,
+        taskType: res.taskType,
+        processes: []
+      })
       break
+
+    case 'dequeue':
+      taskQueueHelper.delete(res.taskID)
+      break
+  }
+
+  if (!res.useFork) {
+    switch (res.metadata.taskGroup) {
+      case 'apollo':
+        handleApolloProcessQueueEvents(
+          res as TaskQueueEvent<{ accountID: string; taskType: string }>
+        )
+        break
+    }
   }
 }

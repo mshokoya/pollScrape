@@ -2,7 +2,7 @@ import { AccountModel_, IAccount } from './models/accounts'
 import { IProxy, ProxyModel_ } from './models/proxy'
 import { parseProxy, apolloGetParamsFromURL } from './util'
 import { generateSlug } from 'random-word-slugs'
-import { IRecord, IRecords, RecordModel_, } from './models/records'
+import { IRecord, IRecords, RecordModel_ } from './models/records'
 import { IMetaData, MetaDataModel_ } from './models/metadata'
 import { v4 as uuidv4 } from 'uuid'
 import { CreditsInfo } from '../actions/apollo/lib/util'
@@ -25,9 +25,7 @@ export const updateAccount = async (
   filter: Record<string, any>,
   data: Partial<IAccount>
 ): Promise<IAccount> => {
-  const account = (await AccountModel_.findOneAndUpdate(filter, data)) as IAccount
-
-  return account
+  return (await AccountModel_.findOneAndUpdate(filter, data)) as IAccount
 }
 
 export const addProxyToDB = async (p: string): Promise<IProxy | null> => {
@@ -61,20 +59,12 @@ export const saveScrapeToDB = async (
       { transaction: t }
     )
 
-    if (!newAcc) {
-      await t.rollback()
-      throw new AppError(
-        taskID,
-        'failed to update account after scrape, if this continues please contact developer'
-      )
-    }
-
     // METADATA UPDATE
     const scrapeID = uuidv4()
 
     let newMeta = await MetaDataModel_.findOne({ id: meta.id })
-    if (!newMeta) throw new AppError(taskID, 'failed to find meta for transaction')
 
+    // (FIX) ?? is thast suppose to be continue or break ?
     for (const l of newMeta.accounts) {
       // if already exist do nothing (this is to make sure account is stored in meta, you can do this earlier in the request)
       if (l.accountID === account.id && l.range[0] === range[0] && l.range[1] === range[1]) {
@@ -97,14 +87,6 @@ export const saveScrapeToDB = async (
       { transaction: t }
     )
 
-    if (!newMeta) {
-      await t.rollback()
-      throw new AppError(
-        taskID,
-        'failed to update meta after scrape, if this continues please contact developer'
-      )
-    }
-
     // RECORD UPDATE
     const fmtData: Omit<IRecords, 'id'>[] = data.map((d) => ({ scrapeID, url: meta.url, data: d }))
 
@@ -114,16 +96,17 @@ export const saveScrapeToDB = async (
 
     return { meta: newMeta, account: newAcc }
   } catch (error) {
-    await t.rollback()
+    t.rollback()
     throw new AppError(taskID, 'failed to save scrape to db')
   }
 }
 
-export const initMeta = async (url: string): Promise<IMetaData> => {
+export const initMeta = async (name: string, url: string): Promise<IMetaData> => {
   const params = apolloGetParamsFromURL(url) // sets page to 1
 
   const newMeta = await MetaDataModel_.create({
-    name: generateSlug(),
+    name,
+    // name: generateSlug(),
     url,
     params: params
   })
@@ -141,7 +124,6 @@ export const deleteMetaAndRecords = async (metaID: string) => {
   try {
     const meta = await MetaDataModel_.findOne({ id: metaID }, { transaction: t })
     if (!meta) {
-      await t.rollback()
       throw new Error('failed to find metadata')
     }
 
@@ -150,7 +132,6 @@ export const deleteMetaAndRecords = async (metaID: string) => {
       { transaction: t }
     )
     if (!metaDeleteLength) {
-      await t.rollback()
       throw new Error('failed to delete metadata')
     }
 
@@ -189,42 +170,25 @@ export const updateDBForNewScrape = async (
   const t = await sequelize.transaction()
   try {
     // METADATA UPDATE
-    const newMeta = await MetaDataModel_.pushToArray(
+    await MetaDataModel_.pushToArray(
       { id: meta.id },
       'scrapes',
       { scrapeID, listName, date: new Date().getTime(), length: 0 },
       { transaction: t }
     )
-    if (!newMeta) {
-      await t.rollback()
-      throw new AppError(
-        taskID,
-        'failed to update meta after scrape, if this continues please contact developer'
-      )
-    }
 
     // ACCOUNT UPDATE
-    const newAccount = await AccountModel_.pushToArray(
+    await AccountModel_.pushToArray(
       { id: account.id },
       'history',
       [null, null, listName, scrapeID],
       { transaction: t }
     )
-    if (!newAccount) {
-      await t.rollback()
-      throw new AppError(
-        taskID,
-        'failed to update account after scrape, if this continues please contact developer'
-      )
-    }
 
     await t.commit()
   } catch (err) {
     await t.rollback()
-    throw new AppError(
-      taskID,
-      'failed to update account after scrape, if this continues please contact developer'
-    )
+    throw new AppError(taskID, err.message)
   }
 }
 
@@ -254,7 +218,7 @@ export const saveLeadsFromRecovery = async (
     )
 
     if (!newAcc) {
-      await t.rollback()
+      // await t.rollback()
       throw new AppError(
         taskID,
         'failed to update account after scrape, if this continues please contact developer'
@@ -273,7 +237,7 @@ export const saveLeadsFromRecovery = async (
     )
 
     if (!newMeta) {
-      await t.rollback()
+      // await t.rollback()
       throw new AppError(
         taskID,
         'failed to update meta after scrape, if this continues please contact developer'
@@ -285,8 +249,8 @@ export const saveLeadsFromRecovery = async (
     await RecordModel_.bulkCreate(fmtData, { transaction: t })
 
     await t.commit()
-  } catch (error) {
+  } catch (err) {
     await t.rollback()
-    throw new AppError(taskID, 'failed to save scrape to db')
+    throw new AppError(taskID, err)
   }
 }

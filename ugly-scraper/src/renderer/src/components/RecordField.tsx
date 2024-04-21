@@ -1,5 +1,5 @@
 import { Dispatch, MouseEvent, SetStateAction, useEffect, useState } from 'react'
-import { fetchData, fmtDate } from '../core/util'
+import { downloadData, fetchData, fmtDate, getDataInCSVFmt } from '../core/util'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { IoOptionsOutline } from 'react-icons/io5'
 import { MdCheckBoxOutlineBlank } from 'react-icons/md'
@@ -9,106 +9,65 @@ import { BiLinkAlt } from 'react-icons/bi'
 import { FaTwitter } from 'react-icons/fa'
 import { FaFacebookF } from 'react-icons/fa'
 import { MetaPopup } from './MetaPopup'
-import { metaMockData, recordMockData } from '../core/mockdata'
 import { appState$ } from '../core/state'
-
-export type IMetaData = {
-  id: string
-  url: string
-  params: { [key: string]: string }
-  name: string
-  scrapes: { scrapeID: string; listName: string; length: number; date: number }[]
-  accounts: { accountID: string; range: [min: number, max: number] }[]
-}
-
-export type IRecords = {
-  id: string
-  scrapeID: string
-  url: string
-  page: number
-  data: IRecord
-}
-
-export type IRecord = {
-  Name: string
-  Linkedin: string
-  Title: string
-  'Company Name': string
-  'Company Website': string
-  'Company Linkedin': string
-  'Company Twitter': string
-  'Company Facebook': string
-  Email: string
-  isVerified: boolean
-  'Company Location': string
-  Employees: string
-  Phone: string
-  Industry: string
-  Keywords: string[]
-}
+import { observer, useComputed, useObservable, useSelector } from '@legendapp/state/react'
+import { IMetaData, IRecords } from 'src/shared'
+import { Button, DropdownMenu } from '@radix-ui/themes'
+import { ObservableComputed, ObservableObject } from '@legendapp/state'
 
 // type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
 type MetaSubCompArgs = {
   meta: IMetaData[]
-  metaChecked: number[]
-  setMetaChecked: Dispatch<SetStateAction<number[]>>
+  metaChecked: ObservableObject<number[]>
 }
 // type RecordsDispatch = Dispatch<SetStateAction<IRecords[]>>
 type RecordsSubCompArgs = {
   records: IRecords[]
-  recordsChecked: number[]
-  setRecordsChecked: Dispatch<SetStateAction<number[]>>
+  recordsChecked: ObservableObject<number[]>
   meta: IMetaData[]
-  metaChecked: number[]
+  metaChecked: ObservableObject<number[]>
 }
 
-export const RecordField = () => {
-  const [metaChecked, setMetaChecked] = useState<number[]>([])
-  const [recordsChecked, setRecordsChecked] = useState<number[]>([])
-  const [meta, setMeta] = useState<IMetaData[]>(metaMockData)
-  const [records, setRecords] = useState<IRecords[]>(recordMockData)
+export const RecordField = observer(() => {
+  const metaChecked = useObservable<number[]>([])
+  const recordsChecked = useObservable<number[]>([])
+  const meta = useSelector(appState$.metas) as IMetaData[]
+  const records = useSelector(appState$.records) as IRecords[]
 
-  useEffect(() => {
-    // eslint-disable-next-line no-async-promise-executor
-    new Promise(async (resolve) => {
-      const meta = await fetchData('/metadata', 'GET')
-      const records = await fetchData('/records', 'GET')
-      resolve({ meta, records })
+  const filteredRecords = useComputed(() => {
+    const filter: string[] = []
+    metaChecked.get().forEach((m) => {
+      meta[m].scrapes.forEach((d) => filter.push(d.scrapeID))
     })
-      .then((data: any) => {
-        console.log(data.meta.data)
-        setMeta(data.meta.data)
-        setRecords(data.records.data)
-      })
-      .catch((err: any) => {
-        console.log('error')
-        console.log(err.message)
-      })
-  }, [])
+    return filter.length ? records.filter((r) => filter.includes(r.scrapeID)) : []
+  })
 
   return (
-    <div className="flex relative grow">
-      <div className="flex gap-3 grow absolute inset-x-0 inset-y-0">
-        <Meta meta={meta} metaChecked={metaChecked} setMetaChecked={setMetaChecked} />
-        <Record
-          records={records}
-          recordsChecked={recordsChecked}
-          setRecordsChecked={setRecordsChecked}
-          meta={meta}
-          metaChecked={metaChecked}
-        />
+    <div className="flex flex-col overflow-auto">
+      <Options filteredRecords={filteredRecords} />
+      <div className="flex overflow-auto grow">
+        <div className="flex gap-3">
+          <Meta meta={meta} metaChecked={metaChecked} />
+          <Record
+            records={records}
+            recordsChecked={recordsChecked}
+            meta={meta}
+            metaChecked={metaChecked}
+          />
+        </div>
       </div>
     </div>
   )
-}
+})
 
-export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => {
+export const Meta = ({ meta, metaChecked }: MetaSubCompArgs) => {
   const [selectedMeta, setSelectedMeta] = useState<number | null>(null)
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
     const type = e.target.closest('td')?.dataset.type as string
+    const metaCheckedState = metaChecked.get()
 
     switch (type) {
       case 'opt':
@@ -118,9 +77,9 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
       case 'check': {
         //@ts-ignore
         const idx = parseInt(e.target.closest('tr').dataset.idx)
-        metaChecked.includes(idx)
-          ? setMetaChecked((p) => p.filter((a) => a !== idx))
-          : setMetaChecked([...metaChecked, idx])
+        metaCheckedState.includes(idx)
+          ? metaChecked.set((p) => p.filter((a) => a !== idx))
+          : metaChecked.set([...metaCheckedState, idx])
         break
       }
       case 'extend':
@@ -131,70 +90,73 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
   }
 
   const handleMetaToggle = () => {
-    metaChecked.length === meta.length
-      ? setMetaChecked([])
-      : setMetaChecked(meta.map((_, idx) => idx))
+    metaChecked.get().length === meta.length
+      ? metaChecked.set([])
+      : metaChecked.set(meta.map((_, idx) => idx))
   }
 
   const PopupComp = () =>
     selectedMeta ? <MetaPopup setPopup={setSelectedMeta} meta={meta[selectedMeta]} /> : null
 
   return (
-    <>
+    <div className="border rounded border-cyan-600 flex-none w-[30%] overflow-scroll">
       <PopupComp />
-      <div className=" border-cyan-600 min-w-[30%] max-w-[30%] border rounded overflow-auto ">
-        <table className="text-[0.7rem] font-light m-auto w-[150%] table-fixed">
-          <thead className="sticky top-0 bg-black text text-[0.8rem]">
-            <tr>
-              <th className="w-[7%]" onClick={handleMetaToggle}>
-                {metaChecked.length === meta.length ? (
-                  <MdCheckBox className="inline" />
-                ) : (
-                  <MdCheckBoxOutlineBlank className="inline" />
-                )}
-              </th>
-              <th>Name</th>
-              <th>URL</th>
-              <th className="w-7 sticky bg-black right-0">
-                <IoOptionsOutline className="inline" />
-              </th>
-            </tr>
-          </thead>
-          <tbody className="text-[0.8rem] " onClick={handleExtendRow}>
-            {meta.length &&
-              meta.map((a, idx) => (
-                <>
-                  <tr
-                    className="text-center hover:border-cyan-600 hover:border"
-                    data-idx={idx}
-                    key={idx}
-                  >
-                    <td data-type="check" data-idx={idx}>
-                      {metaChecked.includes(idx) ? (
-                        <MdCheckBox className="inline" />
-                      ) : (
-                        <MdCheckBoxOutlineBlank className="inline" />
-                      )}
-                    </td>
-                    <td className="overflow-scroll truncate" data-type="extend">
-                      {a.name}
-                    </td>
-                    <td className="overflow-scroll truncate" data-type="extend">
-                      {a.url}
-                    </td>
-                    <td className="overflow-scroll sticky bg-black right-0" data-type="opt">
-                      <button>
-                        <SlOptionsVertical className="inline" />
-                      </button>
-                    </td>
-                  </tr>
 
-                  {/* META OTHER TABLE */}
-                  <tr className="text-left w-auto h-full overflow-hidden hidden ">
-                    <table className={` border-cyan-600 border-y text-[0.7rem] opacity-95`}>
+      <table className="text-[0.7rem] w-[150%] table-fixed ">
+        <thead className="sticky top-0 bg-[#202226] text-[0.8rem] z-10">
+          <tr>
+            <th className="sticky left-0 p-1.5 w-[3%] bg-[#202226]" onClick={handleMetaToggle}>
+              {metaChecked.get().length === meta.length ? (
+                <MdCheckBox className="bg-[#202226] inline" />
+              ) : (
+                <MdCheckBoxOutlineBlank className="inline" />
+              )}
+            </th>
+            <th className="w-[25%] p-2">Name</th>
+            <th className="w-[70%] p-2">URL</th>
+            <th className="w-[3%] sticky bg-[#202226] right-0">
+              <IoOptionsOutline className="inline" />
+            </th>
+          </tr>
+        </thead>
+        <tbody className="text-[0.9rem]" onClick={handleExtendRow}>
+          {meta.length &&
+            meta.map((a, idx) => (
+              <>
+                <tr
+                  className="text-center hover:border-cyan-600 hover:border"
+                  data-idx={idx}
+                  key={idx}
+                >
+                  <td className="sticky left-0 bg-[#111111] p-1" data-type="check" data-idx={idx}>
+                    {metaChecked.get().includes(idx) ? (
+                      <MdCheckBox className="bg-[#111111] inline" />
+                    ) : (
+                      <MdCheckBoxOutlineBlank className="bg-[#111111] inline" />
+                    )}
+                  </td>
+                  <td className="overflow-scroll truncate  p-1" data-type="extend">
+                    {a.name}
+                  </td>
+                  <td className="overflow-scroll truncate text-[0.6rem]  p-1" data-type="extend">
+                    {a.url}
+                  </td>
+                  <td className="sticky right-0 bg-[#111111]" data-type="opt">
+                    <button>
+                      <SlOptionsVertical className="inline" />
+                    </button>
+                  </td>
+                </tr>
+
+                {/* META OTHER TABLE */}
+                <div className="text-left hidden w-[47.4rem] overflow-hidden">
+                  <tr>
+                    <table className="border-cyan-600 border-y text-[0.9rem] opacity-95 table-fixed">
                       <tr className="hover:border-cyan-600 hover:border-y">
-                        <th className="whitespace-nowrap px-2 w-4">URL:</th>
-                        <td className="px-2">{a.url}</td>
+                        <th className="whitespace-nowrap px-2">URL:</th>
+                        <td className="px-2">
+                          <div className="w-[30%]">{a.url}</div>
+                        </td>
                       </tr>
 
                       <tr className="hover:border-cyan-600 hover:border-y">
@@ -213,9 +175,9 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                           <table>
                             <thead className="sticky top-0 bg-black">
                               <tr>
-                                <th className="px-2"> Account Used </th>
-                                <th className="px-2"> Min Employee Range </th>
-                                <th className="px-2"> Max Employee Range </th>
+                                <th className="px-2">Account Used</th>
+                                <th className="px-2">Min Employee Range</th>
+                                <th className="px-2">Max Employee Range</th>
                               </tr>
                             </thead>
                             <tbody className="text-[0.5rem] text-center">
@@ -244,8 +206,8 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                           <table>
                             <thead className="sticky top-0 bg-black">
                               <tr>
-                                <th className="px-2"> Length </th>
-                                <th className="px-2"> Date </th>
+                                <th className="px-2">Length </th>
+                                <th className="px-2">Date</th>
                               </tr>
                             </thead>
                             <tbody className="text-[0.5rem] text-center">
@@ -271,12 +233,12 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
                       </tr>
                     </table>
                   </tr>
-                </>
-              ))}
-          </tbody>
-        </table>
-      </div>
-    </>
+                </div>
+              </>
+            ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -304,7 +266,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
 
   const recordFilter = () => {
     const filter: string[] = []
-    metaChecked.forEach((m) => {
+    metaChecked.get().forEach((m) => {
       meta[m].scrapes.forEach((d) => filter.push(d.scrapeID))
     })
 
@@ -312,19 +274,19 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
   }
 
   return (
-    <div className="border-cyan-600 border rounded grow overflow-auto">
-      <table className=" w-[150%] font-light text-left table-fixed border-spacing-x-2 border-collapse">
-        <thead className="top-0 bg-black text-sm z-50">
+    <div className="border-cyan-600 border rounded  overflow-auto">
+      <table className="text-[0.7rem]  m-auto w-[180%] table-fixed">
+        <thead className="sticky top-0 bg-[#202226]  text-[0.8rem] z-10">
           <tr>
-            <th className="px-2 sticky left-0 bg-black">Name</th>
-            <th className="px-2">Title</th>
-            <th className="px-2">Company</th>
-            <th className="px-2">Email</th>
-            <th className="px-2">Location</th>
-            <th className="px-2"># Employees</th>
-            <th className="px-2">Phone</th>
-            <th className="px-2">Industry</th>
-            <th className="px-2">Keywords</th>
+            <th className="p-2 sticky left-0 bg-[#202226]">Name</th>
+            <th className="p-2">Title</th>
+            <th className="p-2">Company</th>
+            <th className="p-2">Email</th>
+            <th className="p-2">Location</th>
+            <th className="p-2"># Employees</th>
+            <th className="p-2">Phone</th>
+            <th className="p-2">Industry</th>
+            <th className="p-2">Keywords</th>
           </tr>
         </thead>
         <tbody className="relative" onClick={handleExtendRow}>
@@ -388,7 +350,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
                     {a.data['Company Location']}
                   </td>
 
-                  <td className="py-3 px-2 truncate" data-type="extend">
+                  <td className="py-3 px-2 truncate text-center" data-type="extend">
                     {a.data.Employees}
                   </td>
 
@@ -405,7 +367,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
                   </td>
                 </tr>
 
-                <tr className="hidden">
+                <tr className="hidden text-[0.9rem]">
                   <table className="hidden border-cyan-600 border-y">
                     <tr className="hover:border-cyan-600 hover:border-y">
                       <th className="whitespace-nowrap px-2">Name:</th>
@@ -469,6 +431,41 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
             ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+export const Options = ({
+  filteredRecords
+}: {
+  filteredRecords: ObservableComputed<IRecords[]>
+}) => {
+  return (
+    <div className="w-3 mb-1">
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Button variant="soft" color="indigo">
+            Options
+            <DropdownMenu.TriggerIcon />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Download</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onClick={() => downloadData(filteredRecords.get(), 'json')}>
+                JSON
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => downloadData(filteredRecords.get(), 'csv')}>
+                CSV
+              </DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+          <DropdownMenu.Item>Select all</DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item color="red">Delete Selected</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
     </div>
   )
 }

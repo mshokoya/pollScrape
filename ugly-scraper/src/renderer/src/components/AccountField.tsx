@@ -15,6 +15,7 @@ import {
 } from '../core/state/account'
 import { appState$ } from '../core/state'
 import { CHANNELS } from '../../../shared/util'
+import { ScrollArea } from '@radix-ui/themes'
 
 export const AccountField = observer(() => {
   const s = accountState //useSelector ?
@@ -45,7 +46,7 @@ export const AccountField = observer(() => {
   // (FIX) email verification + get domain to determine login type // also colors
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await fetchData<IAccount>('account', CHANNELS.aa, {
+    await fetchData<IAccount>('account', CHANNELS.a_accountAdd, {
       ...s.input.peek(),
       addType: s.addType.peek(),
       selectedDomain: s.selectedDomain.peek()
@@ -55,25 +56,25 @@ export const AccountField = observer(() => {
   const login = async () => {
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.ala, accountID)
+    await fetchData('account', CHANNELS.a_accountLoginAuto, accountID)
   }
 
   const manualLogin = async () => {
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.alm, accountID)
+    await fetchData('account', CHANNELS.a_accountLoginManually, accountID)
   }
 
   const checkAccount = async () => {
     const selectedAcc = s.selectedAcc.peek()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.ac, accountID)
+    await fetchData('account', CHANNELS.a_accountCheck, accountID)
   }
 
   const updateAccount = async (input: Partial<IAccount>) => {
     const accountID = accounts[s.selectedAcc.peek()].id
     accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
-    await fetchData<IAccount>('account', CHANNELS.au, accountID, input)
+    await fetchData<IAccount>('account', CHANNELS.a_accountUpdate, accountID, input)
       .then((data) => {
         if (data.ok) {
           stateResStatusHelper.add(accountID, ['update', 'ok'])
@@ -98,25 +99,25 @@ export const AccountField = observer(() => {
   const upgradeAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.aua, accountID)
+    await fetchData('account', CHANNELS.a_accountUpgradeAutomatically, accountID)
   }
 
   const manualUpgradeAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.aum, accountID)
+    await fetchData('account', CHANNELS.a_accountUpgradeManually, accountID)
   }
 
   const clearMines = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.ad, accountID)
+    await fetchData('account', CHANNELS.a_accountDemine, accountID)
   }
 
   const confirmAccount = async () => {
     const selectedAcc = s.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.aca, accountID)
+    await fetchData('account', CHANNELS.a_accountConfirm, accountID)
   }
 
   // (FIX) complete func (dont delete, just archive)
@@ -127,7 +128,7 @@ export const AccountField = observer(() => {
 
     accountTaskHelper.add(accountID, { status: 'processing', type: 'delete' })
 
-    await fetchData<IAccount>('account', CHANNELS.adel, accountID)
+    await fetchData<IAccount>('account', CHANNELS.a_accountDelete, accountID)
       .then((data) => {
         batch(() => {
           data.ok
@@ -210,176 +211,188 @@ export const AccountField = observer(() => {
                 addAccount={addAccount}
                 accountTaskHelper={accountTaskHelper}
                 stateResStatusHelper={stateResStatusHelper}
+                //@ts-ignore
                 selectedDomain={s.selectedDomain}
               />
             )}
           </div>
 
           <div className="border-cyan-600 border rounded grow overflow-auto">
-            <table className="text-[0.7rem] font-light m-auto table-fixed w-[200%]">
-              <thead className="sticky top-0 bg-black">
-                <tr>
-                  <th className="px-2"> Email </th>
-                  <th className="px-2"> Credits </th>
-                  <th className="px-2"> Verified </th>
-                  <th className="px-2"> Suspended </th>
-                  <th className="px-2"> Last Used </th>
-                  <th className="px-2"> Type </th>
-                  <th className="px-2"> Trial </th>
-                  <th className="w-7 sticky bg-black right-0">
-                    <IoOptionsOutline className="inline" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-[0.5rem] text-center" onClick={handleExtendRow}>
-                {accounts.length &&
-                  accounts.map((a, idx) => (
-                    <>
-                      <tr
-                        className={`
+            <ScrollArea type="always">
+              <table className="text-[0.7rem]  m-auto w-[150%] table-fixed overflow-auto">
+                <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
+                  <tr>
+                    <th className="p-2"> Email </th>
+                    <th className="p-2"> Credits </th>
+                    <th className="p-2"> Verified </th>
+                    <th className="p-2"> Suspended </th>
+                    <th className="p-2"> Last Used </th>
+                    <th className="p-2"> Type </th>
+                    <th className="p-2"> Trial </th>
+                    <th className="w-7 sticky bg-[#202226] right-0">
+                      <IoOptionsOutline className="inline" />
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="text-[0.9rem] text-center" onClick={handleExtendRow}>
+                  {accounts.length &&
+                    accounts.map((a, idx) => (
+                      <>
+                        <tr
+                          className={`
                           text-[0.8rem] text-center hover:border-cyan-600 hover:border
                           ${a.emailCreditsUsed !== a.emailCreditsLimit ? 'el-ok' : 'el-no'}
                           ${accountTaskHelper.getEntityTasks(a.id).length ? 'fieldBlink' : ''}
                           ${stateResStatusHelper.getByID(a.id, 0)[1] === 'ok' ? 'resOK' : ''}
                           ${stateResStatusHelper.getByID(a.id, 0)[1] === 'fail' ? 'resFail' : ''}
                         `}
-                        data-idx={idx}
-                        key={idx}
-                      >
-                        <td className="overflow-scroll truncate max-w-2" data-type="extend">
-                          {a.email}
-                        </td>
-                        <td className="overflow-scroll truncate" data-type="extend">
-                          {fmtCredits(a.emailCreditsLimit, a.emailCreditsUsed)}
-                        </td>
-                        <td className="overflow-scroll truncate" data-type="extend">
-                          {a.verified}
-                        </td>
-                        <td className="overflow-scroll truncate" data-type="extend">
-                          {a.suspended ? 'yes' : 'no'}
-                        </td>
-                        <td className="overflow-scroll truncate" data-type="extend">
-                          {fmtDate(a.lastUsed)}
-                        </td>
-                        <td className="overflow-scroll truncate" data-type="extend">
-                          {a.accountType}
-                        </td>
-                        <td className="overflow-scroll truncate" data-type="extend">
-                          {fmtDate(a.trialTime)}
-                        </td>
-                        <td className="overflow-scroll sticky bg-black right-0" data-type="opt">
-                          <button>
-                            <SlOptionsVertical className="inline" />
-                          </button>
-                        </td>
-                      </tr>
-
-                      {/* OTHER TABLE */}
-                      <tr className="hidden text-left">
-                        <table
-                          className={`hidden border-cyan-600 border-y text-[0.7rem] w-[2000px] ${a.emailCreditsUsed !== a.emailCreditsLimit ? 'el-ok' : 'el-no'} opacity-95`}
+                          data-idx={idx}
+                          key={idx}
                         >
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Email:</th>
-                            <td className="px-2">{a.email}</td>
-                          </tr>
+                          <td className="overflow-scroll truncate  max-w-2" data-type="extend">
+                            {a.email}
+                          </td>
+                          <td className="overflow-scroll truncate" data-type="extend">
+                            {fmtCredits(a.emailCreditsLimit, a.emailCreditsUsed)}
+                          </td>
+                          <td className="overflow-scroll truncate" data-type="extend">
+                            {a.verified}
+                          </td>
+                          <td className="overflow-scroll truncate" data-type="extend">
+                            {a.suspended ? 'yes' : 'no'}
+                          </td>
+                          <td className="overflow-scroll truncate" data-type="extend">
+                            {fmtDate(a.lastUsed)}
+                          </td>
+                          <td className="overflow-scroll truncate" data-type="extend">
+                            {a.accountType}
+                          </td>
+                          <td className="overflow-scroll truncate" data-type="extend">
+                            {fmtDate(a.trialTime)}
+                          </td>
+                          <td
+                            className="overflow-scroll sticky bg-[#111111] right-0"
+                            data-type="opt"
+                          >
+                            <button>
+                              <SlOptionsVertical className="inline" />
+                            </button>
+                          </td>
+                        </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Password:</th>
-                            <td className="px-2">{a.password}</td>
-                          </tr>
+                        {/* OTHER TABLE */}
+                        <tr className="hidden text-left">
+                          <table
+                            className={`hidden border-cyan-600 border-y text-[0.7rem] w-[2000px] ${a.emailCreditsUsed !== a.emailCreditsLimit ? 'el-ok' : 'el-no'} opacity-95`}
+                          >
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Email:</th>
+                              <td className="px-2">{a.email}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Credits Used:</th>
-                            <td className="px-2">
-                              {a.emailCreditsUsed === -1 ? 'N/A' : a.emailCreditsUsed}
-                            </td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Password:</th>
+                              <td className="px-2">{a.password}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Credits Limit:</th>
-                            <td className="px-2">
-                              {a.emailCreditsLimit === -1 ? 'N/A' : a.emailCreditsLimit}
-                            </td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Credits Used:</th>
+                              <td className="px-2">
+                                {a.emailCreditsUsed === -1 ? 'N/A' : a.emailCreditsUsed}
+                              </td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Credits Renewal Date:</th>
-                            <td className="px-2">{fmtDate(a.renewalEndDate)}</td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Credits Limit:</th>
+                              <td className="px-2">
+                                {a.emailCreditsLimit === -1 ? 'N/A' : a.emailCreditsLimit}
+                              </td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Trial Days Left:</th>
-                            <td className="px-2">
-                              {a.trialDaysLeft === -1 ? 'N/A' : a.trialDaysLeft}
-                            </td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Credits Renewal Date:</th>
+                              <td className="px-2">{fmtDate(a.renewalEndDate)}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Is Suspended ?:</th>
-                            <td className="px-2">{a.suspended ? 'yes' : 'no'}</td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Trial Days Left:</th>
+                              <td className="px-2">
+                                {a.trialDaysLeft === -1 ? 'N/A' : a.trialDaysLeft}
+                              </td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Logged In ?:</th>
-                            <td className="px-2">{a.cookies ? 'yes' : 'no'}</td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Is Suspended ?:</th>
+                              <td className="px-2">{a.suspended ? 'yes' : 'no'}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Proxy:</th>
-                            <td className="px-2">{a.proxy ? a.proxy : 'N/A'}</td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Logged In ?:</th>
+                              <td className="px-2">{a.cookies ? 'yes' : 'no'}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Trial:</th>
-                            <td className="px-2">{fmtDate(a.trialTime)}</td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Proxy:</th>
+                              <td className="px-2">{a.proxy ? a.proxy : 'N/A'}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">Last Used:</th>
-                            <td className="px-2">{fmtDate(a.lastUsed)}</td>
-                          </tr>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Trial:</th>
+                              <td className="px-2">{fmtDate(a.trialTime)}</td>
+                            </tr>
 
-                          <tr className="hover:border-cyan-600 hover:border-y">
-                            <th className="whitespace-nowrap px-2 w-4">History:</th>
-                            <td className="px-2">
-                              <table className="text-center">
-                                <thead className="sticky top-0 bg-black opacity-100">
-                                  <tr>
-                                    <th className="px-2"> Amount Scraped </th>
-                                    <th className="px-2"> Time Of Scraped </th>
-                                    <th className="px-2"> ListName </th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {a.history.map((h, idx) => (
-                                    <tr key={idx}>
-                                      <td className="overflow-scroll truncate">{h[0] || 'N/A'}</td>
-                                      <td className="overflow-scroll truncate">{fmtDate(h[1])}</td>
-                                      <td className="overflow-scroll truncate">{h[2] || 'N/A'} </td>
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">Last Used:</th>
+                              <td className="px-2">{fmtDate(a.lastUsed)}</td>
+                            </tr>
+
+                            <tr className="hover:border-cyan-600 hover:border-y">
+                              <th className="whitespace-nowrap px-2 w-4">History:</th>
+                              <td className="px-2">
+                                <table className="text-center">
+                                  <thead className="sticky top-0 bg-black opacity-100">
+                                    <tr>
+                                      <th className="px-2"> Amount Scraped </th>
+                                      <th className="px-2"> Time Of Scraped </th>
+                                      <th className="px-2"> ListName </th>
                                     </tr>
-                                  ))}
-                                  <tr>
-                                    <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
-                                      {a.history.reduce((acc, cur) => {
-                                        const o = typeof cur[0] !== 'number' ? 0 : cur[0]
-                                        return acc + o
-                                      }, 0)}
-                                    </td>
-                                    <div className="bg-cyan-500/90 font-bold border-t-2">
-                                      TOTAL LEADS SCRAPED
-                                    </div>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
-                      </tr>
-                    </>
-                  ))}
-              </tbody>
-            </table>
+                                  </thead>
+                                  <tbody>
+                                    {a.history.map((h, idx) => (
+                                      <tr key={idx}>
+                                        <td className="overflow-scroll truncate">
+                                          {h[0] || 'N/A'}
+                                        </td>
+                                        <td className="overflow-scroll truncate">
+                                          {fmtDate(h[1])}
+                                        </td>
+                                        <td className="overflow-scroll truncate">
+                                          {h[2] || 'N/A'}{' '}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                    <tr>
+                                      <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
+                                        {a.history.reduce((acc, cur) => {
+                                          const o = typeof cur[0] !== 'number' ? 0 : cur[0]
+                                          return acc + o
+                                        }, 0)}
+                                      </td>
+                                      <div className="bg-cyan-500/90 font-bold border-t-2">
+                                        TOTAL LEADS SCRAPED
+                                      </div>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </tr>
+                      </>
+                    ))}
+                </tbody>
+              </table>
+            </ScrollArea>
           </div>
         </div>
       </div>
@@ -447,7 +460,7 @@ export const EmailForm = (props: EmailProps) => {
         {/* <div>
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="domain">Alias Email:</label>
-            <input 
+            <input
               disabled={isCreateReq}
               className={`
                 ${ props.accountTaskHelper.getTaskByReqType('create')[0] ? 'fieldBlink' : '' }
@@ -459,7 +472,7 @@ export const EmailForm = (props: EmailProps) => {
 
           <div className='mb-3'>
             <label className='mr-2 border-cyan-600 border-b-2 mb-1' htmlFor="recovery">Recovery Email:</label>
-            <input 
+            <input
               disabled={isCreateReq}
               className={`
                 ${ props.accountTaskHelper.getTaskByReqType('create')[0] ? 'fieldBlink' : '' }

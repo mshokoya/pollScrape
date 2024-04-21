@@ -10,7 +10,7 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/main/index.ts'),
           core: resolve(__dirname, 'src/main/core/index.ts'),
-          worker: resolve(__dirname, 'src/main/worker.ts')
+          window: resolve(__dirname, 'src/main/window.ts')
         }
       }
     }

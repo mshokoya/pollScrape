@@ -1,67 +1,72 @@
 import { cpus } from 'os'
 import { Mutex } from 'async-mutex'
-import AbortablePromise from 'promise-abortable'
 import { generateID } from './util'
-import { io } from './websockets'
-import { ipcMain } from 'electron'
-// import { Piscina } from 'piscina';
-// import path from 'path'
+import { EmitResponse, io } from './websockets'
+import { ForkScrapeEvent, ForkScrapeEventArgs, Forks, TaskQueueEvent } from '../../shared'
+import path from 'node:path/posix'
+import { P2cBalancer } from 'load-balancers'
+import { QUEUE_CHANNELS as QC } from '../../shared/util'
+import { fork } from 'node:child_process'
 
-// const piscina = new Piscina({
-//   filename: path.resolve(__dirname, 'worker.js')
-// });
-
-type QueueItem = {
-  id: string
+type QueueItem<T = Record<string, any>> = {
+  taskID: string
+  useFork: boolean
   taskGroup: string
   taskType: string
   message: string
-  metadata: Record<string, string | number> & { taskID: string }
-  action: () => Promise<any>
-  args?: Record<string, any>
+  metadata: Record<string, string | number>
+  action: (args: T) => Promise<any>
+  args?: T
 }
 
-type TIP_Item = [
-  id: string,
-  args: Record<string, any> | undefined,
-  AbortablePromise<unknown>,
-  QueueItem
-]
+type STQ = 'stq' | 'spq'
+
+type ProcessQueueItem = {
+  task: QueueItem
+  process: Promise<void>
+  type: 'fork' | 'main'
+  processes: { forkID: string; taskID: string; status: STQ }[]
+}
 
 const TaskQueue = () => {
   const _Qlock = new Mutex()
   const _Plock = new Mutex()
   const exec_lock = new Mutex()
-  let maxWorkers: number
-  const taskQueue: QueueItem[] = []
-  let processQueue: TIP_Item[] = []
-  // let pool;
+  let taskQueue: QueueItem[] = []
+  let processQueue: ProcessQueueItem[] = []
+  let useFork = true
+  let maxProcesses = 10
+  const maxForks = cpus().length
+  const forks: Forks = {}
+  let forkKeys: string[]
+  let lb: P2cBalancer
+  const EXEC_FORK = 'ex-fk'
 
-  const enqueue = async <T = Record<string, any>>(
+  const enqueue = async <T = Record<string, any>>({
     taskID = generateID(),
-    taskGroup: string,
-    taskType: string,
-    message: string,
-    metadata: Record<string, any>,
-    action: (a: T) => Promise<unknown>,
-    args?: T
-  ) => {
+    taskGroup,
+    taskType,
+    useFork,
+    message,
+    metadata,
+    action,
+    args
+  }: QueueItem<T>) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
-        taskQueue.push({ taskID, action, args, taskGroup, taskType, message, metadata })
+        taskQueue.push({ useFork, taskID, action, args, taskGroup, taskType, message, metadata })
       })
       .then(() => {
-        io.emit('taskQueue', {
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID,
+          useFork,
           message: 'new task added to queue',
-          status: 'enqueue',
           taskType: 'enqueue',
           metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
       .finally(() => {
-        console.log('task added')
         exec()
       })
   }
@@ -73,13 +78,13 @@ const TaskQueue = () => {
       })
       .then((t) => {
         if (!t) return
-        io.emit('taskQueue', {
-          taskID: t.id,
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
+          taskID: t.taskID,
+          useFork: t.useFork,
           message: 'moving from queue to processing',
-          status: 'passing',
           taskType: 'dequeue',
           metadata: {
-            taskID: t.id,
+            taskID: t.taskID,
             taskGroup: t.taskGroup,
             taskType: t.taskType,
             metadata: t.metadata
@@ -89,34 +94,46 @@ const TaskQueue = () => {
       })
   }
 
-  const remove = async (id: string) => {
+  const remove = async (taskID: string) => {
     return _Qlock
       .runExclusive(() => {
-        taskQueue.filter((task) => task.id !== id)
+        const task = taskQueue.find((t) => t.taskID === taskID)
+        taskQueue = taskQueue.filter((t) => t.taskID !== taskID)
+        return task
       })
-      .then(() => {
-        io.emit('taskQueue', {
-          taskID: id,
+      .then((t) => {
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
+          taskID,
           message: 'deleting task from queue',
-          status: 'removed',
           taskType: 'remove',
-          metadata: { taskID: id }
+          useFork: t.useFork,
+          metadata: {
+            taskID: t.taskID,
+            taskGroup: t.taskGroup,
+            taskType: t.taskType,
+            metadata: t.metadata
+          }
         })
       })
   }
 
-  const _TIP_Enqueue = async (item: TIP_Item) => {
+  const p_enqueue = async (item: ProcessQueueItem) => {
     return _Plock
       .runExclusive(() => {
         processQueue.push(item)
       })
       .then(() => {
-        io.emit('processQueue', {
-          taskID: item[0],
+        io.emit<TaskQueueEvent>(QC.processQueue, {
+          taskID: item.task.taskID,
           message: 'new task added to processing queue',
-          status: 'start',
           taskType: 'enqueue',
-          metadata: { taskID: item[0] }
+          useFork: item.task.useFork,
+          metadata: {
+            taskID: item.task.taskID,
+            taskGroup: item.task.taskGroup,
+            taskType: item.task.taskType,
+            metadata: item.task.metadata
+          }
         })
       })
       .finally(() => {
@@ -124,78 +141,91 @@ const TaskQueue = () => {
       })
   }
 
-  const _TIP_Dequeue = async (id: string) => {
+  const p_dequeue = async (taskID: string) => {
     return _Plock
       .runExclusive(() => {
-        processQueue = processQueue.filter((task) => task[0] !== id)
+        const task = processQueue.find((t) => t.task.taskID === taskID)
+        processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
+        return task
       })
-      .then(() => {
-        io.emit('processQueue', {
-          taskID: id,
+      .then((t) => {
+        io.emit<TaskQueueEvent>(QC.processQueue, {
+          taskID: t.task.taskID,
           message: 'removed completed task from queue',
-          status: 'end',
           taskType: 'dequeue',
-          metadata: { taskID: id }
+          useFork: t.task.useFork,
+          metadata: {
+            taskID: t.task.taskID,
+            taskGroup: t.task.taskGroup,
+            taskType: t.task.taskType,
+            metadata: t.task.metadata
+          }
         })
       })
   }
 
-  const stop = async (id: string) => {
+  // (FIX) make abortable
+  const stop = async (taskID: string) => {
     return _Plock
       .runExclusive(async () => {
-        const process = processQueue.find((p) => p[0] === id)
-        if (!process) return null
-        return await process[2].abort()
+        const task = processQueue.find((t) => t.task.taskID === taskID)
+        processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
+        return task
       })
-      .then(() => {
-        io.emit('processQueue', {
-          taskID: id,
+      .then((t) => {
+        io.emit<TaskQueueEvent>(QC.processQueue, {
+          taskID,
           message: 'cancelled',
-          status: 'stopped',
           taskType: 'stop',
-          metadata: { taskID: id }
+          useFork: t.task.useFork,
+          metadata: {
+            taskID: t.task.taskID,
+            taskGroup: t.task.taskGroup,
+            taskType: t.task.taskType,
+            metadata: t.task.metadata
+          }
         })
       })
       .finally(() => {
         exec()
       })
-  }
-
-  const setMaxWorkers = (n: number) => {
-    if (n > maxWorkers) {
-      for (let i = maxWorkers; i < n; i++) {
-        exec()
-      }
-    }
-    maxWorkers = n
   }
 
   const exec = async () => {
     try {
-      console.log('task exec 1 ')
       await exec_lock.acquire()
-      if (processQueue.length >= maxWorkers) return
+      if (processQueue.length >= maxProcesses) return
       const task = await dequeue()
       if (!task) return
-      console.log('task exec 2 ')
 
-      const taskIOArgs = {
-        taskGroup: task.taskGroup,
-        taskID: task.id,
-        metadata: task.metadata
+      // taskType
+      const taskIOEmitArgs = {
+        taskID: task.taskID,
+        useFork: task.useFork,
+        taskType: 'end',
+        metadata: {
+          taskID: task.taskID,
+          taskGroup: task.taskGroup,
+          taskType: task.taskType,
+          metadata: { ...task.metadata }
+        }
       }
 
       const tsk = new Promise((resolve, reject) => {
-        // io.emit('processQueue', {
-        //   message: `starting ${task.id} processing`,
-        //   taskType: 'processing',
-        //   metadata: { taskID: task.id }
-        // })
-
-        console.log('task exec 3 ')
+        io.emit<TaskQueueEvent>(QC.processQueue, {
+          taskID: task.taskID,
+          message: `starting ${task.taskID} processing`,
+          taskType: 'processing',
+          useFork: task.useFork,
+          metadata: {
+            taskID: task.taskID,
+            taskGroup: task.taskGroup,
+            taskType: task.taskType
+          }
+        })
 
         task
-          .action()
+          .action(task.args)
           .then((r) => {
             resolve(r)
           })
@@ -203,46 +233,128 @@ const TaskQueue = () => {
             reject(err)
           })
       })
-        .then(async (r) => {
-          console.log('in tq then')
-          console.log(r)
-          // @ts-ignore
-          io.emit(task.taskGroup, { ...taskIOArgs, ok: true, metadata: r })
+        .then(async (r: any) => {
+          if (r === EXEC_FORK) return
+          io.emit<TaskQueueEvent>(task.taskGroup, {
+            ...taskIOEmitArgs,
+            ok: true,
+            metadata: {
+              ...taskIOEmitArgs.metadata,
+              metadata: { ...task.metadata, ...r }
+            }
+          })
+          p_dequeue(task.taskID)
         })
         .catch(async (err) => {
-          console.log('in tq err')
-          console.log(err)
-          // @ts-ignore
-          io.emit(task.taskGroup, { ...taskIOArgs, ok: false, message: err.message })
+          if (err === EXEC_FORK) return
+          io.emit<TaskQueueEvent>(task.taskGroup, {
+            ...taskIOEmitArgs,
+            ok: false,
+            message: err.message,
+            metadata: taskIOEmitArgs.metadata
+          })
+          p_dequeue(task.taskID)
         })
         .finally(() => {
-          _TIP_Dequeue(task.id)
           exec()
-        }) as AbortablePromise<unknown>
+        })
 
-      _TIP_Enqueue([task.id, task.args, tsk, task])
+      p_enqueue({ task, process: tsk, type: 'main', processes: [] })
     } finally {
       exec_lock.release()
     }
   }
 
-  function init() {
-    maxWorkers = Math.round(cpus().length / 2)
+  const setUseFork = (i: boolean) => {
+    useFork = i
   }
 
-  ipcMain.on('scrapeProcessQueue', ({ taskID, taskGroup, ok, message, metadata }) => {
-    io.emit(taskGroup, { ok, message, taskID })
-    _TIP_Dequeue(taskID)
-    exec()
-  })
+  const execInFork = (task: ForkScrapeEventArgs) => {
+    // @ts-ignore
+    task.useFork = true
+    postToFork({
+      taskType: 'scrape',
+      meta: task
+    })
+    return EXEC_FORK
+  }
+
+  const postToFork = (arg: ForkScrapeEvent) => {
+    const fork = randomFork()
+    fork.fork.send(arg)
+  }
+
+  const createProcess = () => {
+    const id = generateID()
+
+    const f = fork(`${path.join(__dirname)}/core.js`)
+    f.send({ taskType: 'init' })
+    f.on('message', handleProcessResponse)
+    forks[id] = {
+      fork: f,
+      TIP: []
+    }
+  }
+
+  const handleProcessResponse = (evt: {
+    channel: string
+    args: EmitResponse & { forkID: string }
+  }) => {
+    if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
+      // if scrape job in taskqueue in worker
+      processQueue
+        .find((t) => t.task.taskID === evt.args.pid)
+        ?.processes.push({
+          forkID: evt.args.forkID,
+          taskID: evt.args.taskID,
+          status: evt.channel as STQ
+        })
+    } else if (evt.channel === QC.scrapeProcessQueue && evt.args.taskType === 'enqueue') {
+      const process = processQueue
+        .find((t) => t.task.taskID === evt.args.pid)
+        ?.processes.find((p) => p.taskID === evt.args.taskID)
+      if (process) process.status = evt.channel as STQ
+    } else if (evt.channel === QC.scrapeProcessQueue && evt.args.taskType === 'dequeue') {
+      console.log('IN THE IF')
+      const process = processQueue.find((t) => t.task.taskID === evt.args.pid)
+      if (process.processes.length <= 1) {
+        p_dequeue(evt.args.pid)
+      } else {
+        process.processes = process.processes.filter((p) => p.taskID !== evt.args.taskID)
+      }
+    }
+
+    // if ()
+    io.emit(evt.channel, evt.args)
+  }
+
+  const randomFork = () => {
+    const key = forkKeys[lb.pick()]
+    return forks[key]
+  }
+
+  const setMaxProcesses = (n: number) => {
+    maxProcesses = n
+  }
+
+  function init() {
+    for (let i = 0; i < maxForks; i++) {
+      createProcess()
+    }
+    forkKeys = Object.keys(forks)
+    lb = new P2cBalancer(forkKeys.length)
+  }
 
   return {
+    setMaxProcesses,
+    execInFork,
+    useFork,
+    setUseFork,
     enqueue,
     remove,
     stop,
     init,
-    setMaxWorkers,
-    maxWorkers: () => maxWorkers,
+    EXEC_FORK,
     queues: () => ({ taskQueue, processQueue }),
     tasksInProcess: () => processQueue
   }
@@ -255,243 +367,3 @@ export const initTaskQueue = () => {
   taskQueue.init()
   return taskQueue
 }
-
-// ==================================
-
-// import { cpus } from 'os'
-// import { Mutex } from 'async-mutex'
-// import AbortablePromise from 'promise-abortable'
-// import { generateID } from './util'
-// import { io } from './websockets'
-
-// type QueueItem = {
-//   id: string
-//   taskGroup: string
-//   taskType: string
-//   message: string
-//   metadata: Record<string, string | number> & { taskID: string }
-//   action: () => Promise<any>
-//   args?: Record<string, any>
-// }
-
-// // processQueue = TASK IN PROCESS
-// type TIP_Item = [
-//   id: string,
-//   args: Record<string, any> | undefined,
-//   AbortablePromise<unknown>,
-//   QueueItem
-// ]
-
-// // https://dev.to/bleedingcode/increase-node-js-performance-with-libuv-thread-pool-5h10
-
-// // (FIX) remember to test processQueue cancelation
-// // (FIX) REMEMBER BECAUSE SCRAPES ARE RUNNING IN PARALLEL, SOME DB RESOURCES NEED TO BE SAVED BEFORE USE
-// // E.G WHEN SELECTING USE ACCOUNT OR PROXY TO SCRAPE WITH
-// const TaskQueue = () => {
-//   const _Qlock = new Mutex()
-//   const _Plock = new Mutex()
-//   const exec_lock = new Mutex()
-//   let maxWorkers: number
-//   const taskQueue: QueueItem[] = []
-//   let processQueue: TIP_Item[] = []
-//   // let pool;
-
-//   const enqueue = async <T = Record<string, any>>(
-//     id = generateID(),
-//     taskGroup: string,
-//     taskType: string,
-//     message: string,
-//     metadata: Record<string, any>,
-//     action: (a: T) => Promise<unknown>,
-//     args?: T
-//   ) => {
-//     return _Qlock
-//       .runExclusive(() => {
-//         // @ts-ignore
-//         taskQueue.push({ id, action, args, taskGroup, taskType, message, metadata })
-//       })
-//       .then(() => {
-//         io.emit('taskQueue', {
-//           message: 'new task added to queue',
-//           status: 'enqueue',
-//           taskType: 'enqueue',
-//           metadata: { taskID: id, taskGroup, taskType, metadata }
-//         })
-//       })
-//       .finally(() => {
-//         exec()
-//       })
-//   }
-
-//   const dequeue = async () => {
-//     return _Qlock
-//       .runExclusive(() => {
-//         return taskQueue.shift()
-//       })
-//       .then((t) => {
-//         if (!t) return
-//         io.emit('taskQueue', {
-//           message: 'moving from queue to processing',
-//           status: 'passing',
-//           taskType: 'dequeue',
-//           metadata: {
-//             taskID: t.id,
-//             taskGroup: t.taskGroup,
-//             taskType: t.taskType,
-//             metadata: t.metadata
-//           }
-//         })
-//         return t
-//       })
-//   }
-
-//   const remove = async (id: string) => {
-//     return _Qlock
-//       .runExclusive(() => {
-//         taskQueue.filter((task) => task.id !== id)
-//       })
-//       .then(() => {
-//         io.emit('taskQueue', {
-//           message: 'deleting task from queue',
-//           status: 'removed',
-//           taskType: 'remove',
-//           metadata: { taskID: id }
-//         })
-//       })
-//   }
-
-//   const _TIP_Enqueue = async (item: TIP_Item) => {
-//     return _Plock
-//       .runExclusive(() => {
-//         processQueue.push(item)
-//       })
-//       .then(() => {
-//         io.emit('processQueue', {
-//           message: 'new task added to processing queue',
-//           status: 'start',
-//           taskType: 'enqueue',
-//           metadata: { taskID: item[0] }
-//         })
-//       })
-//       .finally(() => {
-//         exec()
-//       })
-//   }
-
-//   const _TIP_Dequeue = async (id: string) => {
-//     return _Plock
-//       .runExclusive(() => {
-//         processQueue = processQueue.filter((task) => task[0] !== id)
-//       })
-//       .then(() => {
-//         io.emit('processQueue', {
-//           message: 'removed completed task from queue',
-//           status: 'end',
-//           taskType: 'dequeue',
-//           metadata: { taskID: id }
-//         })
-//       })
-//   }
-
-//   const stop = async (id: string) => {
-//     return _Plock
-//       .runExclusive(async () => {
-//         const process = processQueue.find((p) => p[0] === id)
-//         if (!process) return null
-//         return await process[2].abort()
-//       })
-//       .then(() => {
-//         io.emit('processQueue', {
-//           message: 'cancelled',
-//           status: 'stopped',
-//           taskType: 'stop',
-//           metadata: { taskID: id }
-//         })
-//       })
-//       .finally(() => {
-//         exec()
-//       })
-//   }
-
-//   const setMaxWorkers = (n: number) => {
-//     if (n > maxWorkers) {
-//       for (let i = maxWorkers; i < n; i++) {
-//         exec()
-//       }
-//     }
-//     maxWorkers = n
-//   }
-
-//   const exec = async () => {
-//     try {
-//       await exec_lock.acquire()
-//       if (processQueue.length >= maxWorkers) return
-//       const task = await dequeue()
-//       if (!task) return
-
-//       const taskIOArgs = {
-//         taskGroup: task.taskGroup,
-//         taskID: task.id,
-//         metadata: task.metadata
-//       }
-
-//       const tsk = new AbortablePromise((resolve, reject, signal) => {
-//         io.emit('processQueue', {
-//           message: `starting ${task.id} processing`,
-//           taskType: 'processing',
-//           metadata: { taskID: task.id }
-//         })
-//         signal.onabort = reject
-//         task
-//           .action()
-//           .then((r) => {
-//             resolve(r)
-//           })
-//           .catch((err) => {
-//             reject(err)
-//           })
-//       })
-//         .then(async (r) => {
-//           console.log('in tq then')
-//           console.log(r)
-//           io.emit(task.taskGroup, { ...taskIOArgs, ok: true, metadata: r })
-//         })
-//         .catch(async (err) => {
-//           console.log('in tq err')
-//           console.log(err)
-//           io.emit(task.taskGroup, { ...taskIOArgs, ok: false, message: err.message })
-//         })
-//         .finally(() => {
-//           _TIP_Dequeue(task.id)
-//           exec()
-//         }) as AbortablePromise<unknown>
-
-//       _TIP_Enqueue([task.id, task.args, tsk, task])
-//     } finally {
-//       exec_lock.release()
-//     }
-//   }
-
-//   function init() {
-//     maxWorkers = Math.round(cpus().length / 2)
-//   }
-
-//   return {
-//     enqueue,
-//     remove,
-//     stop,
-//     init,
-//     setMaxWorkers,
-//     maxWorkers: () => maxWorkers,
-//     queues: () => ({ taskQueue, processQueue }),
-//     tasksInProcess: () => processQueue
-//   }
-// }
-
-// export let taskQueue: ReturnType<typeof TaskQueue>
-
-// export const initTaskQueue = () => {
-//   taskQueue = TaskQueue()
-//   taskQueue.init()
-//   return taskQueue
-// }

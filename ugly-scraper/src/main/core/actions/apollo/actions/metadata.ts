@@ -1,5 +1,6 @@
+import { IMetaData } from '../../../../../shared'
 import { deleteMetaAndRecords, updateMeta } from '../../../database'
-import { IMetaData, MetaDataModel_ } from '../../../database/models/metadata'
+import { MetaDataModel_ } from '../../../database/models/metadata'
 
 export const updateMetadata = async (meta: IMetaData) => {
   try {

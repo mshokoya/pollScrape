@@ -21,31 +21,63 @@ import {
   addProxy
 } from './apollo/actions'
 
+// Accounts
+export {
+  TconfirmAccount,
+  TupgradeManually,
+  TupgradeAutomatically,
+  TcheckAccount,
+  TdeleteAccount,
+  TloginAuto,
+  TaddAccount,
+  TgetAccounts,
+  TupdateAcc,
+  TloginManually,
+  Tdemine,
+  Tscrape
+} from './apollo'
+
+export {
+  addDomain,
+  verifyDomain,
+  deleteDomain,
+  getDomains,
+  updateMetadata,
+  deleteMetadata,
+  getMetadatas,
+  getRecords,
+  getRecord,
+  scrape,
+  getProxies,
+  addProxy
+}
+
+// keys are type = ForkActions
 export const actions = {
   // account
-  a_a_cfma: confirmAccount,
-  a_a_um: upgradeManually,
-  a_a_ua: upgradeAutomatically,
-  a_a_ca: checkAccount,
-  a_a_la: loginAuto,
-  a_a_aa: addAccount,
-  a_a_lm: loginManually,
-  a_a_d: demine,
+  a_aca: confirmAccount,
+  a_aum: upgradeManually,
+  a_aua: upgradeAutomatically,
+  a_ac: checkAccount,
+  a_ala: loginAuto,
+  a_aa: addAccount,
+  a_alm: loginManually,
+  a_ad: demine,
   // domain
-  a_d_ad: addDomain,
-  a_d_vd: verifyDomain,
-  a_d_dd: deleteDomain,
-  a_d_gd: getDomains,
+  a_da: addDomain,
+  a_dv: verifyDomain,
+  a_dd: deleteDomain,
+  a_dga: getDomains,
   // metadata
-  a_m_um: updateMetadata,
-  a_m_dm: deleteMetadata,
-  a_m_gm: getMetadatas,
+  a_mu: updateMetadata,
+  a_md: deleteMetadata,
+  a_mga: getMetadatas,
   // records
-  a_r_grs: getRecords,
-  a_r_gr: getRecord,
+  a_rga: getRecords,
+  a_rg: getRecord,
   // scrape
-  a_s_s: scrape,
+  a_s: scrape,
   // proxy
-  a_p_gp: getProxies,
-  a_p_ap: addProxy
+  a_pga: getProxies,
+  a_pa: addProxy
 }

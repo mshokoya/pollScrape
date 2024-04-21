@@ -8,35 +8,8 @@ import {
   SaveOptions
 } from 'sequelize'
 import { sequelize } from '../db'
+import { IRecords } from '../../../../shared'
 
-export type IRecords = {
-  id: string
-  scrapeID: string
-  url: string
-  data: IRecord
-}
-
-export type IRecord = {
-  Name: string
-  Firstname: string
-  Lastname: string
-  Linkedin: string
-  Title: string
-  'Company Name': string
-  'Company Website': string
-  'Comapny Linkedin': string
-  'Company Twitter': string
-  'Company Facebook': string
-  Email: string
-  isVerified: boolean
-  'Company Location': string
-  Employees: string
-  Phone: string
-  Industry: string
-  Keywords: string[]
-}
-
-// @ts-ignore
 export const Record = sequelize.define('record', {
   id: {
     type: DataTypes.UUID,
@@ -67,12 +40,12 @@ export const RecordModel_ = {
     })),
   create: async (r: Partial<IRecords> = {}, opts?: SaveOptions) =>
     //@ts-ignore
-    await Record.create({ ...r, data: JSON.stringify(r.data) }, { raw: true, ...opts })
-      .then((r1) => ({
+    await Record.create({ ...r, data: JSON.stringify(r.data) }, { raw: true, ...opts }).then(
+      (r1) => ({
         ...r1.dataValues,
         data: JSON.parse(r1.dataValues.data as any)
-      }))
-      .catch(() => null),
+      })
+    ),
   findById: async (id: string, opts?: FindOptions) =>
     //@ts-ignore
     await Record.findByPk<IRecords>(id, { raw: true, ...opts })
@@ -105,19 +78,16 @@ export const RecordModel_ = {
       .save(opts)
       // @ts-ignore
       .then((r1) => ({ ...r1.dataValues, data: JSON.parse(r1.dataValues.data) }))
-      .catch(() => null)
   },
   findOneAndDelete: async (filter: Partial<Omit<IRecords, 'data'>>, opts?: DestroyOptions) => {
     // @ts-ignore
-    return await Record.destroy({ where: filter, ...opts })
-      .then((n) => (n === 0 ? null : n))
-      .catch(() => null)
+    return await Record.destroy({ where: filter, ...opts }).then((n) => (n === 0 ? null : n))
   },
   bulkCreate: async (records: Omit<IRecords, 'id'>[], opts?: BulkCreateOptions) => {
     const r = records.map((r1) => ({ ...r1, data: JSON.stringify(r1.data) }))
-    return await Record.bulkCreate(r, opts)
-      .then((r) => r.map((r1) => ({ ...r1.dataValues, data: JSON.parse(r1.dataValues.data) })))
-      .catch(() => null)
+    return await Record.bulkCreate(r, opts).then((r) =>
+      r.map((r1) => ({ ...r1.dataValues, data: JSON.parse(r1.dataValues.data) }))
+    )
   }
 }
 

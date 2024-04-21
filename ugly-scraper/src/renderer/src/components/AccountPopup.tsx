@@ -62,7 +62,7 @@ export const AccountPopup = (p: Props) => {
 
   return (
     <div
-      className="flex items-center justify-center fixed top-0 left-0 right-0 bottom-0 z-10"
+      className="flex items-center justify-center fixed top-0 left-0 right-0 bottom-0 z-20"
       style={{ background: 'rgba(0,0,0,.70)' }}
       onClick={handleClose}
     >
@@ -278,7 +278,6 @@ export const UpdateFields = ({ obs, handleRequest, account }: UFProps) => {
             }}
           />
         </div>
-
 
         <div className="mb-3">
           <label className="mr-2 border-cyan-600 border-b-2" htmlFor="recovery">

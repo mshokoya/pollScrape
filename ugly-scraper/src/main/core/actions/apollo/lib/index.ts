@@ -368,36 +368,9 @@ export const apolloConfirmAccountEvent = async (
     //     await mailbox.deleteMailByID(authEmail, uid)
     //   }
     // )) as Promise<IAccount>
-
   } catch (err: any) {
     io.emit('apollo', { taskID, message: err.message, ok: false })
   }
-}
-
-export const apolloScrape = async (
-  taskID: string,
-  browserCTX: BrowserContext,
-  meta: IMetaData,
-  usingProxy: boolean
-) => {
-  let employeeRangeMin
-  let employeeRangeMax
-  const employeeRange = getRangeFromApolloURL(meta.url)
-  if (employeeRange.length > 1) throw new AppError(taskID, 'can only have one range set')
-
-  if (!employeeRange.length) {
-    employeeRangeMin = 1
-    employeeRangeMax = 3
-  } else {
-    employeeRangeMin = parseInt(employeeRange[0][0])
-    employeeRangeMax = parseInt(employeeRange[0][1])
-  }
-
-  // (FIX) low ranges may fuckup - make parts dynamic (lowest min/max difference must be 3)
-  const rng = chuckRange(employeeRangeMin, employeeRangeMax, 3)
-
-  // (FIX) if one promise fails, all fail immediatly https://dmitripavlutin.com/promise-all/
-  await Promise.all([ssa(taskID, browserCTX, meta, usingProxy, rng[0])])
 }
 
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
@@ -405,65 +378,19 @@ const _SALock = new Mutex()
 // (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
 // (FIX) put mutex of selectAccForScrapingFILO() call and not inside the func, this way we can acc in use in global obj/list
 // (FIX) handle account errors like suspension
-export const ssa = async (
+export const apolloScrape = async (
   taskID: string,
   browserCTX: BrowserContext,
   meta: IMetaData,
   usingProxy: boolean,
+  account: SAccount,
   range: [number, number]
 ) => {
   let proxy: string | null = null
-  let account: SAccount
+  // let account: SAccount
   const maxLeadScrapeLimit = 1000 // max amount of leads 1 account can scrape before protentially 24hr ban
-  const minLeadScrapeLimit = 100
+  // const minLeadScrapeLimit = 100
   const maxLeadsOnPage = 25 // apollo has 25 leads per page MAX
-
-  const acc4Scrape = meta.accounts.find((a) => a.range[0] === range[0] && a.range[1] === range[1])
-
-  if (!acc4Scrape) {
-    // (FIX) move mutex to the function instead
-    account = await _SALock.runExclusive(
-      async () => (await selectAccForScrapingFILO(meta.id, 1))[0]
-    )
-    // if (!account) throw new AppError(taskID, 'failed to find account for scraping')
-    if (!account) return
-  } else {
-    let acc = (await AccountModel_.findById(acc4Scrape.accountID)) as SAccount
-    if (!acc) {
-      // (FIX) move mutex to the function instead
-      acc = await _SALock.runExclusive(async () => (await selectAccForScrapingFILO(meta.id, 1))[0])
-      // if (!acc) throw new AppError(taskID, 'failed to find account for scraping')
-      if (!acc) return
-    } else {
-      !acc.history.length
-        ? (acc.totalScrapedInLast30Mins = 0)
-        : (acc.totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(acc))
-    }
-    account = acc
-  }
-
-  if (
-    account.totalScrapedInLast30Mins === undefined ||
-    account.totalScrapedInLast30Mins >= maxLeadScrapeLimit
-  )
-    return
-
-  const amountAccountCanScrape = maxLeadScrapeLimit - account.totalScrapedInLast30Mins
-
-  if (amountAccountCanScrape <= minLeadScrapeLimit) {
-    // (FIX calculate time left to scrape limit reset)
-    const answer = await prompt.askQuestion(
-      `
-      The max amount of leads you can scrape right now is 
-      ${amountAccountCanScrape}/minLeadScrapeLimit. if you wait 30 minutes / 1hour accounts will reset. 
-      do you want to continue anyway ?
-      `,
-      ['yes', 'no'],
-      0
-    )
-
-    if (answer === 'no') return
-  }
 
   if (usingProxy) {
     // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
@@ -483,7 +410,7 @@ export const ssa = async (
   const credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
   // (FIX) ============ PUT INTO FUNC =====================
-  // leads recover (is account has listName and no date or numOfLeadsScraped)
+  // leads recovery (if account has listName and no date or numOfLeadsScraped)
   // (FIX) test to see if it works
   const metasWithEmptyList = meta.scrapes.filter((l) => {
     const history = account.history.find((h) => h[2] === l.listName)
@@ -545,7 +472,7 @@ export const ssa = async (
 
     if (!data || !data.length) return
 
-    delay(3000) // randomise between 3 - 5
+    delay(2000) // randomise between 3 - 5
 
     const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
@@ -570,7 +497,6 @@ export const ssa = async (
     })
 
     const nextPage = getPageInApolloURL(url) + 1
-    // (FIX) make sure it works
     url = setPageInApolloURL(url, nextPage > apolloMaxPage ? 1 : nextPage)
     meta = save.meta
     account = { ...account, ...save.account }

@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { ObservableObject } from '@legendapp/state'
+import { STaskQueue, TQTask, TaskQueue } from 'src/shared'
+import { batch } from '@legendapp/state'
 
 export const cn = (...args: ClassValue[]) => {
   return twMerge(clsx(...args))
@@ -31,17 +33,7 @@ export const fetchData = async <T>(
   method: string,
   ...args: any
 ): Promise<FetchData<T>> => {
-  console.log(args)
   return await window[entity][method](...args)
-    .then((r) => {
-      console.log('in THEN')
-      console.log(r)
-      return r
-    })
-    .catch((r) => {
-      console.log('in Err')
-      console.log(r)
-    })
 }
 
 export const blinkCSS = (reqInProces: boolean = false, color: string = 'text-cyan-600') =>
@@ -62,6 +54,9 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
   return {
     getTaskByTaskID: (taskID: string): [entityID: string, idx: number, task?: Task<T>] => {
       for (const [k, v] of Object.entries(taskInProcess.get())) {
+        console.log('IN getTaskByTaskID  V & TaskID')
+        console.log(v)
+        console.log(taskID)
         const taskIdx = v.findIndex((_) => _.taskID === taskID)
         if (taskIdx > -1) return [k, taskIdx, v[taskIdx]]
       }
@@ -99,6 +94,9 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     },
     deleteTaskByTaskID: (entityID: string, taskID: string) => {
       const tip = taskInProcess[entityID].get()
+      console.log('IN deleteTaskByTaskID  TIP')
+      console.log(tip)
+      console.log(entityID, taskID)
       const idx = tip.findIndex((t1) => t1.taskID === taskID)
       if (tip && idx > -1 && tip.length > 1) {
         taskInProcess[entityID][idx].delete()
@@ -139,12 +137,10 @@ export const ResStatusHelpers = <RT>(resStatus: ObservableObject<ResStatus<RT>>)
   },
   delete: (entityID: string, reqType: RT) => {
     const rsl = resStatus[entityID]
-    console.log(rsl.get() && rsl.get().length > 1)
     if (rsl.get() && rsl.get().length > 1) {
       const rs = rsl.find((rs1) => rs1[0].get() === reqType)
-      if (rs) {
-        rs.delete()
-      }
+      // (FIX) check how the array look, when deleting from an array, it leave a empty space rather that shrinking array
+      if (rs) rs.delete()
     } else {
       resStatus[entityID].delete()
     }
@@ -177,9 +173,8 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 // min - 1 / max - 3 // lowest
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
-  //@ts-ignore
-  const result: [number, number][] = [[]]
-  const delta = Math.round((max - min) / (parts - 1))
+  const result = [[]],
+    delta = Math.round((max - min) / parts)
 
   while (min < max) {
     const l = result.length - 1
@@ -188,16 +183,47 @@ export const chuckRange = (min: number, max: number, parts: number): [number, nu
       result[l].push(min)
     } else {
       //@ts-ignore
-      result.push([result[l][1] + 1, min])
+      const s = result[l]
+      const val = s[1] ? s[1] + 1 : s[0] + 1
+      result.push([val, min])
     }
     min += delta
   }
 
   //@ts-ignore
-  const l = result[result.length - 1][1] + 1
+  const l = result[result.length - 1]
+  const s = l[1] ? l[1] + 1 : l[0] + 1
+
   //@ts-ignore
-  result.push([l, l === max ? max + 1 : max])
+  if (l.length === 1) l.push(l[0] + 1)
+  result.push([s, s === max ? max + 1 : max])
   return result
+
+  //   var result= [[]],
+  //       delta = Math.round((max - min) / parts);
+
+  //   while (min < max) {
+  //       const l = result.length-1
+  //       if (result.length === 1 && result[l].length < 2) {
+  //         //@ts-ignore
+  //         result[l].push(min)
+  //       } else {
+  //         //@ts-ignore
+  //         const s = result[l]
+  //         const val = s[1]?s[1]+1:s[0]+1
+  //         result.push([val, min])
+  //       }
+  //       min += delta;
+  //   }
+
+  //   //@ts-ignore
+  //   const l = result[result.length-1]
+  //   const s = l[1]?l[1]+1:l[0]+1
+
+  //   //@ts-ignore
+  //   if (s[l].length === 1) s[l].push(l[0]+1)
+  //   result.push([s, (s===max)?max+1:max]);
+  //   return result;
 }
 
 // (FIX) infinate is defined as undefined
@@ -252,3 +278,119 @@ export const removeLeadColInApolloURL = (url: string) => {
   params.delete('prospectedByCurrentTeam[]')
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
+
+export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue | STaskQueue>) => ({
+  addToQueue: (queueName: keyof typeof tq, t: T) => {
+    // @ts-ignore
+    tq[queueName].push({ ...t, processes: [] })
+  },
+  move: (taskID: string, from: keyof typeof tq, to: keyof typeof tq) => {
+    batch(() => {
+      // @ts-ignore
+      const task = tq[from].find((t) => t.taskID.peek() === taskID)
+      if (!task) return
+      // @ts-ignore
+      tq[to].push(task.peek())
+      task.delete()
+    })
+  },
+  delete: (taskID: string) => {
+    for (const queues in tq) {
+      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
+      if (t) {
+        tq[queues].set(tq[queues].get().filter((t) => t.taskID !== taskID))
+        break
+      }
+    }
+  },
+  findTask: (taskID: string): ObservableObject<TQTask> | void => {
+    for (const queues in tq) {
+      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
+      if (t) {
+        return t.get()
+      }
+    }
+  },
+  findTaskViaProcessID: (taskID: string): ObservableObject<TQTask> | void => {
+    for (const queues in tq) {
+      for (const task of tq[queues]) {
+        if (task.processes.peek().includes(taskID)) {
+          return task
+        }
+      }
+    }
+  },
+  addProcess: (taskID: string, PtaskID: string) => {
+    for (const queues in tq) {
+      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
+      if (t) {
+        return t.processes.push(PtaskID)
+      }
+    }
+  },
+  deleteProcess: (taskID: string) => {
+    for (const queues in tq) {
+      for (const task of tq[queues]) {
+        if (task.processes.peek().includes(taskID)) {
+          return task.set((t) => t.filter((t0) => t0 !== taskID))
+        }
+      }
+    }
+  }
+})
+
+// ==================
+
+// const downloadCSVButton = () => {
+//   const evtHdlr = () => {
+//     el.setAttribute('href', window.URL.createObjectURL(new Blob([storageImport.getDataInCSVFmt()], {type: 'text/csv'})))
+//     el.click()
+//   }
+//   const el = createButton('a', 'dcv-button','Download CSV', evtHdlr);
+//   return el
+// }
+
+export const downloadData = (
+  records: Record<string, any>[],
+  contentType: 'csv' | 'json',
+  name?: string
+) => {
+  if (!records.length) return
+  records = records.map((r) => r.data)
+  const fileName = name || 'ugly-data'
+  let data: any
+  let type: string
+  if (contentType === 'csv') {
+    data = setCSVColumn(records)
+    data += arrOfObjToCsv(records)
+    type = 'text/csv'
+  } else {
+    data = JSON.stringify(records)
+    type = 'application/json'
+  }
+
+  const el = document.querySelector('[class="ugly-download hidden"]')
+  console.log(el)
+  if (!el) return
+
+  console.log('we are eeyyaa')
+
+  const file = new File([data], fileName, { type })
+  const exportUrl = URL.createObjectURL(file)
+
+  el.href = exportUrl
+  el.download = fileName
+  el.click()
+  URL.revokeObjectURL(exportUrl)
+}
+
+const setCSVColumn = (data: Record<string, any>[]) => Object.keys(data[0]).join() + '\n'
+
+const arrOfObjToCsv = (data: Record<string, any>) => {
+  return data
+    .map((f) => Object.values(f))
+    .map((e) => e.join(','))
+    .join('\n')
+}
+
+// ==================

@@ -1,11 +1,12 @@
 import { observable } from '@legendapp/state'
 
 import { IDomain } from '../../components/DomainField'
-import { IProxy } from '../../components/ProxyField'
+// import { IProxy } from '../../components/ProxyField'
 import { IMetaData, IRecord } from '../../components/RecordField'
 import { IAccount } from './account'
 import { fetchData } from '../util'
 import { CHANNELS } from '../../../../shared/util'
+import { IRecords } from 'src/shared'
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok' | 'fail']
 export type ResStatus<T> = { [entityID: string]: Status<T>[] }
@@ -18,33 +19,33 @@ export type TaskInProcess<T> = { [id: string]: Task<T>[] }
 type AppState = {
   accounts: IAccount[]
   domains: IDomain[]
-  proxies: IProxy[]
+  // proxies: IProxy[]
   metas: IMetaData[]
-  records: IRecord[]
+  records: IRecords[]
 }
 
 export const appState$ = observable<AppState>({
   accounts: [],
   domains: [],
-  proxies: [],
+  // proxies: [],
   metas: [],
   records: []
 })
 
 Promise.all([
-  await fetchData<IAccount[]>('account', CHANNELS.aga)
+  fetchData<IAccount[]>('account', CHANNELS.a_accountGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IDomain[]>('domain', CHANNELS.dga)
+  fetchData<IDomain[]>('domain', CHANNELS.a_domainGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IProxy[]>('proxy', CHANNELS.pga)
+  // fetchData<IProxy[]>('proxy', CHANNELS.a_proxyGetAll)
+  //   .then((data) => data.data)
+  //   .catch(() => []),
+  fetchData<IMetaData[]>('meta', CHANNELS.a_metadataGetAll)
     .then((data) => data.data)
     .catch(() => []),
-  await fetchData<IMetaData[]>('metadata', CHANNELS.mga)
-    .then((data) => data.data)
-    .catch(() => []),
-  await fetchData<IRecord[]>('records', CHANNELS.rga)
+  fetchData<IRecords[]>('record', CHANNELS.a_recordsGetAll)
     .then((data) => data.data)
     .catch(() => [])
 ]).then((r) => {
@@ -52,8 +53,63 @@ Promise.all([
   appState$.set({
     accounts: r[0],
     domains: r[1],
-    proxies: r[2],
-    metas: r[3],
-    records: r[4]
+    // proxies: r[2],
+    metas: r[2],
+    records: r[3]
   })
 })
+
+const position = { x: 0, y: 0 }
+const edgeType = 'smoothstep'
+
+export const initialNodes: any[] = [
+  {
+    id: 'tq',
+    position,
+    data: { label: 'task queue' },
+    style: { fontSize: '1.5rem', fontWeight: 700 },
+    className: 'li',
+    draggable: true
+  },
+  {
+    id: 'q',
+    data: { label: 'wait queue' },
+    position,
+    // type: 'group',
+    className: 'li',
+    style: {
+      backgroundColor: 'rgba(255, 165, 0, 0.7)',
+      width: '300px',
+      height: '300px',
+      fontSize: '1.5rem',
+      fontWeight: 400
+    },
+    draggable: true
+  },
+  {
+    id: 'p',
+    data: { label: 'processing queue' },
+    position,
+    className: 'li',
+    style: { backgroundColor: 'rgba(0, 128, 0, 0.7)', fontSize: '1.5rem', fontWeight: 400 },
+    draggable: true
+  },
+  {
+    id: 't',
+    data: { label: 'timeout queue' },
+    position,
+    className: 'li',
+    style: {
+      backgroundColor: 'rgba(255, 0, 0, 0.7)',
+      fontSize: '1.5rem',
+      fontWeight: 400
+    },
+    draggable: true
+  }
+]
+
+export const initialEdges = [
+  { id: 'tqq', source: 'tq', target: 'q', type: edgeType, animated: true },
+  { id: 'tqp', source: 'tq', target: 'p', type: edgeType, animated: true },
+  { id: 'tqt', source: 'tq', target: 't', type: edgeType, animated: true }
+]
