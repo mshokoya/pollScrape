@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { ObservableObject } from '@legendapp/state'
-import { TQTask, TaskQueue } from 'src/shared'
+import { STaskQueue, TQTask, TaskQueue } from 'src/shared'
 import { batch } from '@legendapp/state'
 
 export const cn = (...args: ClassValue[]) => {
@@ -173,7 +173,7 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 // min - 1 / max - 3 // lowest
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
-  var result = [[]],
+  const result = [[]],
     delta = Math.round((max - min) / parts)
 
   while (min < max) {
@@ -279,7 +279,7 @@ export const removeLeadColInApolloURL = (url: string) => {
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
 
-export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
+export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue | STaskQueue>) => ({
   addToQueue: (queueName: keyof typeof tq, t: T) => {
     // @ts-ignore
     tq[queueName].push({ ...t, processes: [] })
@@ -338,3 +338,59 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue>) => ({
     }
   }
 })
+
+// ==================
+
+// const downloadCSVButton = () => {
+//   const evtHdlr = () => {
+//     el.setAttribute('href', window.URL.createObjectURL(new Blob([storageImport.getDataInCSVFmt()], {type: 'text/csv'})))
+//     el.click()
+//   }
+//   const el = createButton('a', 'dcv-button','Download CSV', evtHdlr);
+//   return el
+// }
+
+export const downloadData = (
+  records: Record<string, any>[],
+  contentType: 'csv' | 'json',
+  name?: string
+) => {
+  if (!records.length) return
+  records = records.map((r) => r.data)
+  const fileName = name || 'ugly-data'
+  let data: any
+  let type: string
+  if (contentType === 'csv') {
+    data = setCSVColumn(records)
+    data += arrOfObjToCsv(records)
+    type = 'text/csv'
+  } else {
+    data = JSON.stringify(records)
+    type = 'application/json'
+  }
+
+  const el = document.querySelector('[class="ugly-download hidden"]')
+  console.log(el)
+  if (!el) return
+
+  console.log('we are eeyyaa')
+
+  const file = new File([data], fileName, { type })
+  const exportUrl = URL.createObjectURL(file)
+
+  el.href = exportUrl
+  el.download = fileName
+  el.click()
+  URL.revokeObjectURL(exportUrl)
+}
+
+const setCSVColumn = (data: Record<string, any>[]) => Object.keys(data[0]).join() + '\n'
+
+const arrOfObjToCsv = (data: Record<string, any>) => {
+  return data
+    .map((f) => Object.values(f))
+    .map((e) => e.join(','))
+    .join('\n')
+}
+
+// ==================

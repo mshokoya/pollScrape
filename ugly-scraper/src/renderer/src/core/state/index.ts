@@ -58,3 +58,58 @@ Promise.all([
     records: r[3]
   })
 })
+
+const position = { x: 0, y: 0 }
+const edgeType = 'smoothstep'
+
+export const initialNodes: any[] = [
+  {
+    id: 'tq',
+    position,
+    data: { label: 'task queue' },
+    style: { fontSize: '1.5rem', fontWeight: 700 },
+    className: 'li',
+    draggable: true
+  },
+  {
+    id: 'q',
+    data: { label: 'wait queue' },
+    position,
+    // type: 'group',
+    className: 'li',
+    style: {
+      backgroundColor: 'rgba(255, 165, 0, 0.7)',
+      width: '300px',
+      height: '300px',
+      fontSize: '1.5rem',
+      fontWeight: 400
+    },
+    draggable: true
+  },
+  {
+    id: 'p',
+    data: { label: 'processing queue' },
+    position,
+    className: 'li',
+    style: { backgroundColor: 'rgba(0, 128, 0, 0.7)', fontSize: '1.5rem', fontWeight: 400 },
+    draggable: true
+  },
+  {
+    id: 't',
+    data: { label: 'timeout queue' },
+    position,
+    className: 'li',
+    style: {
+      backgroundColor: 'rgba(255, 0, 0, 0.7)',
+      fontSize: '1.5rem',
+      fontWeight: 400
+    },
+    draggable: true
+  }
+]
+
+export const initialEdges = [
+  { id: 'tqq', source: 'tq', target: 'q', type: edgeType, animated: true },
+  { id: 'tqp', source: 'tq', target: 'p', type: edgeType, animated: true },
+  { id: 'tqt', source: 'tq', target: 't', type: edgeType, animated: true }
+]

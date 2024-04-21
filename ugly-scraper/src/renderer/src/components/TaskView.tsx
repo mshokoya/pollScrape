@@ -34,7 +34,7 @@ export const TaskView = () => {
   return (
     <>
       <PopupComp />
-      <div className="w-full h-[5.5%] mb-4 bg-cyan-600">
+      <div className="w-full h-[5.5%] mb-2 bg-cyan-600">
         {tq.timeout &&
           tq.timeout.map((t, idx) => (
             <div

@@ -1,5 +1,5 @@
 import { Dispatch, MouseEvent, SetStateAction, useEffect, useState } from 'react'
-import { fetchData, fmtDate } from '../core/util'
+import { downloadData, fetchData, fmtDate, getDataInCSVFmt } from '../core/util'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { IoOptionsOutline } from 'react-icons/io5'
 import { MdCheckBoxOutlineBlank } from 'react-icons/md'
@@ -9,58 +9,65 @@ import { BiLinkAlt } from 'react-icons/bi'
 import { FaTwitter } from 'react-icons/fa'
 import { FaFacebookF } from 'react-icons/fa'
 import { MetaPopup } from './MetaPopup'
-import { metaMockData, recordMockData } from '../core/mockdata'
 import { appState$ } from '../core/state'
-import { useSelector } from '@legendapp/state/react'
+import { observer, useComputed, useObservable, useSelector } from '@legendapp/state/react'
 import { IMetaData, IRecords } from 'src/shared'
-import { ScrollArea, Text } from '@radix-ui/themes'
+import { Button, DropdownMenu } from '@radix-ui/themes'
+import { ObservableComputed, ObservableObject } from '@legendapp/state'
 
 // type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
 type MetaSubCompArgs = {
   meta: IMetaData[]
-  metaChecked: number[]
-  setMetaChecked: Dispatch<SetStateAction<number[]>>
+  metaChecked: ObservableObject<number[]>
 }
 // type RecordsDispatch = Dispatch<SetStateAction<IRecords[]>>
 type RecordsSubCompArgs = {
   records: IRecords[]
-  recordsChecked: number[]
-  setRecordsChecked: Dispatch<SetStateAction<number[]>>
+  recordsChecked: ObservableObject<number[]>
   meta: IMetaData[]
-  metaChecked: number[]
+  metaChecked: ObservableObject<number[]>
 }
 
-export const RecordField = () => {
-  const [metaChecked, setMetaChecked] = useState<number[]>([])
-  const [recordsChecked, setRecordsChecked] = useState<number[]>([])
+export const RecordField = observer(() => {
+  const metaChecked = useObservable<number[]>([])
+  const recordsChecked = useObservable<number[]>([])
   const meta = useSelector(appState$.metas) as IMetaData[]
   const records = useSelector(appState$.records) as IRecords[]
-  // const [meta, setMeta] = useState<IMetaData[]>(metaMockData)
-  // const [records, setRecords] = useState<IRecords[]>(recordMockData)
+
+  const filteredRecords = useComputed(() => {
+    const filter: string[] = []
+    metaChecked.get().forEach((m) => {
+      meta[m].scrapes.forEach((d) => filter.push(d.scrapeID))
+    })
+    return filter.length ? records.filter((r) => filter.includes(r.scrapeID)) : []
+  })
 
   return (
-    <div className="flex relative grow">
-      <div className="flex gap-3 absolute inset-x-0 inset-y-0">
-        <Meta meta={meta} metaChecked={metaChecked} setMetaChecked={setMetaChecked} />
-        <Record
-          records={records}
-          recordsChecked={recordsChecked}
-          setRecordsChecked={setRecordsChecked}
-          meta={meta}
-          metaChecked={metaChecked}
-        />
+    <div className="flex flex-col overflow-auto">
+      <Options filteredRecords={filteredRecords} />
+      <div className="flex overflow-auto grow">
+        <div className="flex gap-3">
+          <Meta meta={meta} metaChecked={metaChecked} />
+          <Record
+            records={records}
+            recordsChecked={recordsChecked}
+            meta={meta}
+            metaChecked={metaChecked}
+          />
+        </div>
       </div>
     </div>
   )
-}
+})
 
-export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => {
+export const Meta = ({ meta, metaChecked }: MetaSubCompArgs) => {
   const [selectedMeta, setSelectedMeta] = useState<number | null>(null)
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
     //@ts-ignore
     const type = e.target.closest('td')?.dataset.type as string
+    const metaCheckedState = metaChecked.get()
 
     switch (type) {
       case 'opt':
@@ -70,9 +77,9 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
       case 'check': {
         //@ts-ignore
         const idx = parseInt(e.target.closest('tr').dataset.idx)
-        metaChecked.includes(idx)
-          ? setMetaChecked((p) => p.filter((a) => a !== idx))
-          : setMetaChecked([...metaChecked, idx])
+        metaCheckedState.includes(idx)
+          ? metaChecked.set((p) => p.filter((a) => a !== idx))
+          : metaChecked.set([...metaCheckedState, idx])
         break
       }
       case 'extend':
@@ -83,155 +90,154 @@ export const Meta = ({ meta, metaChecked, setMetaChecked }: MetaSubCompArgs) => 
   }
 
   const handleMetaToggle = () => {
-    metaChecked.length === meta.length
-      ? setMetaChecked([])
-      : setMetaChecked(meta.map((_, idx) => idx))
+    metaChecked.get().length === meta.length
+      ? metaChecked.set([])
+      : metaChecked.set(meta.map((_, idx) => idx))
   }
 
   const PopupComp = () =>
     selectedMeta ? <MetaPopup setPopup={setSelectedMeta} meta={meta[selectedMeta]} /> : null
 
   return (
-    <div className="border rounded border-cyan-600 flex-none w-[30%]">
+    <div className="border rounded border-cyan-600 flex-none w-[30%] overflow-scroll">
       <PopupComp />
-      <ScrollArea type="always">
-        <table className="text-[0.7rem]  m-auto w-[150%] table-fixed overflow-auto">
-          <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
-            <tr className="p-9">
-              <th className="sticky left-0 p-1.5 w-[2.5%] bg-[#202226]" onClick={handleMetaToggle}>
-                {metaChecked.length === meta.length ? (
-                  <MdCheckBox className="inline" />
-                ) : (
-                  <MdCheckBoxOutlineBlank className="inline" />
-                )}
-              </th>
-              <th className="w-[25%] p-2">Name</th>
-              <th className="w-[70%] p-2">URL</th>
-              <th className="w-[2.5%] sticky bg-[#202226] right-0">
-                <IoOptionsOutline className="inline" />
-              </th>
-            </tr>
-          </thead>
-          <tbody className="text-[0.9rem]" onClick={handleExtendRow}>
-            {meta.length &&
-              meta.map((a, idx) => (
-                <>
-                  <tr
-                    className="text-center hover:border-cyan-600 hover:border my-3"
-                    data-idx={idx}
-                    key={idx}
-                  >
-                    <td className="sticky left-0 bg-[#111111] p-1" data-type="check" data-idx={idx}>
-                      {metaChecked.includes(idx) ? (
-                        <MdCheckBox className="inline" />
-                      ) : (
-                        <MdCheckBoxOutlineBlank className="inline" />
-                      )}
-                    </td>
-                    <td className="overflow-scroll truncate  p-1" data-type="extend">
-                      {a.name}
-                    </td>
-                    <td className="overflow-scroll truncate text-[0.6rem]  p-1" data-type="extend">
-                      {a.url}
-                    </td>
-                    <td className="overflow-scroll sticky bg-[#111111] right-0" data-type="opt">
-                      <button>
-                        <SlOptionsVertical className="inline" />
-                      </button>
-                    </td>
+
+      <table className="text-[0.7rem] w-[150%] table-fixed ">
+        <thead className="sticky top-0 bg-[#202226] text-[0.8rem] z-10">
+          <tr>
+            <th className="sticky left-0 p-1.5 w-[3%] bg-[#202226]" onClick={handleMetaToggle}>
+              {metaChecked.get().length === meta.length ? (
+                <MdCheckBox className="bg-[#202226] inline" />
+              ) : (
+                <MdCheckBoxOutlineBlank className="inline" />
+              )}
+            </th>
+            <th className="w-[25%] p-2">Name</th>
+            <th className="w-[70%] p-2">URL</th>
+            <th className="w-[3%] sticky bg-[#202226] right-0">
+              <IoOptionsOutline className="inline" />
+            </th>
+          </tr>
+        </thead>
+        <tbody className="text-[0.9rem]" onClick={handleExtendRow}>
+          {meta.length &&
+            meta.map((a, idx) => (
+              <>
+                <tr
+                  className="text-center hover:border-cyan-600 hover:border"
+                  data-idx={idx}
+                  key={idx}
+                >
+                  <td className="sticky left-0 bg-[#111111] p-1" data-type="check" data-idx={idx}>
+                    {metaChecked.get().includes(idx) ? (
+                      <MdCheckBox className="bg-[#111111] inline" />
+                    ) : (
+                      <MdCheckBoxOutlineBlank className="bg-[#111111] inline" />
+                    )}
+                  </td>
+                  <td className="overflow-scroll truncate  p-1" data-type="extend">
+                    {a.name}
+                  </td>
+                  <td className="overflow-scroll truncate text-[0.6rem]  p-1" data-type="extend">
+                    {a.url}
+                  </td>
+                  <td className="sticky right-0 bg-[#111111]" data-type="opt">
+                    <button>
+                      <SlOptionsVertical className="inline" />
+                    </button>
+                  </td>
+                </tr>
+
+                {/* META OTHER TABLE */}
+                <div className="text-left hidden w-[47.4rem] overflow-hidden">
+                  <tr>
+                    <table className="border-cyan-600 border-y text-[0.9rem] opacity-95 table-fixed">
+                      <tr className="hover:border-cyan-600 hover:border-y">
+                        <th className="whitespace-nowrap px-2">URL:</th>
+                        <td className="px-2">
+                          <div className="w-[30%]">{a.url}</div>
+                        </td>
+                      </tr>
+
+                      <tr className="hover:border-cyan-600 hover:border-y">
+                        <th className="whitespace-nowrap px-2 w-4">params:</th>
+                        <td className="px-2"></td>
+                      </tr>
+
+                      <tr className="hover:border-cyan-600 hover:border-y">
+                        <th className="whitespace-nowrap px-2 w-4">Name:</th>
+                        <td className="px-2">{a.name}</td>
+                      </tr>
+
+                      <tr className="hover:border-cyan-600 hover:border-y">
+                        <th className="whitespace-nowrap px-2 w-4">Accounts:</th>
+                        <td className="px-2">
+                          <table>
+                            <thead className="sticky top-0 bg-black">
+                              <tr>
+                                <th className="px-2">Account Used</th>
+                                <th className="px-2">Min Employee Range</th>
+                                <th className="px-2">Max Employee Range</th>
+                              </tr>
+                            </thead>
+                            <tbody className="text-[0.5rem] text-center">
+                              {a.accounts?.length &&
+                                a.accounts.map((a0, idx) => (
+                                  <tr key={idx} className="hover:border-cyan-600 hover:border-y">
+                                    <td className="px-2">
+                                      {
+                                        appState$.accounts
+                                          .peek()
+                                          .find((a1) => a1.id === a0.accountID)?.email
+                                      }
+                                    </td>
+                                    <td className="px-2">{a0.range[0]}</td>
+                                    <td className="px-2">{a0.range[1]}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <tr className="hover:border-cyan-600 hover:border-y">
+                        <th className="whitespace-nowrap px-2 w-4">Scrapes:</th>
+                        <td className="px-2">
+                          <table>
+                            <thead className="sticky top-0 bg-black">
+                              <tr>
+                                <th className="px-2">Length </th>
+                                <th className="px-2">Date</th>
+                              </tr>
+                            </thead>
+                            <tbody className="text-[0.5rem] text-center">
+                              {a.scrapes?.length &&
+                                a.scrapes.map((a0, idx) => (
+                                  <tr key={idx} className="hover:border-cyan-600 hover:border-y">
+                                    <td className="px-2">{a0.length}</td>
+                                    <td className="px-2">{fmtDate(a0.date)}</td>
+                                  </tr>
+                                ))}
+                              <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
+                                {a.scrapes.reduce((acc, cur) => {
+                                  const o = typeof cur.length !== 'number' ? 0 : cur.length
+                                  return acc + o
+                                }, 0)}
+                              </td>
+                              <div className="bg-cyan-500/90 font-bold border-t-2">
+                                TOTAL LEADS SCRAPED
+                              </div>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
                   </tr>
-
-                  {/* META OTHER TABLE */}
-                  <div className="text-left hidden w-[47.4rem] overflow-hidden">
-                    <tr>
-                      <table className="border-cyan-600 border-y text-[0.9rem] opacity-95 table-fixed">
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2">URL:</th>
-                          <td className="px-2">
-                            <div className="w-[30%]">{a.url}</div>
-                          </td>
-                        </tr>
-
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">params:</th>
-                          <td className="px-2"></td>
-                        </tr>
-
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">Name:</th>
-                          <td className="px-2">{a.name}</td>
-                        </tr>
-
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">Accounts:</th>
-                          <td className="px-2">
-                            <table>
-                              <thead className="sticky top-0 bg-black">
-                                <tr>
-                                  <th className="px-2">Account Used</th>
-                                  <th className="px-2">Min Employee Range</th>
-                                  <th className="px-2">Max Employee Range</th>
-                                </tr>
-                              </thead>
-                              <tbody className="text-[0.5rem] text-center">
-                                {a.accounts?.length &&
-                                  a.accounts.map((a0, idx) => (
-                                    <tr key={idx} className="hover:border-cyan-600 hover:border-y">
-                                      <td className="px-2">
-                                        {
-                                          appState$.accounts
-                                            .peek()
-                                            .find((a1) => a1.id === a0.accountID)?.email
-                                        }
-                                      </td>
-                                      <td className="px-2">{a0.range[0]}</td>
-                                      <td className="px-2">{a0.range[1]}</td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                          </td>
-                        </tr>
-
-                        <tr className="hover:border-cyan-600 hover:border-y">
-                          <th className="whitespace-nowrap px-2 w-4">Scrapes:</th>
-                          <td className="px-2">
-                            <table>
-                              <thead className="sticky top-0 bg-black">
-                                <tr>
-                                  <th className="px-2">Length </th>
-                                  <th className="px-2">Date</th>
-                                </tr>
-                              </thead>
-                              <tbody className="text-[0.5rem] text-center">
-                                {a.scrapes?.length &&
-                                  a.scrapes.map((a0, idx) => (
-                                    <tr key={idx} className="hover:border-cyan-600 hover:border-y">
-                                      <td className="px-2">{a0.length}</td>
-                                      <td className="px-2">{fmtDate(a0.date)}</td>
-                                    </tr>
-                                  ))}
-                                <td className="overflow-scroll bg-cyan-500/90 font-bold border-t-2">
-                                  {a.scrapes.reduce((acc, cur) => {
-                                    const o = typeof cur.length !== 'number' ? 0 : cur.length
-                                    return acc + o
-                                  }, 0)}
-                                </td>
-                                <div className="bg-cyan-500/90 font-bold border-t-2">
-                                  TOTAL LEADS SCRAPED
-                                </div>
-                              </tbody>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    </tr>
-                  </div>
-                </>
-              ))}
-          </tbody>
-        </table>
-      </ScrollArea>
+                </div>
+              </>
+            ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -260,7 +266,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
 
   const recordFilter = () => {
     const filter: string[] = []
-    metaChecked.forEach((m) => {
+    metaChecked.get().forEach((m) => {
       meta[m].scrapes.forEach((d) => filter.push(d.scrapeID))
     })
 
@@ -268,9 +274,9 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
   }
 
   return (
-    <div className="border-cyan-600 border rounded grow overflow-auto">
-      <table className="text-[0.7rem]  m-auto w-[180%] table-fixed overflow-auto">
-        <thead className="sticky top-0 bg-[#202226] text text-[0.8rem] z-10">
+    <div className="border-cyan-600 border rounded  overflow-auto">
+      <table className="text-[0.7rem]  m-auto w-[180%] table-fixed">
+        <thead className="sticky top-0 bg-[#202226]  text-[0.8rem] z-10">
           <tr>
             <th className="p-2 sticky left-0 bg-[#202226]">Name</th>
             <th className="p-2">Title</th>
@@ -425,6 +431,41 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
             ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+export const Options = ({
+  filteredRecords
+}: {
+  filteredRecords: ObservableComputed<IRecords[]>
+}) => {
+  return (
+    <div className="w-3 mb-1">
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <Button variant="soft" color="indigo">
+            Options
+            <DropdownMenu.TriggerIcon />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger>Download</DropdownMenu.SubTrigger>
+            <DropdownMenu.SubContent>
+              <DropdownMenu.Item onClick={() => downloadData(filteredRecords.get(), 'json')}>
+                JSON
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onClick={() => downloadData(filteredRecords.get(), 'csv')}>
+                CSV
+              </DropdownMenu.Item>
+            </DropdownMenu.SubContent>
+          </DropdownMenu.Sub>
+          <DropdownMenu.Item>Select all</DropdownMenu.Item>
+          <DropdownMenu.Separator />
+          <DropdownMenu.Item color="red">Delete Selected</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
     </div>
   )
 }

@@ -8,6 +8,7 @@ export function handleTaskQueueEvent(res: TaskQueueEvent<any>) {
       taskQueueHelper.addToQueue('queue', {
         taskID: res.taskID,
         taskGroup: res.metadata.taskGroup,
+        taskType: res.taskType,
         processes: []
       })
       break
@@ -32,6 +33,7 @@ export function handleProcessQueueEvent(res: TaskQueueEvent<any>) {
       taskQueueHelper.addToQueue('processing', {
         taskID: res.taskID,
         taskGroup: res.metadata.taskGroup,
+        taskType: res.taskType,
         processes: []
       })
       break

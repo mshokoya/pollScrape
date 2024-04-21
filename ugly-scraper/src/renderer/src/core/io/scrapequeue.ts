@@ -8,8 +8,10 @@ export function handleScrapeQueueEvent(res: ScrapeQueueEvent<unknown>) {
       scrapeTaskQueueHelper.addToQueue('queue', {
         pid: res.pid,
         taskID: res.taskID,
-        taskGroup: res.taskGroup
+        taskGroup: res.taskGroup,
+        taskType: res.taskType
       })
+
       break
     case 'dequeue':
       scrapeTaskQueueHelper.delete(res.taskID)
@@ -31,7 +33,8 @@ export const handleScrapeProcessQueueEvent = (res: ScrapeQueueEvent<unknown>) =>
       scrapeTaskQueueHelper.addToQueue('processing', {
         pid: res.pid,
         taskID: res.taskID,
-        taskGroup: res.taskGroup
+        taskGroup: res.taskGroup,
+        taskType: res.taskType
       })
       break
 

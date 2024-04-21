@@ -29,11 +29,13 @@ type TQTask = {
   taskGroup: string
   taskID: string
   status?: string
+  taskType: string
   processes: []
 }
 
 type STQTask = {
   taskGroup: string
+  taskType: string
   taskID: string
   pid: string
 }
@@ -153,6 +155,12 @@ type TaskQueue = {
   queue: TQTask[]
   processing: TQTask[]
   timeout: TQTask[]
+}
+
+type STaskQueue = {
+  queue: STQTask[]
+  processing: STQTask[]
+  timeout: STQTask[]
 }
 
 export type IAccount = {
