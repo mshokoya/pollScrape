@@ -122,30 +122,17 @@ export const deleteMetaAndRecords = async (metaID: string) => {
   const t = await sequelize.transaction()
 
   try {
-    const meta = await MetaDataModel_.findOne({ id: metaID }, { transaction: t })
+    const meta = await MetaDataModel_.findOne({ id: metaID })
     if (!meta) {
       throw new Error('failed to find metadata')
     }
 
-    const metaDeleteLength = await MetaDataModel_.findOneAndDelete(
-      { id: metaID },
-      { transaction: t }
-    )
-    if (!metaDeleteLength) {
-      throw new Error('failed to delete metadata')
-    }
+    await MetaDataModel_.findOneAndDelete({ id: metaID }, { transaction: t })
 
     const scrapeIds = meta.scrapes.map((m) => m.scrapeID)
 
     // https://stackoverflow.com/a/34917715/5252283
-    const recordDeleteLength = await RecordModel_.findOneAndDelete(
-      { scrapeID: scrapeIds as any },
-      { transaction: t }
-    )
-    if (!recordDeleteLength) {
-      await t.rollback()
-      throw new Error('failed to delete records')
-    }
+    await RecordModel_.findOneAndDelete({ scrapeID: scrapeIds as any }, { transaction: t })
 
     await t.commit()
   } catch (error) {

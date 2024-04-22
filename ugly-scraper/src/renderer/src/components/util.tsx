@@ -1,4 +1,4 @@
-import { Spinner } from './Spinner'
+// import { Spinner } from './Spinner'
 
 type ISpin = {
   show?: boolean
@@ -6,5 +6,5 @@ type ISpin = {
 }
 
 export const Spin = ({ show, classs }: ISpin) => (
-  <span className="w-5 h-5"> {show ? <Spinner classs={classs} /> : ''} </span>
+  <span className="w-5 h-5"> {show ? <div classs={classs} /> : ''} </span>
 )

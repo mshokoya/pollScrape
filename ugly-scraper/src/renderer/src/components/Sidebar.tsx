@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ProxyField } from './ProxyField'
+// import { ProxyField } from './ProxyField'
 import { AccountField } from './AccountField'
-import { DomainField } from './DomainField'
+import { DomainField } from './Domain/DomainField'
 
 export const Sidebar = () => {
   const [toggle, setToggle] = useState(true)

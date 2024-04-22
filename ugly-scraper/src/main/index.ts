@@ -93,7 +93,7 @@ function createWindow(): void {
 
     // =============== Metadata =====================
     ipcMain.handle(CHANNELS.a_metadataGetAll, async () => await getMetadatas())
-    ipcMain.handle(CHANNELS.a_metadataDelete, async (e, id: string) => await deleteMetadata(id))
+    ipcMain.handle(CHANNELS.a_metadataDelete, async (e, id: string[]) => await deleteMetadata(id))
     ipcMain.handle(
       CHANNELS.a_metadataUpdate,
       async (e, meta: IMetaData) => await updateMetadata(meta)

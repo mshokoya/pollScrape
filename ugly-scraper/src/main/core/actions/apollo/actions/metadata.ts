@@ -14,13 +14,13 @@ export const updateMetadata = async (meta: IMetaData) => {
   }
 }
 
-export const deleteMetadata = async (id: string) => {
+export const deleteMetadata = async (ids: string[]) => {
   try {
-    const metaID = id
+    if (!ids || !ids.length) throw new Error('valid meta id not provided')
 
-    if (!metaID) throw new Error('valid meta id not provided')
-
-    await deleteMetaAndRecords(metaID)
+    for (const id of ids) {
+      await deleteMetaAndRecords(id)
+    }
 
     return { ok: true, message: null, data: null }
   } catch (err: any) {

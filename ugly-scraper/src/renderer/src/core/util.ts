@@ -279,6 +279,8 @@ export const removeLeadColInApolloURL = (url: string) => {
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
 
+// ==================
+
 export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue | STaskQueue>) => ({
   addToQueue: (queueName: keyof typeof tq, t: T) => {
     // @ts-ignore
@@ -340,15 +342,6 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue | STaskQueue>)
 })
 
 // ==================
-
-// const downloadCSVButton = () => {
-//   const evtHdlr = () => {
-//     el.setAttribute('href', window.URL.createObjectURL(new Blob([storageImport.getDataInCSVFmt()], {type: 'text/csv'})))
-//     el.click()
-//   }
-//   const el = createButton('a', 'dcv-button','Download CSV', evtHdlr);
-//   return el
-// }
 
 export const downloadData = (
   records: Record<string, any>[],

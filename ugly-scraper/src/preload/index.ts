@@ -69,7 +69,7 @@ contextBridge.exposeInMainWorld('meta', {
   [CHANNELS.a_metadataGetAll]: async () => {
     return await ipcRenderer.invoke(CHANNELS.a_metadataGetAll)
   },
-  [CHANNELS.a_metadataDelete]: async (id: string) => {
+  [CHANNELS.a_metadataDelete]: async (id: string[]) => {
     return await ipcRenderer.invoke(CHANNELS.a_metadataDelete, id)
   },
   [CHANNELS.a_metadataUpdate]: async (meta: IMetaData) => {

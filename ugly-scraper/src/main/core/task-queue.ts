@@ -338,11 +338,11 @@ const TaskQueue = () => {
   }
 
   function init() {
-    for (let i = 0; i < maxForks; i++) {
-      createProcess()
-    }
-    forkKeys = Object.keys(forks)
-    lb = new P2cBalancer(forkKeys.length)
+    // for (let i = 0; i < maxForks; i++) {
+    //   createProcess()
+    // }
+    // forkKeys = Object.keys(forks)
+    // lb = new P2cBalancer(forkKeys.length)
   }
 
   return {

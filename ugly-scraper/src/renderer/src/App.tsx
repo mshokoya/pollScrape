@@ -1,7 +1,7 @@
-import { RecordField } from './components/RecordField'
-import { ScrapeField } from './components/ScrapeField'
+// import { RecordField } from './components/Records/RecordField'
+// import { ScrapeField } from './components/ScrapeField'
 import { Sidebar } from './components/Sidebar'
-import { TaskView } from './components/TaskView'
+// import { TaskView } from './components/TaskView'
 import { PromptPopup } from './components/Prompt'
 import { promptState } from './core/state/prompt'
 import { observer } from '@legendapp/state/react'
@@ -29,9 +29,9 @@ const App = observer(() => {
       <a className="ugly-download hidden" />
       <div className="flex relative">
         <div className="flex flex-col center h-screen z-0 w-full p-2">
-          <TaskView />
-          <ScrapeField />
-          <RecordField />
+          {/* <TaskView /> */}
+          {/* <ScrapeField /> */}
+          {/* <RecordField /> */}
         </div>
         <div>
           <Sidebar />
