@@ -21,14 +21,4 @@ export type State = {
   resStatus: ResStatus<DomainReqType>
 }
 
-export type IDomain = {
-  id: string
-  domain: string
-  authEmail: string
-  verified: boolean
-  MXRecords: boolean
-  TXTRecords: boolean
-  VerifyMessage: string
-}
-
 export type DomainReqType = 'create' | 'verify' | 'delete' | 'update'
