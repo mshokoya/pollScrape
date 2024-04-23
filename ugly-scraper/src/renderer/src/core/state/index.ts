@@ -1,12 +1,12 @@
 import { observable } from '@legendapp/state'
 
-import { IDomain } from '../../components/DomainField'
+import { IDomain, IMetaData, IRecords } from 'src/shared'
 // import { IProxy } from '../../components/ProxyField'
-import { IMetaData, IRecord } from '../../components/RecordField'
+
 import { IAccount } from './account'
 import { fetchData } from '../util'
 import { CHANNELS } from '../../../../shared/util'
-import { IRecords } from 'src/shared'
+import { metaMockData } from '../mockdata'
 
 export type Status<ReqType> = [reqType: ReqType, status: 'ok' | 'fail']
 export type ResStatus<T> = { [entityID: string]: Status<T>[] }
@@ -52,7 +52,8 @@ Promise.all([
   //  ORDER MATTERS
   appState$.set({
     accounts: r[0],
-    domains: r[1],
+    domains: metaMockData,
+    // domains: r[1],
     // proxies: r[2],
     metas: r[2],
     records: r[3]

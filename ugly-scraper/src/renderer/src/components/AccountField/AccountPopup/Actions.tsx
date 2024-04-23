@@ -23,7 +23,7 @@ export const AccountActionsComp = (p: MProps) => {
 
   return (
     <Flex direction="column">
-      <Dialog.Title> {p.account.email} settings </Dialog.Title>
+      <Dialog.Title className="m-auto"> {p.account.email} settings </Dialog.Title>
 
       <Flex direction="column" gap="3">
         <Button

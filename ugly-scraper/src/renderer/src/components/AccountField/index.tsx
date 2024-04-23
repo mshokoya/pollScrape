@@ -1,7 +1,6 @@
 import { FormEvent } from 'react'
 import { fetchData } from '../../core/util'
-import { AccountPopup } from './AccountPopup'
-import { IDomain } from '../Domain/DomainField'
+import { IDomain } from '@shared/index'
 import { observer, useSelector } from '@legendapp/state/react'
 import { batch } from '@legendapp/state'
 import {
@@ -13,8 +12,6 @@ import {
 import { appState$ } from '../../core/state'
 import { CHANNELS } from '../../../../shared/util'
 import { AccountTable } from './AccountTable/'
-import { EmailForm } from './EmailForm'
-import { DomainForm } from './DomainForm'
 import { AccountForms } from './AccountForms'
 import { Flex } from '@radix-ui/themes'
 
@@ -136,44 +133,16 @@ export const AccountField = observer(() => {
 
   return (
     <Flex className="relative grow text-xs">
-      <div className="flex flex-col grow absolute inset-x-0 inset-y-0">
-        {/* <div className="flex mt-1 mb-3 gap-3">
-          <button
-            className="text-cyan-600 border-cyan-600 border rounded p-1"
-            onClick={() => state.addType.set('email')}
-          >
-            email
-          </button>
+      <Flex direction="column" flexGrow="1" className="absolute inset-x-0 inset-y-0">
+        <AccountForms
+          input={state.input}
+          addAccount={addAccount}
+          accountTaskHelper={accountTaskHelper}
+          stateResStatusHelper={stateResStatusHelper}
+          domains={domains}
+          selectedDomain={state.selectedDomain}
+        />
 
-          <button
-            className="text-cyan-600 border-cyan-600 border rounded p-1"
-            onClick={() => state.addType.set('domain')}
-          >
-            domain
-          </button>
-        </div> */}
-
-        <AccountForms />
-
-        {/* <div className="mb-2">
-          {state.addType.get() === 'email' ? (
-            <EmailForm
-              input={state.input}
-              addAccount={addAccount}
-              accountTaskHelper={accountTaskHelper}
-              stateResStatusHelper={stateResStatusHelper}
-            />
-          ) : (
-            <DomainForm
-              domains={domains}
-              addAccount={addAccount}
-              accountTaskHelper={accountTaskHelper}
-              stateResStatusHelper={stateResStatusHelper}
-              //@ts-ignore
-              selectedDomain={state.selectedDomain}
-            />
-          )}
-        </div> */}
         <AccountTable
           accounts={accounts}
           state={state}
@@ -190,7 +159,7 @@ export const AccountField = observer(() => {
           account={accounts[state.selectedAcc.get()]}
           confirmAccount={confirmAccount}
         />
-      </div>
+      </Flex>
     </Flex>
   )
 })

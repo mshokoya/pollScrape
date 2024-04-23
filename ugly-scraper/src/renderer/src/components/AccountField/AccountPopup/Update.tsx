@@ -30,6 +30,8 @@ export const UpdateFields = observer(({ obs, handleRequest, account }: UFProps) 
     <Flex direction="column" gap="3">
       <div onClick={backToMain}>Go Back</div>
 
+      <Dialog.Title className="m-auto"> Edit {account.email} </Dialog.Title>
+
       <label>
         <Text as="div" size="2" mb="1" weight="bold">
           Email
