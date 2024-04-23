@@ -274,7 +274,7 @@ export const Record = ({ records, meta, metaChecked }: RecordsSubCompArgs) => {
   }
 
   return (
-    <div className="border-cyan-600 border rounded  overflow-auto">
+    <div className="border-cyan-600 border rounded overflow-auto">
       <table className="text-[0.7rem]  m-auto w-[180%] table-fixed">
         <thead className="sticky top-0 bg-[#202226]  text-[0.8rem] z-10">
           <tr>
