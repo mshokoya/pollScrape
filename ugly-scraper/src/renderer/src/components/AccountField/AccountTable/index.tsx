@@ -64,14 +64,14 @@ export const AccountTable = observer((p: Props) => {
           <table className=" w-[150%] table-fixed overflow-auto">
             <thead className="sticky top-0 bg-[#202226] text-[0.8rem] z-10">
               <tr>
-                <th className="py-2 w-[10rem]"> Email </th>
+                <th className="p-2 w-[7rem]"> Email </th>
                 <th className="p-2 w-[7rem]"> Credits </th>
-                <th className="p-2 w-[5rem]"> Verified </th>
-                <th className="p-2 w-[6rem]"> Suspended </th>
-                <th className="p-2 w-[7rem]"> Last Used </th>
-                <th className="p-2 w-[3rem]"> Type </th>
-                <th className="p-2 w-[3rem]"> Trial </th>
-                <th className="w-7 sticky bg-[#202226] right-0">
+                <th className="p-2 w-[3rem]"> Verified </th>
+                <th className="p-2 w-[4rem]"> Suspended </th>
+                <th className="p-2 w-[4rem]"> Last Used </th>
+                <th className="p-2 w-[2rem]"> Type </th>
+                <th className="p-2 w-[2rem]"> Trial </th>
+                <th className="w-[0.9rem] sticky bg-[#202226] right-0">
                   <IoOptionsOutline className="inline" />
                 </th>
               </tr>
