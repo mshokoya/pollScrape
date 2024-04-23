@@ -1,20 +1,20 @@
-import { FormEvent, MouseEvent } from 'react'
 import { fetchData } from '../../core/util'
-import { observer, useSelector } from '@legendapp/state/react'
+import { observer, useObservable, useSelector } from '@legendapp/state/react'
 import { domainState, domainTaskHelper, domainResStatusHelper } from '../../core/state/domain'
 import { appState$ } from '../../core/state'
 import { CHANNELS } from '../../../../shared/util'
-import { Button, Flex } from '@radix-ui/themes'
+import { Flex } from '@radix-ui/themes'
 import { DomainTable } from './DomainTable'
 import { IDomain } from '@shared/index'
+import { DomainForms } from './DomainForm'
 
 export const DomainField = observer(() => {
-  const s = domainState
   const domains = useSelector(appState$.domains) as IDomain[]
+  const input = useObservable<string>()
 
   const addDomain = async () => {
     domainTaskHelper.add('domain', { type: 'create', status: 'processing' })
-    await fetchData<IDomain>('domain', CHANNELS.a_domainAdd, s.input.peek())
+    await fetchData<IDomain>('domain', CHANNELS.a_domainAdd, domainState.input.peek())
       .then((d) => {
         if (d.ok) {
           domainResStatusHelper.add('domain', ['create', 'ok'])
@@ -35,8 +35,8 @@ export const DomainField = observer(() => {
   }
 
   const deleteDomain = async () => {
-    const domainID = domains[s.selectedDomain.peek()].id
-    const domain = domains[s.selectedDomain.peek()].domain
+    const domainID = domains[domainState.selectedDomain.peek()].id
+    const domain = domains[domainState.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, { type: 'delete', status: 'processing' })
     await fetchData<IDomain>('domain', CHANNELS.a_domainDelete, domain)
       .then((res) => {
@@ -60,8 +60,8 @@ export const DomainField = observer(() => {
   }
 
   const verifyDomain = async () => {
-    const domainID = domains[s.selectedDomain.peek()].id
-    const domain = domains[s.selectedDomain.peek()].domain
+    const domainID = domains[domainState.selectedDomain.peek()].id
+    const domain = domains[domainState.selectedDomain.peek()].domain
     domainTaskHelper.add(domainID, { type: 'verify', status: 'processing' })
     await fetchData<IDomain>('domain', CHANNELS.a_domainVerify, domain)
       .then((res) => {
@@ -86,11 +86,10 @@ export const DomainField = observer(() => {
   return (
     <Flex className="relative grow text-xs">
       <Flex direction="column" flexGrow="1" className="absolute inset-x-0 inset-y-0">
-        <Button>dsadassa </Button>
+        <DomainForms addDomain={addDomain} input={input} />
 
         <DomainTable
           domains={domains}
-          addDomain={addDomain}
           deleteDomain={deleteDomain}
           verifyDomain={verifyDomain}
           // updateDomain={updateDomain}

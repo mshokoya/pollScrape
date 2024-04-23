@@ -7,7 +7,6 @@ import { UpdateFields } from './UpdateDomain'
 type Props = {
   verifyDomain: () => Promise<void>
   deleteDomain: () => Promise<void>
-  addDomain: () => void
   domain: IDomain
 }
 

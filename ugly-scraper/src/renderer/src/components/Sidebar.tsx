@@ -19,7 +19,7 @@ export const Sidebar = () => {
         className={`${toggle && 'hidden'} overflow-scroll bg-[#111111] absolute top-0 bottom-0 right-[1.25rem] w-[40rem] z-200 flex flex-col p-2 gap-2 border-l-4 border-cyan-500`}
       >
         {/* DOMAIN */}
-        <div className="flex flex-col basis-[60%]">
+        <div className="flex flex-col basis-[80%]">
           <h2 className=" mb-1">DOMAINS</h2>
           <DomainField />
         </div>

@@ -11,7 +11,6 @@ import { IDomain } from '@shared/index'
 
 type Props = {
   domains: IDomain[]
-  addDomain: () => Promise<void>
   deleteDomain: () => Promise<void>
   verifyDomain: () => Promise<void>
 }
