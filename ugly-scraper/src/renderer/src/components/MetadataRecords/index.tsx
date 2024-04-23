@@ -5,11 +5,6 @@ import { ObservableObject } from '@legendapp/state'
 import { appState$ } from '@renderer/core/state'
 import { MetadataTable } from './MetadataTable'
 
-// type MetaDispatch = Dispatch<SetStateAction<IMetaData[]>>
-type MetaSubCompArgs = {
-  meta: IMetaData[]
-  metaChecked: ObservableObject<number[]>
-}
 // type RecordsDispatch = Dispatch<SetStateAction<IRecords[]>>
 type RecordsSubCompArgs = {
   records: IRecords[]
@@ -35,7 +30,7 @@ export const MetadataAndRecordField = observer(() => {
   return (
     <Flex className="relative grow text-xs">
       <Flex direction="column" flexGrow="1" className="absolute inset-x-0 inset-y-0">
-        <MetadataTable metaChecked={metaChecked} meta={meta} />
+        <MetadataTable metaChecked={metaChecked} metas={meta} />
       </Flex>
     </Flex>
   )

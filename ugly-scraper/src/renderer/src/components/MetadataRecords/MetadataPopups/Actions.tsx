@@ -1,11 +1,14 @@
+import { ObservableObject } from '@legendapp/state'
 import { Button, Dialog, Flex, Spinner } from '@radix-ui/themes'
 import { MetadataReqType, metadataTaskHelper } from '@renderer/core/state/metadata'
 import { blinkCSS } from '@renderer/core/util'
 import { IMetaData } from '@shared/index'
+import { MetadataPopupState } from '.'
 
 export type MetadataPopupProps = {
   meta: IMetaData
   handleRequest: (a: MetadataReqType) => void
+  obs: ObservableObject<MetadataPopupState>
 }
 
 export const MetadataActions = (p: MetadataPopupProps) => {
@@ -34,7 +37,7 @@ export const MetadataActions = (p: MetadataPopupProps) => {
           disabled={isUpdateReq}
           className={blinkCSS(isUpdateReq)}
           onClick={() => {
-            p.handleRequest('update')
+            p.obs.page.set('update')
           }}
           variant="outline"
         >

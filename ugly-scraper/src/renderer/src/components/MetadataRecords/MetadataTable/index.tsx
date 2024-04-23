@@ -1,5 +1,5 @@
 import { ObservableObject, batch } from '@legendapp/state'
-import { observer, useObservable } from '@legendapp/state/react'
+import { observer } from '@legendapp/state/react'
 import { Button, Dialog, ScrollArea } from '@radix-ui/themes'
 import { IMetaData } from '@shared/index'
 import { MouseEvent } from 'react'
@@ -14,7 +14,7 @@ import {
   metadataState,
   metadataTaskHelper
 } from '@renderer/core/state/metadata'
-import { CHANNELS } from '@shared/util'
+import { CHANNELS } from '../../../../../shared/util'
 import { appState$ } from '@renderer/core/state'
 
 type MetaSubCompArgs = {
@@ -23,7 +23,7 @@ type MetaSubCompArgs = {
 }
 
 export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) => {
-  const selectedMeta = useObservable<number>(-1)
+  // const selectedMeta = useObservable<number>(-1)
 
   const handleExtendRow = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
     e.stopPropagation()
@@ -34,7 +34,7 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
     switch (type) {
       case 'opt':
         //@ts-ignore
-        selectedMeta.set(e.target.closest('tr').dataset.idx)
+        metadataState.selectedMeta.set(e.target.closest('tr').dataset.idx)
         break
       case 'check': {
         //@ts-ignore
@@ -51,9 +51,9 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
     }
   }
 
-  const updateMeta = async (input: IMetaData) => {
+  const updateMeta = async (input: Partial<IMetaData>) => {
     // if (rename === meta.name) return
-    const metaID = metas[selectedMeta.peek()].id
+    const metaID = metas[metadataState.selectedMeta.peek()].id
     metadataTaskHelper.add(metaID, { type: 'update', status: 'processing' })
     await fetchData<IMetaData>('meta', CHANNELS.a_metadataUpdate, {
       id: input.id,
@@ -81,7 +81,7 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
   }
 
   const continueScraping = () => {
-    const metaID = metas[selectedMeta.peek()].id
+    const metaID = metas[metadataState.selectedMeta.peek()].id
     metadataTaskHelper.add(metaID, { type: 'continue', status: 'processing' })
     fetchData('meta', CHANNELS.a_scrape, { id: metaID })
   }
@@ -89,7 +89,7 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
   // create warning popup
   const deleteMeta = async () => {
     // if (rename === meta.name) return
-    const metaID = metas[selectedMeta.peek()].id
+    const metaID = metas[metadataState.selectedMeta.peek()].id
     metadataTaskHelper.add(metaID, { type: 'delete', status: 'processing' })
     await fetchData<IMetaData>('meta', CHANNELS.a_metadataDelete, { id: metaID })
       .then((res) => {
@@ -127,7 +127,7 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
             <thead className="sticky top-0 bg-[#202226] text-[0.8rem] z-10">
               <tr>
                 <th className="sticky left-0 p-1.5 w-[3%] bg-[#202226]" onClick={handleMetaToggle}>
-                  {metaChecked.get().length === meta.length ? (
+                  {metaChecked.get().length === metas.length ? (
                     <MdCheckBox className="bg-[#202226] inline" />
                   ) : (
                     <MdCheckBoxOutlineBlank className="inline" />
@@ -181,9 +181,9 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
       {/*
                   DIALOG CONTENT
           */}
-      account={p.accounts[p.state.selectedAcc.get()]}
+
       <Dialog.Content maxWidth="450px">
-        {selectedMeta && (
+        {metadataState.selectedMeta.get() && (
           <MetadataPopup
             meta={metas[metadataState.selectedMeta.get()]}
             updateMeta={updateMeta}
