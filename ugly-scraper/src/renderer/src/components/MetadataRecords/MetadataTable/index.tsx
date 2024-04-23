@@ -80,18 +80,10 @@ export const MetadataTable = observer(({ metas, metaChecked }: MetaSubCompArgs) 
       })
   }
 
-  const continueScraping = async () => {
-    setReqInProcess(true)
-    await fetchData('/scrape', 'POST', { meta })
-      .then(() => {
-        console.log('success')
-      })
-      .catch(() => {
-        console.log('failed')
-      })
-      .finally(() => {
-        setReqInProcess(false)
-      })
+  const continueScraping = () => {
+    const metaID = metas[selectedMeta.peek()].id
+    metadataTaskHelper.add(metaID, { type: 'continue', status: 'processing' })
+    fetchData('meta', CHANNELS.a_scrape, { id: metaID })
   }
 
   // create warning popup
