@@ -29,6 +29,7 @@ import { batch } from '@legendapp/state'
 import { selectAccForScrapingFILO } from '@renderer/core/state/account'
 import { appState$ } from '@renderer/core/state'
 import { Chunk } from './Chunk'
+import { Diagram } from './Diagram'
 
 type State = {
   name: string
@@ -221,8 +222,8 @@ export const ScrapeField = observer(() => {
     const cp = s.chunkParts.peek()
     const numOfAccs = appState$.accounts.length
 
-    if (val === 'inc' && cp + 1 > numOfAccs) return
-    if (val === 'dec' && cp - 1 <= 0) return
+    // if (val === 'inc' && cp + 1 > numOfAccs) return
+    // if (val === 'dec' && cp - 1 <= 0) return
 
     const newChunk = val === 'inc' ? cp + 1 : cp - 1
 
@@ -233,165 +234,165 @@ export const ScrapeField = observer(() => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Flex direction="column" align="start" gap="3">
-        {/* COLUMN 1a */}
-        <Flex align="center" gap="1">
-          <Text>URL: </Text>
-          <TextArea
-            required
-            disabled={!!s.url.get()}
-            value={s.url.get()}
-            onChange={(e) => {
-              handleInput(e.target.value)
-            }}
-            size="1"
-            resize="vertical"
-            placeholder="Search the docs…"
-            className="w-[25rem] max-h-[10rem]"
-          />
-
-          <Box
-            className={`text-cyan-600 text-xl ${!s.url.get() ? 'hidden' : ''}`}
-            onClick={() => {
-              resetState()
-            }}
-          >
-            <GiCancel fill="rgb(8 145 178 / 1)" />
-          </Box>
-
-          <Button variant="solid">
-            <input disabled={!s.url.get()} type="submit" value="Start Scraping" />
-          </Button>
-        </Flex>
-
-        {/* COLUMN 1b */}
-        <Flex gap="5" align="center">
-          {/* ROW 1a */}
-          <Flex direction="column" gap="3">
-            <Flex direction="column" align="center" gap="2">
-              <Text size="2">Scrape name</Text>
-              <TextField.Root
-                required
-                size="2"
-                onChange={(e: any) => {
-                  s.name.set(e.target.value)
-                }}
-                placeholder="Search the docs…"
-              />
-            </Flex>
-
-            <Separator size="4" />
-
-            <Flex direction="column" align="center" gap="2">
-              <Text size="2">Employee Range</Text>
-              <TextField.Root
-                required
-                size="2"
-                type="number"
-                value={s.min.get()}
-                onChange={(e: any) => {
-                  handleRange(e.target.value, 'min')
-                }}
-                placeholder="Minimum range"
-              />
-              <TextField.Root
-                required
-                size="2"
-                type="number"
-                value={s.max.get()}
-                onChange={(e: any) => {
-                  handleRange(e.target.value, 'max')
-                }}
-                placeholder="Maximum range"
-              />
-            </Flex>
-          </Flex>
-
-          <Flex direction="column" gap="3" justify="center">
-            <Separator orientation="vertical" size="3" />
-          </Flex>
-
-          {/* ROW 1b */}
-          <Flex direction="column" gap="3">
-            <Flex direction="column" align="center" gap="2">
-              <Text size="2">Email status</Text>
-              <Flex direction="column" gap="1">
-                <Text as="label" size="2">
-                  <Flex gap="2">
-                    <Checkbox
-                      value="verified"
-                      data-status="verified"
-                      onClick={handleEmailStatus}
-                      checked={s.checkedStatus.get().includes('verified')}
-                    />
-                    verified
-                  </Flex>
-                </Text>
-                <Text as="label" size="2">
-                  <Flex gap="2">
-                    <Checkbox
-                      value="guessed"
-                      data-status="guessed"
-                      onClick={handleEmailStatus}
-                      checked={s.checkedStatus.get().includes('guessed')}
-                    />
-                    guessed
-                  </Flex>
-                </Text>
-              </Flex>
-            </Flex>
-
-            <Separator size="4" />
-
-            <Flex direction="column" align="center" gap="2">
-              <Text size="2">Lead column</Text>
-
-              <Flex direction="column" gap="1">
-                <Text as="label" size="2">
-                  <Flex gap="2">
-                    <Checkbox
-                      value="total"
-                      onClick={handleLeadCol}
-                      checked={s.leadCol.get().includes('total')}
-                    />
-                    Total
-                  </Flex>
-                </Text>
-                <Text as="label" size="2">
-                  <Flex gap="2">
-                    <Checkbox
-                      value="new"
-                      onClick={handleLeadCol}
-                      checked={s.leadCol.get().includes('new')}
-                    />
-                    Net new
-                  </Flex>
-                </Text>
-              </Flex>
-
-              {/* <CheckboxGroup.Root defaultValue={[s.leadCol.get()]} name="lead">
-                <CheckboxGroup.Item value="total">Total</CheckboxGroup.Item>
-                <CheckboxGroup.Item value="new">Net new</CheckboxGroup.Item>
-              </CheckboxGroup.Root> */}
-            </Flex>
-          </Flex>
-
-          <Flex direction="column" gap="3" justify="center">
-            <Separator orientation="vertical" size="3" />
-          </Flex>
-
-          {/* ROW 2a */}
-          <Flex direction="column" gap="3">
-            <Chunk
-              aar={s.aar.get()}
-              chunkParts={s.chunkParts.get()}
-              handleChunkPart={handleChunkPart}
-              maxScrapeLimit={s.maxScrapeLimit.get()}
+    <Flex justify="between">
+      <form onSubmit={handleSubmit}>
+        <Flex direction="column" align="start" gap="3">
+          {/* COLUMN 1a */}
+          <Flex align="center" gap="2">
+            <Text>URL: </Text>
+            <TextArea
+              required
+              disabled={!!s.url.get()}
+              value={s.url.get()}
+              onChange={(e) => {
+                handleInput(e.target.value)
+              }}
+              size="1"
+              resize="vertical"
+              placeholder="Search the docs…"
+              className="w-[25rem] max-h-[10rem]"
             />
+
+            <div
+              className={`text-cyan-600 text-xl ${!s.url.get() ? 'hidden' : ''}`}
+              onClick={() => {
+                resetState()
+              }}
+            >
+              <GiCancel fill="rgb(8 145 178 / 1)" />
+            </div>
+
+            <Button variant="solid">
+              <input disabled={!s.url.get()} type="submit" value="Start Scraping" />
+            </Button>
+          </Flex>
+
+          {/* COLUMN 1b */}
+          <Flex gap="5" align="center">
+            {/* ROW 1a */}
+            <Flex direction="column" gap="3">
+              <Flex direction="column" align="center" gap="2">
+                <Text size="2">Scrape name</Text>
+                <TextField.Root
+                  required
+                  size="2"
+                  onChange={(e: any) => {
+                    s.name.set(e.target.value)
+                  }}
+                  placeholder="Search the docs…"
+                />
+              </Flex>
+
+              <Separator size="4" />
+
+              <Flex direction="column" align="center" gap="2">
+                <Text size="2">Employee Range</Text>
+                <TextField.Root
+                  required
+                  size="2"
+                  type="number"
+                  value={s.min.get()}
+                  onChange={(e: any) => {
+                    handleRange(e.target.value, 'min')
+                  }}
+                  placeholder="Minimum range"
+                />
+                <TextField.Root
+                  required
+                  size="2"
+                  type="number"
+                  value={s.max.get()}
+                  onChange={(e: any) => {
+                    handleRange(e.target.value, 'max')
+                  }}
+                  placeholder="Maximum range"
+                />
+              </Flex>
+            </Flex>
+
+            <Flex direction="column" gap="3" justify="center">
+              <Separator orientation="vertical" size="3" />
+            </Flex>
+
+            {/* ROW 1b */}
+            <Flex direction="column" gap="3">
+              <Flex direction="column" align="center" gap="2">
+                <Text size="2">Email status</Text>
+                <Flex direction="column" gap="1">
+                  <Text as="label" size="2">
+                    <Flex gap="2">
+                      <Checkbox
+                        value="verified"
+                        data-status="verified"
+                        onClick={handleEmailStatus}
+                        checked={s.checkedStatus.get().includes('verified')}
+                      />
+                      verified
+                    </Flex>
+                  </Text>
+                  <Text as="label" size="2">
+                    <Flex gap="2">
+                      <Checkbox
+                        value="guessed"
+                        data-status="guessed"
+                        onClick={handleEmailStatus}
+                        checked={s.checkedStatus.get().includes('guessed')}
+                      />
+                      guessed
+                    </Flex>
+                  </Text>
+                </Flex>
+              </Flex>
+
+              <Separator size="4" />
+
+              <Flex direction="column" align="center" gap="2">
+                <Text size="2">Lead column</Text>
+
+                <Flex direction="column" gap="1">
+                  <Text as="label" size="2">
+                    <Flex gap="2">
+                      <Checkbox
+                        value="total"
+                        onClick={handleLeadCol}
+                        checked={s.leadCol.get().includes('total')}
+                      />
+                      Total
+                    </Flex>
+                  </Text>
+                  <Text as="label" size="2">
+                    <Flex gap="2">
+                      <Checkbox
+                        value="new"
+                        onClick={handleLeadCol}
+                        checked={s.leadCol.get().includes('new')}
+                      />
+                      Net new
+                    </Flex>
+                  </Text>
+                </Flex>
+              </Flex>
+            </Flex>
+
+            <Flex direction="column" gap="3" justify="center">
+              <Separator orientation="vertical" size="3" />
+            </Flex>
+
+            {/* ROW 2a */}
+            <Flex direction="column" gap="3">
+              <Chunk
+                aar={s.aar.get()}
+                chunkParts={s.chunkParts.get()}
+                handleChunkPart={handleChunkPart}
+                maxScrapeLimit={s.maxScrapeLimit.get()}
+              />
+            </Flex>
           </Flex>
         </Flex>
+      </form>
+      <Flex>
+        <Diagram />
       </Flex>
-    </form>
+    </Flex>
   )
 })

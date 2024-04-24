@@ -173,57 +173,16 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 // min - 1 / max - 3 // lowest
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
-  const result = [[]],
-    delta = Math.round((max - min) / parts)
+  //@ts-ignore
+  const intervalSize = (max - min) / parts
+  const intervals = []
 
-  while (min < max) {
-    const l = result.length - 1
-    if (result.length === 1 && result[l].length < 2) {
-      //@ts-ignore
-      result[l].push(min)
-    } else {
-      //@ts-ignore
-      const s = result[l]
-      const val = s[1] ? s[1] + 1 : s[0] + 1
-      result.push([val, min])
-    }
-    min += delta
+  for (let i = 0; i < parts; i++) {
+    const start = min + i * intervalSize
+    const end = start + intervalSize
+    intervals.push([start, end])
   }
-
-  //@ts-ignore
-  const l = result[result.length - 1]
-  const s = l[1] ? l[1] + 1 : l[0] + 1
-
-  //@ts-ignore
-  if (l.length === 1) l.push(l[0] + 1)
-  result.push([s, s === max ? max + 1 : max])
-  return result
-
-  //   var result= [[]],
-  //       delta = Math.round((max - min) / parts);
-
-  //   while (min < max) {
-  //       const l = result.length-1
-  //       if (result.length === 1 && result[l].length < 2) {
-  //         //@ts-ignore
-  //         result[l].push(min)
-  //       } else {
-  //         //@ts-ignore
-  //         const s = result[l]
-  //         const val = s[1]?s[1]+1:s[0]+1
-  //         result.push([val, min])
-  //       }
-  //       min += delta;
-  //   }
-
-  //   //@ts-ignore
-  //   const l = result[result.length-1]
-  //   const s = l[1]?l[1]+1:l[0]+1
-
-  //   //@ts-ignore
-  //   if (s[l].length === 1) s[l].push(l[0]+1)
-  //   result.push([s, (s===max)?max+1:max]);
-  //   return result;
+  return intervals
 }
 
 // (FIX) infinate is defined as undefined
@@ -387,3 +346,7 @@ const arrOfObjToCsv = (data: Record<string, any>) => {
 }
 
 // ==================
+
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min
+}

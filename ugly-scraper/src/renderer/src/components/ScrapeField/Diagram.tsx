@@ -14,6 +14,7 @@ import { STQTask, STaskQueue, TQTask, TaskQueue } from 'src/shared'
 import dagre from 'dagre'
 import { initialEdges, initialNodes } from '@renderer/core/state'
 import { scrapeTaskQueue } from '@renderer/core/state/scrapeQueue'
+import { Box } from '@radix-ui/themes'
 
 const dagreGraph = new dagre.graphlib.Graph()
 dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -96,27 +97,27 @@ export const Diagram = () => {
   useObserve(() => {
     const [newTNodes, newTEdges] = addNodes(taskQueue.get())
     const [newSNodes, newSEdges] = addNodes(scrapeTaskQueue.get())
-    const nodes = [...initialNodes, ...newTNodes, ...newSNodes]
+    const nnodes = [...newTNodes, ...newSNodes]
+    const eedges = [...newTEdges, ...newSEdges]
 
-    const edges = [...initialEdges, ...newTEdges, ...newSEdges]
-
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges)
-    setNodes(layoutedNodes)
-    setEdges(layoutedEdges)
+    setNodes([...nodes, ...nnodes])
+    setEdges([...edges, ...eedges])
   })
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      className="bg-white"
-      fitView
-    >
-      <Controls />
-      <Background />
-    </ReactFlow>
+    <Box className="w-[25rem] h-[15rem]">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        className="bg-white"
+        fitView
+      >
+        <Controls />
+        <Background />
+      </ReactFlow>
+    </Box>
   )
 }

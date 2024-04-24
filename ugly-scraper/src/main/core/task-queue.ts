@@ -34,7 +34,7 @@ const TaskQueue = () => {
   const exec_lock = new Mutex()
   let taskQueue: QueueItem[] = []
   let processQueue: ProcessQueueItem[] = []
-  let useFork = true
+  let useFork = false
   let maxProcesses = 10
   const maxForks = cpus().length
   const forks: Forks = {}
@@ -235,6 +235,7 @@ const TaskQueue = () => {
       })
         .then(async (r: any) => {
           if (r === EXEC_FORK) return
+          // console.log({ ...task, ...r, ok: true })
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: true,
@@ -247,6 +248,7 @@ const TaskQueue = () => {
         })
         .catch(async (err) => {
           if (err === EXEC_FORK) return
+          // console.log({ ...task, message: err.message, ok: false })
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,

@@ -4,6 +4,7 @@ import { Flex } from '@radix-ui/themes'
 import { appState$ } from '@renderer/core/state'
 import { MetadataTable } from './MetadataTable'
 import { RecordTable } from './RecordTable'
+import { Options } from './Options'
 
 export const MetadataAndRecordField = observer(() => {
   const metaChecked = useObservable<number[]>([])
@@ -19,8 +20,9 @@ export const MetadataAndRecordField = observer(() => {
   })
 
   return (
-    <Flex className="overflow-scroll grow">
-      <Flex gap="2">
+    <Flex className="overflow-scroll" direction="column">
+      <Options filteredRecords={filteredRecords} />
+      <Flex className="overflow-scroll grow" gap="2">
         <MetadataTable metaChecked={metaChecked} metas={meta} />
         <RecordTable filteredRecords={filteredRecords} />
       </Flex>
