@@ -88,29 +88,6 @@ export const Chunk = ({ aar, chunkParts, handleChunkPart, maxScrapeLimit }: Chun
                     </Table.Row>
                   )
                 )}
-                <Table.Row>
-                  <Table.RowHeaderCell maxWidth="10rem" className=" overflow-scroll truncate">
-                    fgchvjbknlm;,;lkjhgfdxchvjbknlm;,lkmjnhbgvfchvbjn
-                  </Table.RowHeaderCell>
-                  <Table.Cell className="overflow-scroll  truncate" maxWidth="7rem">
-                    2 - 100000000000000
-                  </Table.Cell>
-                  <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
-                    10000000000000
-                  </Table.Cell>
-                </Table.Row>
-
-                <Table.Row>
-                  <Table.RowHeaderCell maxWidth="10rem" className=" overflow-scroll truncate">
-                    fgchvjbknlm;,;lkjhgfdxchvjbknlm;,lkmjnhbgvfchvbjn
-                  </Table.RowHeaderCell>
-                  <Table.Cell className="overflow-scroll truncate" maxWidth="7rem">
-                    2 - 10000000
-                  </Table.Cell>
-                  <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
-                    10000
-                  </Table.Cell>
-                </Table.Row>
               </Table.Body>
             </Table.Root>
           )}
