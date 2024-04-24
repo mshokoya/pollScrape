@@ -1,6 +1,6 @@
 import { observer, useComputed, useObservable, useSelector } from '@legendapp/state/react'
 import { IMetaData, IRecords } from 'src/shared'
-import { Box, Flex } from '@radix-ui/themes'
+import { Flex } from '@radix-ui/themes'
 import { appState$ } from '@renderer/core/state'
 import { MetadataTable } from './MetadataTable'
 import { RecordTable } from './RecordTable'

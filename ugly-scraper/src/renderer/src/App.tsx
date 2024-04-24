@@ -5,10 +5,11 @@ import { Sidebar } from './components/Sidebar'
 import { PromptPopup } from './components/Prompt'
 import { promptState } from './core/state/prompt'
 import { observer } from '@legendapp/state/react'
-import { Theme } from '@radix-ui/themes'
+import { Flex, Theme } from '@radix-ui/themes'
 import { taskQueue } from './core/state/taskQueue'
 import { TaskView } from './components/TaskQueueBar/TaskView'
 import { MetadataAndRecordField } from './components/MetadataRecords'
+import { ScrapeField } from './components/ScrapeField'
 
 const App = observer(() => {
   const addToQueue = () => {
@@ -30,11 +31,11 @@ const App = observer(() => {
       </button> */}
       <a className="ugly-download hidden" />
       <div className="flex relative">
-        <div className="flex flex-col center h-screen z-0 w-full p-2">
+        <Flex direction="column" className=" center h-screen z-0 w-full p-2" gap="3">
           <TaskView />
-          {/* <ScrapeField /> */}
+          <ScrapeField />
           <MetadataAndRecordField />
-        </div>
+        </Flex>
         <div>
           <Sidebar />
         </div>
