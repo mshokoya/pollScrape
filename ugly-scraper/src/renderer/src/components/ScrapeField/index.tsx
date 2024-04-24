@@ -2,6 +2,7 @@ import { observer, useObservable } from '@legendapp/state/react'
 import {
   Box,
   Button,
+  Checkbox,
   CheckboxGroup,
   Flex,
   Heading,
@@ -146,13 +147,11 @@ export const ScrapeField = observer(() => {
     })
   }
 
-  const handleEmailStatus = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
-    e.stopPropagation()
-
+  const handleEmailStatus = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent> | any) => {
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
 
     // @ts-ignore
-    const status = e.target.dataset.status as string
+    const status = e.target.value as string
     const url = s.url.get()
 
     if (!status) return
@@ -171,12 +170,12 @@ export const ScrapeField = observer(() => {
         })
   }
 
-  const handleLeadCol = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
+  const handleLeadCol = (e: MouseEvent<HTMLDivElement, globalThis.MouseEvent> | any) => {
     e.stopPropagation()
     if (!s.url.peek().includes('https://app.apollo.io/#/people?finderViewId=')) return
 
     // @ts-ignore
-    const leadCol = e.target.dataset.status as string
+    const leadCol = e.target.value as string
     const url = s.url.get()
 
     switch (leadCol) {
@@ -234,7 +233,7 @@ export const ScrapeField = observer(() => {
   }
 
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <Flex direction="column" align="start" gap="3">
         {/* COLUMN 1a */}
         <Flex align="center" gap="1">
@@ -249,11 +248,11 @@ export const ScrapeField = observer(() => {
             size="1"
             resize="vertical"
             placeholder="Search the docs…"
-            className="w-[25rem] "
+            className="w-[25rem] max-h-[10rem]"
           />
 
           <Box
-            className={`mx-1 inline text-cyan-600 text-xl ${!s.url.get() ? 'hidden' : ''}`}
+            className={`text-cyan-600 text-xl ${!s.url.get() ? 'hidden' : ''}`}
             onClick={() => {
               resetState()
             }}
@@ -272,15 +271,40 @@ export const ScrapeField = observer(() => {
           <Flex direction="column" gap="3">
             <Flex direction="column" align="center" gap="2">
               <Text size="2">Scrape name</Text>
-              <TextField.Root size="2" placeholder="Search the docs…" />
+              <TextField.Root
+                required
+                size="2"
+                onChange={(e: any) => {
+                  s.name.set(e.target.value)
+                }}
+                placeholder="Search the docs…"
+              />
             </Flex>
 
             <Separator size="4" />
 
             <Flex direction="column" align="center" gap="2">
               <Text size="2">Employee Range</Text>
-              <TextField.Root size="2" type="number" placeholder="Minimum range" />
-              <TextField.Root size="2" type="number" placeholder="Maximum range" />
+              <TextField.Root
+                required
+                size="2"
+                type="number"
+                value={s.min.get()}
+                onChange={(e: any) => {
+                  handleRange(e.target.value, 'min')
+                }}
+                placeholder="Minimum range"
+              />
+              <TextField.Root
+                required
+                size="2"
+                type="number"
+                value={s.max.get()}
+                onChange={(e: any) => {
+                  handleRange(e.target.value, 'max')
+                }}
+                placeholder="Maximum range"
+              />
             </Flex>
           </Flex>
 
@@ -292,20 +316,64 @@ export const ScrapeField = observer(() => {
           <Flex direction="column" gap="3">
             <Flex direction="column" align="center" gap="2">
               <Text size="2">Email status</Text>
-              <CheckboxGroup.Root defaultValue={s.checkedStatus.get()} name="email">
-                <CheckboxGroup.Item value="verified">Verified</CheckboxGroup.Item>
-                <CheckboxGroup.Item value="guessed">Guessed</CheckboxGroup.Item>
-              </CheckboxGroup.Root>
+              <Flex direction="column" gap="1">
+                <Text as="label" size="2">
+                  <Flex gap="2">
+                    <Checkbox
+                      value="verified"
+                      data-status="verified"
+                      onClick={handleEmailStatus}
+                      checked={s.checkedStatus.get().includes('verified')}
+                    />
+                    verified
+                  </Flex>
+                </Text>
+                <Text as="label" size="2">
+                  <Flex gap="2">
+                    <Checkbox
+                      value="guessed"
+                      data-status="guessed"
+                      onClick={handleEmailStatus}
+                      checked={s.checkedStatus.get().includes('guessed')}
+                    />
+                    guessed
+                  </Flex>
+                </Text>
+              </Flex>
             </Flex>
 
             <Separator size="4" />
 
             <Flex direction="column" align="center" gap="2">
               <Text size="2">Lead column</Text>
-              <CheckboxGroup.Root defaultValue={[s.leadCol.get()]} name="lead">
+
+              <Flex direction="column" gap="1">
+                <Text as="label" size="2">
+                  <Flex gap="2">
+                    <Checkbox
+                      value="total"
+                      onClick={handleLeadCol}
+                      checked={s.leadCol.get().includes('total')}
+                    />
+                    Total
+                  </Flex>
+                </Text>
+                <Text as="label" size="2">
+                  <Flex gap="2">
+                    <Checkbox
+                      value="new"
+                      onClick={handleLeadCol}
+                      checked={s.leadCol.get().includes('new')}
+                    />
+                    Net new
+                  </Flex>
+                </Text>
+              </Flex>
+
+              {/* <CheckboxGroup.Root defaultValue={[s.leadCol.get()]} name="lead">
                 <CheckboxGroup.Item value="total">Total</CheckboxGroup.Item>
                 <CheckboxGroup.Item value="new">Net new</CheckboxGroup.Item>
-              </CheckboxGroup.Root>
+              </CheckboxGroup.Root> */}
             </Flex>
           </Flex>
 

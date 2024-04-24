@@ -1,4 +1,4 @@
-import { Flex, Table, Text } from '@radix-ui/themes'
+import { Box, Flex, Separator, Table, Text } from '@radix-ui/themes'
 import { IoArrowUp } from 'react-icons/io5'
 import { IoArrowDown } from 'react-icons/io5'
 
@@ -37,16 +37,22 @@ export const Chunk = ({ aar, chunkParts, handleChunkPart, maxScrapeLimit }: Chun
             <IoArrowUp />
           </span>
         </Flex>
+        <Box width="7rem">
+          <Separator orientation="horizontal" mt="2" mb="1" size="4" />
+        </Box>
+
         <Flex overflow="scroll" flexGrow="1">
           {aar.chunk?.length && (
-            <Table.Root size="1" cl>
+            <Table.Root size="1">
               <Table.Header className="sticky top-0 bg-[#111111]">
                 <Table.Row>
-                  <Table.ColumnHeaderCell className="text-[0.7rem]">
+                  <Table.ColumnHeaderCell maxWidth="10rem" className="text-[0.7rem]">
                     Accounts
                   </Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell className="text-[0.7rem]">Range</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell className="text-[0.6rem]">
+                  <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.7rem]">
+                    Range
+                  </Table.ColumnHeaderCell>
+                  <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.6rem]">
                     Estimated Scrape
                   </Table.ColumnHeaderCell>
                 </Table.Row>
@@ -56,35 +62,54 @@ export const Chunk = ({ aar, chunkParts, handleChunkPart, maxScrapeLimit }: Chun
                 {aar.chunk.map((aar0, idx) =>
                   aar.accounts[idx] ? (
                     <Table.Row key={idx}>
-                      <Table.RowHeaderCell className=" overflow-scroll truncate max-w-2">
+                      <Table.RowHeaderCell maxWidth="10rem" className=" overflow-scroll truncate">
                         {aar.accounts[idx].email}
                       </Table.RowHeaderCell>
-                      <Table.Cell className="overflow-scroll truncate max-w-2">{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
-                      <Table.Cell className="overflow-scroll truncate max-w-2">
+                      <Table.Cell
+                        className="overflow-scroll truncate"
+                        maxWidth="7rem"
+                      >{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
+                      <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
                         {maxScrapeLimit - aar.accounts[idx].totalScrapedInTimeFrame}
                       </Table.Cell>
                     </Table.Row>
                   ) : (
-                    <Table.Row key={idx}>
-                      <Table.RowHeaderCell className="overflow-scroll truncate">
+                    <Table.Row key={idx} className="overflow-scroll truncate">
+                      <Table.RowHeaderCell maxWidth="10rem" className="overflow-scroll">
                         No Account Available
                       </Table.RowHeaderCell>
-                      <Table.Cell className="overflow-scroll truncate">{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
-                      <Table.Cell className="overflow-scroll truncate"> - </Table.Cell>
+                      <Table.Cell
+                        className="overflow-scroll truncate"
+                        maxWidth="7rem"
+                      >{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
+                      <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                        -
+                      </Table.Cell>
                     </Table.Row>
                   )
                 )}
-
                 <Table.Row>
-                  <Table.RowHeaderCell>Zahra Ambessa</Table.RowHeaderCell>
-                  <Table.Cell>zahra@example.com</Table.Cell>
-                  <Table.Cell>Admin</Table.Cell>
+                  <Table.RowHeaderCell maxWidth="10rem" className=" overflow-scroll truncate">
+                    fgchvjbknlm;,;lkjhgfdxchvjbknlm;,lkmjnhbgvfchvbjn
+                  </Table.RowHeaderCell>
+                  <Table.Cell className="overflow-scroll  truncate" maxWidth="7rem">
+                    2 - 100000000000000
+                  </Table.Cell>
+                  <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                    10000000000000
+                  </Table.Cell>
                 </Table.Row>
 
                 <Table.Row>
-                  <Table.RowHeaderCell>Jasper Eriksson</Table.RowHeaderCell>
-                  <Table.Cell>jasper@example.com</Table.Cell>
-                  <Table.Cell>Developer</Table.Cell>
+                  <Table.RowHeaderCell maxWidth="10rem" className=" overflow-scroll truncate">
+                    fgchvjbknlm;,;lkjhgfdxchvjbknlm;,lkmjnhbgvfchvbjn
+                  </Table.RowHeaderCell>
+                  <Table.Cell className="overflow-scroll truncate" maxWidth="7rem">
+                    2 - 10000000
+                  </Table.Cell>
+                  <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                    10000
+                  </Table.Cell>
                 </Table.Row>
               </Table.Body>
             </Table.Root>
