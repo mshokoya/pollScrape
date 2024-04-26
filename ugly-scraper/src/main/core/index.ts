@@ -43,7 +43,7 @@ export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void
 
   if (isFork) {
     initScrapeQueue()
-    console.log('ScrapeQueue startedddddddddd')
+    console.log('ScrapeQueue started')
   } else {
     initTaskQueue()
     console.log('TaskQueue started')
