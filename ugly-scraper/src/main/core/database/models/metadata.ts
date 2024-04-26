@@ -1,4 +1,3 @@
-import { Schema, model } from 'mongoose'
 import { DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
 import { IMetaData } from '../../../../shared'
@@ -176,13 +175,3 @@ export const MetaDataModel_ = {
     }))
   }
 }
-
-const metaData = new Schema<IMetaData>({
-  url: { type: String, default: '' },
-  params: { type: Object, default: {} },
-  name: { type: String, default: '', unique: true },
-  accounts: { type: [Object], default: [] }, // IMetaData
-  scrapes: { type: [Object], default: [] } // [{scrapeID: "", listName: ''}] - is used in Records Model (scrape)
-})
-
-export const MetadataModel = model<IMetaData>('metadata', metaData)

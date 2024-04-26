@@ -235,7 +235,7 @@ const TaskQueue = () => {
       })
         .then(async (r: any) => {
           if (r === EXEC_FORK) return
-          // console.log({ ...task, ...r, ok: true })
+          console.log({ ok: true, ...r })
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: true,
@@ -248,7 +248,7 @@ const TaskQueue = () => {
         })
         .catch(async (err) => {
           if (err === EXEC_FORK) return
-          // console.log({ ...task, message: err.message, ok: false })
+          console.log({ message: err.message, ok: false })
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,

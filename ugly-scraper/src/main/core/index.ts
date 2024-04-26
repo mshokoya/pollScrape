@@ -10,13 +10,12 @@ import { IPC_APP } from '../../shared'
 import { generateID } from './util'
 import { actions } from './actions'
 
-process.on('message', (e) => {
-  console.log('wi in dis bihh')
+// (FIX) create types for receiving data from parent (websockets.ts = parent -> frontend & fork -> parent)
+process.on('message', (e: any & { taskType: string }) => {
   switch (e.taskType) {
     case 'init': {
-      console.log('WE WYYAAA')
       global.forkID = generateID()
-      init(null, true)
+      global.cacheHTTPPort = e.init(null, true)
       break
     }
     case 'scrape': {
@@ -27,29 +26,6 @@ process.on('message', (e) => {
     }
   }
 })
-
-// process.parentPort?.on('message', (e) => {
-//   console.log('WE WYYAAA')
-//   global.forkID = generateID()
-//   const [port] = e.ports
-
-//   global.port = port
-
-//   port.on('message', (e: ForkEvent) => {
-//     switch (e.data.taskType) {
-//       case 'scrape': {
-//         const args = e.data.meta
-//         const action = actions[args.action]
-//         scrapeQueue.enqueue({ ...args, action })
-//         break
-//       }
-//     }
-//   })
-
-//   port.start()
-
-//   init(null, true)
-// })
 
 export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void> => {
   // global.isWorker = wrk

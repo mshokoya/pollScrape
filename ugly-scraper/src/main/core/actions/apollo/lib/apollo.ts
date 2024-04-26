@@ -1,10 +1,8 @@
 import { logIntoApollo } from '.'
+import { IAccount, IRecord } from '../../../../../shared'
 import { updateAccount } from '../../../database'
-import { IAccount } from '../../../database/models/accounts'
-import { IRecord } from '../../../database/models/records'
 import { AppError, delay } from '../../../util'
 import { io } from '../../../websockets'
-import { eval_delay, waitForElement, waitForElementHide } from '../../util'
 import { apolloDoc } from './dom/scrapeData'
 import { BrowserContext } from './scraper'
 import {
@@ -296,7 +294,7 @@ export const apolloDefaultSignup = async (
     io.emit('apollo', { taskID, message: 'click the signup button' })
   })
 
-  delay(2000)
+  await delay(2000)
 
   const inputError = await page
     .$('p[class="MuiTypography-root MuiTypography-bodySmall mui-style-1ccelp7"]')
@@ -357,7 +355,7 @@ export const apolloConfirmAccount = async (
     })
     .catch(() => {})
 
-  delay(10000)
+  await delay(10000)
 
   const submitButton = await page.$('button[class="zp-button zp_zUY3r zp_aVzf8"]')
   if (!submitButton) throw new AppError(taskID, 'Failed to find confirm password field')
@@ -430,7 +428,8 @@ export const apolloAddLeadsToListAndScrape = async (
   taskID: string,
   browserCTX: BrowserContext,
   limit: number,
-  listName: string
+  listName: string,
+  lastName: { get: () => string; set: (n: any) => void }
 ) => {
   const page = browserCTX.page
 
@@ -441,11 +440,24 @@ export const apolloAddLeadsToListAndScrape = async (
   const SLPopupSelector = '[class="zp_lMRYw zp_yHIi8"]'
   const savedListTableRowSelector = '[class="zp_cWbgJ"]'
   const paginationInfoSelector = '[class="zp_VVYZh"]'
+  const getFirstTableRowName = async () => {
+    const row = await page.$(tableRowsSelector)
+    return await row.$eval('.zp_BC5Bd', (el) => el.innerText)
+  }
 
   await page.waitForSelector(paginationInfoSelector, { visible: true, timeout: 10000 })
 
-  const rows = await page.$$(tableRowsSelector)
+  let shouldContinue = true
+  while (shouldContinue) {
+    if ((await getFirstTableRowName()) !== lastName.get()) shouldContinue = false
+    console.log(lastName.get())
+    console.log(await getFirstTableRowName())
+    await delay(5000)
+  }
 
+  lastName.set(await getFirstTableRowName())
+
+  const rows = await page.$$(tableRowsSelector)
   for (let i = 0; i < 1; i++) {
     const check = await rows[i].$(checkboxSelector)
     if (!check) continue
@@ -456,7 +468,7 @@ export const apolloAddLeadsToListAndScrape = async (
     '[class="zp-button zp_zUY3r zp_hLUWg zp_n9QPr zp_B5hnZ zp_MCSwB zp_ML2Jn"]'
   )
 
-  if (!l) throw new AppError(taskID, 'failed to find list button')
+  if (!l.length) throw new AppError(taskID, 'failed to find list button')
   await l[1].click()
 
   const b = await page.waitForSelector('[class="zp-menu-item zp_fZtsJ zp_pEvFx"]', {
@@ -499,7 +511,7 @@ export const apolloAddLeadsToListAndScrape = async (
       (el) => el.querySelector('[class="zp_aBhrx"]')?.innerText
     )
     counter++
-    delay(3000)
+    await delay(3000)
   }
 
   const savedListTableRow = await page.$(savedListTableRowSelector)
@@ -562,7 +574,7 @@ export const getSavedListAndScrape = async (
       break
     }
 
-    delay(3000)
+    await delay(3000)
   }
 
   if (listIdx === null) {

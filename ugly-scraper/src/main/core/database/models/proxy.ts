@@ -1,4 +1,3 @@
-import { Schema, model } from 'mongoose'
 import { DataTypes, DestroyOptions, FindOptions, Model, SaveOptions } from 'sequelize'
 import { sequelize } from '../db'
 import { IProxy } from '../../../../shared'
@@ -69,12 +68,3 @@ export const ProxyModel_ = {
       .catch(() => null)
   }
 }
-
-const proxy = new Schema<IProxy>({
-  proxy: { type: String, default: '' },
-  protocol: { type: String, default: '' },
-  host: { type: String, default: '' },
-  port: { type: String, default: '' }
-})
-
-export const ProxyModel = model<IProxy>('proxies', proxy)

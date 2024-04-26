@@ -16,6 +16,7 @@ import { GiCancel } from 'react-icons/gi'
 import { CHANNELS } from '../../../../shared/util'
 import {
   chuckRange,
+  fetchData,
   getEmailStatusFromApolloURL,
   getLeadColFromApolloURL,
   getRangeFromApolloURL,

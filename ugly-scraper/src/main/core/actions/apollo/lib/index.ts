@@ -409,34 +409,45 @@ export const apolloScrape = async (
   url = setPageInApolloURL(url, 1)
   const credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
-  // (FIX) ============ PUT INTO FUNC =====================
-  // leads recovery (if account has listName and no date or numOfLeadsScraped)
-  // (FIX) test to see if it works
-  const metasWithEmptyList = meta.scrapes.filter((l) => {
-    const history = account.history.find((h) => h[2] === l.listName)
-    if (!history) return false
-    return history[0] == undefined && !history[1]
-  })
+  // // (FIX) ============ PUT INTO FUNC =====================
+  // // leads recovery (if account has listName and no date or numOfLeadsScraped)
+  // // (FIX) test to see if it works
+  // const metasWithEmptyList = meta.scrapes.filter((l) => {
+  //   const history = account.history.find((h) => h[2] === l.listName)
+  //   if (!history) return false
+  //   return history[0] == undefined && !history[1]
+  // })
 
-  if (metasWithEmptyList.length) {
-    for (const s of metasWithEmptyList) {
-      const data = await getSavedListAndScrape(taskID, browserCTX, s.listName)
-      await saveLeadsFromRecovery(
-        taskID,
-        meta,
-        account,
-        data,
-        s.date,
-        s.scrapeID,
-        s.listName,
-        proxy
-      ) // make func for updating db scrape
-    }
-  }
-  // =========================================================
+  // if (metasWithEmptyList.length) {
+  //   for (const s of metasWithEmptyList) {
+  //     const data = await getSavedListAndScrape(taskID, browserCTX, s.listName)
+  //     await saveLeadsFromRecovery(
+  //       taskID,
+  //       meta,
+  //       account,
+  //       data,
+  //       s.date,
+  //       s.scrapeID,
+  //       s.listName,
+  //       proxy
+  //     ) // make func for updating db scrape
+  //   }
+  // }
+  // // =========================================================
 
   // (FIX) make sure this works
   const apolloMaxPage = ['gmail', 'hotmail', 'outlook'].includes(account.domain) ? 3 : 5
+
+  // when hit the second page on apollo list, whist the the table is loading, the first element from the table last viewed is appended whilst then replaced then table has loaded
+  const lastName = (() => {
+    let name = ''
+    return {
+      get: () => name,
+      set: (n: string) => {
+        name = n
+      }
+    }
+  })()
 
   let counter = 0
   while (counter <= 2) {
@@ -463,7 +474,8 @@ export const apolloScrape = async (
       taskID,
       browserCTX,
       numOfLeadsToScrape,
-      listName
+      listName,
+      lastName
     ) // edit
       .then((_) => {
         io.emit('apollo', { taskID, message: 'successfully scraped page' })
@@ -472,7 +484,7 @@ export const apolloScrape = async (
 
     if (!data || !data.length) return
 
-    delay(2000) // randomise between 3 - 5
+    await delay(2000) // randomise between 3 - 5
 
     const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
