@@ -126,12 +126,20 @@ export const cacheServer = (cache: ReturnType<typeof Cache>) => {
       }
     }
   })
-    .listen(0, 'localhost')
+    .listen(0, () => {
+      console.log('immaaa connected')
+    })
     .on('error', () => {
       // (FIX) close entire app if server closes, or errors (look for other events that may be relevant)
       'close whole app'
     })
 
+  console.log(`
+
+    check
+
+    `)
+  console.log(server.address())
   return (server.address() as AddressInfo).port
 }
 
@@ -171,6 +179,7 @@ export const initCache = () => {
           })
         },
         getAllMetaIDs: async () => {
+          console.log('in the fork')
           return fetch(address + cacheReq.cr_getAllMetaIDs).then(async (r) => await r.json())
         },
         getAllAccountIDs: async () => {

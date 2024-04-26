@@ -290,7 +290,7 @@ const TaskQueue = () => {
     const id = generateID()
 
     const f = fork(`${path.join(__dirname)}/core.js`)
-    f.send({ taskType: 'init' })
+    f.send({ taskType: 'init', forkID: id, cacheHTTPPort: global.cacheHTTPPort })
     f.on('message', handleProcessResponse)
     forks[id] = {
       fork: f,
@@ -340,11 +340,12 @@ const TaskQueue = () => {
   }
 
   function init() {
+    createProcess()
     // for (let i = 0; i < maxForks; i++) {
     //   createProcess()
     // }
-    // forkKeys = Object.keys(forks)
-    // lb = new P2cBalancer(forkKeys.length)
+    forkKeys = Object.keys(forks)
+    lb = new P2cBalancer(forkKeys.length)
   }
 
   return {

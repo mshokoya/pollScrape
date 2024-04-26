@@ -347,6 +347,7 @@ const arrOfObjToCsv = (data: Record<string, any>) => {
 
 // ==================
 
+// for diagram (react flow)
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min
 }
