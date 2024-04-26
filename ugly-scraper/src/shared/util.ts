@@ -28,7 +28,16 @@ export const CHANNELS = {
   a_recordsGetAll: 'a_rga',
   a_recordGet: 'a_rg',
   //scrape
-  a_scrape: 'a_s'
+  a_scrape: 'a_s',
+  // =====================
+  // cache_get: 'c_g',
+  // cache_delete: 'c_d',
+  // cache_deleteMeta: 'c_dm',
+  // cache_getMeta: 'c_gm',
+  // cache_addAccount: 'c_aa',
+  // cache_removeAccount: 'c_ra',
+  // cache_getAllMetaIDs: 'c_gami',
+  cache_getAllAccountIDs: 'c_gaai'
 }
 
 export const QUEUE_CHANNELS = {

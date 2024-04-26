@@ -1,5 +1,6 @@
 import { IMetaData } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
+import { cache } from '../../../cache'
 import { initMeta } from '../../../database'
 import { MetaDataModel_ } from '../../../database/models/metadata'
 import { taskQueue } from '../../../task-queue'
@@ -80,7 +81,9 @@ export const Tscrape = async ({
       }
     })
 
-    return { ok: true, message: null, data: null }
+    await cache.addAccounts(metaID, accounts)
+
+    return { ok: true, message: null, data: metadata }
   } catch (err: any) {
     return { ok: false, message: err.message || 'failed to scrape', data: null }
   }

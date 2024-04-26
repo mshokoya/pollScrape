@@ -29,11 +29,11 @@ export const delay = (time: number) => {
 export const fmtDate = (n: any) => (n && n !== 'n/a' ? new Date(n).toDateString() : 'N/A')
 
 export const fetchData = async <T>(
-  entity: string,
-  method: string,
+  ipcGroup: string,
+  channel: string,
   ...args: any
 ): Promise<FetchData<T>> => {
-  return await window[entity][method](...args)
+  return await window[ipcGroup][channel](...args)
 }
 
 export const blinkCSS = (reqInProces: boolean = false, color: string = 'text-cyan-600') =>

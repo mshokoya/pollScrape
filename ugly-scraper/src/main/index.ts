@@ -26,6 +26,7 @@ import {
   getProxies,
   addProxy
 } from './core/actions'
+import { cache } from './core/cache'
 import { CHANNELS } from '../shared/util'
 import { AddAccountArgs, IAccount, IMetaData } from '../shared'
 import { create } from './window'
@@ -126,6 +127,8 @@ function createWindow(): void {
       ) => await Tscrape(args)
     )
 
+    // =============== cache =====================
+    ipcMain.handle(CHANNELS.cache_getAllAccountIDs, async () => await cache.getAllAccountIDs())
     // ==========================================================================================
   })
 }

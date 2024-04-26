@@ -25,8 +25,8 @@ export const scrape = async ({
     if (!account) throw new AppError(taskID, 'Failed to scrape, account could not be found')
     await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk)
   } finally {
-    // (FIX) CACHE NOW IN DB
-    // await cache.deleteMeta(metadata.id)
+    // (FIX) make sure this works
+    await cache.removeAccount(metadata.id, accountID)
     await scraper.close(browserCTX)
   }
 }

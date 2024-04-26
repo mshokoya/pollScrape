@@ -113,6 +113,12 @@ contextBridge.exposeInMainWorld('ipc', {
   on: (channel, func) => ipcRenderer.on(channel, (event, args) => func(args))
 })
 
+contextBridge.exposeInMainWorld('cache', {
+  [CHANNELS.cache_getAllAccountIDs]: async () => {
+    return await ipcRenderer.invoke(CHANNELS.cache_getAllAccountIDs)
+  }
+})
+
 // ==============================================
 
 // // Custom APIs for renderer
