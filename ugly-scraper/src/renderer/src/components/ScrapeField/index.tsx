@@ -1,16 +1,5 @@
 import { observer, useObservable } from '@legendapp/state/react'
-import {
-  Box,
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Flex,
-  Heading,
-  Separator,
-  Text,
-  TextArea,
-  TextField
-} from '@radix-ui/themes'
+import { Button, Checkbox, Flex, Separator, Text, TextArea, TextField } from '@radix-ui/themes'
 import { FormEvent, MouseEvent } from 'react'
 import { GiCancel } from 'react-icons/gi'
 import { CHANNELS } from '../../../../shared/util'
@@ -35,6 +24,7 @@ import { Diagram } from './Diagram'
 type State = {
   name: string
   reqInProcess: boolean
+  chunkingInProcess: boolean
   url: string
   min?: number
   max?: number
@@ -56,6 +46,7 @@ const defaultState = () => ({
   max: 1000000,
   maxScrapeLimit: 1000,
   checkedStatus: ['verified'],
+  chunkingInProcess: true,
   leadCol: 'total',
   chunkParts: 1,
   aar: {
@@ -199,12 +190,12 @@ export const ScrapeField = observer(() => {
     }
   }
 
-  const aar = (min: number, max: number, chunkParts: number) => {
+  const aar = async (min: number, max: number, chunkParts: number) => {
     if (!min || !max || !chunkParts) return { chunk: [], accounts: [] }
-
+    s.chunkingInProcess.set(true)
     const chunk = chuckRange(min, max, chunkParts)
-    const accounts = selectAccForScrapingFILO(chunkParts)
-
+    const accounts = await selectAccForScrapingFILO(chunkParts)
+    s.chunkingInProcess.set(false)
     return {
       chunk,
       accounts: accounts.map((a) => ({
@@ -223,14 +214,14 @@ export const ScrapeField = observer(() => {
     const cp = s.chunkParts.peek()
     const numOfAccs = appState$.accounts.length
 
-    // if (val === 'inc' && cp + 1 > numOfAccs) return
-    // if (val === 'dec' && cp - 1 <= 0) return
+    if (val === 'inc' && cp + 1 > numOfAccs) return
+    if (val === 'dec' && cp - 1 <= 0) return
 
     const newChunk = val === 'inc' ? cp + 1 : cp - 1
 
-    batch(() => {
+    batch(async () => {
       s.chunkParts.set(newChunk)
-      s.aar.set(aar(s.min.peek(), s.max.peek(), newChunk))
+      s.aar.set(await aar(s.min.peek(), s.max.peek(), newChunk))
     })
   }
 
@@ -243,7 +234,7 @@ export const ScrapeField = observer(() => {
             <Text>URL: </Text>
             <TextArea
               required
-              disabled={!!s.url.get()}
+              disabled={!!s.url.get() || s.reqInProcess.get()}
               value={s.url.get()}
               onChange={(e) => {
                 handleInput(e.target.value)
@@ -251,7 +242,7 @@ export const ScrapeField = observer(() => {
               size="1"
               resize="vertical"
               placeholder="Search the docs…"
-              className="w-[25rem] max-h-[10rem]"
+              className={`w-[25rem] max-h-[10rem] ${s.reqInProcess.get() ? 'fieldBlink' : ''}`}
             />
 
             <div
@@ -382,6 +373,7 @@ export const ScrapeField = observer(() => {
             {/* ROW 2a */}
             <Flex direction="column" gap="3">
               <Chunk
+                chunkingInProcess={s.chunkingInProcess.get()}
                 aar={s.aar.get()}
                 chunkParts={s.chunkParts.get()}
                 handleChunkPart={handleChunkPart}
