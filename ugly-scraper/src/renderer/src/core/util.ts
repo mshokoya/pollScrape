@@ -120,8 +120,10 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     },
     findTaskByTaskID: (entityID: string, taskID: string) =>
       taskInProcess[entityID].get()?.find((t1) => t1.taskID === taskID),
-    findTaskByReqType: (entityID: string, reqType: string) =>
-      taskInProcess[entityID].get()?.find((t1) => t1.type === reqType),
+    findTaskByReqType: (entityID: string, reqType: string) => {
+      if (!entityID || !reqType) return undefined
+      return taskInProcess[entityID].get()?.find((t1) => t1.type === reqType)
+    },
     updateTask: (entityID: string, taskID: string, vals: Partial<Task<T>>) => {
       const idx = taskInProcess[entityID].get().findIndex((t) => t.taskID === taskID)
       const tip = taskInProcess[entityID].get().find((t) => t.taskID === taskID)

@@ -9,7 +9,7 @@ export type MetadataPopupProps = {
   meta: IMetaData
   updateMeta: (a: Partial<IMetaData>) => Promise<void>
   continueScraping: () => void
-  deleteMeta: () => Promise<void>
+  deleteMeta: (type: 'checklist' | 'single') => Promise<void>
 }
 
 export type MetadataPopupState = { input: IMetaData; page: 'main' | 'update' }
@@ -26,7 +26,7 @@ export const MetadataPopup = (p: MetadataPopupProps) => {
         p.updateMeta(obs.input.get())
         break
       case 'delete':
-        p.deleteMeta()
+        p.deleteMeta('single')
         break
     }
   }

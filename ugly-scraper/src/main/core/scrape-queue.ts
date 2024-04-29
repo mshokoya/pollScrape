@@ -3,6 +3,7 @@ import { generateID } from './util'
 import { io } from './websockets'
 import { ScrapeQueueEvent, SProcessQueueItem, SQueueItem } from '../../shared'
 import { QUEUE_CHANNELS as QC } from '../../shared/util'
+import { actions } from './actions'
 
 const ScrapeQueue = () => {
   const _Qlock = new Mutex()
@@ -11,6 +12,27 @@ const ScrapeQueue = () => {
   let maxProcess: number = 20
   const scrapeQueue: SQueueItem[] = []
   let processQueue: SProcessQueueItem[] = []
+
+  const move = async <T>(task: SQueueItem<T>) => {
+    return _Qlock
+      .runExclusive(() => {
+        scrapeQueue.push({
+          pid: task.pid,
+          taskID: task.taskID,
+          action: task.action,
+          taskGroup: task.taskGroup,
+          args: { ...task.args, taskID: task.taskID },
+          metadata: { ...task.metadata, taskID: task.taskID }
+        })
+      })
+      .then(() => {
+        io.emit(QC.scrapeQueue, {
+          pid: task.pid,
+          taskID: task.taskID,
+          taskType: 'move'
+        })
+      })
+  }
 
   const enqueue = async <T>({
     pid,
@@ -111,6 +133,8 @@ const ScrapeQueue = () => {
       const task = await dequeue()
       if (!task) return
 
+      const abortController = new AbortController()
+
       const process = new Promise((resolve, reject) => {
         io.emit<ScrapeQueueEvent>(QC.scrapeProcessQueue, {
           pid: task.pid,
@@ -120,16 +144,12 @@ const ScrapeQueue = () => {
           taskType: 'processing',
           metadata: task.metadata as ScrapeQueueEvent['metadata']
         })
-        task
-          .action(task.args)
+        abortController.signal.addEventListener('abort', () => reject('task aborted'))
+        actions[task.action](task.args)
           .then((r) => {
-            console.log('in the THEN')
-            console.log(r)
             resolve(r)
           })
           .catch((err) => {
-            console.log('in the ERR')
-            console.log(err)
             reject(err)
           })
       })
@@ -153,6 +173,11 @@ const ScrapeQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch((err) => {
+          if (abortController.signal.aborted) {
+            io.emit('abort', {})
+            return
+          }
+
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
@@ -166,9 +191,8 @@ const ScrapeQueue = () => {
         .finally(() => {
           exec()
         })
-      // as AbortablePromise<unknown>
 
-      p_enqueue({ task, process })
+      p_enqueue({ task, process, abortController })
     } finally {
       exec_lock.release()
     }
@@ -178,9 +202,20 @@ const ScrapeQueue = () => {
     maxProcess = n
   }
 
+  const stopForce = (stopType: 'move' | 'abort') => {
+    for (const task of processQueue) {
+      task.abortController.abort()
+      io.emit()
+    }
+  }
+
+  const stopWaitForAll = () => {}
+  const stopWaitForProcesses = () => {}
+
   return {
     setMaxProcesses,
-    enqueue
+    enqueue,
+    move
   }
 }
 

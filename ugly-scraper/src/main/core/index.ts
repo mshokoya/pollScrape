@@ -7,7 +7,6 @@ import { syncDB } from './database/db'
 import { initSocketIO } from './websockets'
 import { initScrapeQueue, scrapeQueue } from './scrape-queue'
 import { IPC_APP } from '../../shared'
-import { actions } from './actions'
 
 // (FIX) create types for receiving data from parent (websockets.ts = parent -> frontend & fork -> parent)
 process.on('message', (e: any & { taskType: string }) => {
@@ -20,8 +19,13 @@ process.on('message', (e: any & { taskType: string }) => {
     }
     case 'scrape': {
       const args = e.meta
-      const action = actions[args.action]
-      scrapeQueue.enqueue({ ...args, action })
+      scrapeQueue.enqueue(args)
+      break
+    }
+    case 'move': {
+      break
+    }
+    case 'stop': {
       break
     }
   }

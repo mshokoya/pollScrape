@@ -10,9 +10,16 @@ export type ChunkCompProps = {
   maxScrapeLimit: number
   chunkParts: number
   handleChunkPart: (val: 'inc' | 'dec') => void
+  chunkingInProcess: boolean
 }
 
-export const Chunk = ({ aar, chunkParts, handleChunkPart, maxScrapeLimit }: ChunkCompProps) => {
+export const Chunk = ({
+  aar,
+  chunkParts,
+  handleChunkPart,
+  maxScrapeLimit,
+  chunkingInProcess
+}: ChunkCompProps) => {
   if (!aar.chunk.length) return <div></div>
 
   return (
@@ -21,21 +28,23 @@ export const Chunk = ({ aar, chunkParts, handleChunkPart, maxScrapeLimit }: Chun
       <Flex direction="column" overflow="scroll" className="h-[10rem]">
         <Flex gap="3" className="text-[0.8rem]">
           <Text>Chunk:</Text>
-          <span
+          <button
+            disabled={chunkingInProcess}
             onClick={() => {
               handleChunkPart('dec')
             }}
           >
             <IoArrowDown />
-          </span>
+          </button>
           <span> {chunkParts} </span>
-          <span
+          <button
+            disabled={chunkingInProcess}
             onClick={() => {
               handleChunkPart('inc')
             }}
           >
             <IoArrowUp />
-          </span>
+          </button>
         </Flex>
         <Box width="7rem">
           <Separator orientation="horizontal" mt="2" mb="1" size="4" />

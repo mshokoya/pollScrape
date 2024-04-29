@@ -38,7 +38,6 @@ const TaskQueue = () => {
   let maxProcesses = 10
   const maxForks = cpus().length
   const forks: Forks = {}
-  let forkKeys: string[]
   let lb: P2cBalancer
   const EXEC_FORK = 'ex-fk'
 
@@ -267,6 +266,19 @@ const TaskQueue = () => {
     }
   }
 
+  const stopForks = (forkIDs: string[], stopType: 'force' | 'waitAll' | 'waitPs') => {
+    const allForkIDs = Object.keys(forks)
+    const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
+    initForkLoadBalancer(newIDList)
+    for (const forkID of forkIDs) {
+      forks[forkID].fork.send({
+        taskType: 'move',
+        stopType
+      })
+    }
+    // (FIX) stop frok from click on frontend ???
+  }
+
   const setUseFork = (i: boolean) => {
     useFork = i
   }
@@ -291,17 +303,14 @@ const TaskQueue = () => {
 
     const f = fork(`${path.join(__dirname)}/core.js`)
     f.send({ taskType: 'init', forkID: id, cacheHTTPPort: global.cacheHTTPPort })
-    f.on('message', handleProcessResponse)
+    f.on('message', handleForkEvent)
     forks[id] = {
       fork: f,
       TIP: []
     }
   }
 
-  const handleProcessResponse = (evt: {
-    channel: string
-    args: EmitResponse & { forkID: string }
-  }) => {
+  const handleForkEvent = (evt: { channel: string; args: EmitResponse & { forkID: string } }) => {
     if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
       // if scrape job in taskqueue in worker
       processQueue
@@ -317,7 +326,6 @@ const TaskQueue = () => {
         ?.processes.find((p) => p.taskID === evt.args.taskID)
       if (process) process.status = evt.channel as STQ
     } else if (evt.channel === QC.scrapeProcessQueue && evt.args.taskType === 'dequeue') {
-      console.log('IN THE IF')
       const process = processQueue.find((t) => t.task.taskID === evt.args.pid)
       if (process.processes.length <= 1) {
         p_dequeue(evt.args.pid)
@@ -326,12 +334,12 @@ const TaskQueue = () => {
       }
     }
 
-    // if ()
     io.emit(evt.channel, evt.args)
   }
 
   const randomFork = () => {
-    const key = forkKeys[lb.pick()]
+    const forkIDs = Object.keys(forks)
+    const key = forkIDs[lb.pick()]
     return forks[key]
   }
 
@@ -344,8 +352,12 @@ const TaskQueue = () => {
     // for (let i = 0; i < maxForks; i++) {
     //   createProcess()
     // }
-    forkKeys = Object.keys(forks)
-    lb = new P2cBalancer(forkKeys.length)
+    const forkIDs = Object.keys(forks)
+    initForkLoadBalancer(forkIDs)
+  }
+
+  const initForkLoadBalancer = (forkIDs: string[]) => {
+    lb = new P2cBalancer(forkIDs.length)
   }
 
   return {

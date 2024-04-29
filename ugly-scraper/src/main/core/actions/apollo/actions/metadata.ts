@@ -15,14 +15,17 @@ export const updateMetadata = async (meta: IMetaData) => {
 }
 
 export const deleteMetadata = async (ids: string[]) => {
+  const del: any = { ok: [], fail: [] }
   try {
     if (!ids || !ids.length) throw new Error('valid meta id not provided')
 
     for (const id of ids) {
       await deleteMetaAndRecords(id)
+        .then(() => del.ok.push(id))
+        .catch(() => del.fail.push(id))
     }
 
-    return { ok: true, message: null, data: null }
+    return { ok: true, message: null, data: del }
   } catch (err: any) {
     return { ok: false, message: err.message, data: err }
   }

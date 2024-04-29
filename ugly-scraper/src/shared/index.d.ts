@@ -73,7 +73,7 @@ type SQueueItem<T = Record<string, any>> = {
   pid: string
   taskID: string
   taskGroup: string
-  action: (a: T) => Promise<void>
+  action: string
   args: Omit<T, 'taskID'>
   metadata: Record<string, any>
 }
@@ -81,6 +81,7 @@ type SQueueItem<T = Record<string, any>> = {
 type SProcessQueueItem = {
   task: SQueueItem
   process: Promise<any>
+  abortController: AbortController
 }
 
 type ForkScrapeEventArgs = {
