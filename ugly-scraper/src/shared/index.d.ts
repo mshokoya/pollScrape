@@ -72,6 +72,7 @@ type ScrapeQueueEvent<T = Record<string, any>> = {
 type SQueueItem<T = Record<string, any>> = {
   pid: string
   taskID: string
+  taskType
   taskGroup: string
   action: string
   args: Omit<T, 'taskID'>
@@ -98,7 +99,7 @@ type ForkScrapeEventArgs = {
 }
 
 type ForkScrapeEvent = {
-  taskType: 'scrape'
+  taskType: 'scrape' | 'move'
   meta: ForkScrapeEventArgs
 }
 

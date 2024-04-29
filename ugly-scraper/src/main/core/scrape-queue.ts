@@ -22,6 +22,7 @@ const ScrapeQueue = () => {
           pid: task.pid,
           taskID: task.taskID,
           action: task.action,
+          taskType: task.taskType,
           taskGroup: task.taskGroup,
           args: { ...task.args, taskID: task.taskID },
           metadata: { ...task.metadata, taskID: task.taskID }
@@ -41,6 +42,7 @@ const ScrapeQueue = () => {
     action,
     args,
     taskGroup,
+    taskType,
     metadata
   }: Omit<SQueueItem<T>, 'taskID'>) => {
     const taskID = generateID()
@@ -49,6 +51,7 @@ const ScrapeQueue = () => {
         scrapeQueue.push({
           pid,
           taskID,
+          taskType,
           action,
           taskGroup,
           args: { ...args, taskID },
@@ -157,8 +160,6 @@ const ScrapeQueue = () => {
           })
       })
         .then((r: Record<string, any>) => {
-          console.log('in scrape rr')
-          console.log(r)
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
@@ -177,7 +178,7 @@ const ScrapeQueue = () => {
         })
         .catch((err) => {
           if (abortController.signal.aborted) {
-            io.emit('abort', {})
+            // io.emit('abort', {})
             return
           }
 

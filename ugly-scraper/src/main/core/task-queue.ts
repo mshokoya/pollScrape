@@ -15,6 +15,7 @@ import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
 import { QUEUE_CHANNELS as QC } from '../../shared/util'
 import { fork } from 'node:child_process'
+import { actions } from './actions'
 
 type QueueItem<T = Record<string, any>> = {
   taskID: string
@@ -63,6 +64,26 @@ const TaskQueue = () => {
       .runExclusive(() => {
         // @ts-ignore
         taskQueue.push({ useFork, taskID, action, args, taskGroup, taskType, message, metadata })
+      })
+      .then(() => {
+        io.emit<TaskQueueEvent>(QC.taskQueue, {
+          taskID,
+          useFork,
+          message: 'new task added to queue',
+          taskType: 'enqueue',
+          metadata: { taskID, taskGroup, taskType, metadata }
+        })
+      })
+      .finally(() => {
+        exec()
+      })
+  }
+
+  const move = (task: QueueItem) => {
+    return _Qlock
+      .runExclusive(() => {
+        // @ts-ignore
+        taskQueue.push(task)
       })
       .then(() => {
         io.emit<TaskQueueEvent>(QC.taskQueue, {
@@ -292,11 +313,11 @@ const TaskQueue = () => {
     useFork = i
   }
 
-  const execInFork = (task: ForkScrapeEventArgs) => {
+  const execInFork = (task: ForkScrapeEventArgs, taskType?: 'scrape' | 'move') => {
     // @ts-ignore
     task.useFork = true
     postToFork({
-      taskType: 'scrape',
+      taskType: taskType || 'scrape',
       meta: task
     })
     return EXEC_FORK
@@ -319,7 +340,17 @@ const TaskQueue = () => {
     }
   }
 
-  const moveTasks = (tasks: SQueueItem[]) => {}
+  const moveTasks = (tasks: SQueueItem[]) => {
+    tasks.forEach((task) => {
+      if (useFork) {
+        // @ts-ignore
+        execInFork(task, 'move')
+      } else {
+        // @ts-ignore
+        move({ ...task, action: actions[task.action] })
+      }
+    })
+  }
 
   const handleForkEvent = (evt: { channel: string; args: EmitResponse & { forkID: string } }) => {
     if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
@@ -346,8 +377,8 @@ const TaskQueue = () => {
     } else if (evt.channel === 'end') {
       const stopType = forks[evt.args.forkID].stopType
       if (stopType === 'force') {
-        moveTasks(e.args.processQueue)
-        moveTasks(e.args.scrapeQueue)
+        moveTasks(evt.args.processQueue)
+        moveTasks(evt.args.scrapeQueue)
         forks[evt.args.forkID].fork.kill()
       } else if (stopType === 'waitPs') {
         ;('')
