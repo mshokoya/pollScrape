@@ -141,6 +141,7 @@ type Forks = {
   [key: string]: {
     fork: ChildProcess
     TIP: string[] // ids
+    stopType?: StopType
   }
 }
 
@@ -246,3 +247,5 @@ export type IRecord = {
   Industry: string
   Keywords: string[]
 }
+
+type StopType = 'force' | 'waitAll' | 'waitPs'

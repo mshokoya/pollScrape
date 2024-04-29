@@ -2,7 +2,15 @@ import { cpus } from 'os'
 import { Mutex } from 'async-mutex'
 import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
-import { ForkScrapeEvent, ForkScrapeEventArgs, Forks, TaskQueueEvent } from '../../shared'
+import {
+  ForkScrapeEvent,
+  ForkScrapeEventArgs,
+  Forks,
+  SProcessQueueItem,
+  SQueueItem,
+  StopType,
+  TaskQueueEvent
+} from '../../shared'
 import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
 import { QUEUE_CHANNELS as QC } from '../../shared/util'
@@ -266,13 +274,14 @@ const TaskQueue = () => {
     }
   }
 
-  const stopForks = (forkIDs: string[], stopType: 'force' | 'waitAll' | 'waitPs') => {
+  const stopForks = (forkIDs: string[], stopType: StopType) => {
     const allForkIDs = Object.keys(forks)
     const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
     initForkLoadBalancer(newIDList)
     for (const forkID of forkIDs) {
+      forks[forkID].stopType = stopType
       forks[forkID].fork.send({
-        taskType: 'move',
+        taskType: 'stop',
         stopType
       })
     }
@@ -310,6 +319,8 @@ const TaskQueue = () => {
     }
   }
 
+  const moveTasks = (tasks: SQueueItem[]) => {}
+
   const handleForkEvent = (evt: { channel: string; args: EmitResponse & { forkID: string } }) => {
     if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
       // if scrape job in taskqueue in worker
@@ -332,6 +343,17 @@ const TaskQueue = () => {
       } else {
         process.processes = process.processes.filter((p) => p.taskID !== evt.args.taskID)
       }
+    } else if (evt.channel === 'end') {
+      const stopType = forks[evt.args.forkID].stopType
+      if (stopType === 'force') {
+        moveTasks(e.args.processQueue)
+        moveTasks(e.args.scrapeQueue)
+        forks[evt.args.forkID].fork.kill()
+      } else if (stopType === 'waitPs') {
+        ;('')
+      } else if (stopType === 'waitAll') {
+        ;('')
+      }
     }
 
     io.emit(evt.channel, evt.args)
@@ -347,6 +369,10 @@ const TaskQueue = () => {
     maxProcesses = n
   }
 
+  const initForkLoadBalancer = (forkIDs: string[]) => {
+    lb = new P2cBalancer(forkIDs.length)
+  }
+
   function init() {
     createProcess()
     // for (let i = 0; i < maxForks; i++) {
@@ -354,10 +380,6 @@ const TaskQueue = () => {
     // }
     const forkIDs = Object.keys(forks)
     initForkLoadBalancer(forkIDs)
-  }
-
-  const initForkLoadBalancer = (forkIDs: string[]) => {
-    lb = new P2cBalancer(forkIDs.length)
   }
 
   return {
@@ -371,7 +393,8 @@ const TaskQueue = () => {
     init,
     EXEC_FORK,
     queues: () => ({ taskQueue, processQueue }),
-    tasksInProcess: () => processQueue
+    tasksInProcess: () => processQueue,
+    stopForks
   }
 }
 

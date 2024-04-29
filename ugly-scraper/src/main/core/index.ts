@@ -26,6 +26,13 @@ process.on('message', (e: any & { taskType: string }) => {
       break
     }
     case 'stop': {
+      if (e.stopType === 'force') {
+        scrapeQueue.stopForce()
+      } else if (e.stopType === 'waitAll') {
+        scrapeQueue.stopWaitForAll()
+      } else if (e.stopType === 'waitPs') {
+        scrapeQueue.stopWaitForProcess()
+      }
       break
     }
   }
