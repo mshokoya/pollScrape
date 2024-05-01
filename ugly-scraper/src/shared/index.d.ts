@@ -1,6 +1,5 @@
 import { IpcMain } from 'electron'
 import { CHANNELS } from './util'
-import { MessagePortMain, UtilityProcess } from 'electron/main'
 import { ChildProcess } from 'child_process'
 type IPC_APP = {
   ipcMain: IpcMain

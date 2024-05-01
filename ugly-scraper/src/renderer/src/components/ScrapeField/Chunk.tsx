@@ -20,6 +20,8 @@ export const Chunk = ({
   maxScrapeLimit,
   chunkingInProcess
 }: ChunkCompProps) => {
+  console.log('the aar')
+  console.log(aar.chunk)
   if (!aar.chunk.length) return <div></div>
 
   return (
@@ -29,6 +31,7 @@ export const Chunk = ({
         <Flex gap="3" className="text-[0.8rem]">
           <Text>Chunk:</Text>
           <button
+            type="button"
             disabled={chunkingInProcess}
             onClick={() => {
               handleChunkPart('dec')
@@ -38,6 +41,7 @@ export const Chunk = ({
           </button>
           <span> {chunkParts} </span>
           <button
+            type="button"
             disabled={chunkingInProcess}
             onClick={() => {
               handleChunkPart('inc')

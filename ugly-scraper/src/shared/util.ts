@@ -29,15 +29,20 @@ export const CHANNELS = {
   a_recordGet: 'a_rg',
   //scrape
   a_scrape: 'a_s',
-  // =====================
-  // cache_get: 'c_g',
-  // cache_delete: 'c_d',
-  // cache_deleteMeta: 'c_dm',
-  // cache_getMeta: 'c_gm',
-  // cache_addAccount: 'c_aa',
-  // cache_removeAccount: 'c_ra',
-  // cache_getAllMetaIDs: 'c_gami',
-  cache_getAllAccountIDs: 'c_gaai'
+  // cache
+  cache_get: 'c_g',
+  cache_delete: 'c_d',
+  cache_deleteMeta: 'c_dm',
+  cache_getMeta: 'c_gm',
+  cache_addAccount: 'c_aa',
+  cache_removeAccount: 'c_ra',
+  cache_getAllMetaIDs: 'c_gami',
+  cache_getAllAccountIDs: 'c_gaai',
+  // fork
+  fork_stop: 'f_s',
+  fork_create: 'f_c',
+  fork_setMaxTasks: 'f_smt',
+  fork_get: 'f_g'
 }
 
 export const QUEUE_CHANNELS = {

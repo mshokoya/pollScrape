@@ -1,7 +1,7 @@
 import { observable } from '@legendapp/state'
 import { ResStatus, ResStatusHelpers, TaskHelpers, TaskInProcess } from '../util'
 import { appState$ } from '.'
-import { CHANNELS } from '@shared/util'
+import { CHANNELS } from '../../../../shared/util'
 
 export const accountState = observable<State>({
   input: { email: '', password: '', recoveryEmail: '' },
@@ -47,9 +47,14 @@ export const selectAccForScrapingFILO = async (
 ): Promise<(IAccount & { totalScrapedInLast30Mins: number })[]> => {
   const accs: (IAccount & { totalScrapedInLast30Mins: number })[] = []
 
-  const allAccInUse = (await window['cache'][CHANNELS.cache_getAllAccountIDs].catch(
-    () => []
-  )) as string[]
+  console.log(window['cache'])
+  const allAccInUse = (await window['cache']
+    [CHANNELS.cache_getAllAccountIDs]()
+    .catch(() => [])) as string[]
+
+  console.log('cacheeeee')
+
+  console.log(allAccInUse)
 
   const allAccounts = appState$.accounts
     .get()

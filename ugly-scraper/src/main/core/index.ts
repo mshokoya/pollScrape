@@ -4,7 +4,7 @@ import { initForwarder } from './forwarder'
 import { cache, initCache } from './cache'
 import { initPrompt } from './prompt'
 import { syncDB } from './database/db'
-import { initSocketIO } from './websockets'
+import { initSocketIO, io } from './websockets'
 import { initScrapeQueue, scrapeQueue } from './scrape-queue'
 import { IPC_APP } from '../../shared'
 
@@ -15,14 +15,29 @@ process.on('message', (e: any & { taskType: string }) => {
       global.forkID = e.forkID
       global.cacheHTTPPort = e.cacheHTTPPort
       init(null, true)
+        .then(() => {
+          io.emit('fork', {
+            taskType: 'create',
+            ok: true,
+            forkID: e.forkID
+          })
+        })
+        .catch(() => {
+          process.kill(0)
+        })
+
       break
     }
     case 'scrape': {
-      const args = e.meta
-      scrapeQueue.enqueue(args)
+      console.log('I AM SCRAPING')
+      console.log(global.forkID)
+      scrapeQueue.enqueue(e.task)
       break
     }
     case 'move': {
+      console.log('I AM MOVING')
+      console.log(global.forkID)
+      scrapeQueue.move(e.task)
       break
     }
     case 'stop': {

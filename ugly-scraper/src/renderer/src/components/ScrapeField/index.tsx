@@ -106,12 +106,12 @@ export const ScrapeField = observer(() => {
     let leadCol: string | null = getLeadColFromApolloURL(url)
     leadCol = !leadCol ? 'total' : leadCol === 'no' ? 'new' : null
 
-    batch(() => {
+    batch(async () => {
       s.min.set(min)
       s.max.set(max)
       s.url.set(url)
       s.checkedStatus.set(emailStatus)
-      s.aar.set(aar(min, max, s.chunkParts.peek()))
+      s.aar.set(await aar(min, max, s.chunkParts.peek()))
       if (!leadCol) {
         s.url.set(removeLeadColInApolloURL(url))
         s.leadCol.set('total')

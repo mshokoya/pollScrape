@@ -155,11 +155,14 @@ export const loginManually = async ({ taskID, account }: { taskID: string; accou
   }
 }
 
-export const demine = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
+export const demine = async ({ taskID, account }, signal) => {
   const browserCTX = await scraper.newBrowser(false)
   if (!browserCTX)
     throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
   try {
+    signal.addEventListener('abort', () => {
+      throw new AppError(taskID, 'task aborted')
+    })
     // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
     await logIntoApollo(taskID, browserCTX, account)
     await waitForNavigationTo(taskID, browserCTX, 'settings/account').then(async () => {

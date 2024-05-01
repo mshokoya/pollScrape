@@ -1,8 +1,6 @@
 import { ipcRenderer, contextBridge } from 'electron'
 import { CHANNELS } from '../shared/util'
-import { IAccount } from '../main/core/database/models/accounts'
-import { IMetaData } from '../main/core/database/models/metadata'
-// import { electronAPI } from '@electron-toolkit/preload'
+import { IAccount, IMetaData } from '../shared'
 
 if (!process.contextIsolated) {
   throw new Error('contextIsolation must be enabled in the BrowserWindow')
@@ -115,8 +113,19 @@ contextBridge.exposeInMainWorld('ipc', {
 
 contextBridge.exposeInMainWorld('cache', {
   [CHANNELS.cache_getAllAccountIDs]: async () => {
-    return await ipcRenderer.invoke(CHANNELS.cache_getAllAccountIDs)
+    console.log('cchhaassddd 0')
+    const l = await ipcRenderer.invoke(CHANNELS.cache_getAllAccountIDs)
+    console.log('cchhaassddd 1')
+    console.log(l)
+    return l
   }
+})
+
+contextBridge.exposeInMainWorld('fork', {
+  [CHANNELS.fork_stop]: async (args: { forkIDs: string[]; stopType: string }) =>
+    await ipcRenderer.invoke(CHANNELS.fork_stop, args),
+  [CHANNELS.fork_create]: async () => await ipcRenderer.invoke(CHANNELS.fork_create),
+  [CHANNELS.fork_get]: async () => await ipcRenderer.invoke(CHANNELS.fork_get)
 })
 
 // ==============================================

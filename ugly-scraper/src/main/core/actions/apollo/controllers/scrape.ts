@@ -46,14 +46,14 @@ export const Tscrape = async ({
     await taskQueue.enqueue({
       taskID,
       taskGroup: 'apollo',
-      useFork: taskQueue.useFork,
+      useFork: taskQueue.useFork(),
       taskType: 'scrape',
       message: `scrape leads from apollo`,
       metadata: { metaID: metaID },
       action: async () => {
         io.emit('apollo', { taskID, taskType: 'scrape', message: 'starting lead scraper' })
 
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           for (let i = 0; i < accounts.length; i++) {
             taskQueue.execInFork({
               pid: taskID,

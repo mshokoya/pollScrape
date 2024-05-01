@@ -11,6 +11,7 @@ import { handleAPromptEvents } from './core/io/prompt'
 import { handleApolloScrapeEndEvent } from './core/io/apollo'
 import { QUEUE_CHANNELS as QC } from '../../shared/util'
 import { handleScrapeProcessQueueEvent, handleScrapeQueueEvent } from './core/io/scrapequeue'
+import { handleForkEvent } from './core/io/forks'
 
 enableReactTracking({
   auto: true
@@ -22,5 +23,6 @@ window.ipc.on(QC.processQueue, handleProcessQueueEvent)
 window.ipc.on(QC.scrapeQueue, handleScrapeQueueEvent)
 window.ipc.on(QC.scrapeProcessQueue, handleScrapeProcessQueueEvent)
 window.ipc.on('prompt', handleAPromptEvents)
+window.ipc.on('fork', handleForkEvent)
 
 createRoot(document.getElementById('root')!).render(<App />)

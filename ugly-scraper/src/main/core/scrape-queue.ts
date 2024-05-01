@@ -18,15 +18,7 @@ const ScrapeQueue = () => {
   const move = async <T>(task: SQueueItem<T>) => {
     return _Qlock
       .runExclusive(() => {
-        scrapeQueue.push({
-          pid: task.pid,
-          taskID: task.taskID,
-          action: task.action,
-          taskType: task.taskType,
-          taskGroup: task.taskGroup,
-          args: { ...task.args, taskID: task.taskID },
-          metadata: { ...task.metadata, taskID: task.taskID }
-        })
+        scrapeQueue.push(task)
       })
       .then(() => {
         io.emit(QC.scrapeQueue, {
@@ -37,35 +29,25 @@ const ScrapeQueue = () => {
       })
   }
 
-  const enqueue = async <T>({
-    pid,
-    action,
-    args,
-    taskGroup,
-    taskType,
-    metadata
-  }: Omit<SQueueItem<T>, 'taskID'>) => {
+  const enqueue = async <T>(task: Omit<SQueueItem<T>, 'taskID'>) => {
     const taskID = generateID()
     return _Qlock
       .runExclusive(() => {
         scrapeQueue.push({
-          pid,
+          ...task,
           taskID,
-          taskType,
-          action,
-          taskGroup,
-          args: { ...args, taskID },
-          metadata: { ...metadata, taskID }
+          args: { ...task.args, taskID },
+          metadata: { ...task.metadata, taskID }
         })
       })
       .then(() => {
         io.emit<ScrapeQueueEvent>(QC.scrapeQueue, {
-          pid,
+          pid: task.pid,
           taskID,
-          taskGroup,
+          taskGroup: task.taskGroup,
           taskType: 'enqueue',
           message: 'new task added to queue',
-          metadata: { ...metadata, taskID } as ScrapeQueueEvent['metadata']
+          metadata: { ...task.metadata, taskID } as ScrapeQueueEvent['metadata']
         })
       })
       .finally(() => {
@@ -128,7 +110,6 @@ const ScrapeQueue = () => {
           taskType: 'dequeue',
           metadata: t.metadata as ScrapeQueueEvent['metadata']
         })
-        taskEndEvent.emit('end')
       })
   }
 
@@ -150,8 +131,9 @@ const ScrapeQueue = () => {
           taskType: 'processing',
           metadata: task.metadata as ScrapeQueueEvent['metadata']
         })
-        abortController.signal.addEventListener('abort', () => reject('task aborted'))
-        actions[task.action](task.args)
+        // abortController.signal.addEventListener('abort', () => reject('task aborted'))
+        console.log('running a tsk')
+        actions[task.action](task.args, abortController.signal)
           .then((r) => {
             resolve(r)
           })
@@ -177,22 +159,21 @@ const ScrapeQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch((err) => {
-          if (abortController.signal.aborted) {
-            // io.emit('abort', {})
-            return
-          }
-
+          console.log('INNA SQ ERR')
+          console.log(err.message)
+          console.log(err.taskID)
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
             taskGroup: task.taskGroup,
-            taskType: 'end',
+            taskType: abortController.signal.aborted ? 'abort' : 'end',
             ok: false,
             message: err.message
           })
           p_dequeue(task.taskID)
         })
         .finally(() => {
+          taskEndEvent.emit('end')
           exec()
         })
 
@@ -207,26 +188,49 @@ const ScrapeQueue = () => {
   }
 
   const stopForce = () => {
-    maxProcess = -1
+    // maxProcess = -1
+    // const sq = scrapeQueue
+    // const pq = JSON.parse(JSON.stringify(processQueue.map((p) => p.task)))
+
+    // if (!processQueue.length) {
+    //   io.emit('fork', {
+    //     taskType: 'force',
+    //     scrapeQueue: sq,
+    //     processQueue: pq,
+    //     forkID: global.forkID
+    //   })
+    //   return
+    // }
+
     for (const task of processQueue) {
       task.abortController.abort()
     }
 
-    taskEndEvent.on('end', () => {
-      if (!processQueue.length) {
-        io.emit('end', {
-          scrapeQueue,
-          processQueue: processQueue.map((p) => p.task),
-          forkID: global.forkID
-        })
-      }
-    })
+    // taskEndEvent.on('end', () => {
+    //   if (!processQueue.length) {
+    //     io.emit('fork', {
+    //       taskType: 'force',
+    //       scrapeQueue: sq,
+    //       processQueue: pq,
+    //       forkID: global.forkID
+    //     })
+    //   }
+    // })
   }
 
   const stopWaitForAll = () => {
+    if (!processQueue.length && !scrapeQueue.length) {
+      io.emit('fork', {
+        taskType: 'waitAll',
+        forkID: global.forkID
+      })
+      return
+    }
+
     taskEndEvent.on('end', () => {
       if (!processQueue.length && !scrapeQueue.length) {
-        io.emit('end', {
+        io.emit('fork', {
+          taskType: 'waitAll',
           forkID: global.forkID
         })
       }
@@ -235,9 +239,21 @@ const ScrapeQueue = () => {
 
   const stopWaitForProcess = () => {
     maxProcess = -1
+
+    if (!processQueue.length) {
+      io.emit('fork', {
+        taskType: 'waitPs',
+        scrapeQueue,
+        // processQueue,
+        forkID: global.forkID
+      })
+      return
+    }
+
     taskEndEvent.on('end', () => {
       if (!processQueue.length) {
-        io.emit('end', {
+        io.emit('fork', {
+          taskType: 'waitPs',
           scrapeQueue,
           // processQueue,
           forkID: global.forkID
