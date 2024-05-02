@@ -282,7 +282,6 @@ const TaskQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch(async (err) => {
-          if (err === EXEC_FORK) return
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,
