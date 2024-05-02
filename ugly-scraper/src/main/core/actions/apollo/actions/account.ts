@@ -260,8 +260,8 @@ export const demine = async (
       await logIntoApollo(taskID, browserCTX, account)
       await waitForNavigationTo(taskID, browserCTX, 'settings/account').then(async () => {
         const cookies = await getBrowserCookies(browserCTX)
-        const news = await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
-        res(news)
+        const acc = await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
+        res(acc)
       })
     })
   } finally {
