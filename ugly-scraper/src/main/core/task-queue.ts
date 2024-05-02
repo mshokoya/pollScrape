@@ -428,9 +428,6 @@ const TaskQueue = () => {
 
   function init() {
     createFork()
-    // for (let i = 0; i < maxForks; i++) {
-    //   createFork()
-    // }
     const forkIDs = Object.keys(forks)
     initForkLoadBalancer(forkIDs)
   }

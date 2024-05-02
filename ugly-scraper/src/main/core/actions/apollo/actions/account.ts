@@ -101,27 +101,37 @@ export const checkAccount = async ({ taskID, account }: { taskID: string; accoun
   }
 }
 
-export const loginAuto = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
-  const browserCTX = await scraper.newBrowser(false)
+export const loginAuto = async (
+  { taskID, account }: { taskID: string; account: IAccount },
+  signal: AbortSignal
+) => {
+  let browserCTX_ID: string
 
-  if (!browserCTX)
-    throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
   try {
-    io.emit('apollo', { taskID, message: 'attempting to login' })
-    await logIntoApollo(taskID, browserCTX, account).then(() => {
-      io.emit('apollo', { taskID, message: 'login complete' })
-    })
+    return await new Promise(async () => {
+      const browserCTX = await scraper.newBrowser(false)
 
-    io.emit('apollo', { taskID, message: 'attempting to update browser cookies in db' })
-    const cookies = await getBrowserCookies(browserCTX).then((c) => {
-      io.emit('apollo', { taskID, message: 'collected browser cookies' })
-      return c
-    })
+      if (!browserCTX)
+        throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
 
-    io.emit('apollo', { taskID, message: 'saving browser cookies in db' })
-    await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
+      browserCTX_ID = browserCTX.id
+
+      io.emit('apollo', { taskID, message: 'attempting to login' })
+      await logIntoApollo(taskID, browserCTX, account).then(() => {
+        io.emit('apollo', { taskID, message: 'login complete' })
+      })
+
+      io.emit('apollo', { taskID, message: 'attempting to update browser cookies in db' })
+      const cookies = await getBrowserCookies(browserCTX).then((c) => {
+        io.emit('apollo', { taskID, message: 'collected browser cookies' })
+        return c
+      })
+
+      io.emit('apollo', { taskID, message: 'saving browser cookies in db' })
+      await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
+    })
   } finally {
-    await scraper.close(browserCTX)
+    await scraper.close(browserCTX_ID)
   }
 }
 
@@ -158,11 +168,11 @@ export const loginManually = async (
   try {
     return await new Promise(async (res, rej) => {
       signal.addEventListener('abort', () => {
-        rej({ taskID, message: 'Failed to confirm account, task aborted' })
+        rej({ taskID, message: 'Failed to login manually, task aborted' })
       })
       const browserCTX = await scraper.newBrowser(false)
       if (!browserCTX)
-        throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+        throw new AppError(taskID, 'Failed to  login manually, browser could not be started')
 
       browserCTX_ID = browserCTX.id
 
@@ -193,12 +203,12 @@ export const demine = async (
   try {
     return await new Promise(async (res, rej) => {
       signal.addEventListener('abort', () => {
-        rej({ taskID, message: 'Failed to confirm account, task aborted' })
+        rej({ taskID, message: 'Failed to demine account, task aborted' })
       })
 
       const browserCTX = await scraper.newBrowser(false)
       if (!browserCTX)
-        throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+        throw new AppError(taskID, 'Failed to demine account, browser could not be started')
 
       browserCTX_ID = browserCTX.id
 
