@@ -125,16 +125,27 @@ export const loginAuto = async ({ taskID, account }: { taskID: string; account: 
   }
 }
 
-export const addAccount = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
-  const browserCTX = await scraper.newBrowser(false)
-  if (!browserCTX)
-    throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+export const addAccount = async (
+  { taskID, account }: { taskID: string; account: IAccount },
+  signal: AbortSignal
+) => {
+  let browserCTX_ID: string
   try {
-    await signupForApollo(taskID, browserCTX, account)
-    // (FIX) indicate that account exists on db but not verified via email or apollo
-    return await AccountModel_.create(account)
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to confirm account, task aborted' })
+      })
+      const browserCTX = await scraper.newBrowser(false)
+      if (!browserCTX)
+        throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+      browserCTX_ID = browserCTX.id
+      await signupForApollo(taskID, browserCTX, account)
+      // (FIX) indicate that account exists on db but not verified via email or apollo
+      const acc = await AccountModel_.create(account)
+      res(acc)
+    })
   } finally {
-    await scraper.close(browserCTX)
+    await scraper.close(browserCTX_ID)
   }
 }
 
@@ -142,7 +153,7 @@ export const loginManually = async (
   { taskID, account }: { taskID: string; account: IAccount },
   signal: AbortSignal
 ) => {
-  let browserCTX_ID
+  let browserCTX_ID: string
 
   try {
     return await new Promise(async (res, rej) => {
@@ -177,7 +188,7 @@ export const demine = async (
   { taskID, account }: { taskID: string; account: IAccount },
   signal: AbortSignal
 ) => {
-  let browserCTX_ID
+  let browserCTX_ID: string
 
   try {
     return await new Promise(async (res, rej) => {
