@@ -52,10 +52,6 @@ export const selectAccForScrapingFILO = async (
     [CHANNELS.cache_getAllAccountIDs]()
     .catch(() => [])) as string[]
 
-  console.log('cacheeeee')
-
-  console.log(allAccInUse)
-
   const allAccounts = appState$.accounts
     .get()
     .filter((a) => a.verified === 'yes' && !allAccInUse.includes(a.id)) as (IAccount & {

@@ -14,6 +14,9 @@ process.on('message', (e: any & { taskType: string }) => {
     case 'init': {
       global.forkID = e.forkID
       global.cacheHTTPPort = e.cacheHTTPPort
+      process.on('uncaughtException', () => {
+        console.log('CAUGHT DA ERRRRRRR')
+      })
       init(null, true)
         .then(() => {
           io.emit('fork', {

@@ -95,6 +95,7 @@ const ScrapeQueue = () => {
   }
 
   const p_dequeue = async (taskID: string) => {
+    console.log('WE I?N DA DEQUEUE')
     return _Plock
       .runExclusive(() => {
         const task = processQueue.find((t) => t.task.taskID === taskID)
@@ -111,6 +112,7 @@ const ScrapeQueue = () => {
           metadata: t.metadata as ScrapeQueueEvent['metadata']
         })
       })
+    console.log('WE I?N DA DEQUEUE')
   }
 
   const exec = async () => {
@@ -132,16 +134,18 @@ const ScrapeQueue = () => {
           metadata: task.metadata as ScrapeQueueEvent['metadata']
         })
         // abortController.signal.addEventListener('abort', () => reject('task aborted'))
-        console.log('running a tsk')
         actions[task.action](task.args, abortController.signal)
           .then((r) => {
             resolve(r)
           })
           .catch((err) => {
+            console.log('in reject ERROR')
             reject(err)
           })
       })
         .then((r: Record<string, any>) => {
+          console.log('INNA SQ THEN')
+          // console.log(err)
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
@@ -160,21 +164,20 @@ const ScrapeQueue = () => {
         })
         .catch((err) => {
           console.log('INNA SQ ERR')
-          console.log(err.message)
-          console.log(err.taskID)
-          io.emit<ScrapeQueueEvent>(task.taskGroup, {
-            pid: task.pid,
-            taskID: task.taskID,
-            taskGroup: task.taskGroup,
-            taskType: abortController.signal.aborted ? 'abort' : 'end',
-            ok: false,
-            message: err.message
-          })
+          console.log(err)
+          // io.emit<ScrapeQueueEvent>(task.taskGroup, {
+          //   pid: task.pid,
+          //   taskID: task.taskID,
+          //   taskGroup: task.taskGroup,
+          //   taskType: abortController.signal.aborted ? 'abort' : 'end',
+          //   ok: false,
+          //   message: err.message
+          // })
           p_dequeue(task.taskID)
         })
         .finally(() => {
-          taskEndEvent.emit('end')
-          exec()
+          // taskEndEvent.emit('end')
+          // exec()
         })
 
       p_enqueue({ task, process, abortController })

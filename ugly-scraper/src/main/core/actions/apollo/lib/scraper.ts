@@ -103,10 +103,32 @@ export const scraper = (() => {
     }
   }
 
+  const closeByID = async (id: string) => {
+    const context = contextList.find((ctx) => ctx.id === id)
+    if (!context) {
+      console.log('failed to find CTX')
+      return
+    }
+    await context.page.close()
+    await context.context.close()
+    if (contextList.length === 1) {
+      await browser
+        ?.close()
+        .catch(() => {})
+        .finally(() => {
+          browser = null
+          contextList = []
+        })
+    } else {
+      contextList = contextList.filter((c) => c.id !== context.id)
+    }
+  }
+
   return {
     newBrowser,
     visit,
-    close
+    close,
+    closeByID
   }
 })()
 

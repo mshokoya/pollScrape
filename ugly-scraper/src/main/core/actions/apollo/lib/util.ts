@@ -4,7 +4,7 @@ import { logIntoApollo } from '.'
 import { updateAccount } from '../../../database'
 import { IAccount } from '../../../database/models/accounts'
 import { io } from '../../../websockets'
-import { delay } from '../../../util'
+import { AppError, delay } from '../../../util'
 
 export type CreditsInfo = {
   emailCreditsUsed: number
@@ -69,11 +69,16 @@ export const waitForNavigationTo = (
 ) =>
   new Promise<boolean>((resolve, _reject) => {
     const browser_check = setInterval(async () => {
-      if (browserCTX.page.url().includes(location)) {
+      if (!browserCTX.page.url() || browserCTX.page.url().includes(location)) {
         clearInterval(browser_check)
-        resolve(true)
+        if (!browserCTX.page.url()) {
+          _reject(new AppError(taskID, 'failled interval'))
+        } else {
+          resolve(true)
+        }
+
         // @ts-ignore
-      } 
+      }
       // else if ((await browserCTX.context.pages()).length === 0) {
       //   clearInterval(browser_check)
       //   throw new AppError(

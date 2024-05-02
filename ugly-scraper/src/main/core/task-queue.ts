@@ -73,8 +73,6 @@ const TaskQueue = () => {
           taskType: 'enqueue',
           metadata: { taskID, taskGroup, taskType, metadata }
         })
-        console.log('IM IN TQ MOVE')
-        console.log('IM IN TQ MOVE')
       })
       .finally(() => {
         exec()
@@ -103,6 +101,8 @@ const TaskQueue = () => {
         })
       })
       .finally(() => {
+        console.log('IM IN TQ MOVE')
+        console.log('IM IN TQ MOVE')
         exec()
       })
   }
@@ -303,16 +303,16 @@ const TaskQueue = () => {
   }
 
   const stopForks = (forkIDs: string[], stopType: StopType) => {
-    const allForkIDs = Object.keys(forks)
-    const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
-    initForkLoadBalancer(newIDList)
+    // const allForkIDs = Object.keys(forks)
+    // const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
+    // initForkLoadBalancer(newIDList)
     for (const forkID of forkIDs) {
       forks[forkID].fork.send({
         taskType: 'stop',
         stopType
       })
     }
-    if (!newIDList.length) setUseFork(false)
+    // if (!newIDList.length) setUseFork(false)
   }
 
   const setUseFork = (i: boolean) => {
@@ -344,9 +344,12 @@ const TaskQueue = () => {
     }
     const id = generateID()
 
-    const f = fork(`${path.join(__dirname)}/core.js`)
+    const f = fork(`${path.join(__dirname)}/core.js`, {}, { silent: true, stdio: 'ignore' })
     f.send({ taskType: 'init', forkID: id, cacheHTTPPort: global.cacheHTTPPort })
     f.on('message', handleForkEvent)
+    f.on('error', () => {
+      console.log('CHILD ERROR')
+    })
     f.on('exit', () => {
       io.emit('fork', {
         taskType: 'dead',

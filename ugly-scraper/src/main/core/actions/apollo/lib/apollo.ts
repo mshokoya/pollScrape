@@ -126,6 +126,7 @@ export const apolloDefaultLogin = async (
   await delay(2000)
 
   if (
+    // !page.url() ||
     page.url().includes('#/login') ||
     page.url().includes('google.com') ||
     page.url().includes('microsoftonline.com')

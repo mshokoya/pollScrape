@@ -20,8 +20,6 @@ export const Chunk = ({
   maxScrapeLimit,
   chunkingInProcess
 }: ChunkCompProps) => {
-  console.log('the aar')
-  console.log(aar.chunk)
   if (!aar.chunk.length) return <div></div>
 
   return (

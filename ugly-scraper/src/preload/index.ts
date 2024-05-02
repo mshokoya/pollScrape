@@ -112,13 +112,8 @@ contextBridge.exposeInMainWorld('ipc', {
 })
 
 contextBridge.exposeInMainWorld('cache', {
-  [CHANNELS.cache_getAllAccountIDs]: async () => {
-    console.log('cchhaassddd 0')
-    const l = await ipcRenderer.invoke(CHANNELS.cache_getAllAccountIDs)
-    console.log('cchhaassddd 1')
-    console.log(l)
-    return l
-  }
+  [CHANNELS.cache_getAllAccountIDs]: async () =>
+    await ipcRenderer.invoke(CHANNELS.cache_getAllAccountIDs)
 })
 
 contextBridge.exposeInMainWorld('fork', {
