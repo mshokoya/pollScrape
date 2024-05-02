@@ -72,7 +72,7 @@ export const waitForNavigationTo = (
       if (!browserCTX.page.url() || browserCTX.page.url().includes(location)) {
         clearInterval(browser_check)
         if (!browserCTX.page.url()) {
-          _reject(new AppError(taskID, 'failled interval'))
+          _reject(new AppError(taskID, 'failed interval'))
         } else {
           resolve(true)
         }

@@ -20,23 +20,31 @@ import { io } from '../../../websockets'
 import { mailbox } from '../../../mailbox'
 import { IAccount } from '../../../../../shared'
 
-export const confirmAccount = async ({
-  taskID,
-  account
-}: {
-  taskID: string
-  account: IAccount
-}) => {
-  const browserCTX = await scraper.newBrowser(false)
-  if (!browserCTX)
-    throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+export const confirmAccount = async (
+  { taskID, account }: { taskID: string; account: IAccount },
+  signal: AbortSignal
+) => {
+  let browserCTX_ID: string
+
   try {
-    const newAccount = await completeApolloAccountConfimation(taskID, browserCTX, account)
-    if (!newAccount)
-      throw new AppError(taskID, 'Failed to confirm account, could not complete the process')
-    return newAccount
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to confirm account, task aborted' })
+      })
+
+      const browserCTX = await scraper.newBrowser(false)
+      if (!browserCTX)
+        throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+
+      browserCTX_ID = browserCTX.id
+
+      const newAccount = await completeApolloAccountConfimation(taskID, browserCTX, account)
+      if (!newAccount)
+        throw new AppError(taskID, 'Failed to confirm account, could not complete the process')
+      res(newAccount)
+    })
   } finally {
-    await scraper.close(browserCTX)
+    await scraper.close(browserCTX_ID)
     await mailbox.relinquishConnection(process.env.AUTHEMAIL)
   }
 }
