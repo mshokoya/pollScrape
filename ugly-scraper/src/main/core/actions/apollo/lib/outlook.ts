@@ -101,6 +101,7 @@ const outlookAuth = async (
       .$('[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]')
       .catch(() => null)
     const url = page.url()
+    if (!page.url()) throw new AppError(taskID, 'Failed to find url')
 
     if (url.includes('ppsecure')) {
       const nextButton = await page.$('button[type="submit"]').catch(() => null)

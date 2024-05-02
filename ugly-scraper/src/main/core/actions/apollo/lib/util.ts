@@ -143,7 +143,10 @@ export const logIntoApolloThenVisit = async (
 
   await page.waitForNavigation({ timeout: 15000 }).then(async () => {
     await delay(7000)
-    if (page.mainFrame().url().includes('/#/login')) {
+
+    // if (page.mainFrame().url().includes('/#/login')) {
+    if (!browserCTX.page.url() || page.url().includes('/#/login')) {
+      if (!browserCTX.page.url()) throw new AppError(taskID, 'Failed to find url')
       await logIntoApollo(taskID, browserCTX, account).then(() => {
         io.emit('apollo', { taskID, message: 'Logged into apollo' })
       })

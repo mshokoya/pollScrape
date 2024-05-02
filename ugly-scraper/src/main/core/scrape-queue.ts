@@ -27,6 +27,9 @@ const ScrapeQueue = () => {
           taskType: 'move'
         })
       })
+      .finally(() => {
+        exec()
+      })
   }
 
   const enqueue = async <T>(task: Omit<SQueueItem<T>, 'taskID'>) => {
@@ -95,7 +98,6 @@ const ScrapeQueue = () => {
   }
 
   const p_dequeue = async (taskID: string) => {
-    console.log('WE I?N DA DEQUEUE')
     return _Plock
       .runExclusive(() => {
         const task = processQueue.find((t) => t.task.taskID === taskID)
@@ -112,7 +114,6 @@ const ScrapeQueue = () => {
           metadata: t.metadata as ScrapeQueueEvent['metadata']
         })
       })
-    console.log('WE I?N DA DEQUEUE')
   }
 
   const exec = async () => {
@@ -133,19 +134,16 @@ const ScrapeQueue = () => {
           taskType: 'processing',
           metadata: task.metadata as ScrapeQueueEvent['metadata']
         })
-        // abortController.signal.addEventListener('abort', () => reject('task aborted'))
+
         actions[task.action](task.args, abortController.signal)
           .then((r) => {
             resolve(r)
           })
           .catch((err) => {
-            console.log('in reject ERROR')
             reject(err)
           })
       })
         .then((r: Record<string, any>) => {
-          console.log('INNA SQ THEN')
-          // console.log(err)
           io.emit<ScrapeQueueEvent>(task.taskGroup, {
             pid: task.pid,
             taskID: task.taskID,
@@ -163,21 +161,19 @@ const ScrapeQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch((err) => {
-          console.log('INNA SQ ERR')
-          console.log(err)
-          // io.emit<ScrapeQueueEvent>(task.taskGroup, {
-          //   pid: task.pid,
-          //   taskID: task.taskID,
-          //   taskGroup: task.taskGroup,
-          //   taskType: abortController.signal.aborted ? 'abort' : 'end',
-          //   ok: false,
-          //   message: err.message
-          // })
+          io.emit<ScrapeQueueEvent>(task.taskGroup, {
+            pid: task.pid,
+            taskID: task.taskID,
+            taskGroup: task.taskGroup,
+            taskType: abortController.signal.aborted ? 'abort' : 'end',
+            ok: false,
+            message: err.message
+          })
           p_dequeue(task.taskID)
         })
         .finally(() => {
-          // taskEndEvent.emit('end')
-          // exec()
+          taskEndEvent.emit('end')
+          exec()
         })
 
       p_enqueue({ task, process, abortController })
@@ -191,34 +187,34 @@ const ScrapeQueue = () => {
   }
 
   const stopForce = () => {
-    // maxProcess = -1
-    // const sq = scrapeQueue
-    // const pq = JSON.parse(JSON.stringify(processQueue.map((p) => p.task)))
+    maxProcess = -1
+    const sq = scrapeQueue
+    const pq = JSON.parse(JSON.stringify(processQueue.map((p) => p.task)))
 
-    // if (!processQueue.length) {
-    //   io.emit('fork', {
-    //     taskType: 'force',
-    //     scrapeQueue: sq,
-    //     processQueue: pq,
-    //     forkID: global.forkID
-    //   })
-    //   return
-    // }
+    if (!processQueue.length) {
+      io.emit('fork', {
+        taskType: 'force',
+        scrapeQueue: sq,
+        processQueue: pq,
+        forkID: global.forkID
+      })
+      return
+    }
 
     for (const task of processQueue) {
       task.abortController.abort()
     }
 
-    // taskEndEvent.on('end', () => {
-    //   if (!processQueue.length) {
-    //     io.emit('fork', {
-    //       taskType: 'force',
-    //       scrapeQueue: sq,
-    //       processQueue: pq,
-    //       forkID: global.forkID
-    //     })
-    //   }
-    // })
+    taskEndEvent.on('end', () => {
+      if (!processQueue.length) {
+        io.emit('fork', {
+          taskType: 'force',
+          scrapeQueue: sq,
+          processQueue: pq,
+          forkID: global.forkID
+        })
+      }
+    })
   }
 
   const stopWaitForAll = () => {

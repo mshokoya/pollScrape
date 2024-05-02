@@ -126,7 +126,7 @@ export const apolloDefaultLogin = async (
   await delay(2000)
 
   if (
-    // !page.url() ||
+    !page.url() ||
     page.url().includes('#/login') ||
     page.url().includes('google.com') ||
     page.url().includes('microsoftonline.com')
@@ -148,6 +148,7 @@ export const setupApolloForScraping = async (
 
   const page = browserCTX.page as Page
   const pageUrl = page.url()
+  if (!pageUrl) throw new AppError(taskID, 'Failed to find url')
 
   // check if logged in via url
   if (pageUrl.includes(apolloLoggedOutURLSubstr)) {

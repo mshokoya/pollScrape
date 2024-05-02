@@ -140,6 +140,7 @@ const gmailAuth = async (
       .$('[class="zp-icon mdi mdi-close zp_dZ0gM zp_foWXB zp_j49HX zp_rzbAy"]')
       .catch(() => null)
     const url = page.url()
+    if (!url) throw new AppError(taskID, 'Failed to find url')
 
     if (gmailInvalidField) {
       throw new AppError(taskID, 'failed to login, invalid input field')

@@ -1,6 +1,6 @@
 import { cpus } from 'os'
 import { Mutex } from 'async-mutex'
-import { delay, generateID } from './util'
+import { generateID } from './util'
 import { EmitResponse, io } from './websockets'
 import {
   ForkScrapeEvent,
@@ -49,6 +49,7 @@ const TaskQueue = () => {
   const forks: Forks = {}
   let lb: P2cBalancer
   const EXEC_FORK = 'ex-fk'
+  let forkIDList = []
 
   const enqueue = async <T = Record<string, any>>({
     taskID = generateID(),
@@ -79,7 +80,7 @@ const TaskQueue = () => {
       })
   }
 
-  const move = (task: QueueItem) => {
+  const move = (task: SQueueItem) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
@@ -92,7 +93,7 @@ const TaskQueue = () => {
           message: 'new task added to queue',
           taskType: 'move',
           metadata: {
-            forkID: task.forkID,
+            // forkID: task.forkID,
             taskID: task.taskID,
             taskGroup: task.taskGroup,
             taskType: task.taskType,
@@ -101,8 +102,6 @@ const TaskQueue = () => {
         })
       })
       .finally(() => {
-        console.log('IM IN TQ MOVE')
-        console.log('IM IN TQ MOVE')
         exec()
       })
   }
@@ -283,7 +282,6 @@ const TaskQueue = () => {
         })
         .catch(async (err) => {
           if (err === EXEC_FORK) return
-          console.log('INNA TQ ERR')
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,
@@ -303,16 +301,16 @@ const TaskQueue = () => {
   }
 
   const stopForks = (forkIDs: string[], stopType: StopType) => {
-    // const allForkIDs = Object.keys(forks)
-    // const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
-    // initForkLoadBalancer(newIDList)
+    const allForkIDs = Object.keys(forks)
+    const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
+    initForkLoadBalancer(newIDList)
     for (const forkID of forkIDs) {
       forks[forkID].fork.send({
         taskType: 'stop',
         stopType
       })
     }
-    // if (!newIDList.length) setUseFork(false)
+    if (!newIDList.length) setUseFork(false)
   }
 
   const setUseFork = (i: boolean) => {
@@ -347,9 +345,6 @@ const TaskQueue = () => {
     const f = fork(`${path.join(__dirname)}/core.js`, {}, { silent: true, stdio: 'ignore' })
     f.send({ taskType: 'init', forkID: id, cacheHTTPPort: global.cacheHTTPPort })
     f.on('message', handleForkEvent)
-    f.on('error', () => {
-      console.log('CHILD ERROR')
-    })
     f.on('exit', () => {
       io.emit('fork', {
         taskType: 'dead',
@@ -362,6 +357,7 @@ const TaskQueue = () => {
       TIP: []
     }
     if (!useFork) setUseFork(true)
+    initForkLoadBalancer()
   }
 
   const moveTasks = (tasks: SQueueItem[]) => {
@@ -409,25 +405,24 @@ const TaskQueue = () => {
       } else if (evt.args.taskType === 'waitAll') {
         forks[evt.args.forkID].fork.kill()
       }
-      console.log('in kill event')
     }
 
     io.emit(evt.channel, evt.args)
   }
 
   const randomFork = () => {
-    const forkIDs = Object.keys(forks)
-    const key = forkIDs[lb.pick()]
+    const key = forkIDList[lb.pick()]
+    console.log(key)
     return forks[key]
   }
 
   const setMaxProcesses = (forkID: string, n: number) => {
-    console.log('complete')
-    // maxProcesses = n
+    maxProcesses = n
   }
 
-  const initForkLoadBalancer = (forkIDs?: string[]) => {
+  const initForkLoadBalancer = (forkIDs: string[] = []) => {
     const length = forkIDs.length || Object.keys(forks).length
+    forkIDList = length ? forkIDs : Object.keys(forks)
     lb = new P2cBalancer(length)
   }
 
