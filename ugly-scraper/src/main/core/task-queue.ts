@@ -24,7 +24,7 @@ type QueueItem<T = Record<string, any>> = {
   taskType: string
   message: string
   metadata: Record<string, string | number>
-  action: (args: T) => Promise<any>
+  action: (args: T, signal: AbortSignal) => Promise<any>
   args?: T
 }
 
@@ -35,6 +35,7 @@ type ProcessQueueItem = {
   process: Promise<void>
   type: 'fork' | 'main'
   processes: { forkID: string; taskID: string; status: STQ }[]
+  abortController: AbortController
 }
 
 const TaskQueue = () => {
@@ -58,13 +59,12 @@ const TaskQueue = () => {
     useFork,
     message,
     metadata,
-    action,
-    args
+    action
   }: QueueItem<T>) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
-        taskQueue.push({ useFork, taskID, action, args, taskGroup, taskType, message, metadata })
+        taskQueue.push({ useFork, taskID, action, taskGroup, taskType, message, metadata })
       })
       .then(() => {
         io.emit<TaskQueueEvent>(QC.taskQueue, {
@@ -246,6 +246,8 @@ const TaskQueue = () => {
         }
       }
 
+      const abortController = new AbortController()
+
       const tsk = new Promise((resolve, reject) => {
         io.emit<TaskQueueEvent>(QC.processQueue, {
           taskID: task.taskID,
@@ -260,7 +262,7 @@ const TaskQueue = () => {
         })
 
         task
-          .action(task.args)
+          .action(abortController.signal)
           .then((r) => {
             resolve(r)
           })
@@ -294,7 +296,7 @@ const TaskQueue = () => {
           exec()
         })
 
-      p_enqueue({ task, process: tsk, type: 'main', processes: [] })
+      p_enqueue({ task, process: tsk, type: 'main', processes: [], abortController })
     } finally {
       exec_lock.release()
     }
@@ -342,7 +344,7 @@ const TaskQueue = () => {
     }
     const id = generateID()
 
-    const f = fork(`${path.join(__dirname)}/core.js`, {}, { silent: true, stdio: 'ignore' })
+    const f = fork(`${path.join(__dirname)}/core.js`, null, { silent: true, stdio: 'ignore' })
     f.send({ taskType: 'init', forkID: id, cacheHTTPPort: global.cacheHTTPPort })
     f.on('message', handleForkEvent)
     f.on('exit', () => {

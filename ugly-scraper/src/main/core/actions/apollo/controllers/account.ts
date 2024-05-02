@@ -1,7 +1,7 @@
-import { AddAccountArgs } from '../../../../../shared'
+import { AddAccountArgs, IAccount } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
 import { updateAccount } from '../../../database'
-import { AccountModel_, IAccount } from '../../../database/models/accounts'
+import { AccountModel_ } from '../../../database/models/accounts'
 import { DomainModel_ } from '../../../database/models/domain'
 import { accountToMailbox, mailbox, MailboxAuthOptions } from '../../../mailbox'
 import { taskQueue } from '../../../task-queue'
@@ -37,7 +37,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
       useFork: taskQueue.useFork(),
       message: `confirming account ${account.email}`,
       metadata: { accountID, taskType: 'confirm' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'confirm',
@@ -58,7 +58,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
           })
         } else {
           // @ts-ignore
-          return await confirmAccount({ taskID, account })
+          return await confirmAccount({ taskID, account }, signal)
         }
       }
     })
@@ -85,7 +85,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
       useFork: taskQueue.useFork(),
       message: `Upgrading ${account.email} manually`,
       metadata: { accountID, taskType: 'manualUpgrade' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'manualUpgrade',
@@ -106,7 +106,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
           })
         } else {
           // @ts-ignore
-          return await upgradeManually({ taskID, account })
+          return await upgradeManually({ taskID, account }, signal)
         }
       }
     })
@@ -133,7 +133,7 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
       useFork: taskQueue.useFork(),
       message: `Upgrading ${account.email} automatically`,
       metadata: { accountID },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'upgrade',
@@ -154,7 +154,7 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
           })
         } else {
           // @ts-ignore
-          return await upgradeAutomatically({ taskID, account })
+          return await upgradeAutomatically({ taskID, account }, signal)
         }
       }
     })
@@ -181,7 +181,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
       useFork: taskQueue.useFork(),
       message: `Getting information on ${account.email} credits`,
       metadata: { accountID, taskType: 'check' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'check',
@@ -202,7 +202,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
           })
         } else {
           // @ts-ignore
-          return await checkAccount({ taskID, account })
+          return await checkAccount({ taskID, account }, signal)
         }
       }
     })
@@ -243,7 +243,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
       useFork: taskQueue.useFork(),
       message: `Logging into ${account.email} apollo account`,
       metadata: { accountID, taskType: 'login' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'login',
@@ -270,7 +270,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
           })
         } else {
           // @ts-ignore
-          return await loginAuto({ taskID, account })
+          return await loginAuto({ taskID, account }, signal)
         }
       }
     })
@@ -356,7 +356,7 @@ export const TaddAccount = async ({
       useFork: taskQueue.useFork(),
       message: `adding ${account.email}`,
       metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'create',
@@ -379,7 +379,7 @@ export const TaddAccount = async ({
           })
         } else {
           // @ts-ignore
-          return await addAccount({ taskID, account })
+          return await addAccount({ taskID, account }, signal)
         }
       }
     })
@@ -437,7 +437,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
       useFork: taskQueue.useFork(),
       message: `Login into ${account.email}`,
       metadata: { accountID, taskType: 'manualLogin' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'manualLogin',
@@ -457,7 +457,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
             }
           })
         } else {
-          return await loginManually({ taskID, account })
+          return await loginManually({ taskID, account }, signal)
         }
       }
     })
@@ -484,7 +484,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
       useFork: taskQueue.useFork(),
       message: `Demine ${account.email} popups`,
       metadata: { accountID, taskType: 'demine' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // (FIX) MOVE TO DEMINE FUNC.. i this its used to disable account in add "in use" colors on fronend
         // io.emit<TaskEnqueue>('apollo', {
         //   taskID,
@@ -492,8 +492,6 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
         //   message: `Demine ${account.email} popups`,
         //   metadata: { accountID }
         // })
-        console.log('WE USING FORK')
-        console.log(taskQueue.useFork())
         if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
@@ -507,7 +505,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
             }
           })
         } else {
-          return await demine({ taskID, account })
+          return await demine({ taskID, account }, signal)
         }
       }
     })
