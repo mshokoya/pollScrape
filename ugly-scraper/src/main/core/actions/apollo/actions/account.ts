@@ -41,63 +41,96 @@ export const confirmAccount = async ({
   }
 }
 
-export const upgradeManually = async ({
-  taskID,
-  account
-}: {
-  taskID: string
-  account: IAccount
-}) => {
-  const browserCTX = await scraper.newBrowser(false)
-  if (!browserCTX)
-    throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+export const upgradeManually = async (
+  { taskID, account }: { taskID: string; account: IAccount },
+  signal: AbortSignal
+) => {
+  let browserCTX_ID: string
   try {
-    // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
-    await logIntoApolloAndUpgradeAccountManually(taskID, browserCTX, account)
-    const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-    return await updateAccount({ id: account.id }, creditsInfo)
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to upgrade account manually, task aborted' })
+      })
+      const browserCTX = await scraper.newBrowser(false)
+      if (!browserCTX)
+        throw new AppError(
+          taskID,
+          'Failed to upgrade account manually, browser could not be started'
+        )
+
+      browserCTX_ID = browserCTX.id
+
+      // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
+      await logIntoApolloAndUpgradeAccountManually(taskID, browserCTX, account)
+      const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+      const acc = await updateAccount({ id: account.id }, creditsInfo)
+      res(acc)
+    })
   } finally {
-    await scraper.close(browserCTX)
+    await scraper.close(browserCTX_ID)
   }
 }
 
-export const upgradeAutomatically = async ({
-  taskID,
-  account
-}: {
-  taskID: string
-  account: IAccount
-}) => {
-  const browserCTX = await scraper.newBrowser(false)
-  if (!browserCTX)
-    throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+export const upgradeAutomatically = async (
+  { taskID, account }: { taskID: string; account: IAccount },
+  signal: AbortSignal
+) => {
+  let browserCTX_ID: string
   try {
-    // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
-    await logIntoApolloAndUpgradeAccount(taskID, browserCTX, account)
-    const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
-    return await updateAccount({ id: account.id }, creditsInfo) // (FIX)
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to upgrade account automatically, task aborted' })
+      })
+
+      const browserCTX = await scraper.newBrowser(false)
+      if (!browserCTX)
+        throw new AppError(
+          taskID,
+          'Failed to upgrade account automatically, browser could not be started'
+        )
+
+      browserCTX_ID = browserCTX.id
+
+      // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
+      await logIntoApolloAndUpgradeAccount(taskID, browserCTX, account)
+      const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+      return await updateAccount({ id: account.id }, creditsInfo) // (FIX)
+    })
   } finally {
-    await scraper.close(browserCTX)
+    await scraper.close(browserCTX_ID)
   }
 }
 
-export const checkAccount = async ({ taskID, account }: { taskID: string; account: IAccount }) => {
-  const browserCTX = await scraper.newBrowser(false)
-  if (!browserCTX)
-    throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+export const checkAccount = async (
+  { taskID, account }: { taskID: string; account: IAccount },
+  signal: AbortSignal
+) => {
+  let browserCTX_ID: string
   try {
-    // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
-    const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to check account, task aborted' })
+      })
 
-    const acc = await AccountModel_.findOneAndUpdate(
-      { id: account.id },
-      { ...creditsInfo, verified: 'yes' }
-    )
-    if (!acc) throw new AppError(taskID, 'failed to confirm account, update failed')
+      const browserCTX = await scraper.newBrowser(false)
+      if (!browserCTX)
+        throw new AppError(taskID, 'Failed to check account, browser could not be started')
 
-    return acc
+      browserCTX_ID = browserCTX.id
+
+      // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
+      const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+
+      const acc = await AccountModel_.findOneAndUpdate(
+        { id: account.id },
+        { ...creditsInfo, verified: 'yes' }
+      )
+      if (!acc) throw new AppError(taskID, 'failed to confirm account, update failed')
+
+      res(acc)
+    })
   } finally {
-    await scraper.close(browserCTX)
+    await scraper.close(browserCTX_ID)
   }
 }
 
@@ -108,11 +141,14 @@ export const loginAuto = async (
   let browserCTX_ID: string
 
   try {
-    return await new Promise(async () => {
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to login automatically, task aborted' })
+      })
       const browserCTX = await scraper.newBrowser(false)
 
       if (!browserCTX)
-        throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+        throw new AppError(taskID, 'Failed to login automatically, browser could not be started')
 
       browserCTX_ID = browserCTX.id
 
