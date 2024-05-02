@@ -50,7 +50,7 @@ export const Tscrape = async ({
       taskType: 'scrape',
       message: `scrape leads from apollo`,
       metadata: { metaID: metaID },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         io.emit('apollo', { taskID, taskType: 'scrape', message: 'starting lead scraper' })
 
         if (taskQueue.useFork()) {
@@ -73,7 +73,10 @@ export const Tscrape = async ({
           const arr = []
           for (let i = 0; i < accounts.length; i++) {
             arr.push(
-              scrape({ chunk: chunk[i], accountID: accounts[i], metadata, useProxy, taskID })
+              scrape(
+                { chunk: chunk[i], accountID: accounts[i], metadata, useProxy, taskID },
+                signal
+              )
             )
           }
           return await Promise.allSettled(arr)
