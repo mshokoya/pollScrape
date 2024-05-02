@@ -1,5 +1,5 @@
 import { prompt } from './prompt'
-import { IPC_APP } from '../../shared'
+import { IPC_APP, SProcessQueueItem, SQueueItem } from '../../shared'
 import { get } from '../window'
 
 export type EmitResponse = {
@@ -12,6 +12,11 @@ export type EmitResponse = {
   status?: string
   metadata?: Record<string, any>
   ok?: boolean
+}
+
+export type StopEmitResponse = {
+  scrapeQueue: SQueueItem[]
+  processQueue: SProcessQueueItem[]
 }
 
 type IO = {

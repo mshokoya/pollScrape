@@ -6,7 +6,6 @@ import {
   ForkScrapeEvent,
   ForkScrapeEventArgs,
   Forks,
-  SProcessQueueItem,
   SQueueItem,
   StopType,
   TaskQueueEvent
@@ -17,15 +16,14 @@ import { QUEUE_CHANNELS as QC } from '../../shared/util'
 import { fork } from 'node:child_process'
 import { actions } from './actions'
 
-type QueueItem<T = Record<string, any>> = {
+type QueueItem = {
   taskID: string
   useFork: boolean
   taskGroup: string
   taskType: string
   message: string
   metadata: Record<string, string | number>
-  action: (args: T, signal: AbortSignal) => Promise<any>
-  args?: T
+  action: (signal: AbortSignal) => Promise<any>
 }
 
 type STQ = 'stq' | 'spq'
@@ -44,6 +42,7 @@ const TaskQueue = () => {
   const exec_lock = new Mutex()
   let taskQueue: QueueItem[] = []
   let processQueue: ProcessQueueItem[] = []
+  let timeoutQueue: ProcessQueueItem[] = []
   let useFork = false
   let maxProcesses = 10
   const maxForks = cpus().length
@@ -60,7 +59,7 @@ const TaskQueue = () => {
     message,
     metadata,
     action
-  }: QueueItem<T>) => {
+  }: QueueItem) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
@@ -324,7 +323,7 @@ const TaskQueue = () => {
     task.useFork = true
     postToFork({
       taskType: taskType || 'scrape',
-      task: task
+      meta: task
     })
     return EXEC_FORK
   }
@@ -398,10 +397,13 @@ const TaskQueue = () => {
       }
     } else if (evt.channel === 'fork') {
       if (evt.args.taskType === 'force') {
-        moveTasks(evt.args.processQueue)
-        moveTasks(evt.args.scrapeQueue)
+        // @ts-ignore
+        evt.args.processQueue && moveTasks(evt.args.processQueue)
+        // @ts-ignore
+        evt.args.scrapeQueue && moveTasks(evt.args.scrapeQueue)
         forks[evt.args.forkID].fork.kill()
       } else if (evt.args.taskType === 'waitPs') {
+        // @ts-ignore
         moveTasks(evt.args.scrapeQueue)
         forks[evt.args.forkID].fork.kill()
       } else if (evt.args.taskType === 'waitAll') {

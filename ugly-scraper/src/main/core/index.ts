@@ -34,13 +34,13 @@ process.on('message', (e: any & { taskType: string }) => {
     case 'scrape': {
       console.log('I AM SCRAPING')
       console.log(global.forkID)
-      scrapeQueue.enqueue(e.task)
+      scrapeQueue.enqueue(e.meta)
       break
     }
     case 'move': {
       console.log('I AM MOVING')
       console.log(global.forkID)
-      scrapeQueue.move(e.task)
+      scrapeQueue.move(e.meta)
       break
     }
     case 'stop': {
