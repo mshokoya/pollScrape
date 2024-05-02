@@ -145,20 +145,28 @@ export const loginManually = async (
   let browserCTX_ID
 
   try {
-    return await new Promise(async () => {
-      signal.addEventListener('abort', (res, rej) => {
-        rej({taskID, message: })
+    return await new Promise(async (res, rej) => {
+      signal.addEventListener('abort', () => {
+        rej({ taskID, message: 'Failed to confirm account, task aborted' })
       })
       const browserCTX = await scraper.newBrowser(false)
       if (!browserCTX)
         throw new AppError(taskID, 'Failed to confirm account, browser could not be started')
+
+      browserCTX_ID = browserCTX.id
+
       await manuallyLogIntoApollo(taskID, browserCTX, account)
-      await waitForNavigationTo(taskID, browserCTX, '/settings/account', 'settings page').then(
-        async () => {
-          const cookies = await getBrowserCookies(browserCTX)
-          return await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
-        }
-      )
+      const acc = await waitForNavigationTo(
+        taskID,
+        browserCTX,
+        '/settings/account',
+        'settings page'
+      ).then(async () => {
+        const cookies = await getBrowserCookies(browserCTX)
+        return await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
+      })
+
+      res(acc)
     })
   } finally {
     await scraper.close(browserCTX_ID)
@@ -174,7 +182,7 @@ export const demine = async (
   try {
     return await new Promise(async (res, rej) => {
       signal.addEventListener('abort', () => {
-        rej({taskID, message: 'Failed to confirm account, task aborted'} )
+        rej({ taskID, message: 'Failed to confirm account, task aborted' })
       })
 
       const browserCTX = await scraper.newBrowser(false)
@@ -191,7 +199,6 @@ export const demine = async (
         res(news)
       })
     })
-
   } finally {
     await scraper.close(browserCTX_ID)
   }
