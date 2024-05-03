@@ -177,7 +177,7 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
   //@ts-ignore
   const intervalSize = (max - min) / parts
-  const intervals = []
+  const intervals: [number, number] = []
 
   for (let i = 0; i < parts; i++) {
     const start = min + i * intervalSize

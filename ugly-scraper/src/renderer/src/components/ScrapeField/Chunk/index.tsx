@@ -7,6 +7,8 @@ import { ChunkDialog } from './Dialog'
 
 export type ChunkCompProps = {
   aar: ObservableObject<{
+    rounds: number
+    timeout: [string, string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
     chunk: [min: number, max: number][]
   }>

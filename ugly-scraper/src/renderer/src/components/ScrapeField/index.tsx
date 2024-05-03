@@ -33,13 +33,13 @@ type State = {
   leadCol: string
   chunkParts: number
   aar: {
+    rounds: number
+    timeout: [string, string, string, string]
     chunk: [number, number][]
     accounts: {
       id: string
       email: string
       totalScrapedInTimeFrame: number
-      timeout: number
-      rounds: number
     }[]
   }
 }
@@ -56,6 +56,8 @@ const defaultState = () => ({
   leadCol: 'total',
   chunkParts: 1,
   aar: {
+    rounds: 1,
+    timeout: ['0', '0', '30', '0'] as [string, string, string, string],
     chunk: [],
     accounts: []
   }
@@ -104,6 +106,7 @@ export const ScrapeField = observer(() => {
       return
     }
 
+    const dft = defaultState()
     const range = getRangeFromApolloURL(urll)
     const min = !range[0] ? 1 : range[0]
     const max = !range[1] ? 10000000 : range[1]
@@ -117,7 +120,11 @@ export const ScrapeField = observer(() => {
       s.max.set(max)
       s.url.set(url)
       s.checkedStatus.set(emailStatus)
-      s.aar.set(await aar(min, max, s.chunkParts.peek()))
+      s.aar.set({
+        ...(await aar(min, max, s.chunkParts.peek())),
+        timeout: dft.aar.timeout,
+        rounds: dft.aar.rounds
+      })
       if (!leadCol) {
         s.url.set(removeLeadColInApolloURL(url))
         s.leadCol.set('total')
@@ -203,15 +210,13 @@ export const ScrapeField = observer(() => {
     const accounts = await selectAccForScrapingFILO(chunkParts)
     s.chunkingInProcess.set(false)
     return {
+      rounds: s.aar.rounds.peek(),
+      timeout: s.aar.timeout.peek(),
       chunk,
       accounts: accounts.map((a) => ({
         id: a.id,
         email: a.email,
-        totalScrapedInTimeFrame: a.totalScrapedInLast30Mins,
-        // @ts-ignore
-        timeout: a.timeout || 3000000,
-        // @ts-ignore
-        rounds: a.rounds || 0
+        totalScrapedInTimeFrame: a.totalScrapedInLast30Mins
       }))
     }
   }
@@ -231,7 +236,7 @@ export const ScrapeField = observer(() => {
 
     batch(async () => {
       s.chunkParts.set(newChunk)
-      s.aar.set(await aar(Math.round(s.min.peek()), Math.round(s.max.peek()), newChunk))
+      s.aar.set(await aar(s.min.peek(), s.max.peek(), newChunk))
     })
   }
 
