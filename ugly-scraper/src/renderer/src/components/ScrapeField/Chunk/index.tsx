@@ -66,8 +66,8 @@ export const Chunk = observer(
                       <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.7rem]">
                         Range
                       </Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.6rem]">
-                        Estimated Scrape
+                      <Table.ColumnHeaderCell maxWidth="4.5rem" className="text-[0.6rem]">
+                        Total leads
                       </Table.ColumnHeaderCell>
                     </Table.Row>
                   </Table.Header>
@@ -83,7 +83,7 @@ export const Chunk = observer(
                             {aar.accounts[idx].email.get()}
                           </Table.RowHeaderCell>
                           <Table.Cell
-                            className="overflow-scroll truncate"
+                            className="overflow-scroll truncate text-[0.6rem]"
                             maxWidth="7rem"
                           >{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
                           <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
@@ -92,11 +92,14 @@ export const Chunk = observer(
                         </Table.Row>
                       ) : (
                         <Table.Row key={idx} className="overflow-scroll truncate">
-                          <Table.RowHeaderCell maxWidth="10rem" className="overflow-scroll">
+                          <Table.RowHeaderCell
+                            maxWidth="10rem"
+                            className="overflow-scroll text-[0.5rem]"
+                          >
                             No Account Available
                           </Table.RowHeaderCell>
                           <Table.Cell
-                            className="overflow-scroll truncate"
+                            className="overflow-scroll truncate text-[0.6rem]"
                             maxWidth="7rem"
                           >{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
                           <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
@@ -112,7 +115,7 @@ export const Chunk = observer(
           </Flex>
         </Flex>
 
-        <Dialog.Content maxWidth="450px">
+        <Dialog.Content maxWidth="700px">
           {aar.chunk?.get().length && (
             <ChunkDialog
               chunkingInProcess={chunkingInProcess}

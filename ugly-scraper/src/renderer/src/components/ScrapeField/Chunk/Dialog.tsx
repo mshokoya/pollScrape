@@ -17,7 +17,7 @@ export type ChunkCompProps = {
 export const ChunkDialog = observer(
   ({ aar, chunkParts, handleChunkPart, maxScrapeLimit, chunkingInProcess }: ChunkCompProps) => {
     return (
-      <Box>
+      <Flex direction="column" height="500px">
         <Dialog.Title>Accounts For Scrape</Dialog.Title>
         {/* <Dialog.Description size="2" mb="4">
           Make changes to your profile.
@@ -25,7 +25,7 @@ export const ChunkDialog = observer(
 
         <Flex direction="column" align="center" gap="2">
           <Text size="2">Accounts For Scrape</Text>
-          <Flex direction="column" overflow="scroll" className="h-[10rem]">
+          <Flex direction="column" overflow="scroll">
             <Flex gap="3" className="text-[0.8rem]">
               <Text>Chunk:</Text>
               <button
@@ -52,9 +52,9 @@ export const ChunkDialog = observer(
               <Separator orientation="horizontal" mt="2" mb="1" size="4" />
             </Box>
 
-            <Flex overflow="scroll" flexGrow="1">
+            <Flex overflow="scroll">
               {aar.chunk?.get().length && (
-                <Table.Root size="1">
+                <Table.Root size="1" className="w-[600px] h-[360px]">
                   <Table.Header className="sticky top-0 bg-[#111111]">
                     <Table.Row>
                       <Table.ColumnHeaderCell maxWidth="10rem" className="text-[0.7rem]">
@@ -137,7 +137,7 @@ export const ChunkDialog = observer(
             <Button>Save</Button>
           </Dialog.Close>
         </Flex>
-      </Box>
+      </Flex>
     )
   }
 )

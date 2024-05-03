@@ -181,8 +181,10 @@ export const chuckRange = (min: number, max: number, parts: number): [number, nu
 
   for (let i = 0; i < parts; i++) {
     const start = min + i * intervalSize
-    const end = start + intervalSize
-    intervals.push([start, end])
+    const end = Math.round(start + intervalSize)
+    const fmtStart = i <= 0 ? Math.round(start) : Math.round(start + 1)
+
+    intervals.push([fmtStart, end])
   }
   return intervals
 }
