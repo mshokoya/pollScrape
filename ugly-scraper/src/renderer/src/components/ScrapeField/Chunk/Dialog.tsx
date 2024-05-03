@@ -75,7 +75,7 @@ export const ChunkDialog = observer(
                         Range
                       </Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.6rem]">
-                        Estimated Scrape
+                        Total leads
                       </Table.ColumnHeaderCell>
                     </Table.Row>
                   </Table.Header>
