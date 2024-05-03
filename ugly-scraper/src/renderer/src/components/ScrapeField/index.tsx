@@ -34,7 +34,13 @@ type State = {
   chunkParts: number
   aar: {
     chunk: [number, number][]
-    accounts: { id: string; email: string; totalScrapedInTimeFrame: number }[]
+    accounts: {
+      id: string
+      email: string
+      totalScrapedInTimeFrame: number
+      timeout: number
+      rounds: number
+    }[]
   }
 }
 
@@ -201,7 +207,11 @@ export const ScrapeField = observer(() => {
       accounts: accounts.map((a) => ({
         id: a.id,
         email: a.email,
-        totalScrapedInTimeFrame: a.totalScrapedInLast30Mins
+        totalScrapedInTimeFrame: a.totalScrapedInLast30Mins,
+        // @ts-ignore
+        timeout: a.timeout || 3000000,
+        // @ts-ignore
+        rounds: a.rounds || 0
       }))
     }
   }
@@ -374,7 +384,7 @@ export const ScrapeField = observer(() => {
             <Flex direction="column" gap="3">
               <Chunk
                 chunkingInProcess={s.chunkingInProcess.get()}
-                aar={s.aar.get()}
+                aar={s.aar}
                 chunkParts={s.chunkParts.get()}
                 handleChunkPart={handleChunkPart}
                 maxScrapeLimit={s.maxScrapeLimit.get()}

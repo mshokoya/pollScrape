@@ -11,7 +11,7 @@ export function handleForkEvent(res: any) {
     // }
     case 'create': {
       if (res.ok) forkState$.forks.push(res.forkID)
-      forkState$.createInProcess.set((c) => c - 1)
+      forkState$.createInProcess.set((c) => (c - 1 <= 0 ? 0 : c - 1))
       break
     }
     case 'dead':
