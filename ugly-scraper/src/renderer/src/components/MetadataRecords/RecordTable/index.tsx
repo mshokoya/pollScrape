@@ -34,7 +34,7 @@ export const RecordTable = ({ filteredRecords }: RecordsSubCompArgs) => {
 
   return (
     <div className="border-[#2f3135] basis-2/3 border rounded grow overflow-auto">
-      <ScrollArea type="always">
+      <ScrollArea type="scroll">
         <table className=" w-[150%] table-fixed overflow-auto">
           <thead className="sticky top-0 bg-[#202226] text-[0.8rem] z-10">
             <tr>

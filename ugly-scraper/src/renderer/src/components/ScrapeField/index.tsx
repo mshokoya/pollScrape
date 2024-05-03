@@ -33,7 +33,7 @@ type State = {
   leadCol: string
   chunkParts: number
   aar: {
-    rounds: number
+    rounds: string
     timeout: [string, string, string, string]
     chunk: [number, number][]
     accounts: {
@@ -56,7 +56,7 @@ const defaultState = () => ({
   leadCol: 'total',
   chunkParts: 1,
   aar: {
-    rounds: 1,
+    rounds: '1',
     timeout: ['0', '0', '30', '0'] as [string, string, string, string],
     chunk: [],
     accounts: []
@@ -146,10 +146,10 @@ export const ScrapeField = observer(() => {
 
     const url = setRangeInApolloURL(s.url.peek(), [min, max])
 
-    batch(() => {
+    batch(async () => {
       s.url.set(url)
       rng === 'min' ? s.min.set(val) : s.max.set(val)
-      s.aar.set(aar(min, max, s.chunkParts.peek()))
+      s.aar.set(await aar(min, max, s.chunkParts.peek()))
     })
   }
 

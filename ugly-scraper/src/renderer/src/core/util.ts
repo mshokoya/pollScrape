@@ -177,14 +177,21 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
   //@ts-ignore
   const intervalSize = (max - min) / parts
-  const intervals: [number, number] = []
+  const intervals: [number, number][] = []
 
   for (let i = 0; i < parts; i++) {
-    const start = min + i * intervalSize
+    const start = Math.round(min + i * intervalSize)
     const end = Math.round(start + intervalSize)
-    const fmtStart = i <= 0 ? Math.round(start) : Math.round(start + 1)
+    const fmtStart =
+      i === 0 // if first arr, then set first val in that arr
+        ? start
+        : intervals[i - 1][1] >= start //if not on first arr and first value matches second value in previous arr, inc by 1
+          ? intervals[i - 1][1] + 1
+          : start
 
-    intervals.push([fmtStart, end])
+    const fmtEnd = end <= fmtStart ? fmtStart + 1 : end
+
+    intervals.push([fmtStart, fmtEnd])
   }
   return intervals
 }

@@ -1,13 +1,13 @@
 import { ObservableObject } from '@legendapp/state'
 import { observer } from '@legendapp/state/react'
 import { Box, Flex, Separator, Table, Text, Dialog, Button } from '@radix-ui/themes'
-import { IoArrowUp } from 'react-icons/io5'
+import { IoArrowUp, IoOptionsOutline } from 'react-icons/io5'
 import { IoArrowDown } from 'react-icons/io5'
 import { ChunkDialog } from './Dialog'
 
 export type ChunkCompProps = {
   aar: ObservableObject<{
-    rounds: number
+    rounds: string
     timeout: [string, string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
     chunk: [min: number, max: number][]
@@ -27,30 +27,32 @@ export const Chunk = observer(
         <Flex direction="column" align="center" gap="2">
           <Text size="2">Accounts For Scrape</Text>
           <Flex direction="column" overflow="scroll" className="h-[10rem]">
-            <Flex gap="3" className="text-[0.8rem]">
-              <Text>Chunk:</Text>
-              <button
-                type="button"
-                disabled={chunkingInProcess}
-                onClick={() => {
-                  handleChunkPart('dec')
-                }}
-              >
-                <IoArrowDown />
-              </button>
-              <span> {chunkParts} </span>
-              <button
-                type="button"
-                disabled={chunkingInProcess}
-                onClick={() => {
-                  handleChunkPart('inc')
-                }}
-              >
-                <IoArrowUp />
-              </button>
+            <Flex justify="between" align="center">
+              <Flex gap="3" className="text-[0.8rem]">
+                <Text>Chunk:</Text>
+                <button
+                  type="button"
+                  disabled={chunkingInProcess}
+                  onClick={() => {
+                    handleChunkPart('dec')
+                  }}
+                >
+                  <IoArrowDown />
+                </button>
+                <span> {chunkParts} </span>
+                <button
+                  type="button"
+                  disabled={chunkingInProcess}
+                  onClick={() => {
+                    handleChunkPart('inc')
+                  }}
+                >
+                  <IoArrowUp />
+                </button>
+              </Flex>
 
               <Dialog.Trigger>
-                <Button>Edit profile</Button>
+                <IoOptionsOutline className="inline" />
               </Dialog.Trigger>
             </Flex>
             <Box width="7rem">
@@ -118,7 +120,7 @@ export const Chunk = observer(
         </Flex>
 
         <Dialog.Content maxWidth="700px">
-          {aar.chunk?.get().length && (
+          {aar.chunk.get()?.length && (
             <ChunkDialog
               chunkingInProcess={chunkingInProcess}
               aar={aar}

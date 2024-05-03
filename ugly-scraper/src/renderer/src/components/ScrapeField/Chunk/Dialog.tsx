@@ -5,7 +5,7 @@ import { IoArrowDown, IoArrowUp } from 'react-icons/io5'
 
 export type ChunkCompProps = {
   aar: ObservableObject<{
-    rounds: number
+    rounds: string
     timeout: [string, string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
     chunk: [min: number, max: number][]
@@ -18,25 +18,28 @@ export type ChunkCompProps = {
 
 export const ChunkDialog = observer(
   ({ aar, chunkParts, handleChunkPart, maxScrapeLimit, chunkingInProcess }: ChunkCompProps) => {
-    const handleTimeoutSelect = (pos: string, e: any) => {
-      aar.timeout[parseInt(pos)].set(e)
-    }
-
-    console.log(aar.get())
-
+    const timeout = `${aar.timeout[0].get()}d:${aar.timeout[1].get()}h:${aar.timeout[2].get()}m:${aar.timeout[3].get()}s`
+    const rounds = aar.rounds.get()
     return (
-      <Flex direction="column" height="500px">
-        <Dialog.Title>Accounts For Scrape</Dialog.Title>
-        {/* <Dialog.Description size="2" mb="4">
-          Make changes to your profile.
-        </Dialog.Description> */}
-        <Flex gap="2">
-          <Text>Timeout:</Text>
-          <TimeoutComp aar={aar} handleTimeoutSelect={handleTimeoutSelect} />
-        </Flex>
+      <Flex direction="column" height="500px" gap="3">
+        <Box mx="auto" mb="2">
+          <Dialog.Title>Accounts For Scrape</Dialog.Title>
+        </Box>
 
         <Flex direction="column" gap="2" align="center">
           <Flex direction="column" overflow="scroll">
+            <Flex direction="column" gap="3" mb="3">
+              <Flex gap="2">
+                <Text>Timeout:</Text>
+                <TimeoutComp aar={aar} />
+              </Flex>
+
+              <Flex gap="2">
+                <Text>Rounds:</Text>
+                <RoundsComp aar={aar} />
+              </Flex>
+            </Flex>
+
             <Flex gap="3" className="text-[0.8rem]">
               <Text>Chunk:</Text>
               <button
@@ -65,7 +68,7 @@ export const ChunkDialog = observer(
 
             <Flex overflow="scroll" align="center">
               {aar.chunk?.get().length && (
-                <Table.Root size="1" className="w-[600px] h-[360px]">
+                <Table.Root size="1" className="w-[600px] h-[300px]">
                   <Table.Header className="sticky top-0 bg-[#111111]">
                     <Table.Row>
                       <Table.ColumnHeaderCell maxWidth="10rem" className="text-[0.7rem]">
@@ -76,6 +79,12 @@ export const ChunkDialog = observer(
                       </Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.6rem]">
                         Total leads
+                      </Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.6rem]">
+                        Timeout
+                      </Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell maxWidth="7rem" className="text-[0.6rem]">
+                        Rounds
                       </Table.ColumnHeaderCell>
                     </Table.Row>
                   </Table.Header>
@@ -97,6 +106,12 @@ export const ChunkDialog = observer(
                           <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
                             {maxScrapeLimit - aar.accounts[idx].totalScrapedInTimeFrame.get()}
                           </Table.Cell>
+                          <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                            {timeout}
+                          </Table.Cell>
+                          <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                            {rounds}
+                          </Table.Cell>
                         </Table.Row>
                       ) : (
                         <Table.Row key={idx} className="overflow-scroll truncate">
@@ -109,6 +124,12 @@ export const ChunkDialog = observer(
                           >{`${aar0[0]} - ${aar0[1]}`}</Table.Cell>
                           <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
                             -
+                          </Table.Cell>
+                          <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                            {timeout}
+                          </Table.Cell>
+                          <Table.Cell className="overflow-scroll truncate" maxWidth="5rem">
+                            {rounds}
                           </Table.Cell>
                         </Table.Row>
                       )
@@ -123,11 +144,8 @@ export const ChunkDialog = observer(
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
             <Button variant="soft" color="gray">
-              Cancel
+              Close
             </Button>
-          </Dialog.Close>
-          <Dialog.Close>
-            <Button>Save</Button>
           </Dialog.Close>
         </Flex>
       </Flex>
@@ -137,22 +155,23 @@ export const ChunkDialog = observer(
 
 type TimeoutComp = {
   aar: ObservableObject<{
-    rounds: number
+    rounds: string
     timeout: [string, string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
     chunk: [min: number, max: number][]
   }>
-  handleTimeoutSelect: (pos: number, e: any) => void
 }
 
-const TimeoutComp = observer(({ handleTimeoutSelect, aar }: TimeoutComp) => {
+const TimeoutComp = observer(({ aar }: TimeoutComp) => {
   return (
     <>
       <Select.Root
         size="1"
         defaultValue={aar.timeout[0].get()}
         value={aar.timeout[0].get()}
-        onValueChange={(e) => handleTimeoutSelect(0, e)}
+        onValueChange={(e) => {
+          aar.timeout[0].set(e)
+        }}
       >
         <Select.Trigger placeholder="Days" />
         <Select.Content>
@@ -169,16 +188,14 @@ const TimeoutComp = observer(({ handleTimeoutSelect, aar }: TimeoutComp) => {
       </Select.Root>
 
       {/*
-
          hours
-
-          */}
+        */}
 
       <Select.Root
         size="1"
         defaultValue={aar.timeout[1].get()}
         value={aar.timeout[1].get()}
-        onValueChange={(e) => handleTimeoutSelect(1, e)}
+        onValueChange={(e) => aar.timeout[1].set(e)}
       >
         <Select.Trigger placeholder="Hours" />
         <Select.Content>
@@ -200,16 +217,14 @@ const TimeoutComp = observer(({ handleTimeoutSelect, aar }: TimeoutComp) => {
       </Select.Root>
 
       {/*
-
           Minutes
-
         */}
 
       <Select.Root
         size="1"
         defaultValue={aar.timeout[2].get()}
         value={aar.timeout[2].get()}
-        onValueChange={(e) => handleTimeoutSelect(2, e)}
+        onValueChange={(e) => aar.timeout[2].set(e)}
       >
         <Select.Trigger placeholder="Minutes" />
         <Select.Content>
@@ -232,16 +247,16 @@ const TimeoutComp = observer(({ handleTimeoutSelect, aar }: TimeoutComp) => {
       </Select.Root>
 
       {/*
-
           Seconds
-
         */}
 
       <Select.Root
         size="1"
         defaultValue={aar.timeout[3].get()}
         value={aar.timeout[3].get()}
-        onValueChange={(e) => handleTimeoutSelect(3, e)}
+        onValueChange={(e) => {
+          aar.timeout[3].set(e)
+        }}
       >
         <Select.Trigger placeholder="Seconds" />
         <Select.Content>
@@ -264,5 +279,44 @@ const TimeoutComp = observer(({ handleTimeoutSelect, aar }: TimeoutComp) => {
         </Select.Content>
       </Select.Root>
     </>
+  )
+})
+
+type RoundsComp = {
+  aar: ObservableObject<{
+    rounds: string
+    timeout: [string, string, string, string]
+    accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
+    chunk: [min: number, max: number][]
+  }>
+}
+
+export const RoundsComp = observer(({ aar }: RoundsComp) => {
+  return (
+    <Select.Root
+      size="1"
+      defaultValue={aar.rounds.get()}
+      value={aar.rounds.get()}
+      onValueChange={(e) => {
+        aar.rounds.set(e)
+      }}
+    >
+      <Select.Trigger placeholder="Rounds" />
+      <Select.Content>
+        <Select.Group>
+          <Select.Label>Rounds</Select.Label>
+          <Select.Item value="1">1 round</Select.Item>
+          <Select.Item value="2">2 rounds</Select.Item>
+          <Select.Item value="3">3 rounds</Select.Item>
+          <Select.Item value="4">4 rounds</Select.Item>
+          <Select.Item value="5">5 rounds</Select.Item>
+          <Select.Item value="6">6 rounds</Select.Item>
+          <Select.Item value="7">7 rounds</Select.Item>
+          <Select.Item value="8">8 rounds</Select.Item>
+          <Select.Item value="9">9 rounds</Select.Item>
+          <Select.Item value="10">10 rounds</Select.Item>
+        </Select.Group>
+      </Select.Content>
+    </Select.Root>
   )
 })

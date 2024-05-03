@@ -40,7 +40,7 @@ export const DomainTable = observer((p: Props) => {
   return (
     <Dialog.Root>
       <div className="border-[#2f3135] border rounded grow overflow-auto">
-        <ScrollArea type="always">
+        <ScrollArea type="scroll">
           <table className=" w-[150%] table-fixed overflow-auto">
             <thead className="sticky top-0 bg-[#202226] text-[0.8rem] z-10">
               <tr>
