@@ -22,6 +22,11 @@ type QueueItem = {
   taskGroup: string
   taskType: string
   message: string
+  timeout?: {
+    time: number
+    rounds: number
+    _TO: NodeJS.Timeout
+  }
   metadata: Record<string, string | number>
   action: (signal: AbortSignal) => Promise<any>
 }
@@ -39,10 +44,11 @@ type ProcessQueueItem = {
 const TaskQueue = () => {
   const _Qlock = new Mutex()
   const _Plock = new Mutex()
+  const _Tlock = new Mutex()
   const exec_lock = new Mutex()
   let taskQueue: QueueItem[] = []
   let processQueue: ProcessQueueItem[] = []
-  let timeoutQueue: ProcessQueueItem[] = []
+  let timeoutQueue: QueueItem[] = []
   let useFork = false
   let maxProcesses = 10
   const maxForks = cpus().length
@@ -51,19 +57,20 @@ const TaskQueue = () => {
   const EXEC_FORK = 'ex-fk'
   let forkIDList = []
 
-  const enqueue = async <T = Record<string, any>>({
+  const enqueue = async ({
     taskID = generateID(),
     taskGroup,
     taskType,
     useFork,
     message,
     metadata,
-    action
+    action,
+    timeout
   }: QueueItem) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore
-        taskQueue.push({ useFork, taskID, action, taskGroup, taskType, message, metadata })
+        taskQueue.push({ useFork, taskID, action, taskGroup, taskType, message, metadata, timeout })
       })
       .then(() => {
         io.emit<TaskQueueEvent>(QC.taskQueue, {
@@ -178,8 +185,15 @@ const TaskQueue = () => {
   const p_dequeue = async (taskID: string) => {
     return _Plock
       .runExclusive(() => {
+        // const task = JSON.parse(JSON.stringify(processQueue.find((t) => t.task.taskID === taskID)))
         const task = processQueue.find((t) => t.task.taskID === taskID)
         processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
+
+        if (task.task.timeout) {
+          task.task.timeout.rounds -= 1
+          task.task.timeout.rounds ? t_enqueue(task.task) : t_dequeue(taskID)
+        }
+
         return task
       })
       .then((t) => {
@@ -193,6 +207,60 @@ const TaskQueue = () => {
             taskGroup: t.task.taskGroup,
             taskType: t.task.taskType,
             metadata: t.task.metadata
+          }
+        })
+      })
+  }
+
+  const t_enqueue = async (task: QueueItem) => {
+    return _Tlock
+      .runExclusive(() => {
+        const to = setTimeout(() => {
+          const taskID = task.taskID
+          _Tlock.runExclusive(() => {
+            timeoutQueue = timeoutQueue.filter((to) => to.taskID === taskID)
+          })
+        }, task.timeout.time)
+        task.timeout._TO = to
+        timeoutQueue.push(task)
+      })
+      .then(() => {
+        io.emit<TaskQueueEvent>(QC.timeoutQueue, {
+          taskID: task.taskID,
+          message: 'task added to timeout',
+          taskType: 'enqueue',
+          useFork: task.useFork,
+          metadata: {
+            taskID: task.taskID,
+            taskGroup: task.taskGroup,
+            taskType: task.taskType,
+            metadata: task.metadata
+          }
+        })
+      })
+      .finally(() => {
+        exec()
+      })
+  }
+
+  const t_dequeue = async (taskID: string) => {
+    return _Tlock
+      .runExclusive(() => {
+        const task = timeoutQueue.find((t) => t.taskID === taskID)
+        timeoutQueue = timeoutQueue.filter((t) => t.taskID !== taskID)
+        return task
+      })
+      .then((t) => {
+        io.emit<TaskQueueEvent>(QC.timeoutQueue, {
+          taskID: t.taskID,
+          message: 'remove task from timeout queue',
+          taskType: 'dequeue',
+          useFork: t.useFork,
+          metadata: {
+            taskID: t.taskID,
+            taskGroup: t.taskGroup,
+            taskType: t.taskType,
+            metadata: t.metadata
           }
         })
       })

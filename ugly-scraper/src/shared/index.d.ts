@@ -46,6 +46,8 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   status?: string
   useFork: boolean
   taskType: ReqType
+  timeout?: [timeout: number, rounds: number]
+  // entity/actions
   metadata: {
     taskID: string
     taskGroup: string

@@ -7,7 +7,7 @@ import { IoOptionsOutline } from 'react-icons/io5'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { DomainDropdownTable } from './DomainDropdownTable'
 import { DomainPopup } from '../DomainPopup'
-import { IDomain } from '@shared/index'
+import { IDomain } from '../../../../../shared/index'
 
 type Props = {
   domains: IDomain[]

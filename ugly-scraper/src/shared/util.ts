@@ -49,5 +49,6 @@ export const QUEUE_CHANNELS = {
   scrapeProcessQueue: 'sqp',
   scrapeQueue: 'sq',
   taskQueue: 'tq',
-  processQueue: 'pq'
+  processQueue: 'pq',
+  timeoutQueue: 'toq'
 }
