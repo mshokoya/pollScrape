@@ -335,7 +335,6 @@ const TaskQueue = () => {
           })
       })
         .then(async (r: any) => {
-          console.log('then')
           if (r === EXEC_FORK) return
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
@@ -348,8 +347,6 @@ const TaskQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch(async (err) => {
-          console.log('err')
-          console.log(err)
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,
@@ -477,9 +474,6 @@ const TaskQueue = () => {
 
   const randomFork = () => {
     const key = Object.keys(forks).filter((forkID) => !forks[forkID].stopType)[lb.pick()]
-    console.log('randomFork')
-    console.log(key)
-    console.log(Object.keys(forks))
     return forks[key]
   }
 
@@ -491,10 +485,6 @@ const TaskQueue = () => {
     const length = Object.keys(forks).filter((forkID) => !forks[forkID].stopType).length
     length ? setUseFork(true) : setUseFork(false)
     lb = new P2cBalancer(length)
-
-    console.log('initForkLoadBalancer')
-    console.log(length)
-    console.log(Object.keys(forks))
   }
 
   function init() {
