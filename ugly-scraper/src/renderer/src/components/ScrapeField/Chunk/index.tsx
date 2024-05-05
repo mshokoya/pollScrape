@@ -1,6 +1,6 @@
 import { ObservableObject } from '@legendapp/state'
 import { observer } from '@legendapp/state/react'
-import { Box, Flex, Separator, Table, Text, Dialog, Button } from '@radix-ui/themes'
+import { Box, Flex, Separator, Table, Text, Dialog } from '@radix-ui/themes'
 import { IoArrowUp, IoOptionsOutline } from 'react-icons/io5'
 import { IoArrowDown } from 'react-icons/io5'
 import { ChunkDialog } from './Dialog'
@@ -9,7 +9,7 @@ export type ChunkCompProps = {
   aar: ObservableObject<{
     rounds: string
     timeout: [string, string, string, string]
-    accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
+    accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
   maxScrapeLimit: number

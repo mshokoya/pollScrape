@@ -26,6 +26,9 @@ export const delay = (time: number) => {
   })
 }
 
+export const toMs = (hrs, min, sec) =>
+  (parseInt(hrs) * 60 * 60 + parseInt(min) * 60 + parseInt(sec)) * 1000
+
 export const fmtDate = (n: any) => (n && n !== 'n/a' ? new Date(n).toDateString() : 'N/A')
 
 export const fetchData = async <T>(

@@ -149,7 +149,7 @@ export const ScrapeField = observer(() => {
     batch(async () => {
       s.url.set(url)
       rng === 'min' ? s.min.set(val) : s.max.set(val)
-      s.aar.set(await aar(min, max, s.chunkParts.peek()))
+      s.aar.set((await aar(min, max, s.chunkParts.peek())) as State['aar'])
     })
   }
 
@@ -229,14 +229,14 @@ export const ScrapeField = observer(() => {
     const cp = s.chunkParts.peek()
     const numOfAccs = appState$.accounts.length
 
-    // if (val === 'inc' && cp + 1 > numOfAccs) return
+    if (val === 'inc' && cp + 1 > numOfAccs) return
     if (val === 'dec' && cp - 1 <= 0) return
 
     const newChunk = val === 'inc' ? cp + 1 : cp - 1
 
     batch(async () => {
       s.chunkParts.set(newChunk)
-      s.aar.set(await aar(s.min.peek(), s.max.peek(), newChunk))
+      s.aar.set((await aar(s.min.peek(), s.max.peek(), newChunk)) as State['aar'])
     })
   }
 
