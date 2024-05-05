@@ -42,7 +42,9 @@ export const CHANNELS = {
   fork_stop: 'f_s',
   fork_create: 'f_c',
   fork_setMaxTasks: 'f_smt',
-  fork_get: 'f_g'
+  fork_get: 'f_g',
+  // taskQueue
+  taskQueue_queues: 't_tqs'
 }
 
 export const QUEUE_CHANNELS = {

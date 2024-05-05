@@ -286,12 +286,6 @@ export const TloginAuto = async ({
         //   data: { accountID }
         // })
         if (taskQueue.useFork()) {
-          console.log(`
-
-
-            exec in fork
-
-            `)
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -519,6 +513,8 @@ export const Tdemine = async ({ accountID, timeout }: { accountID: string; timeo
 
     const account = await AccountModel_.findById(accountID)
     if (!account) throw new Error("Failed to start demining, couldn't find account")
+
+    console.log(accountID, timeout)
 
     const taskID = generateID()
     await taskQueue.enqueue({

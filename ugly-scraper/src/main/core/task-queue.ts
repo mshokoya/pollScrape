@@ -8,7 +8,8 @@ import {
   Forks,
   SQueueItem,
   StopType,
-  TaskQueueEvent
+  TaskQueueEvent,
+  Timeout
 } from '../../shared'
 import path from 'node:path/posix'
 import { P2cBalancer } from 'load-balancers'
@@ -22,11 +23,7 @@ type QueueItem = {
   taskGroup: string
   taskType: string
   message: string
-  timeout?: {
-    time: number
-    rounds: number
-    _TO: NodeJS.Timeout
-  }
+  timeout?: Timeout
   metadata: Record<string, string | number>
   action: (signal: AbortSignal) => Promise<any>
 }
@@ -55,7 +52,6 @@ const TaskQueue = () => {
   const forks: Forks = {}
   let lb: P2cBalancer
   const EXEC_FORK = 'ex-fk'
-  let forkIDList = []
 
   const enqueue = async ({
     taskID = generateID(),
@@ -219,6 +215,7 @@ const TaskQueue = () => {
           const taskID = task.taskID
           _Tlock.runExclusive(() => {
             timeoutQueue = timeoutQueue.filter((to) => to.taskID === taskID)
+            enqueue(task)
           })
         }, task.timeout.time)
         task.timeout._TO = to
@@ -338,6 +335,7 @@ const TaskQueue = () => {
           })
       })
         .then(async (r: any) => {
+          console.log('then')
           if (r === EXEC_FORK) return
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
@@ -350,6 +348,8 @@ const TaskQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch(async (err) => {
+          console.log('err')
+          console.log(err)
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,
@@ -369,16 +369,14 @@ const TaskQueue = () => {
   }
 
   const stopForks = (forkIDs: string[], stopType: StopType) => {
-    const allForkIDs = Object.keys(forks)
-    const newIDList = allForkIDs.filter((fid) => !forkIDs.includes(fid))
-    initForkLoadBalancer(newIDList)
     for (const forkID of forkIDs) {
+      forks[forkID].stopType = stopType
       forks[forkID].fork.send({
         taskType: 'stop',
         stopType
       })
     }
-    if (!newIDList.length) setUseFork(false)
+    initForkLoadBalancer()
   }
 
   const setUseFork = (i: boolean) => {
@@ -402,10 +400,7 @@ const TaskQueue = () => {
 
   const createFork = async () => {
     if (Object.keys(forks).length === maxForks) {
-      io.emit('fork', {
-        taskType: 'status',
-        ok: false
-      })
+      io.emit('fork', { taskType: 'status', ok: false })
       return
     }
     const id = generateID()
@@ -424,7 +419,6 @@ const TaskQueue = () => {
       fork: f,
       TIP: []
     }
-    if (!useFork) setUseFork(true)
     initForkLoadBalancer()
   }
 
@@ -482,8 +476,10 @@ const TaskQueue = () => {
   }
 
   const randomFork = () => {
-    const key = forkIDList[lb.pick()]
+    const key = Object.keys(forks).filter((forkID) => !forks[forkID].stopType)[lb.pick()]
+    console.log('randomFork')
     console.log(key)
+    console.log(Object.keys(forks))
     return forks[key]
   }
 
@@ -491,16 +487,18 @@ const TaskQueue = () => {
     maxProcesses = n
   }
 
-  const initForkLoadBalancer = (forkIDs: string[] = []) => {
-    const length = forkIDs.length || Object.keys(forks).length
-    forkIDList = length ? forkIDs : Object.keys(forks)
+  const initForkLoadBalancer = () => {
+    const length = Object.keys(forks).filter((forkID) => !forks[forkID].stopType).length
+    length ? setUseFork(true) : setUseFork(false)
     lb = new P2cBalancer(length)
+
+    console.log('initForkLoadBalancer')
+    console.log(length)
+    console.log(Object.keys(forks))
   }
 
   function init() {
-    createFork()
-    const forkIDs = Object.keys(forks)
-    initForkLoadBalancer(forkIDs)
+    createFork().then(() => initForkLoadBalancer())
   }
 
   return {
@@ -512,7 +510,13 @@ const TaskQueue = () => {
     stop,
     init,
     EXEC_FORK,
-    queues: () => ({ taskQueue, processQueue }),
+    queues: () => ({
+      taskQueue: JSON.parse(JSON.stringify(taskQueue)),
+      processQueue: JSON.parse(JSON.stringify(processQueue)),
+      timeoutQueue: JSON.parse(
+        JSON.stringify(timeoutQueue.map((t) => ({ ...t, timeout: { ...t.timeout, _TO: null } })))
+      )
+    }),
     forks: () => Object.keys(forks).map((forkID) => ({ forkID, TIP: forks[forkID].TIP })),
     stopForks,
     createFork,

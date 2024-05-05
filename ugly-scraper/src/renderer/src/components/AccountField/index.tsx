@@ -88,7 +88,13 @@ export const AccountField = observer(() => {
   const clearMines = async () => {
     const selectedAcc = state.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.a_accountDemine, accountID)
+    await fetchData('account', CHANNELS.a_accountDemine, {
+      accountID,
+      timeout: {
+        time: 10000,
+        rounds: 2
+      }
+    })
   }
 
   const confirmAccount = async () => {

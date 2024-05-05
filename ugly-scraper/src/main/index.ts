@@ -41,48 +41,23 @@ function createWindow(): void {
     // ==========================================================================================
 
     //================= account =========================
-    ipcMain.handle(
-      CHANNELS.a_accountDemine,
-      async (_, accountID: string) => await Tdemine({ accountID })
-    )
+    ipcMain.handle(CHANNELS.a_accountDemine, async (_, args) => await Tdemine(args))
     ipcMain.handle(
       CHANNELS.a_accountUpgradeManually,
-      async (_, accountID: string) => await TupgradeManually({ accountID })
+      async (_, args) => await TupgradeManually(args)
     )
     ipcMain.handle(
       CHANNELS.a_accountUpgradeAutomatically,
-      async (_, accountID: string) => await TupgradeAutomatically({ accountID })
+      async (_, args) => await TupgradeAutomatically(args)
     )
-    ipcMain.handle(
-      CHANNELS.a_accountCheck,
-      async (_, accountID: string) => await TcheckAccount({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountDelete,
-      async (_, accountID: string) => await TdeleteAccount({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountConfirm,
-      async (_, accountID: string) => await TconfirmAccount({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountLoginAuto,
-      async (_, accountID: string) => await TloginAuto({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountLoginManually,
-      async (_, accountID: string) => await TloginManually({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountUpdate,
-      async (_, accountID: string, fields: IAccount) => await TupdateAcc({ accountID, fields })
-    )
+    ipcMain.handle(CHANNELS.a_accountCheck, async (_, args) => await TcheckAccount(args))
+    ipcMain.handle(CHANNELS.a_accountDelete, async (_, args) => await TdeleteAccount(args))
+    ipcMain.handle(CHANNELS.a_accountConfirm, async (_, args) => await TconfirmAccount(args))
+    ipcMain.handle(CHANNELS.a_accountLoginAuto, async (_, args) => await TloginAuto(args))
+    ipcMain.handle(CHANNELS.a_accountLoginManually, async (_, args) => await TloginManually(args))
+    ipcMain.handle(CHANNELS.a_accountUpdate, async (_, args) => await TupdateAcc(args))
     ipcMain.handle(CHANNELS.a_accountGetAll, async () => await TgetAccounts())
-
-    ipcMain.handle(
-      CHANNELS.a_accountAdd,
-      async (_, args: AddAccountArgs) => await TaddAccount(args)
-    )
+    ipcMain.handle(CHANNELS.a_accountAdd, async (_, args) => await TaddAccount(args))
 
     // =============== domain =====================
     ipcMain.handle(CHANNELS.a_domainAdd, async (_, domain: string) => await addDomain(domain))
@@ -140,6 +115,7 @@ function createWindow(): void {
     //   await taskQueue.setMaxProcesses(args)
     // })
     ipcMain.handle(CHANNELS.fork_get, async () => taskQueue.forks())
+    ipcMain.handle(CHANNELS.taskQueue_queues, async () => taskQueue.queues())
     // ==========================================================================================
   })
 }
