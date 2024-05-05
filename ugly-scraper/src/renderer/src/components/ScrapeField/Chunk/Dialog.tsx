@@ -7,7 +7,7 @@ export type ChunkCompProps = {
   aar: ObservableObject<{
     rounds: string
     timeout: [string, string, string, string]
-    accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
+    accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
   maxScrapeLimit: number
@@ -157,7 +157,7 @@ type TimeoutComp = {
   aar: ObservableObject<{
     rounds: string
     timeout: [string, string, string, string]
-    accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
+    accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
 }
@@ -286,7 +286,7 @@ type RoundsComp = {
   aar: ObservableObject<{
     rounds: string
     timeout: [string, string, string, string]
-    accounts: { email: string; totalScrapedInTimeFrame: number; timeout: number; rounds: number }[]
+    accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
 }
