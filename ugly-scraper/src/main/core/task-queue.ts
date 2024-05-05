@@ -433,7 +433,6 @@ const TaskQueue = () => {
 
   const handleForkEvent = (evt: { channel: string; args: EmitResponse & { forkID: string } }) => {
     if (evt.channel === QC.scrapeQueue && evt.args.taskType === 'enqueue') {
-      // if scrape job in taskqueue in worker
       processQueue
         .find((t) => t.task.taskID === evt.args.pid)
         ?.processes.push({
