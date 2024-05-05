@@ -28,7 +28,7 @@ import {
 } from './core/actions'
 import { cache } from './core/cache'
 import { CHANNELS } from '../shared/util'
-import { AddAccountArgs, IAccount, IMetaData, StopType } from '../shared'
+import { AddAccountArgs, IAccount, IMetaData, StopType, Timeout } from '../shared'
 import { create } from './window'
 import { taskQueue } from './core/task-queue'
 
@@ -124,36 +124,22 @@ function createWindow(): void {
           accounts: string[]
           metaID?: string
           useProxy: boolean
+          timeout?: Timeout
         }
       ) => await Tscrape(args)
     )
 
     // =============== cache =====================
-    ipcMain.handle(CHANNELS.cache_getAllAccountIDs, async () => {
-      console.log('cchhaassddd 2')
-      const ll = await cache.getAllAccountIDs()
-      console.log(ll)
-      console.log('cchhaassddd 3')
-      return ll
-    })
-
+    ipcMain.handle(CHANNELS.cache_getAllAccountIDs, async () => await cache.getAllAccountIDs())
     // =============== fork =====================
-    ipcMain.handle(CHANNELS.fork_create, async () => {
-      await taskQueue.createFork()
-    })
-
-    ipcMain.handle(
-      CHANNELS.fork_stop,
-      async (_, args: { forkIDs: string[]; stopType: StopType }) => {
-        await taskQueue.stopForks(args.forkIDs, args.stopType)
-      }
+    ipcMain.handle(CHANNELS.fork_create, async () => await taskQueue.createFork())
+    ipcMain.handle(CHANNELS.fork_stop, async (_, args: { forkIDs: string[]; stopType: StopType }) =>
+      taskQueue.stopForks(args.forkIDs, args.stopType)
     )
     // ipcMain.handle(CHANNELS.fork_setMaxTasks, async (_, args: { forkID: string; num: number }) => {
     //   await taskQueue.setMaxProcesses(args)
     // })
-    ipcMain.handle(CHANNELS.fork_get, async () => {
-      return taskQueue.forks()
-    })
+    ipcMain.handle(CHANNELS.fork_get, async () => taskQueue.forks())
     // ==========================================================================================
   })
 }

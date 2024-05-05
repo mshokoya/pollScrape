@@ -86,7 +86,7 @@ const TaskQueue = () => {
       })
   }
 
-  const move = (task: SQueueItem) => {
+  const move = async (task: SQueueItem) => {
     return _Qlock
       .runExclusive(() => {
         // @ts-ignore

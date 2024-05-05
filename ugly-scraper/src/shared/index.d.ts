@@ -251,3 +251,9 @@ export type IRecord = {
 }
 
 type StopType = 'force' | 'waitAll' | 'waitPs'
+
+type Timeout = {
+  time: number
+  rounds: number
+  _TO: NodeJS.Timeout
+}

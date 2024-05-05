@@ -1,4 +1,4 @@
-import { AddAccountArgs, IAccount } from '../../../../../shared'
+import { AddAccountArgs, IAccount, Timeout } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
 import { updateAccount } from '../../../database'
 import { AccountModel_ } from '../../../database/models/accounts'
@@ -19,7 +19,13 @@ import {
 } from '../actions'
 import { apolloConfirmAccountEvent } from '../lib'
 
-export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
+export const TconfirmAccount = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('confirm')
 
   try {
@@ -34,6 +40,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'confirm',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `confirming account ${account.email}`,
       metadata: { accountID, taskType: 'confirm' },
@@ -69,7 +76,13 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const TupgradeManually = async ({ accountID }: { accountID: string }) => {
+export const TupgradeManually = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('upgradeAccountManual')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -82,6 +95,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualUpgrade',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `Upgrading ${account.email} manually`,
       metadata: { accountID, taskType: 'manualUpgrade' },
@@ -117,7 +131,13 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
   }
 }
 
-export const TupgradeAutomatically = async ({ accountID }: { accountID: string }) => {
+export const TupgradeAutomatically = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('upgradeAccounts')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -130,6 +150,7 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
       taskID,
       taskGroup: 'apollo',
       taskType: 'upgrade',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `Upgrading ${account.email} automatically`,
       metadata: { accountID },
@@ -165,7 +186,13 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
   }
 }
 
-export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
+export const TcheckAccount = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('checkAccounts')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -178,6 +205,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'check',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `Getting information on ${account.email} credits`,
       metadata: { accountID, taskType: 'check' },
@@ -227,7 +255,13 @@ export const TdeleteAccount = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const TloginAuto = async ({ accountID }: { accountID: string }) => {
+export const TloginAuto = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('loginauto')
   try {
     if (!accountID) throw new Error('Failed to login, invalid id')
@@ -240,6 +274,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'login',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `Logging into ${account.email} apollo account`,
       metadata: { accountID, taskType: 'login' },
@@ -286,8 +321,9 @@ export const TaddAccount = async ({
   addType,
   email: emaill,
   password,
-  recoveryEmail
-}: AddAccountArgs) => {
+  recoveryEmail,
+  timeout
+}: AddAccountArgs & { timeout?: Timeout }) => {
   console.log('addAccount')
 
   try {
@@ -353,6 +389,7 @@ export const TaddAccount = async ({
       taskID,
       taskGroup: 'apollo',
       taskType: 'create',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `adding ${account.email}`,
       metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
@@ -421,7 +458,13 @@ export const TupdateAcc = async ({
   }
 }
 
-export const TloginManually = async ({ accountID }: { accountID: string }) => {
+export const TloginManually = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('loginManually')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -434,6 +477,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualLogin',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `Login into ${account.email}`,
       metadata: { accountID, taskType: 'manualLogin' },
@@ -468,7 +512,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const Tdemine = async ({ accountID }: { accountID: string }) => {
+export const Tdemine = async ({ accountID, timeout }: { accountID: string; timeout?: Timeout }) => {
   console.log('mines')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -481,6 +525,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'demine',
+      timeout,
       useFork: taskQueue.useFork(),
       message: `Demine ${account.email} popups`,
       metadata: { accountID, taskType: 'demine' },

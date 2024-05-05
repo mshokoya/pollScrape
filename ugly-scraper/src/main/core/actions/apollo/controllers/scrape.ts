@@ -1,4 +1,4 @@
-import { IMetaData } from '../../../../../shared'
+import { IMetaData, Timeout } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
 import { cache } from '../../../cache'
 import { initMeta } from '../../../database'
@@ -14,7 +14,8 @@ export const Tscrape = async ({
   url,
   accounts,
   chunk,
-  useProxy
+  useProxy,
+  timeout
 }: {
   name: string
   url: string
@@ -22,6 +23,7 @@ export const Tscrape = async ({
   accounts: string[]
   metaID?: string
   useProxy: boolean
+  timeout?: Timeout
 }) => {
   console.log('scrape')
 
@@ -46,6 +48,7 @@ export const Tscrape = async ({
     await taskQueue.enqueue({
       taskID,
       taskGroup: 'apollo',
+      timeout,
       useFork: taskQueue.useFork(),
       taskType: 'scrape',
       message: `scrape leads from apollo`,
