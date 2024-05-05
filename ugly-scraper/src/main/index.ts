@@ -120,16 +120,6 @@ function createWindow(): void {
   })
 }
 
-// [CHANNELS.fork_stop]: async (args: { forkID: string; stopType: string }) => {
-//   return await ipcRenderer.invoke(CHANNELS.fork_stop, args)
-// },
-// [CHANNELS.fork_create]: async () => {
-//   return await ipcRenderer.invoke(CHANNELS.fork_create)
-// },
-// [CHANNELS.fork_setMaxTasks]: async (args: { forkID: string; num: number }) => {
-//   return await ipcRenderer.invoke(CHANNELS.fork_setMaxTasks, args)
-// },
-
 app.whenReady().then(() => {
   window = create()
   electronApp.setAppUserModelId('com.electron')

@@ -14,9 +14,7 @@ process.on('message', (e: any & { taskType: string }) => {
     case 'init': {
       global.forkID = e.forkID
       global.cacheHTTPPort = e.cacheHTTPPort
-      process.on('uncaughtException', () => {
-        console.log('uncaughtException eerrrrr')
-      })
+      process.on('uncaughtException', () => {})
       init(null, true)
         .then(() => {
           io.emit('fork', {
@@ -26,20 +24,16 @@ process.on('message', (e: any & { taskType: string }) => {
           })
         })
         .catch(() => {
+          io.emit('fork', { taskType: 'create', ok: false })
           process.kill(0)
         })
-
       break
     }
     case 'scrape': {
-      console.log('I AM SCRAPING')
-      console.log(global.forkID)
       scrapeQueue.enqueue(e.meta)
       break
     }
     case 'move': {
-      console.log('I AM MOVING')
-      console.log(global.forkID)
       scrapeQueue.move(e.meta)
       break
     }
@@ -56,7 +50,7 @@ process.on('message', (e: any & { taskType: string }) => {
   }
 })
 
-export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void> => {
+export const init = async (ipc?: IPC_APP): Promise<void> => {
   await syncDB().then(() => {
     console.log('DB started')
   })
@@ -70,7 +64,7 @@ export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void
   initPrompt()
   console.log('Prompt started')
 
-  if (isFork) {
+  if (global.forkID) {
     initScrapeQueue()
     console.log('ScrapeQueue started')
   } else {
@@ -83,8 +77,4 @@ export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void
 
   initMailBox()
   console.log('Mailbox started')
-
-  if (isFork) {
-    console.log(await cache.getAllMetaIDs())
-  }
 }

@@ -53,59 +53,42 @@ const TaskQueue = () => {
   let lb: P2cBalancer
   const EXEC_FORK = 'ex-fk'
 
-  const enqueue = async ({
-    taskID = generateID(),
-    taskGroup,
-    taskType,
-    useFork,
-    message,
-    metadata,
-    action,
-    timeout
-  }: QueueItem) => {
+  const enqueue = async (args: QueueItem) => {
     return _Qlock
       .runExclusive(() => {
-        // @ts-ignore
-        taskQueue.push({ useFork, taskID, action, taskGroup, taskType, message, metadata, timeout })
+        args.taskID = generateID()
+        taskQueue.push(args)
+        return args.taskID
       })
-      .then(() => {
+      .then((taskID) => {
+        const { taskGroup, taskType, metadata } = args
         io.emit<TaskQueueEvent>(QC.taskQueue, {
-          taskID,
+          taskID: taskID,
           useFork,
           message: 'new task added to queue',
           taskType: 'enqueue',
           metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
-      .finally(() => {
-        exec()
-      })
+      .finally(() => exec())
   }
 
   const move = async (task: SQueueItem) => {
     return _Qlock
       .runExclusive(() => {
-        // @ts-ignore
-        taskQueue.push(task)
+        taskQueue.push(task as unknown as QueueItem)
       })
       .then(() => {
+        const { taskID, taskGroup, taskType, metadata } = task
         io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID: task.taskID,
           useFork,
           message: 'new task added to queue',
           taskType: 'move',
-          metadata: {
-            // forkID: task.forkID,
-            taskID: task.taskID,
-            taskGroup: task.taskGroup,
-            taskType: task.taskType,
-            metadata: task.metadata
-          }
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
-      .finally(() => {
-        exec()
-      })
+      .finally(() => exec())
   }
 
   const dequeue = async () => {
@@ -115,17 +98,13 @@ const TaskQueue = () => {
       })
       .then((t) => {
         if (!t) return
+        const { taskID, useFork, taskGroup, taskType, metadata } = t
         io.emit<TaskQueueEvent>(QC.taskQueue, {
-          taskID: t.taskID,
-          useFork: t.useFork,
+          taskID: taskID,
+          useFork: useFork,
           message: 'moving from queue to processing',
           taskType: 'dequeue',
-          metadata: {
-            taskID: t.taskID,
-            taskGroup: t.taskGroup,
-            taskType: t.taskType,
-            metadata: t.metadata
-          }
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
         return t
       })
@@ -139,17 +118,13 @@ const TaskQueue = () => {
         return task
       })
       .then((t) => {
+        const { taskID, useFork, taskGroup, taskType, metadata } = t
         io.emit<TaskQueueEvent>(QC.taskQueue, {
           taskID,
           message: 'deleting task from queue',
           taskType: 'remove',
-          useFork: t.useFork,
-          metadata: {
-            taskID: t.taskID,
-            taskGroup: t.taskGroup,
-            taskType: t.taskType,
-            metadata: t.metadata
-          }
+          useFork: useFork,
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
   }
@@ -160,28 +135,21 @@ const TaskQueue = () => {
         processQueue.push(item)
       })
       .then(() => {
+        const { taskID, useFork, taskGroup, taskType, metadata } = item.task
         io.emit<TaskQueueEvent>(QC.processQueue, {
-          taskID: item.task.taskID,
+          taskID: taskID,
           message: 'new task added to processing queue',
           taskType: 'enqueue',
-          useFork: item.task.useFork,
-          metadata: {
-            taskID: item.task.taskID,
-            taskGroup: item.task.taskGroup,
-            taskType: item.task.taskType,
-            metadata: item.task.metadata
-          }
+          useFork: useFork,
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
-      .finally(() => {
-        exec()
-      })
+      .finally(() => exec())
   }
 
   const p_dequeue = async (taskID: string) => {
     return _Plock
       .runExclusive(() => {
-        // const task = JSON.parse(JSON.stringify(processQueue.find((t) => t.task.taskID === taskID)))
         const task = processQueue.find((t) => t.task.taskID === taskID)
         processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
 
@@ -190,20 +158,16 @@ const TaskQueue = () => {
           task.task.timeout.rounds ? t_enqueue(task.task) : t_dequeue(taskID)
         }
 
-        return task
+        return task.task
       })
       .then((t) => {
+        const { taskID, useFork, taskGroup, taskType, metadata } = t
         io.emit<TaskQueueEvent>(QC.processQueue, {
-          taskID: t.task.taskID,
+          taskID: taskID,
           message: 'removed completed task from queue',
           taskType: 'dequeue',
-          useFork: t.task.useFork,
-          metadata: {
-            taskID: t.task.taskID,
-            taskGroup: t.task.taskGroup,
-            taskType: t.task.taskType,
-            metadata: t.task.metadata
-          }
+          useFork: useFork,
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
   }
@@ -222,17 +186,13 @@ const TaskQueue = () => {
         timeoutQueue.push(task)
       })
       .then(() => {
+        const { taskID, useFork, taskGroup, taskType, metadata } = task
         io.emit<TaskQueueEvent>(QC.timeoutQueue, {
-          taskID: task.taskID,
+          taskID: taskID,
           message: 'task added to timeout',
           taskType: 'enqueue',
-          useFork: task.useFork,
-          metadata: {
-            taskID: task.taskID,
-            taskGroup: task.taskGroup,
-            taskType: task.taskType,
-            metadata: task.metadata
-          }
+          useFork: useFork,
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
       .finally(() => {
@@ -248,17 +208,13 @@ const TaskQueue = () => {
         return task
       })
       .then((t) => {
+        const { taskID, useFork, taskGroup, taskType, metadata } = t
         io.emit<TaskQueueEvent>(QC.timeoutQueue, {
-          taskID: t.taskID,
+          taskID: taskID,
           message: 'remove task from timeout queue',
           taskType: 'dequeue',
-          useFork: t.useFork,
-          metadata: {
-            taskID: t.taskID,
-            taskGroup: t.taskGroup,
-            taskType: t.taskType,
-            metadata: t.metadata
-          }
+          useFork: useFork,
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
   }
@@ -269,20 +225,16 @@ const TaskQueue = () => {
       .runExclusive(async () => {
         const task = processQueue.find((t) => t.task.taskID === taskID)
         processQueue = processQueue.filter((t) => t.task.taskID !== taskID)
-        return task
+        return task.task
       })
       .then((t) => {
+        const { taskID, useFork, taskGroup, taskType, metadata } = t
         io.emit<TaskQueueEvent>(QC.processQueue, {
           taskID,
           message: 'cancelled',
           taskType: 'stop',
-          useFork: t.task.useFork,
-          metadata: {
-            taskID: t.task.taskID,
-            taskGroup: t.task.taskGroup,
-            taskType: t.task.taskType,
-            metadata: t.task.metadata
-          }
+          useFork: useFork,
+          metadata: { taskID, taskGroup, taskType, metadata }
         })
       })
       .finally(() => {
@@ -327,12 +279,8 @@ const TaskQueue = () => {
 
         task
           .action(abortController.signal)
-          .then((r) => {
-            resolve(r)
-          })
-          .catch((err) => {
-            reject(err)
-          })
+          .then((r) => resolve(r))
+          .catch((err) => reject(err))
       })
         .then(async (r: any) => {
           if (r === EXEC_FORK) return
@@ -380,13 +328,10 @@ const TaskQueue = () => {
     useFork = i
   }
 
-  const execInFork = (task: ForkScrapeEventArgs, taskType?: 'scrape' | 'move') => {
+  const execInFork = (task: ForkScrapeEventArgs, taskType: 'scrape' | 'move' = 'scrape') => {
     // @ts-ignore
     task.useFork = true
-    postToFork({
-      taskType: taskType || 'scrape',
-      meta: task
-    })
+    postToFork({ taskType, meta: task })
     return EXEC_FORK
   }
 
@@ -396,8 +341,8 @@ const TaskQueue = () => {
   }
 
   const createFork = async () => {
-    if (Object.keys(forks).length === maxForks) {
-      io.emit('fork', { taskType: 'status', ok: false })
+    if (Object.keys(forks).length >= maxForks) {
+      io.emit('fork', { taskType: 'create', ok: false })
       return
     }
     const id = generateID()
