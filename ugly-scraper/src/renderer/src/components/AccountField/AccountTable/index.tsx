@@ -26,7 +26,6 @@ type Props = {
   deleteAccount: () => Promise<void>
   clearMines: () => Promise<void>
   confirmAccount: () => Promise<void>
-  setPopup: (idx: number | null) => void
   account: IAccount
   req: string | null
 }

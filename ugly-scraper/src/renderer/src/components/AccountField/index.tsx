@@ -100,19 +100,40 @@ export const AccountField = observer(() => {
   const confirmAccount = async () => {
     const selectedAcc = state.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    await fetchData('account', CHANNELS.a_accountConfirm, accountID)
+    try {
+      accountTaskHelper.add(accountID, { type: 'confirmReq', status: 'processing' })
+      if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
+        throw new Error('[Error]: Account already in use, please wait for account to be free')
+
+      await fetchData('account', CHANNELS.a_accountConfirm, accountID).then((data) => {
+        data.ok
+          ? stateResStatusHelper.add(accountID, ['confirmReq', 'ok'])
+          : stateResStatusHelper.add(accountID, ['confirmReq', 'fail'])
+      })
+    } catch {
+      stateResStatusHelper.add(accountID, ['confirmReq', 'fail'])
+    } finally {
+      setTimeout(() => {
+        batch(() => {
+          accountTaskHelper.deleteTaskByReqType(accountID, 'confirmReq')
+          stateResStatusHelper.delete(accountID, 'confirmReq')
+        })
+      }, 1500)
+    }
   }
 
   // (FIX) complete func (dont delete, just archive)
   const deleteAccount = async () => {
     const selectedAcc = state.selectedAcc.get()
     const accountID = accounts[selectedAcc].id
-    if (!accountTaskHelper.isEntityPiplineEmpty(accountID)) return
 
-    accountTaskHelper.add(accountID, { status: 'processing', type: 'delete' })
+    try {
+      accountTaskHelper.add(accountID, { type: 'delete', status: 'processing' })
 
-    await fetchData<IAccount>('account', CHANNELS.a_accountDelete, accountID)
-      .then((data) => {
+      if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
+        throw new Error('[Error]: Account already in use, please wait for account to be free')
+
+      await fetchData<IAccount>('account', CHANNELS.a_accountDelete, accountID).then((data) => {
         batch(() => {
           data.ok
             ? stateResStatusHelper.add(accountID, ['delete', 'ok'])
@@ -120,21 +141,16 @@ export const AccountField = observer(() => {
           appState$.accounts.set((a1) => a1.filter((a2) => a2.id !== accountID))
         })
       })
-      .catch(() => {
-        stateResStatusHelper.add(accountID, ['delete', 'fail'])
-      })
-      .finally(() => {
-        setTimeout(() => {
-          batch(() => {
-            accountTaskHelper.deleteTaskByReqType(accountID, 'delete')
-            stateResStatusHelper.delete(accountID, 'delete')
-          })
-        }, 1500)
-      })
-  }
-
-  const setPopup = (v: number | null) => {
-    state.selectedAcc.set(v)
+    } catch {
+      stateResStatusHelper.add(accountID, ['delete', 'fail'])
+    } finally {
+      setTimeout(() => {
+        batch(() => {
+          accountTaskHelper.deleteTaskByReqType(accountID, 'delete')
+          stateResStatusHelper.delete(accountID, 'delete')
+        })
+      }, 1500)
+    }
   }
 
   return (
@@ -155,7 +171,6 @@ export const AccountField = observer(() => {
           req={state.reqType.peek()}
           manualLogin={manualLogin}
           updateAccount={updateAccount}
-          setPopup={setPopup}
           checkAccount={checkAccount}
           login={login}
           deleteAccount={deleteAccount}

@@ -16,10 +16,6 @@ export function handleApolloScrapeEndEvent(
   const c = res.ok ? 'ok' : 'fail'
   stateResStatusHelper.add(accountID, [task.type, c])
 
-  console.log('INNA TASK')
-  console.log(task)
-  console.log(res)
-
   processApolloEventData(task.type, res)
 
   setTimeout(() => {
@@ -120,9 +116,10 @@ export const handleApolloScrapeProcessQueueEvents = (
       break
     }
     case 'dequeue':
-      accountTaskHelper.updateTask(res.metadata!.metadata!.accountID, res.taskID, {
-        status: 'passing'
-      })
+      accountTaskHelper.deleteTaskByTaskID(res.metadata!.metadata!.accountID, res.taskID)
+      // accountTaskHelper.updateTask(res.metadata!.metadata!.accountID, res.taskID, {
+      //   status: 'passing'
+      // })
       break
   }
 }

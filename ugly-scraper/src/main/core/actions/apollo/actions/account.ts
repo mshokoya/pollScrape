@@ -10,15 +10,12 @@ import {
   manuallyLogIntoApollo,
   signupForApollo
 } from '../lib'
-import {
-  getBrowserCookies,
-  // logIntoApolloThenVisit,
-  waitForNavigationTo
-} from '../lib/util'
+import { getBrowserCookies, waitForNavigationTo } from '../lib/util'
 import { AppError } from '../../../util'
 import { io } from '../../../websockets'
 import { mailbox } from '../../../mailbox'
 import { IAccount } from '../../../../../shared'
+import { setupApolloForScraping } from '../lib/apollo'
 
 export const confirmAccount = async (
   { taskID, account }: { taskID: string; account: IAccount },
@@ -126,7 +123,6 @@ export const checkAccount = async (
 
       browserCTX_ID = browserCTX.id
 
-      // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
       const creditsInfo = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
       const acc = await AccountModel_.findOneAndUpdate(
@@ -256,8 +252,9 @@ export const demine = async (
 
       browserCTX_ID = browserCTX.id
 
-      // if (account.cookies) browserCTX.page.setCookie(JSON.parse(account.cookies))
-      await logIntoApollo(taskID, browserCTX, account)
+      await setupApolloForScraping(taskID, browserCTX, account).then(() => {
+        io.emit('apollo', { taskID, message: 'successfully setup apollo for scraping' })
+      })
       await waitForNavigationTo(taskID, browserCTX, 'settings/account').then(async () => {
         const cookies = await getBrowserCookies(browserCTX)
         const acc = await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })

@@ -5,6 +5,7 @@ import { updateAccount } from '../../../database'
 import { IAccount } from '../../../database/models/accounts'
 import { io } from '../../../websockets'
 import { AppError, delay } from '../../../util'
+import { setupApolloForScraping } from './apollo'
 
 export type CreditsInfo = {
   emailCreditsUsed: number
@@ -147,7 +148,10 @@ export const logIntoApolloThenVisit = async (
     // if (page.mainFrame().url().includes('/#/login')) {
     if (!browserCTX.page.url() || page.url().includes('/#/login')) {
       if (!browserCTX.page.url()) throw new AppError(taskID, 'Failed to find url')
-      await logIntoApollo(taskID, browserCTX, account).then(() => {
+      // await logIntoApollo(taskID, browserCTX, account).then(() => {
+      //   io.emit('apollo', { taskID, message: 'Logged into apollo' })
+      // })
+      await setupApolloForScraping(taskID, browserCTX, account).then(() => {
         io.emit('apollo', { taskID, message: 'Logged into apollo' })
       })
       const cookies = await getBrowserCookies(browserCTX)
