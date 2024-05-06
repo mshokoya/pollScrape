@@ -13,7 +13,8 @@ import {
   removeLeadColInApolloURL,
   setEmailStatusInApolloURL,
   setLeadColInApolloURL,
-  setRangeInApolloURL
+  setRangeInApolloURL,
+  toMs
 } from '@renderer/core/util'
 import { batch } from '@legendapp/state'
 import { selectAccForScrapingFILO } from '@renderer/core/state/account'
@@ -34,7 +35,7 @@ type State = {
   chunkParts: number
   aar: {
     rounds: string
-    timeout: [string, string, string, string]
+    timeout: [string, string, string]
     chunk: [number, number][]
     accounts: {
       id: string
@@ -57,7 +58,7 @@ const defaultState = () => ({
   chunkParts: 1,
   aar: {
     rounds: '1',
-    timeout: ['0', '0', '30', '0'] as [string, string, string, string],
+    timeout: ['0', '30', '0'] as [string, string, string],
     chunk: [],
     accounts: []
   }
@@ -73,14 +74,11 @@ export const ScrapeField = observer(() => {
     s.reqInProcess.set(true)
 
     const state = s.peek()
+    const [hh, mm, ss] = state.aar.timeout
 
     // (FIX) throw error or warning to user the not enough accounts or chunk too high etc
 
-    // s.aar.set({
-    //   chunk: [[50, 500]],
-    //   accounts: [state.aar.accounts[0]]
-    // })
-
+    if (!s.aar.accounts.length) return
     if (s.aar.chunk.length !== s.aar.accounts.length) return
 
     await fetchData('scrape', CHANNELS.a_scrape, {
@@ -88,7 +86,8 @@ export const ScrapeField = observer(() => {
       url: state.url,
       chunk: state.aar.chunk,
       accounts: state.aar.accounts.map((a) => a.id),
-      usingProxy: false
+      usingProxy: false,
+      timeout: toMs(hh, mm, ss)
     })
       .then((d) => {
         console.log(d)

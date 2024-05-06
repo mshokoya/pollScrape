@@ -26,6 +26,11 @@ export const delay = (time: number) => {
   })
 }
 
+export const cloneObject = (a: Record<any, any> | any[]) => {
+  return JSON.parse(JSON.stringify(a))
+}
+
+// https://stackoverflow.com/questions/41296950/convert-hours-and-minute-to-millisecond-using-javascript-or-jquery
 export const toMs = (hrs, min, sec) =>
   (parseInt(hrs) * 60 * 60 + parseInt(min) * 60 + parseInt(sec)) * 1000
 

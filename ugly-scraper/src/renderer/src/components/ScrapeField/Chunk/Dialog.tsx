@@ -6,7 +6,7 @@ import { IoArrowDown, IoArrowUp } from 'react-icons/io5'
 export type ChunkCompProps = {
   aar: ObservableObject<{
     rounds: string
-    timeout: [string, string, string, string]
+    timeout: [string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
@@ -156,7 +156,7 @@ export const ChunkDialog = observer(
 type TimeoutComp = {
   aar: ObservableObject<{
     rounds: string
-    timeout: [string, string, string, string]
+    timeout: [string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
@@ -169,33 +169,7 @@ const TimeoutComp = observer(({ aar }: TimeoutComp) => {
         size="1"
         defaultValue={aar.timeout[0].get()}
         value={aar.timeout[0].get()}
-        onValueChange={(e) => {
-          aar.timeout[0].set(e)
-        }}
-      >
-        <Select.Trigger placeholder="Days" />
-        <Select.Content>
-          <Select.Group>
-            <Select.Label>Days</Select.Label>
-            <Select.Item value="0">0 days</Select.Item>
-            <Select.Item value="1">1 day</Select.Item>
-            <Select.Item value="2">2 days</Select.Item>
-            <Select.Item value="3">3 days</Select.Item>
-            <Select.Item value="4">4 days</Select.Item>
-            <Select.Item value="5">5 days</Select.Item>
-          </Select.Group>
-        </Select.Content>
-      </Select.Root>
-
-      {/*
-         hours
-        */}
-
-      <Select.Root
-        size="1"
-        defaultValue={aar.timeout[1].get()}
-        value={aar.timeout[1].get()}
-        onValueChange={(e) => aar.timeout[1].set(e)}
+        onValueChange={(e) => aar.timeout[0].set(e)}
       >
         <Select.Trigger placeholder="Hours" />
         <Select.Content>
@@ -222,9 +196,9 @@ const TimeoutComp = observer(({ aar }: TimeoutComp) => {
 
       <Select.Root
         size="1"
-        defaultValue={aar.timeout[2].get()}
-        value={aar.timeout[2].get()}
-        onValueChange={(e) => aar.timeout[2].set(e)}
+        defaultValue={aar.timeout[1].get()}
+        value={aar.timeout[1].get()}
+        onValueChange={(e) => aar.timeout[1].set(e)}
       >
         <Select.Trigger placeholder="Minutes" />
         <Select.Content>
@@ -252,10 +226,10 @@ const TimeoutComp = observer(({ aar }: TimeoutComp) => {
 
       <Select.Root
         size="1"
-        defaultValue={aar.timeout[3].get()}
-        value={aar.timeout[3].get()}
+        defaultValue={aar.timeout[2].get()}
+        value={aar.timeout[2].get()}
         onValueChange={(e) => {
-          aar.timeout[3].set(e)
+          aar.timeout[2].set(e)
         }}
       >
         <Select.Trigger placeholder="Seconds" />
@@ -285,7 +259,7 @@ const TimeoutComp = observer(({ aar }: TimeoutComp) => {
 type RoundsComp = {
   aar: ObservableObject<{
     rounds: string
-    timeout: [string, string, string, string]
+    timeout: [string, string, string]
     accounts: { email: string; totalScrapedInTimeFrame: number }[]
     chunk: [min: number, max: number][]
   }>
