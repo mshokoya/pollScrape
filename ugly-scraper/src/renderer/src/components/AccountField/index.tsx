@@ -23,29 +23,28 @@ export const AccountField = observer(() => {
   // (FIX) email verification + get domain to determine login type // also colors
   const addAccount = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    await fetchData<IAccount>('account', CHANNELS.a_accountAdd, {
-      ...state.input.peek(),
-      addType: state.addType.peek(),
-      selectedDomain: state.selectedDomain.peek()
-    })
 
     try {
-      accountTaskHelper.add('createReq', { type: 'createReq', status: 'processing' })
-      if (!accountTaskHelper.isEntityPiplineEmpty('createReq'))
+      accountTaskHelper.add('addReq', { type: 'addReq', status: 'processing' })
+      if (!accountTaskHelper.isEntityPiplineEmpty('addReq'))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountLoginAuto, 'createReq').then((data) => {
+      await fetchData<IAccount>('account', CHANNELS.a_accountAdd, {
+        ...state.input.peek(),
+        addType: state.addType.peek(),
+        selectedDomain: state.selectedDomain.peek()
+      }).then((data) => {
         data.ok
-          ? stateResStatusHelper.add('createReq', ['createReq', 'ok'])
-          : stateResStatusHelper.add('createReq', ['createReq', 'fail'])
+          ? stateResStatusHelper.add('addReq', ['addReq', 'ok'])
+          : stateResStatusHelper.add('addReq', ['addReq', 'fail'])
       })
     } catch {
-      stateResStatusHelper.add('createReq', ['createReq', 'fail'])
+      stateResStatusHelper.add('addReq', ['addReq', 'fail'])
     } finally {
       setTimeout(() => {
         batch(() => {
-          accountTaskHelper.deleteTaskByReqType('createReq', 'createReq')
-          stateResStatusHelper.delete('createReq', 'createReq')
+          accountTaskHelper.deleteTaskByReqType('addReq', 'addReq')
+          stateResStatusHelper.delete('addReq', 'addReq')
         })
       }, 1500)
     }
