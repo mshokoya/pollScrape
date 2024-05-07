@@ -21,8 +21,8 @@ export const AccountField = observer(() => {
   const domains = useSelector(appState$.domains) as IDomain[]
 
   // (FIX) email verification + get domain to determine login type // also colors
-  const addAccount = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const addAccount = async () => {
+    // e.preventDefault()
 
     try {
       if (!accountTaskHelper.isEntityPiplineEmpty('addReq'))
@@ -38,6 +38,7 @@ export const AccountField = observer(() => {
         data.ok
           ? stateResStatusHelper.add('addReq', ['addReq', 'ok'])
           : stateResStatusHelper.add('addReq', ['addReq', 'fail'])
+        console.log(data)
       })
     } catch (err) {
       console.log(err)
@@ -144,16 +145,17 @@ export const AccountField = observer(() => {
 
       accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
 
-      await fetchData<IAccount>('account', CHANNELS.a_accountUpdate, { accountID, ...input }).then(
-        (data) => {
-          if (data.ok) {
-            stateResStatusHelper.add(accountID, ['update', 'ok'])
-            appState$.accounts.find((a) => a.id.peek() === accountID)?.set(data.data)
-          } else {
-            stateResStatusHelper.add(accountID, ['update', 'fail'])
-          }
+      await fetchData<IAccount>('account', CHANNELS.a_accountUpdate, {
+        accountID,
+        fields: input
+      }).then((data) => {
+        if (data.ok) {
+          stateResStatusHelper.add(accountID, ['update', 'ok'])
+          appState$.accounts.find((a) => a.id.peek() === accountID)?.set(data.data)
+        } else {
+          stateResStatusHelper.add(accountID, ['update', 'fail'])
         }
-      )
+      })
     } catch (err) {
       console.log(err)
       stateResStatusHelper.add(accountID, ['update', 'fail'])
@@ -322,6 +324,7 @@ export const AccountField = observer(() => {
           stateResStatusHelper={stateResStatusHelper}
           domains={domains}
           selectedDomain={state.selectedDomain}
+          addType={state.addType}
         />
 
         <AccountTable

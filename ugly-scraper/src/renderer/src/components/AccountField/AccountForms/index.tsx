@@ -1,30 +1,25 @@
-import { ObservableObject } from '@legendapp/state'
+import { ObservableObject, ObservablePrimitiveChildFns } from '@legendapp/state'
 import { Box, Button, Flex, Select, Tabs, Text, TextField } from '@radix-ui/themes'
 import { AccountReqType, IAccount, accountTaskHelper } from '@renderer/core/state/account'
 import { ResStatusHelpers, TaskHelpers } from '@renderer/core/util'
 import { IDomain } from '@shared/index'
-import { FormEvent } from 'react'
 
 type Props = {
   domains: IDomain[]
-  addAccount: (e: FormEvent<HTMLFormElement>) => Promise<void>
+  addAccount: () => Promise<void>
   selectedDomain: ObservableObject<string>
   accountTaskHelper: ReturnType<typeof TaskHelpers<AccountReqType>>
   stateResStatusHelper: ReturnType<typeof ResStatusHelpers<AccountReqType>>
-
   input: ObservableObject<Partial<IAccount>>
+  addType: ObservablePrimitiveChildFns<string>
 }
 
 export const AccountForms = (p: Props) => {
   const isCreateReq = !!accountTaskHelper.findTaskByReqType('account', 'create')
   return (
     <Flex direction="column" gap="3" width="260px">
-      <Tabs.Root defaultValue="email">
-        <Tabs.List
-          onChange={() => {
-            console.log('changed ')
-          }}
-        >
+      <Tabs.Root defaultValue="email" onValueChange={(e: string) => p.addType.set(e)}>
+        <Tabs.List>
           <Tabs.Trigger value="email">Email</Tabs.Trigger>
           <Tabs.Trigger value="domain">Domain</Tabs.Trigger>
         </Tabs.List>
@@ -49,7 +44,7 @@ export const AccountForms = (p: Props) => {
         </Box>
       </Tabs.Root>
       <Box width="100px" mb="3">
-        <Button size="1" disabled={isCreateReq}>
+        <Button size="1" disabled={isCreateReq} onClick={() => p.addAccount()}>
           Add Account
         </Button>
       </Box>

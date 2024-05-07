@@ -326,7 +326,7 @@ export const TaddAccount = async ({
     const domain = email
     let account: Partial<IAccount>
     const taskID = generateID()
-
+    const dummyAccountID = generateID()
     if (!addType) throw new Error('Failed to add account, invalid request params')
 
     if (addType === 'domain') {
@@ -361,6 +361,42 @@ export const TaddAccount = async ({
             })
         }
       )
+
+      await taskQueue.enqueue({
+        taskID,
+        taskGroup: 'apollo',
+        taskType: 'create',
+        timeout,
+        useFork: taskQueue.useFork(),
+        message: `adding ${account.email}`,
+        metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
+        action: async (signal: AbortSignal) => {
+          // io.emit('apollo', {
+          //   taskID,
+          //   taskType: 'create',
+          //   message: `adding ${account.email}`
+          // })
+          if (taskQueue.useFork()) {
+            return taskQueue.execInFork({
+              pid: taskID,
+              taskGroup: 'apollo',
+              action: CHANNELS.a_accountAdd,
+              args: { account },
+              metadata: {
+                taskGroup: 'apollo',
+                taskType: 'create',
+                metadata: {
+                  email: account.email,
+                  accountID: dummyAccountID
+                }
+              }
+            })
+          } else {
+            // @ts-ignore
+            return await addAccount({ taskID, account }, signal)
+          }
+        }
+      })
     } else {
       if (!email || !password) throw new Error('invalid request params')
 
@@ -376,46 +412,48 @@ export const TaddAccount = async ({
         : await AccountModel_.findOne({ email })
 
       if (accountExists) throw new Error('Failed to create new account, account already exists')
+
+      account = await AccountModel_.create(account)
+
+      console.log('AAAAADDDD ACCCC')
+      console.log(account)
+
+      await taskQueue.enqueue({
+        taskID,
+        taskGroup: 'apollo',
+        taskType: 'check',
+        timeout,
+        useFork: taskQueue.useFork(),
+        message: `Getting information on ${account.email} credits`,
+        metadata: { accountID: account.id },
+        action: async (signal: AbortSignal) => {
+          // io.emit('apollo', {
+          //   taskID,
+          //   taskType: 'check',
+          //   message: `Getting information on ${account.email} credits`,
+          //   data: { accountID }
+          // })
+          if (taskQueue.useFork()) {
+            return taskQueue.execInFork({
+              pid: taskID,
+              taskGroup: 'apollo',
+              action: CHANNELS.a_accountCheck,
+              args: { account },
+              metadata: {
+                taskGroup: 'apollo',
+                taskType: 'check',
+                metadata: { accountID: account.id }
+              }
+            })
+          } else {
+            // @ts-ignore
+            return await checkAccount({ taskID, account }, signal)
+          }
+        }
+      })
     }
 
-    const dummyAccountID = generateID()
-    await taskQueue.enqueue({
-      taskID,
-      taskGroup: 'apollo',
-      taskType: 'create',
-      timeout,
-      useFork: taskQueue.useFork(),
-      message: `adding ${account.email}`,
-      metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
-      action: async (signal: AbortSignal) => {
-        // io.emit('apollo', {
-        //   taskID,
-        //   taskType: 'create',
-        //   message: `adding ${account.email}`
-        // })
-        if (taskQueue.useFork()) {
-          return taskQueue.execInFork({
-            pid: taskID,
-            taskGroup: 'apollo',
-            action: CHANNELS.a_accountAdd,
-            args: { account },
-            metadata: {
-              taskGroup: 'apollo',
-              taskType: 'create',
-              metadata: {
-                email: account.email,
-                accountID: dummyAccountID
-              }
-            }
-          })
-        } else {
-          // @ts-ignore
-          return await addAccount({ taskID, account }, signal)
-        }
-      }
-    })
-
-    return { ok: true, message: null, data: null }
+    return { ok: true, message: null, data: account }
   } catch (err: any) {
     return { ok: false, message: err.message, data: err }
   }

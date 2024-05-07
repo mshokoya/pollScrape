@@ -19,10 +19,16 @@ export type AccountPopupProps = {
 
 export type AccountPopupPage = 'main' | 'update'
 
-export type AccountPopupState = { input: IAccount; page: AccountPopupPage }
+export type AccountPopupState = {
+  input: { email: string; password: string }
+  page: AccountPopupPage
+}
 
 export const AccountPopup = observer((p: AccountPopupProps) => {
-  const obs = useObservable<AccountPopupState>({ input: { ...p.account }, page: 'main' })
+  const obs = useObservable<AccountPopupState>({
+    input: { email: p.account.email, password: p.account.password },
+    page: 'main'
+  })
 
   const handleRequest = async (h: AccountReqType) => {
     switch (h) {

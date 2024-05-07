@@ -104,7 +104,7 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
         : taskInProcess[entityID].delete()
     },
     deleteTaskByReqType: (entityID: string, reqType: T) => {
-      taskInProcess[entityID].peek().length > 1
+      taskInProcess[entityID].peek() && taskInProcess[entityID].peek().length > 1
         ? taskInProcess[entityID].set((tg) => tg.filter((t1) => t1.type !== reqType))
         : taskInProcess[entityID].delete()
     },

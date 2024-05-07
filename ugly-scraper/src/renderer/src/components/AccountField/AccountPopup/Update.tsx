@@ -17,7 +17,9 @@ export const UpdateFields = observer(({ obs, handleRequest, account }: UFProps) 
 
   const backToMain = () => {
     batch(() => {
-      obs.input.set(JSON.parse(JSON.stringify(account)))
+      obs.input.set(
+        JSON.parse(JSON.stringify({ email: account.email, password: account.password }))
+      )
       obs.page.set('main')
     })
   }
@@ -61,9 +63,7 @@ export const UpdateFields = observer(({ obs, handleRequest, account }: UFProps) 
           <Button
             disabled={isUpdateReq}
             className={blinkCSS(isUpdateReq)}
-            onClick={() => {
-              handleSubmit
-            }}
+            onClick={() => handleSubmit()}
             variant="outline"
           >
             Save
@@ -72,7 +72,9 @@ export const UpdateFields = observer(({ obs, handleRequest, account }: UFProps) 
           <Button
             disabled={isUpdateReq}
             onClick={() => {
-              obs.input.set(JSON.parse(JSON.stringify(account)))
+              obs.input.set(
+                JSON.parse(JSON.stringify({ email: account.email, password: account.password }))
+              )
             }}
             variant="outline"
           >

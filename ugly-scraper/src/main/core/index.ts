@@ -19,7 +19,7 @@ process.on('message', (e: any & { taskType: string }) => {
         console.log('in da exception')
         console.log(err)
       })
-      init(null, true)
+      init(null)
         .then(() => {
           io.emit('fork', {
             taskType: 'create',

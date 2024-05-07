@@ -23,6 +23,9 @@ export const confirmAccount = async (
 ) => {
   let browserCTX_ID: string
 
+  console.log('ACCOUNT')
+  console.log(account)
+
   try {
     return await new Promise(async (res, rej) => {
       signal.addEventListener('abort', () => {
@@ -223,6 +226,7 @@ export const loginManually = async (
         '/settings/account',
         'settings page'
       ).then(async () => {
+        console.log('made it to here')
         const cookies = await getBrowserCookies(browserCTX)
         return await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
       })
