@@ -208,7 +208,7 @@ export const TcheckAccount = async ({
       timeout,
       useFork: taskQueue.useFork(),
       message: `Getting information on ${account.email} credits`,
-      metadata: { accountID, taskType: 'check' },
+      metadata: { accountID },
       action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,

@@ -31,6 +31,7 @@ import { CHANNELS } from '../shared/util'
 import { AddAccountArgs, IAccount, IMetaData, StopType, Timeout } from '../shared'
 import { create } from './window'
 import { taskQueue } from './core/task-queue'
+import { delay } from './core/util'
 
 let window
 

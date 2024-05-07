@@ -1,4 +1,4 @@
-import { useObservable } from '@legendapp/state/react'
+import { observer, useObservable } from '@legendapp/state/react'
 import { AccountReqType, IAccount } from '../../../core/state/account'
 import { UpdateFields } from './Update'
 import { AccountActionsComp } from './Actions'
@@ -21,7 +21,7 @@ export type AccountPopupPage = 'main' | 'update'
 
 export type AccountPopupState = { input: IAccount; page: AccountPopupPage }
 
-export const AccountPopup = (p: AccountPopupProps) => {
+export const AccountPopup = observer((p: AccountPopupProps) => {
   const obs = useObservable<AccountPopupState>({ input: { ...p.account }, page: 'main' })
 
   const handleRequest = async (h: AccountReqType) => {
@@ -65,4 +65,4 @@ export const AccountPopup = (p: AccountPopupProps) => {
       )}
     </div>
   )
-}
+})

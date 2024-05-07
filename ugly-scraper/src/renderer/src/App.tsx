@@ -10,10 +10,12 @@ import { TaskView } from './components/TaskQueueBar/TaskView'
 import { MetadataAndRecordField } from './components/MetadataRecords'
 import { ScrapeField } from './components/ScrapeField'
 import { CHANNELS } from '../../shared/util'
+import { accountState } from './core/state/account'
 
 const App = observer(() => {
   const viewForks = async () => {
     console.log(await window['fork'][CHANNELS.fork_get]())
+    console.log(accountState.get())
   }
 
   const viewQueues = async () => {

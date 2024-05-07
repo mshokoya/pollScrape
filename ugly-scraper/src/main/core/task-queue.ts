@@ -56,7 +56,6 @@ const TaskQueue = () => {
   const enqueue = async (args: QueueItem) => {
     return _Qlock
       .runExclusive(() => {
-        args.taskID = generateID()
         taskQueue.push(args)
         return args.taskID
       })

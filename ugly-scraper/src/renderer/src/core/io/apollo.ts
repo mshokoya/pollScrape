@@ -1,4 +1,10 @@
-import { AccountReqType, IAccount, accountTaskHelper, stateResStatusHelper } from '../state/account'
+import {
+  AccountReqType,
+  IAccount,
+  accountState,
+  accountTaskHelper,
+  stateResStatusHelper
+} from '../state/account'
 import { appState$ } from '../state/index'
 import { ScrapeQueueEvent, TaskQueueEvent } from 'src/shared'
 
@@ -111,7 +117,7 @@ export const handleApolloScrapeProcessQueueEvents = (
       accountTaskHelper.add(accountID, {
         status: 'queue',
         type: res.metadata!.taskType as AccountReqType,
-        taskID: res.metadata!.taskID
+        taskID: res.taskID
       })
       break
     }

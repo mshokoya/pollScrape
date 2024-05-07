@@ -3,6 +3,7 @@ import { AccountReqType, IAccount, accountTaskHelper } from '@renderer/core/stat
 import { AccountPopupState } from '.'
 import { blinkCSS } from '@renderer/core/util'
 import { Button, Dialog, Flex, Spinner } from '@radix-ui/themes'
+import { observer } from '@legendapp/state/react'
 
 type MProps = {
   handleRequest: (a: AccountReqType) => Promise<void>
@@ -10,7 +11,8 @@ type MProps = {
   account: IAccount
 }
 
-export const AccountActionsComp = (p: MProps) => {
+export const AccountActionsComp = observer((p: MProps) => {
+  console.log('IN DA POPUP')
   const isLoginReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'login')
   const isCheckReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'check')
   const isUpdateReq = !!accountTaskHelper.findTaskByReqType(p.account.id, 'update')
@@ -146,4 +148,4 @@ export const AccountActionsComp = (p: MProps) => {
       </Flex>
     </Flex>
   )
-}
+})

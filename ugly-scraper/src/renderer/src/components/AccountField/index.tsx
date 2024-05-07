@@ -25,9 +25,10 @@ export const AccountField = observer(() => {
     e.preventDefault()
 
     try {
-      accountTaskHelper.add('addReq', { type: 'addReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty('addReq'))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
+
+      accountTaskHelper.add('addReq', { type: 'addReq', status: 'processing' })
 
       await fetchData<IAccount>('account', CHANNELS.a_accountAdd, {
         ...state.input.peek(),
@@ -38,7 +39,8 @@ export const AccountField = observer(() => {
           ? stateResStatusHelper.add('addReq', ['addReq', 'ok'])
           : stateResStatusHelper.add('addReq', ['addReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add('addReq', ['addReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -55,16 +57,18 @@ export const AccountField = observer(() => {
     const accountID = accounts[selectedAcc].id
 
     try {
-      accountTaskHelper.add(accountID, { type: 'loginReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountLoginAuto, accountID).then((data) => {
+      accountTaskHelper.add(accountID, { type: 'loginReq', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountLoginAuto, { accountID }).then((data) => {
         data.ok
           ? stateResStatusHelper.add(accountID, ['loginReq', 'ok'])
           : stateResStatusHelper.add(accountID, ['loginReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['loginReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -81,16 +85,18 @@ export const AccountField = observer(() => {
     const accountID = accounts[selectedAcc].id
 
     try {
-      accountTaskHelper.add(accountID, { type: 'manualLoginReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountLoginManually, accountID).then((data) => {
+      accountTaskHelper.add(accountID, { type: 'manualLoginReq', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountLoginManually, { accountID }).then((data) => {
         data.ok
           ? stateResStatusHelper.add(accountID, ['manualLoginReq', 'ok'])
           : stateResStatusHelper.add(accountID, ['manualLoginReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['manualLoginReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -103,20 +109,21 @@ export const AccountField = observer(() => {
   }
 
   const checkAccount = async () => {
-    const selectedAcc = state.selectedAcc.peek()
-    const accountID = accounts[selectedAcc].id
+    const accountID = accounts[state.selectedAcc.peek()].id
 
     try {
-      accountTaskHelper.add(accountID, { type: 'checkReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountCheck, accountID).then((data) => {
+      accountTaskHelper.add(accountID, { type: 'checkReq', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountCheck, { accountID }).then((data) => {
         data.ok
           ? stateResStatusHelper.add(accountID, ['checkReq', 'ok'])
           : stateResStatusHelper.add(accountID, ['checkReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['checkReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -130,44 +137,54 @@ export const AccountField = observer(() => {
 
   const updateAccount = async (input: Partial<IAccount>) => {
     const accountID = accounts[state.selectedAcc.peek()].id
-    accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
-    await fetchData<IAccount>('account', CHANNELS.a_accountUpdate, accountID, input)
-      .then((data) => {
-        if (data.ok) {
-          stateResStatusHelper.add(accountID, ['update', 'ok'])
-          appState$.accounts.find((a) => a.id.peek() === accountID)?.set(data.data)
-        } else {
-          stateResStatusHelper.add(accountID, ['update', 'fail'])
-        }
-      })
-      .catch(() => {
-        stateResStatusHelper.add(accountID, ['update', 'fail'])
-      })
-      .finally(() => {
-        setTimeout(() => {
-          batch(() => {
-            accountTaskHelper.deleteTaskByReqType(accountID, 'update')
-            stateResStatusHelper.delete(accountID, 'update')
-          })
-        }, 1500)
-      })
-  }
-
-  const upgradeAccount = async () => {
-    const selectedAcc = state.selectedAcc.get()
-    const accountID = accounts[selectedAcc].id
 
     try {
-      accountTaskHelper.add(accountID, { type: 'autoUpgradeReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountUpgradeAutomatically, accountID).then((data) => {
-        data.ok
-          ? stateResStatusHelper.add(accountID, ['autoUpgradeReq', 'ok'])
-          : stateResStatusHelper.add(accountID, ['autoUpgradeReq', 'fail'])
-      })
-    } catch {
+      accountTaskHelper.add(accountID, { type: 'update', status: 'processing' })
+
+      await fetchData<IAccount>('account', CHANNELS.a_accountUpdate, { accountID, ...input }).then(
+        (data) => {
+          if (data.ok) {
+            stateResStatusHelper.add(accountID, ['update', 'ok'])
+            appState$.accounts.find((a) => a.id.peek() === accountID)?.set(data.data)
+          } else {
+            stateResStatusHelper.add(accountID, ['update', 'fail'])
+          }
+        }
+      )
+    } catch (err) {
+      console.log(err)
+      stateResStatusHelper.add(accountID, ['update', 'fail'])
+    } finally {
+      setTimeout(() => {
+        batch(() => {
+          accountTaskHelper.deleteTaskByReqType(accountID, 'update')
+          stateResStatusHelper.delete(accountID, 'update')
+        })
+      }, 1500)
+    }
+  }
+
+  const upgradeAccount = async () => {
+    const accountID = accounts[state.selectedAcc.get()].id
+
+    try {
+      if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
+        throw new Error('[Error]: Account already in use, please wait for account to be free')
+
+      accountTaskHelper.add(accountID, { type: 'autoUpgradeReq', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountUpgradeAutomatically, { accountID }).then(
+        (data) => {
+          data.ok
+            ? stateResStatusHelper.add(accountID, ['autoUpgradeReq', 'ok'])
+            : stateResStatusHelper.add(accountID, ['autoUpgradeReq', 'fail'])
+        }
+      )
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['autoUpgradeReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -180,20 +197,21 @@ export const AccountField = observer(() => {
   }
 
   const manualUpgradeAccount = async () => {
-    const selectedAcc = state.selectedAcc.get()
-    const accountID = accounts[selectedAcc].id
+    const accountID = accounts[state.selectedAcc.peek()].id
 
     try {
-      accountTaskHelper.add(accountID, { type: 'manualUpgradeReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountUpgradeManually, accountID).then((data) => {
+      accountTaskHelper.add(accountID, { type: 'manualUpgradeReq', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountUpgradeManually, { accountID }).then((data) => {
         data.ok
           ? stateResStatusHelper.add(accountID, ['manualUpgradeReq', 'ok'])
           : stateResStatusHelper.add(accountID, ['manualUpgradeReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['manualUpgradeReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -206,12 +224,12 @@ export const AccountField = observer(() => {
   }
 
   const clearMines = async () => {
-    const selectedAcc = state.selectedAcc.get()
-    const accountID = accounts[selectedAcc].id
+    const accountID = accounts[state.selectedAcc.peek()].id
     try {
-      accountTaskHelper.add(accountID, { type: 'minesReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
+
+      accountTaskHelper.add(accountID, { type: 'minesReq', status: 'processing' })
 
       await fetchData('account', CHANNELS.a_accountDemine, {
         accountID,
@@ -224,7 +242,8 @@ export const AccountField = observer(() => {
           ? stateResStatusHelper.add(accountID, ['minesReq', 'ok'])
           : stateResStatusHelper.add(accountID, ['minesReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['minesReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -237,19 +256,20 @@ export const AccountField = observer(() => {
   }
 
   const confirmAccount = async () => {
-    const selectedAcc = state.selectedAcc.get()
-    const accountID = accounts[selectedAcc].id
+    const accountID = accounts[state.selectedAcc.peek()].id
     try {
-      accountTaskHelper.add(accountID, { type: 'confirmReq', status: 'processing' })
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData('account', CHANNELS.a_accountConfirm, accountID).then((data) => {
+      accountTaskHelper.add(accountID, { type: 'confirmReq', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountConfirm, { accountID }).then((data) => {
         data.ok
           ? stateResStatusHelper.add(accountID, ['confirmReq', 'ok'])
           : stateResStatusHelper.add(accountID, ['confirmReq', 'fail'])
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['confirmReq', 'fail'])
     } finally {
       setTimeout(() => {
@@ -263,24 +283,24 @@ export const AccountField = observer(() => {
 
   // (FIX) complete func (dont delete, just archive)
   const deleteAccount = async () => {
-    const selectedAcc = state.selectedAcc.get()
-    const accountID = accounts[selectedAcc].id
+    const accountID = accounts[state.selectedAcc.peek()].id
 
     try {
-      accountTaskHelper.add(accountID, { type: 'delete', status: 'processing' })
-
       if (!accountTaskHelper.isEntityPiplineEmpty(accountID))
         throw new Error('[Error]: Account already in use, please wait for account to be free')
 
-      await fetchData<IAccount>('account', CHANNELS.a_accountDelete, accountID).then((data) => {
+      accountTaskHelper.add(accountID, { type: 'delete', status: 'processing' })
+
+      await fetchData('account', CHANNELS.a_accountDelete, { accountID }).then((data) => {
         batch(() => {
           data.ok
             ? stateResStatusHelper.add(accountID, ['delete', 'ok'])
             : stateResStatusHelper.add(accountID, ['delete', 'fail'])
-          appState$.accounts.set((a1) => a1.filter((a2) => a2.id !== accountID))
+          // appState$.accounts.set((a1) => a1.filter((a2) => a2.id !== accountID))
         })
       })
-    } catch {
+    } catch (err) {
+      console.log(err)
       stateResStatusHelper.add(accountID, ['delete', 'fail'])
     } finally {
       setTimeout(() => {
