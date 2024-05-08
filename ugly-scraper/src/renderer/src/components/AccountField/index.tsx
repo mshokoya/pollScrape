@@ -35,10 +35,12 @@ export const AccountField = observer(() => {
         addType: state.addType.peek(),
         selectedDomain: state.selectedDomain.peek()
       }).then((data) => {
-        data.ok
-          ? stateResStatusHelper.add('addReq', ['addReq', 'ok'])
-          : stateResStatusHelper.add('addReq', ['addReq', 'fail'])
-        console.log(data)
+        if (data.ok) {
+          accounts.push(data.data)
+          stateResStatusHelper.add('addReq', ['addReq', 'ok'])
+        } else {
+          stateResStatusHelper.add('addReq', ['addReq', 'fail'])
+        }
       })
     } catch (err) {
       console.log(err)

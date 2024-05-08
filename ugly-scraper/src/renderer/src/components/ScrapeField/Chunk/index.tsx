@@ -84,6 +84,7 @@ export const Chunk = observer(
                             maxWidth="10rem"
                             className=" overflow-scroll truncate"
                           >
+                            {/* {console.log(aar.accounts[idx].email.get())} */}
                             {aar.accounts[idx].email.get()}
                           </Table.RowHeaderCell>
                           <Table.Cell

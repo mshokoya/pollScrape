@@ -362,7 +362,7 @@ export const TaddAccount = async ({
         }
       )
 
-      await taskQueue.enqueue({
+      taskQueue.enqueue({
         taskID,
         taskGroup: 'apollo',
         taskType: 'create',
@@ -415,10 +415,7 @@ export const TaddAccount = async ({
 
       account = await AccountModel_.create(account)
 
-      console.log('AAAAADDDD ACCCC')
-      console.log(account)
-
-      await taskQueue.enqueue({
+      taskQueue.enqueue({
         taskID,
         taskGroup: 'apollo',
         taskType: 'check',

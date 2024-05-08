@@ -47,35 +47,30 @@ export const selectAccForScrapingFILO = async (
 ): Promise<(IAccount & { totalScrapedInLast30Mins: number })[]> => {
   const accs: (IAccount & { totalScrapedInLast30Mins: number })[] = []
 
-  console.log(window['cache'])
   const allAccInUse = (await window['cache']
     [CHANNELS.cache_getAllAccountIDs]()
     .catch(() => [])) as string[]
 
-  const allAccounts = appState$.accounts
+  let allAccounts = appState$.accounts
     .get()
-    .filter((a) => a.verified === 'yes' && !allAccInUse.includes(a.id)) as (IAccount & {
+    .filter((a) => a.verified === 'yes' && !allAccInUse.includes(a.id))
+    .map((a) => ({ ...a, totalScrapedInLast30Mins: 0 })) as (IAccount & {
     totalScrapedInLast30Mins: number
   })[]
 
-  if (!allAccounts || !allAccounts.length) return []
-  // if (allAccounts.length < 15) {
-  //   console.warn('Send a waring via websockets. should have at least 15 to prevent accounts from getting locked for 10 days');
-  // }
-
-  if (allAccounts.length === 1) {
-    allAccounts[0].totalScrapedInLast30Mins = totalLeadsScrapedInTimeFrame(allAccounts[0])
-    return allAccounts
-  }
+  if (allAccounts.length <= accsNeeded) return allAccounts
 
   // get unused accounts first
   for (const a of allAccounts) {
     if (accsNeeded === 0) return accs
     if (!a.history.length) {
-      accs.push({ ...a, totalScrapedInLast30Mins: 0 })
+      accs.push(a)
       accsNeeded--
     }
   }
+
+  const _accIds = accs.map((a) => a.id)
+  allAccounts = allAccounts.filter((a) => !_accIds.includes(a.id))
 
   if (accsNeeded === 0) return accs
 
@@ -88,7 +83,7 @@ export const selectAccForScrapingFILO = async (
     return totalLeadsScrapedIn30MinsB - totalLeadsScrapedIn30MinsA
   })
 
-  const accounts = accs.concat(allAccounts.splice(-accsNeeded))
+  const accounts = accs.concat(allAccounts).splice(-accsNeeded)
 
   return accounts
 }
@@ -105,6 +100,7 @@ const totalLeadsScrapedInTimeFrame = (a: IAccount) => {
         scrapeID: string
       ]
     ) => {
+      if (isNaN(cv[0]) || isNaN(cv[1])) console.log(cv)
       const isWithin30minMark = new Date().getTime() - cv[1] >= timeLimit
 
       return isWithin30minMark ? acc + (cv[0] as any) : acc

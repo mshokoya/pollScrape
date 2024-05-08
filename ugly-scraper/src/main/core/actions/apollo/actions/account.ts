@@ -23,9 +23,6 @@ export const confirmAccount = async (
 ) => {
   let browserCTX_ID: string
 
-  console.log('ACCOUNT')
-  console.log(account)
-
   try {
     return await new Promise(async (res, rej) => {
       signal.addEventListener('abort', () => {

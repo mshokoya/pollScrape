@@ -29,18 +29,20 @@ function processApolloEventData(taskType: string, msg: TaskQueueEvent | ScrapeQu
     // case 'delete':
     // case 'mines':
     // case 'update':
-    case 'new':
+    case 'create': {
       if (msg.ok) appState$.accounts.push(msg.metadata!.metadata as IAccount)
       break
+    }
     case 'confirm':
     case 'manualUpgrade':
     case 'upgrade':
-    case 'check':
+    case 'check': {
       if (msg.ok) {
         const acc = appState$.accounts.find((a) => a.id.get() === msg.metadata!.metadata!.accountID)
         if (acc) acc.set({ ...acc.get(), ...(msg.metadata!.metadata as IAccount) })
       }
       break
+    }
   }
 }
 
