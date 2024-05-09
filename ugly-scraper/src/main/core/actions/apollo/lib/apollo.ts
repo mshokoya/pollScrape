@@ -450,17 +450,17 @@ export const apolloAddLeadsToListAndScrape = async (
   await page.waitForSelector(paginationInfoSelector, { visible: true, timeout: 10000 })
 
   let shouldContinue = true
-  while (shouldContinue) {
+  let c = 0
+  while (shouldContinue && c < 3) {
     if ((await getFirstTableRowName()) !== lastName.get()) shouldContinue = false
-    console.log(lastName.get())
-    console.log(await getFirstTableRowName())
     await delay(5000)
+    c += 1
   }
 
   lastName.set(await getFirstTableRowName())
 
   const rows = await page.$$(tableRowsSelector)
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < limit; i++) {
     const check = await rows[i].$(checkboxSelector)
     if (!check) continue
     await check.click()

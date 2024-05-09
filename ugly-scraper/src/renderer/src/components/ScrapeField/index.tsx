@@ -87,7 +87,11 @@ export const ScrapeField = observer(() => {
       chunk: state.aar.chunk,
       accounts: state.aar.accounts.map((a) => a.id),
       usingProxy: false,
-      timeout: toMs(hh, mm, ss)
+      timeout: {
+        time: toMs(hh, mm, ss),
+        rounds: 1
+      },
+      maxLeads: 53
     })
       .then((d) => {
         console.log(d)

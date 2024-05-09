@@ -374,9 +374,6 @@ export const apolloConfirmAccountEvent = async (
 }
 
 type SAccount = IAccount & { totalScrapedInLast30Mins: number }
-const _SALock = new Mutex()
-// (FIX) find a way to select account not in use (since you can scrape multiple at once), maybe have a global object/list that keeps track of accounts in use
-// (FIX) put mutex of selectAccForScrapingFILO() call and not inside the func, this way we can acc in use in global obj/list
 // (FIX) handle account errors like suspension
 export const apolloScrape = async (
   taskID: string,
@@ -384,13 +381,12 @@ export const apolloScrape = async (
   meta: IMetaData,
   usingProxy: boolean,
   account: SAccount,
-  range: [number, number]
+  range: [number, number],
+  maxLeadScrapeLimit: number
 ) => {
+  let url: string
   let proxy: string | null = null
-  // let account: SAccount
-  const maxLeadScrapeLimit = 1000 // max amount of leads 1 account can scrape before protentially 24hr ban
-  // const minLeadScrapeLimit = 100
-  const maxLeadsOnPage = 25 // apollo has 25 leads per page MAX
+  const maxLeadsOnPage = 25
 
   if (usingProxy) {
     // (FIX) if proxy does not work assign new proxy & save to db, if no proxy use default IP (or give user a choice)
@@ -405,9 +401,8 @@ export const apolloScrape = async (
   await setupApolloForScraping(taskID, browserCTX, account).then(() => {
     io.emit('apollo', { taskID, message: 'successfully setup apollo for scraping' })
   })
-  let url = setRangeInApolloURL(meta.url, range)
+  url = setRangeInApolloURL(meta.url, range)
   url = setPageInApolloURL(url, 1)
-  const credits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
 
   // // (FIX) ============ PUT INTO FUNC =====================
   // // leads recovery (if account has listName and no date or numOfLeadsScraped)
@@ -449,25 +444,23 @@ export const apolloScrape = async (
     }
   })()
 
-  let counter = 0
-  while (counter <= 2) {
-    const creditsLeft = credits.emailCreditsLimit - credits.emailCreditsUsed
+  let oldCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
+
+  while (maxLeadScrapeLimit > 0) {
+    const creditsLeft = oldCredits.emailCreditsLimit - oldCredits.emailCreditsUsed
     if (creditsLeft <= 0) return
 
-    const numOfLeadsAccCanScrape = maxLeadScrapeLimit - account.totalScrapedInLast30Mins
-    if (numOfLeadsAccCanScrape <= 0) return
+    const numOfLeadsToScrape = Math.min(maxLeadScrapeLimit, creditsLeft, maxLeadsOnPage)
+    if (numOfLeadsToScrape <= 0) return
 
     const scrapeID = generateID()
     const listName = generateSlug(4)
 
     await updateDBForNewScrape(taskID, meta, account, listName, scrapeID)
 
-    let numOfLeadsToScrape = Math.min(numOfLeadsAccCanScrape, creditsLeft)
-    numOfLeadsToScrape = numOfLeadsToScrape >= maxLeadsOnPage ? maxLeadsOnPage : numOfLeadsToScrape
-
     // go to scrape link
     await goToApolloSearchUrl(taskID, browserCTX, url).then(() => {
-      io.emit('apollo', { taskID, message: 'visiting apollo lead url' })
+      io.emit('apollo', { taskID, message: 'visiting apollo url' })
     })
 
     const data = await apolloAddLeadsToListAndScrape(
@@ -488,11 +481,12 @@ export const apolloScrape = async (
 
     const newCredits = await logIntoApolloAndGetCreditsInfo(taskID, browserCTX, account)
     const cookies = await getBrowserCookies(browserCTX)
-    const totalScraped = newCredits.emailCreditsUsed - credits.emailCreditsUsed
+    // const totalScraped = newCredits.emailCreditsUsed - oldCredits.emailCreditsUsed
+    // use data.length because group account share lead limits, other accounts scrapes will be reflected in (emailCreditsUsed)
+    const totalScraped = data.length
     account.totalScrapedInLast30Mins = account.totalScrapedInLast30Mins + totalScraped
     account.history.push([totalScraped, new Date().getTime(), listName, scrapeID])
 
-    // (FIX) acc4Scrape & its range needs to be saved in db
     const save = await saveScrapeToDB(
       taskID,
       account,
@@ -511,8 +505,9 @@ export const apolloScrape = async (
     const nextPage = getPageInApolloURL(url) + 1
     url = setPageInApolloURL(url, nextPage > apolloMaxPage ? 1 : nextPage)
     meta = save.meta
-    account = { ...account, ...save.account }
-    counter++
+    account = { ...account, ...save.account } // ?
+    maxLeadScrapeLimit = maxLeadScrapeLimit - totalScraped
+    oldCredits = newCredits
   }
 }
 

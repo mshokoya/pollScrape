@@ -34,6 +34,8 @@ process.on('message', (e: any & { taskType: string }) => {
       break
     }
     case 'scrape': {
+      console.log('iinnn daa scrape')
+      console.log(global.forkID)
       scrapeQueue.enqueue(e.meta)
       break
     }

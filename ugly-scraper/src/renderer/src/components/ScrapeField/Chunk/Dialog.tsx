@@ -18,7 +18,7 @@ export type ChunkCompProps = {
 
 export const ChunkDialog = observer(
   ({ aar, chunkParts, handleChunkPart, maxScrapeLimit, chunkingInProcess }: ChunkCompProps) => {
-    const timeout = `${aar.timeout[0].get()}d:${aar.timeout[1].get()}h:${aar.timeout[2].get()}m:${aar.timeout[3].get()}s`
+    const timeout = `${aar.timeout[0].get()}h:${aar.timeout[1].get()}m:${aar.timeout[2].get()}s`
     const rounds = aar.rounds.get()
     return (
       <Flex direction="column" height="500px" gap="3">

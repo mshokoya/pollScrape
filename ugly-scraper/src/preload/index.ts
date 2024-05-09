@@ -94,15 +94,7 @@ contextBridge.exposeInMainWorld('record', {
 })
 
 contextBridge.exposeInMainWorld('scrape', {
-  [CHANNELS.a_scrape]: async (args: {
-    name: string
-    url: string
-    chunk: [number, number][]
-    accounts: string[]
-    metaID?: string
-    useProxy: boolean
-    timeout?: Timeout
-  }) => {
+  [CHANNELS.a_scrape]: async (args) => {
     return await ipcRenderer.invoke(CHANNELS.a_scrape, args)
   }
 })

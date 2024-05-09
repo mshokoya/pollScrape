@@ -52,7 +52,23 @@ export const scraper = (() => {
       l.type = 'headless'
     } else {
       if (!browser) {
-        browser = await puppeteer.launch({ headless: false })
+        browser = await puppeteer.launch({
+          headless: false,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            // '--single-process', // not working in head browser... try headless
+            '--disable-gpu',
+            '--deterministic-fetch',
+            '--disable-features=IsolateOrigins',
+            '--disable-site-isolation-trials',
+            '--disable-features=site-per-process'
+          ]
+        })
       }
       context = await browser.createBrowserContext()
       l.type = 'head'

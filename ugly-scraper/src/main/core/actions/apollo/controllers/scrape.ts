@@ -15,7 +15,8 @@ export const Tscrape = async ({
   accounts,
   chunk,
   useProxy,
-  timeout
+  timeout,
+  maxLeads
 }: {
   name: string
   url: string
@@ -24,6 +25,7 @@ export const Tscrape = async ({
   metaID?: string
   useProxy: boolean
   timeout?: Timeout
+  maxLeads: number
 }) => {
   console.log('scrape')
 
@@ -45,7 +47,7 @@ export const Tscrape = async ({
     metaID = metadata.id
 
     const taskID = generateID()
-    await taskQueue.enqueue({
+    taskQueue.enqueue({
       taskID,
       taskGroup: 'apollo',
       timeout,
@@ -62,7 +64,7 @@ export const Tscrape = async ({
               pid: taskID,
               taskGroup: 'apollo',
               action: CHANNELS.a_scrape,
-              args: { chunk: chunk[i], accountID: accounts[i], metadata, useProxy },
+              args: { chunk: chunk[i], accountID: accounts[i], metadata, useProxy, maxLeads },
               metadata: {
                 taskType: CHANNELS.a_scrape,
                 taskGroup: 'apollo',
@@ -77,7 +79,7 @@ export const Tscrape = async ({
           for (let i = 0; i < accounts.length; i++) {
             arr.push(
               scrape(
-                { chunk: chunk[i], accountID: accounts[i], metadata, useProxy, taskID },
+                { chunk: chunk[i], accountID: accounts[i], metadata, useProxy, taskID, maxLeads },
                 signal
               )
             )

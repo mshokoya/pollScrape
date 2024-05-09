@@ -207,6 +207,7 @@ const TaskQueue = () => {
         return task
       })
       .then((t) => {
+        if (!t) return
         const { taskID, useFork, taskGroup, taskType, metadata } = t
         io.emit<TaskQueueEvent>(QC.timeoutQueue, {
           taskID: taskID,
@@ -294,6 +295,7 @@ const TaskQueue = () => {
           p_dequeue(task.taskID)
         })
         .catch(async (err) => {
+          console.log(err)
           io.emit<TaskQueueEvent>(task.taskGroup, {
             ...taskIOEmitArgs,
             ok: false,
@@ -346,7 +348,7 @@ const TaskQueue = () => {
     }
     const id = generateID()
 
-    const f = fork(`${path.join(__dirname)}/core.js`, null, { silent: true, stdio: 'ignore' })
+    const f = fork(`${path.join(__dirname)}/core.js`, null, {})
     f.send({ taskType: 'init', forkID: id, cacheHTTPPort: global.cacheHTTPPort })
     f.on('message', handleForkEvent)
     f.on('exit', () => {
