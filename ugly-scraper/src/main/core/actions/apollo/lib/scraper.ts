@@ -72,7 +72,14 @@ export const scraper = (() => {
     return page
   }
 
-  const close = async (context: BrowserContext) => {
+  // provide ctx or id
+  const close = async (context: BrowserContext | string) => {
+    if (typeof context === 'string') {
+      context = contextList.find((ctx) => ctx.id === context)
+      if (!context) {
+        context = headlessContextList.find((ctx) => ctx.id === context)
+      }
+    }
     await context.page.close()
     await context.context.close()
 

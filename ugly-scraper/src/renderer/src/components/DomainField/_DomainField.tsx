@@ -1,12 +1,12 @@
 import { FormEvent, MouseEvent } from 'react'
-import { fetchData } from '../core/util'
+import { fetchData } from '../../core/util'
 import { SlOptionsVertical } from 'react-icons/sl'
 import { IoOptionsOutline } from 'react-icons/io5'
 import { DomainPopup } from './DomainPopup'
 import { observer, useSelector } from '@legendapp/state/react'
-import { domainState, domainTaskHelper, domainResStatusHelper } from '../core/state/domain'
-import { appState$ } from '../core/state'
-import { CHANNELS } from '../../../shared/util'
+import { domainState, domainTaskHelper, domainResStatusHelper } from '../../core/state/domain'
+import { appState$ } from '../../core/state'
+import { CHANNELS } from '../../../../shared/util'
 
 export type IDomain = {
   id: string

@@ -4,7 +4,8 @@ import { logIntoApollo } from '.'
 import { updateAccount } from '../../../database'
 import { IAccount } from '../../../database/models/accounts'
 import { io } from '../../../websockets'
-import { delay } from '../../../util'
+import { AppError, delay } from '../../../util'
+import { setupApolloForScraping } from './apollo'
 
 export type CreditsInfo = {
   emailCreditsUsed: number
@@ -69,11 +70,16 @@ export const waitForNavigationTo = (
 ) =>
   new Promise<boolean>((resolve, _reject) => {
     const browser_check = setInterval(async () => {
-      if (browserCTX.page.url().includes(location)) {
+      if (!browserCTX.page.url() || browserCTX.page.url().includes(location)) {
         clearInterval(browser_check)
-        resolve(true)
+        if (!browserCTX.page.url()) {
+          _reject(new AppError(taskID, 'failed interval'))
+        } else {
+          resolve(true)
+        }
+
         // @ts-ignore
-      } 
+      }
       // else if ((await browserCTX.context.pages()).length === 0) {
       //   clearInterval(browser_check)
       //   throw new AppError(
@@ -136,15 +142,25 @@ export const logIntoApolloThenVisit = async (
   const page = browserCTX.page as Page
   page.goto(url)
 
-  await page.waitForNavigation({ timeout: 15000 }).then(async () => {
-    await delay(7000)
-    if (page.mainFrame().url().includes('/#/login')) {
-      await logIntoApollo(taskID, browserCTX, account).then(() => {
-        io.emit('apollo', { taskID, message: 'Logged into apollo' })
-      })
-      const cookies = await getBrowserCookies(browserCTX)
-      await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
-      await browserCTX.page.goto(url)
-    }
+  await setupApolloForScraping(taskID, browserCTX, account).then(() => {
+    io.emit('apollo', { taskID, message: 'Logged into apollo' })
   })
+
+  await browserCTX.page.goto(url)
+
+  // await page.waitForNavigation({ timeout: 15000 }).then(async () => {
+  //   await delay(7000)
+
+  // // if (page.mainFrame().url().includes('/#/login')) {
+  // if (!browserCTX.page.url() || page.url().includes('/#/login')) {
+  //   if (!browserCTX.page.url()) throw new AppError(taskID, 'Failed to find url')
+  //   // await logIntoApollo(taskID, browserCTX, account).then(() => {
+  //   //   io.emit('apollo', { taskID, message: 'Logged into apollo' })
+  //   // })
+
+  //   const cookies = await getBrowserCookies(browserCTX)
+  //   await updateAccount({ id: account.id }, { cookies: JSON.stringify(cookies) })
+
+  // }
+  // })
 }

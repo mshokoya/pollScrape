@@ -1,4 +1,3 @@
-import { Schema, model } from 'mongoose'
 import {
   CreateOptions,
   DataTypes,
@@ -90,17 +89,3 @@ export const DomainModel_ = {
       .catch(() => null)
   }
 }
-
-const domainSchema = new Schema<IDomain>({
-  domain: { type: String, default: '' },
-  // @ts-ignore
-  authEmail: { type: String, default: import.meta.env.MAIN_VITE_AUTHEMAIL },
-  // @ts-ignore
-  authPassword: { type: String, default: import.meta.env.MAIN_VITE_AUTHPASS },
-  verified: { type: Boolean, default: false },
-  MXRecords: { type: Boolean, default: false },
-  TXTRecords: { type: Boolean, default: false },
-  VerifyMessage: { type: String, default: '' }
-})
-
-export const DomainModel = model<IDomain>('domain', domainSchema)

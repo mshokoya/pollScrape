@@ -1,8 +1,8 @@
 import { IoMdClose } from 'react-icons/io'
-import { blinkCSS, fetchData } from '../core/util'
+import { blinkCSS } from '../../core/util'
 import { IDomain } from './DomainField'
-import { Spin } from './util'
-import { domainTaskHelper, DomainReqType } from '../core/state/domain'
+import { Spin } from '../util'
+import { domainTaskHelper, DomainReqType } from '../../core/state/domain'
 
 type Props = {
   closePopup: () => void

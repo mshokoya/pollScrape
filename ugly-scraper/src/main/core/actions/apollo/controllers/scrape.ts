@@ -1,5 +1,6 @@
-import { IMetaData } from '../../../../../shared'
+import { IMetaData, Timeout } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
+import { cache } from '../../../cache'
 import { initMeta } from '../../../database'
 import { MetaDataModel_ } from '../../../database/models/metadata'
 import { taskQueue } from '../../../task-queue'
@@ -13,7 +14,8 @@ export const Tscrape = async ({
   url,
   accounts,
   chunk,
-  useProxy
+  useProxy,
+  timeout
 }: {
   name: string
   url: string
@@ -21,6 +23,7 @@ export const Tscrape = async ({
   accounts: string[]
   metaID?: string
   useProxy: boolean
+  timeout?: Timeout
 }) => {
   console.log('scrape')
 
@@ -45,14 +48,15 @@ export const Tscrape = async ({
     await taskQueue.enqueue({
       taskID,
       taskGroup: 'apollo',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       taskType: 'scrape',
       message: `scrape leads from apollo`,
       metadata: { metaID: metaID },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         io.emit('apollo', { taskID, taskType: 'scrape', message: 'starting lead scraper' })
 
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           for (let i = 0; i < accounts.length; i++) {
             taskQueue.execInFork({
               pid: taskID,
@@ -72,7 +76,10 @@ export const Tscrape = async ({
           const arr = []
           for (let i = 0; i < accounts.length; i++) {
             arr.push(
-              scrape({ chunk: chunk[i], accountID: accounts[i], metadata, useProxy, taskID })
+              scrape(
+                { chunk: chunk[i], accountID: accounts[i], metadata, useProxy, taskID },
+                signal
+              )
             )
           }
           return await Promise.allSettled(arr)
@@ -80,7 +87,9 @@ export const Tscrape = async ({
       }
     })
 
-    return { ok: true, message: null, data: null }
+    await cache.addAccounts(metaID, accounts)
+
+    return { ok: true, message: null, data: metadata }
   } catch (err: any) {
     return { ok: false, message: err.message || 'failed to scrape', data: null }
   }

@@ -62,23 +62,15 @@ export const getPageInApolloURL = (url: string) => {
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
   //@ts-ignore
-  const result: [number, number][] = [[]],
-    delta = Math.round((max - min) / (parts - 1))
+  const intervalSize = (max - min) / parts
+  const intervals = []
 
-  while (min < max) {
-    const l = result.length - 1
-    if (result.length === 1 && result[l].length < 2) {
-      result[l].push(min)
-    } else {
-      result.push([result[l][1] + 1, min])
-    }
-    min += delta
+  for (let i = 0; i < parts; i++) {
+    const start = min + i * intervalSize
+    const end = start + intervalSize
+    intervals.push([start, end])
   }
-
-  const l = result[result.length - 1][1] + 1
-
-  result.push([l, l === max ? max + 1 : max])
-  return result
+  return intervals
 }
 
 export const delay = (time: number) => {

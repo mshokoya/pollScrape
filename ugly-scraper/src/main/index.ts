@@ -26,9 +26,12 @@ import {
   getProxies,
   addProxy
 } from './core/actions'
+import { cache } from './core/cache'
 import { CHANNELS } from '../shared/util'
-import { AddAccountArgs, IAccount, IMetaData } from '../shared'
+import { AddAccountArgs, IAccount, IMetaData, StopType, Timeout } from '../shared'
 import { create } from './window'
+import { taskQueue } from './core/task-queue'
+import { delay } from './core/util'
 
 let window
 
@@ -39,82 +42,57 @@ function createWindow(): void {
     // ==========================================================================================
 
     //================= account =========================
-    ipcMain.handle(
-      CHANNELS.a_accountDemine,
-      async (e, accountID: string) => await Tdemine({ accountID })
-    )
+    ipcMain.handle(CHANNELS.a_accountDemine, async (_, args) => await Tdemine(args))
     ipcMain.handle(
       CHANNELS.a_accountUpgradeManually,
-      async (e, accountID: string) => await TupgradeManually({ accountID })
+      async (_, args) => await TupgradeManually(args)
     )
     ipcMain.handle(
       CHANNELS.a_accountUpgradeAutomatically,
-      async (e, accountID: string) => await TupgradeAutomatically({ accountID })
+      async (_, args) => await TupgradeAutomatically(args)
     )
-    ipcMain.handle(
-      CHANNELS.a_accountCheck,
-      async (e, accountID: string) => await TcheckAccount({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountDelete,
-      async (e, accountID: string) => await TdeleteAccount({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountConfirm,
-      async (e, accountID: string) => await TconfirmAccount({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountLoginAuto,
-      async (e, accountID: string) => await TloginAuto({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountLoginManually,
-      async (e, accountID: string) => await TloginManually({ accountID })
-    )
-    ipcMain.handle(
-      CHANNELS.a_accountUpdate,
-      async (e, accountID: string, fields: IAccount) => await TupdateAcc({ accountID, fields })
-    )
+    ipcMain.handle(CHANNELS.a_accountCheck, async (_, args) => await TcheckAccount(args))
+    ipcMain.handle(CHANNELS.a_accountDelete, async (_, args) => await TdeleteAccount(args))
+    ipcMain.handle(CHANNELS.a_accountConfirm, async (_, args) => await TconfirmAccount(args))
+    ipcMain.handle(CHANNELS.a_accountLoginAuto, async (_, args) => await TloginAuto(args))
+    ipcMain.handle(CHANNELS.a_accountLoginManually, async (_, args) => await TloginManually(args))
+    ipcMain.handle(CHANNELS.a_accountUpdate, async (_, args) => await TupdateAcc(args))
     ipcMain.handle(CHANNELS.a_accountGetAll, async () => await TgetAccounts())
-
-    ipcMain.handle(
-      CHANNELS.a_accountAdd,
-      async (e, args: AddAccountArgs) => await TaddAccount(args)
-    )
+    ipcMain.handle(CHANNELS.a_accountAdd, async (_, args) => await TaddAccount(args))
 
     // =============== domain =====================
-    ipcMain.handle(CHANNELS.a_domainAdd, async (e, domain: string) => await addDomain(domain))
-    ipcMain.handle(CHANNELS.a_domainVerify, async (e, domain: string) => await verifyDomain(domain))
+    ipcMain.handle(CHANNELS.a_domainAdd, async (_, domain: string) => await addDomain(domain))
+    ipcMain.handle(CHANNELS.a_domainVerify, async (_, domain: string) => await verifyDomain(domain))
     ipcMain.handle(
       CHANNELS.a_domainDelete,
-      async (e, domainID: string) => await deleteDomain(domainID)
+      async (_, domainID: string) => await deleteDomain(domainID)
     )
     ipcMain.handle(CHANNELS.a_domainGetAll, async () => await getDomains())
 
     // =============== Metadata =====================
     ipcMain.handle(CHANNELS.a_metadataGetAll, async () => await getMetadatas())
-    ipcMain.handle(CHANNELS.a_metadataDelete, async (e, id: string) => await deleteMetadata(id))
+    ipcMain.handle(CHANNELS.a_metadataDelete, async (_, id: string[]) => await deleteMetadata(id))
     ipcMain.handle(
       CHANNELS.a_metadataUpdate,
-      async (e, meta: IMetaData) => await updateMetadata(meta)
+      async (_, meta: IMetaData) => await updateMetadata(meta)
     )
 
     // =============== Proxy =====================
     ipcMain.handle(CHANNELS.a_proxyGetAll, async () => await getProxies())
     ipcMain.handle(
       CHANNELS.a_proxyAdd,
-      async (e, url: string, proxy: string) => await addProxy(url, proxy)
+      async (_, url: string, proxy: string) => await addProxy(url, proxy)
     )
 
     // =============== Record =====================
     ipcMain.handle(CHANNELS.a_recordsGetAll, async () => await getRecords())
-    ipcMain.handle(CHANNELS.a_recordGet, async (e, id: string) => await getRecord(id))
+    ipcMain.handle(CHANNELS.a_recordGet, async (_, id: string) => await getRecord(id))
 
     // =============== Scrape =====================
     ipcMain.handle(
       CHANNELS.a_scrape,
       async (
-        e,
+        _,
         args: {
           name: string
           url: string
@@ -122,10 +100,23 @@ function createWindow(): void {
           accounts: string[]
           metaID?: string
           useProxy: boolean
+          timeout?: Timeout
         }
       ) => await Tscrape(args)
     )
 
+    // =============== cache =====================
+    ipcMain.handle(CHANNELS.cache_getAllAccountIDs, async () => await cache.getAllAccountIDs())
+    // =============== fork =====================
+    ipcMain.handle(CHANNELS.fork_create, async () => await taskQueue.createFork())
+    ipcMain.handle(CHANNELS.fork_stop, async (_, args: { forkIDs: string[]; stopType: StopType }) =>
+      taskQueue.stopForks(args.forkIDs, args.stopType)
+    )
+    // ipcMain.handle(CHANNELS.fork_setMaxTasks, async (_, args: { forkID: string; num: number }) => {
+    //   await taskQueue.setMaxProcesses(args)
+    // })
+    ipcMain.handle(CHANNELS.fork_get, async () => taskQueue.forks())
+    ipcMain.handle(CHANNELS.taskQueue_queues, async () => taskQueue.queues())
     // ==========================================================================================
   })
 }

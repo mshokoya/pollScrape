@@ -1,7 +1,7 @@
-import { AddAccountArgs } from '../../../../../shared'
+import { AddAccountArgs, IAccount, Timeout } from '../../../../../shared'
 import { CHANNELS } from '../../../../../shared/util'
 import { updateAccount } from '../../../database'
-import { AccountModel_, IAccount } from '../../../database/models/accounts'
+import { AccountModel_ } from '../../../database/models/accounts'
 import { DomainModel_ } from '../../../database/models/domain'
 import { accountToMailbox, mailbox, MailboxAuthOptions } from '../../../mailbox'
 import { taskQueue } from '../../../task-queue'
@@ -19,7 +19,13 @@ import {
 } from '../actions'
 import { apolloConfirmAccountEvent } from '../lib'
 
-export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
+export const TconfirmAccount = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('confirm')
 
   try {
@@ -34,17 +40,18 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'confirm',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `confirming account ${account.email}`,
       metadata: { accountID, taskType: 'confirm' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'confirm',
         //   message: `confirming account ${account.email}`,
         //   data: { accountID }
         // })
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -58,7 +65,7 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
           })
         } else {
           // @ts-ignore
-          return await confirmAccount({ taskID, account })
+          return await confirmAccount({ taskID, account }, signal)
         }
       }
     })
@@ -69,7 +76,13 @@ export const TconfirmAccount = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const TupgradeManually = async ({ accountID }: { accountID: string }) => {
+export const TupgradeManually = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('upgradeAccountManual')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -82,17 +95,18 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualUpgrade',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `Upgrading ${account.email} manually`,
       metadata: { accountID, taskType: 'manualUpgrade' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'manualUpgrade',
         //   message: `Upgrading ${account.email} manually`,
         //   data: { accountID }
         // })
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -106,7 +120,7 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
           })
         } else {
           // @ts-ignore
-          return await upgradeManually({ taskID, account })
+          return await upgradeManually({ taskID, account }, signal)
         }
       }
     })
@@ -117,7 +131,13 @@ export const TupgradeManually = async ({ accountID }: { accountID: string }) => 
   }
 }
 
-export const TupgradeAutomatically = async ({ accountID }: { accountID: string }) => {
+export const TupgradeAutomatically = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('upgradeAccounts')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -130,17 +150,18 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
       taskID,
       taskGroup: 'apollo',
       taskType: 'upgrade',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `Upgrading ${account.email} automatically`,
       metadata: { accountID },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'upgrade',
         //   message: `Upgrading ${account.email} automatically`,
         //   data: { accountID }
         // })
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -154,7 +175,7 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
           })
         } else {
           // @ts-ignore
-          return await upgradeAutomatically({ taskID, account })
+          return await upgradeAutomatically({ taskID, account }, signal)
         }
       }
     })
@@ -165,7 +186,13 @@ export const TupgradeAutomatically = async ({ accountID }: { accountID: string }
   }
 }
 
-export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
+export const TcheckAccount = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('checkAccounts')
   try {
     if (!accountID) throw new Error('Failed to check account, please provide valid id')
@@ -178,17 +205,18 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'check',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `Getting information on ${account.email} credits`,
-      metadata: { accountID, taskType: 'check' },
-      action: async () => {
+      metadata: { accountID },
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'check',
         //   message: `Getting information on ${account.email} credits`,
         //   data: { accountID }
         // })
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -202,7 +230,7 @@ export const TcheckAccount = async ({ accountID }: { accountID: string }) => {
           })
         } else {
           // @ts-ignore
-          return await checkAccount({ taskID, account })
+          return await checkAccount({ taskID, account }, signal)
         }
       }
     })
@@ -227,7 +255,13 @@ export const TdeleteAccount = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const TloginAuto = async ({ accountID }: { accountID: string }) => {
+export const TloginAuto = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('loginauto')
   try {
     if (!accountID) throw new Error('Failed to login, invalid id')
@@ -240,23 +274,18 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'login',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `Logging into ${account.email} apollo account`,
       metadata: { accountID, taskType: 'login' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'login',
         //   message: `Logging into ${account.email} apollo account`,
         //   data: { accountID }
         // })
-        if (taskQueue.useFork) {
-          console.log(`
-
-
-            exec in fork
-
-            `)
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -270,7 +299,7 @@ export const TloginAuto = async ({ accountID }: { accountID: string }) => {
           })
         } else {
           // @ts-ignore
-          return await loginAuto({ taskID, account })
+          return await loginAuto({ taskID, account }, signal)
         }
       }
     })
@@ -286,8 +315,9 @@ export const TaddAccount = async ({
   addType,
   email: emaill,
   password,
-  recoveryEmail
-}: AddAccountArgs) => {
+  recoveryEmail,
+  timeout
+}: AddAccountArgs & { timeout?: Timeout }) => {
   console.log('addAccount')
 
   try {
@@ -296,7 +326,7 @@ export const TaddAccount = async ({
     const domain = email
     let account: Partial<IAccount>
     const taskID = generateID()
-
+    const dummyAccountID = generateID()
     if (!addType) throw new Error('Failed to add account, invalid request params')
 
     if (addType === 'domain') {
@@ -331,6 +361,42 @@ export const TaddAccount = async ({
             })
         }
       )
+
+      taskQueue.enqueue({
+        taskID,
+        taskGroup: 'apollo',
+        taskType: 'create',
+        timeout,
+        useFork: taskQueue.useFork(),
+        message: `adding ${account.email}`,
+        metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
+        action: async (signal: AbortSignal) => {
+          // io.emit('apollo', {
+          //   taskID,
+          //   taskType: 'create',
+          //   message: `adding ${account.email}`
+          // })
+          if (taskQueue.useFork()) {
+            return taskQueue.execInFork({
+              pid: taskID,
+              taskGroup: 'apollo',
+              action: CHANNELS.a_accountAdd,
+              args: { account },
+              metadata: {
+                taskGroup: 'apollo',
+                taskType: 'create',
+                metadata: {
+                  email: account.email,
+                  accountID: dummyAccountID
+                }
+              }
+            })
+          } else {
+            // @ts-ignore
+            return await addAccount({ taskID, account }, signal)
+          }
+        }
+      })
     } else {
       if (!email || !password) throw new Error('invalid request params')
 
@@ -346,45 +412,45 @@ export const TaddAccount = async ({
         : await AccountModel_.findOne({ email })
 
       if (accountExists) throw new Error('Failed to create new account, account already exists')
+
+      account = await AccountModel_.create(account)
+
+      taskQueue.enqueue({
+        taskID,
+        taskGroup: 'apollo',
+        taskType: 'check',
+        timeout,
+        useFork: taskQueue.useFork(),
+        message: `Getting information on ${account.email} credits`,
+        metadata: { accountID: account.id },
+        action: async (signal: AbortSignal) => {
+          // io.emit('apollo', {
+          //   taskID,
+          //   taskType: 'check',
+          //   message: `Getting information on ${account.email} credits`,
+          //   data: { accountID }
+          // })
+          if (taskQueue.useFork()) {
+            return taskQueue.execInFork({
+              pid: taskID,
+              taskGroup: 'apollo',
+              action: CHANNELS.a_accountCheck,
+              args: { account },
+              metadata: {
+                taskGroup: 'apollo',
+                taskType: 'check',
+                metadata: { accountID: account.id }
+              }
+            })
+          } else {
+            // @ts-ignore
+            return await checkAccount({ taskID, account }, signal)
+          }
+        }
+      })
     }
 
-    const dummyAccountID = generateID()
-    await taskQueue.enqueue({
-      taskID,
-      taskGroup: 'apollo',
-      taskType: 'create',
-      useFork: taskQueue.useFork,
-      message: `adding ${account.email}`,
-      metadata: { email: account.email, accountID: dummyAccountID, taskType: 'create' },
-      action: async () => {
-        // io.emit('apollo', {
-        //   taskID,
-        //   taskType: 'create',
-        //   message: `adding ${account.email}`
-        // })
-        if (taskQueue.useFork) {
-          return taskQueue.execInFork({
-            pid: taskID,
-            taskGroup: 'apollo',
-            action: CHANNELS.a_accountAdd,
-            args: { account },
-            metadata: {
-              taskGroup: 'apollo',
-              taskType: 'create',
-              metadata: {
-                email: account.email,
-                accountID: dummyAccountID
-              }
-            }
-          })
-        } else {
-          // @ts-ignore
-          return await addAccount({ taskID, account })
-        }
-      }
-    })
-
-    return { ok: true, message: null, data: null }
+    return { ok: true, message: null, data: account }
   } catch (err: any) {
     return { ok: false, message: err.message, data: err }
   }
@@ -421,7 +487,13 @@ export const TupdateAcc = async ({
   }
 }
 
-export const TloginManually = async ({ accountID }: { accountID: string }) => {
+export const TloginManually = async ({
+  accountID,
+  timeout
+}: {
+  accountID: string
+  timeout?: Timeout
+}) => {
   console.log('loginManually')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -434,17 +506,18 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'manualLogin',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `Login into ${account.email}`,
       metadata: { accountID, taskType: 'manualLogin' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // io.emit('apollo', {
         //   taskID,
         //   taskType: 'manualLogin',
         //   message: `Login into ${account.email}`,
         //   data: { accountID }
         // })
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -457,7 +530,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
             }
           })
         } else {
-          return await loginManually({ taskID, account })
+          return await loginManually({ taskID, account }, signal)
         }
       }
     })
@@ -468,7 +541,7 @@ export const TloginManually = async ({ accountID }: { accountID: string }) => {
   }
 }
 
-export const Tdemine = async ({ accountID }: { accountID: string }) => {
+export const Tdemine = async ({ accountID, timeout }: { accountID: string; timeout?: Timeout }) => {
   console.log('mines')
   try {
     if (!accountID) throw new Error('Failed to start demining, invalid request body')
@@ -481,10 +554,11 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
       taskID,
       taskGroup: 'apollo',
       taskType: 'demine',
-      useFork: taskQueue.useFork,
+      timeout,
+      useFork: taskQueue.useFork(),
       message: `Demine ${account.email} popups`,
       metadata: { accountID, taskType: 'demine' },
-      action: async () => {
+      action: async (signal: AbortSignal) => {
         // (FIX) MOVE TO DEMINE FUNC.. i this its used to disable account in add "in use" colors on fronend
         // io.emit<TaskEnqueue>('apollo', {
         //   taskID,
@@ -492,7 +566,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
         //   message: `Demine ${account.email} popups`,
         //   metadata: { accountID }
         // })
-        if (taskQueue.useFork) {
+        if (taskQueue.useFork()) {
           return taskQueue.execInFork({
             pid: taskID,
             taskGroup: 'apollo',
@@ -505,7 +579,7 @@ export const Tdemine = async ({ accountID }: { accountID: string }) => {
             }
           })
         } else {
-          return await demine({ taskID, account })
+          return await demine({ taskID, account }, signal)
         }
       }
     })

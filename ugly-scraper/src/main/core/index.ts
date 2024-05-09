@@ -1,60 +1,60 @@
 import { initTaskQueue } from './task-queue'
 import { initMailBox } from './mailbox'
 import { initForwarder } from './forwarder'
-import { initCache } from './cache'
+import { cache, initCache } from './cache'
 import { initPrompt } from './prompt'
 import { syncDB } from './database/db'
-import { initSocketIO } from './websockets'
+import { initSocketIO, io } from './websockets'
 import { initScrapeQueue, scrapeQueue } from './scrape-queue'
 import { IPC_APP } from '../../shared'
-import { generateID } from './util'
-import { actions } from './actions'
 
-process.on('message', (e) => {
-  console.log('wi in dis bihh')
+// (FIX) create types for receiving data from parent (websockets.ts = parent -> frontend & fork -> parent)
+process.on('message', (e: any & { taskType: string }) => {
   switch (e.taskType) {
     case 'init': {
-      console.log('WE WYYAAA')
-      global.forkID = generateID()
-      init(null, true)
+      global.forkID = e.forkID
+      global.cacheHTTPPort = e.cacheHTTPPort
+      process.on('uncaughtException', (err) => {
+        console.log(global.forkID)
+        console.log('in da exception')
+        console.log(err)
+      })
+      init(null)
+        .then(() => {
+          io.emit('fork', {
+            taskType: 'create',
+            ok: true,
+            forkID: e.forkID
+          })
+        })
+        .catch(() => {
+          io.emit('fork', { taskType: 'create', ok: false })
+          process.kill(0)
+        })
       break
     }
     case 'scrape': {
-      const args = e.meta
-      const action = actions[args.action]
-      scrapeQueue.enqueue({ ...args, action })
+      scrapeQueue.enqueue(e.meta)
+      break
+    }
+    case 'move': {
+      scrapeQueue.move(e.meta)
+      break
+    }
+    case 'stop': {
+      if (e.stopType === 'force') {
+        scrapeQueue.stopForce()
+      } else if (e.stopType === 'waitAll') {
+        scrapeQueue.stopWaitForAll()
+      } else if (e.stopType === 'waitPs') {
+        scrapeQueue.stopWaitForProcess()
+      }
       break
     }
   }
 })
 
-// process.parentPort?.on('message', (e) => {
-//   console.log('WE WYYAAA')
-//   global.forkID = generateID()
-//   const [port] = e.ports
-
-//   global.port = port
-
-//   port.on('message', (e: ForkEvent) => {
-//     switch (e.data.taskType) {
-//       case 'scrape': {
-//         const args = e.data.meta
-//         const action = actions[args.action]
-//         scrapeQueue.enqueue({ ...args, action })
-//         break
-//       }
-//     }
-//   })
-
-//   port.start()
-
-//   init(null, true)
-// })
-
-export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void> => {
-  // global.isWorker = wrk
-  //
-
+export const init = async (ipc?: IPC_APP): Promise<void> => {
   await syncDB().then(() => {
     console.log('DB started')
   })
@@ -68,7 +68,7 @@ export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void
   initPrompt()
   console.log('Prompt started')
 
-  if (isFork) {
+  if (global.forkID) {
     initScrapeQueue()
     console.log('ScrapeQueue started')
   } else {
@@ -82,19 +82,3 @@ export const init = async (ipc?: IPC_APP, isFork: boolean = false): Promise<void
   initMailBox()
   console.log('Mailbox started')
 }
-
-// ==========================================================================================
-
-// const { port1, port2 } = new MessageChannelMain()
-
-// const child = utilityProcess.fork(path.join(__dirname, './worker.js'))
-// child.postMessage({ message: 'hello' }, [port1])
-
-// // port2.on('message', (e) => {
-// //   console.log(`Message from child: ${e.data}`)
-// // })
-// port2.start()
-
-// setInterval(() => {
-//   port2.postMessage('hello')
-// }, 5000)

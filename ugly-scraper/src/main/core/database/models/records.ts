@@ -1,4 +1,3 @@
-import { Schema, model } from 'mongoose'
 import {
   BulkCreateOptions,
   DataTypes,
@@ -90,29 +89,3 @@ export const RecordModel_ = {
     )
   }
 }
-
-const records = new Schema<IRecords>({
-  scrapeID: { type: String, default: 'null' },
-  url: { type: String, default: 'null' },
-  data: {
-    Name: { type: String, default: 'null' },
-    Firstname: { type: String, default: 'null' },
-    Lastname: { type: String, default: 'null' },
-    Linkedin: { type: String, default: 'null' },
-    Title: { type: String, default: 'null' },
-    'Company Name': { type: String, default: 'null' },
-    'Company Website': { type: String, default: 'null' },
-    'Company Linkedin': { type: String, default: 'null' },
-    'Company Twitter': { type: String, default: 'null' },
-    'Company Facebook': { type: String, default: 'null' },
-    Email: { type: String, default: 'null' },
-    isVerified: { type: Boolean, default: false },
-    'Company Location': { type: String, default: 'null' },
-    Employees: { type: String, default: 'null' },
-    Phone: { type: String, default: 'null' },
-    Industry: { type: String, default: 'null' },
-    Keywords: { type: [String], default: [] }
-  }
-})
-
-export const RecordsModel = model<IRecords>('record', records)

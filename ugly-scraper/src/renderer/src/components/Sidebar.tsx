@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ProxyField } from './ProxyField'
+// import { ProxyField } from './ProxyField'
 import { AccountField } from './AccountField'
 import { DomainField } from './DomainField'
+import { Separator } from '@radix-ui/themes'
 
 export const Sidebar = () => {
   const [toggle, setToggle] = useState(true)
@@ -17,11 +18,13 @@ export const Sidebar = () => {
       <div
         className={`${toggle && 'hidden'} overflow-scroll bg-[#111111] absolute top-0 bottom-0 right-[1.25rem] w-[40rem] z-200 flex flex-col p-2 gap-2 border-l-4 border-cyan-500`}
       >
-        {/* ACCOUNTS */}
-        <div className="flex flex-col basis-[60%]">
+        {/* DOMAIN */}
+        <div className="flex flex-col basis-[80%]">
           <h2 className=" mb-1">DOMAINS</h2>
           <DomainField />
         </div>
+
+        <Separator my="2" size="4" />
 
         {/* ACCOUNTS */}
         <div className="flex flex-col basis-full">

@@ -7,10 +7,10 @@ let window: BrowserWindow
 
 function create() {
   window = new BrowserWindow({
-    minWidth: 1063,
-    minHeight: 700,
-    height: 700,
-    width: 1063,
+    minWidth: 1222,
+    minHeight: 710,
+    width: 1222,
+    height: 710,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),

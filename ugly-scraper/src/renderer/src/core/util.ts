@@ -26,14 +26,23 @@ export const delay = (time: number) => {
   })
 }
 
+export const cloneObject = (a: Record<any, any> | any[]) => {
+  return JSON.parse(JSON.stringify(a))
+}
+
+// https://stackoverflow.com/questions/9640266/convert-hhmmss-string-to-seconds-only-in-javascript
+// https://stackoverflow.com/questions/41296950/convert-hours-and-minute-to-millisecond-using-javascript-or-jquery
+export const toMs = (hrs, min, sec) =>
+  (parseInt(hrs) * 60 * 60 + parseInt(min) * 60 + parseInt(sec)) * 1000
+
 export const fmtDate = (n: any) => (n && n !== 'n/a' ? new Date(n).toDateString() : 'N/A')
 
 export const fetchData = async <T>(
-  entity: string,
-  method: string,
+  ipcGroup: string,
+  channel: string,
   ...args: any
 ): Promise<FetchData<T>> => {
-  return await window[entity][method](...args)
+  return await window[ipcGroup][channel](...args)
 }
 
 export const blinkCSS = (reqInProces: boolean = false, color: string = 'text-cyan-600') =>
@@ -54,9 +63,6 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
   return {
     getTaskByTaskID: (taskID: string): [entityID: string, idx: number, task?: Task<T>] => {
       for (const [k, v] of Object.entries(taskInProcess.get())) {
-        console.log('IN getTaskByTaskID  V & TaskID')
-        console.log(v)
-        console.log(taskID)
         const taskIdx = v.findIndex((_) => _.taskID === taskID)
         if (taskIdx > -1) return [k, taskIdx, v[taskIdx]]
       }
@@ -93,26 +99,14 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
       }
     },
     deleteTaskByTaskID: (entityID: string, taskID: string) => {
-      const tip = taskInProcess[entityID].get()
-      console.log('IN deleteTaskByTaskID  TIP')
-      console.log(tip)
-      console.log(entityID, taskID)
-      const idx = tip.findIndex((t1) => t1.taskID === taskID)
-      if (tip && idx > -1 && tip.length > 1) {
-        taskInProcess[entityID][idx].delete()
-      } else if (tip && idx > -1 && tip.length === 1) {
-        taskInProcess[entityID].delete()
-      }
+      taskInProcess[entityID].peek().length > 1
+        ? taskInProcess[entityID].set((tg) => tg.filter((t1) => t1.taskID !== taskID))
+        : taskInProcess[entityID].delete()
     },
     deleteTaskByReqType: (entityID: string, reqType: T) => {
-      const tip = taskInProcess[entityID].get()
-      const idx = tip.findIndex((t1) => t1.type === reqType)
-      console.log(idx)
-      if (tip && idx > -1 && tip.length > 1) {
-        taskInProcess[entityID][idx].delete()
-      } else if (tip && idx > -1 && tip.length === 1) {
-        taskInProcess[entityID].delete()
-      }
+      taskInProcess[entityID].peek() && taskInProcess[entityID].peek().length > 1
+        ? taskInProcess[entityID].set((tg) => tg.filter((t1) => t1.type !== reqType))
+        : taskInProcess[entityID].delete()
     },
     add: (entityID: string, task: Task<T>) => {
       const tip = taskInProcess[entityID].get()
@@ -120,8 +114,12 @@ export function TaskHelpers<T>(taskInProcess: ObservableObject<TaskInProcess<T>>
     },
     findTaskByTaskID: (entityID: string, taskID: string) =>
       taskInProcess[entityID].get()?.find((t1) => t1.taskID === taskID),
-    findTaskByReqType: (entityID: string, reqType: string) =>
-      taskInProcess[entityID].get()?.find((t1) => t1.type === reqType),
+    findTaskByReqType: (entityID: string, reqType: string) => {
+      if (!entityID || !reqType) return undefined
+      return taskInProcess[entityID].get()?.find((t1) => {
+        return t1.type === reqType
+      })
+    },
     updateTask: (entityID: string, taskID: string, vals: Partial<Task<T>>) => {
       const idx = taskInProcess[entityID].get().findIndex((t) => t.taskID === taskID)
       const tip = taskInProcess[entityID].get().find((t) => t.taskID === taskID)
@@ -173,57 +171,25 @@ export const setRangeInApolloURL = (url: string, range: [min: number, max: numbe
 // min - 1 / max - 3 // lowest
 // if (max - min <= 4) only use 2 scrapers, (max - min >= 5) use 3 or more
 export const chuckRange = (min: number, max: number, parts: number): [number, number][] => {
-  const result = [[]],
-    delta = Math.round((max - min) / parts)
+  //@ts-ignore
+  const intervalSize = (max - min) / parts
+  const intervals: [number, number][] = []
 
-  while (min < max) {
-    const l = result.length - 1
-    if (result.length === 1 && result[l].length < 2) {
-      //@ts-ignore
-      result[l].push(min)
-    } else {
-      //@ts-ignore
-      const s = result[l]
-      const val = s[1] ? s[1] + 1 : s[0] + 1
-      result.push([val, min])
-    }
-    min += delta
+  for (let i = 0; i < parts; i++) {
+    const start = Math.round(min + i * intervalSize)
+    const end = Math.round(start + intervalSize)
+    const fmtStart =
+      i === 0 // if first arr, then set first val in that arr
+        ? start
+        : intervals[i - 1][1] >= start //if not on first arr and first value matches second value in previous arr, inc by 1
+          ? intervals[i - 1][1] + 1
+          : start
+
+    const fmtEnd = end <= fmtStart ? fmtStart + 1 : end
+
+    intervals.push([fmtStart, fmtEnd])
   }
-
-  //@ts-ignore
-  const l = result[result.length - 1]
-  const s = l[1] ? l[1] + 1 : l[0] + 1
-
-  //@ts-ignore
-  if (l.length === 1) l.push(l[0] + 1)
-  result.push([s, s === max ? max + 1 : max])
-  return result
-
-  //   var result= [[]],
-  //       delta = Math.round((max - min) / parts);
-
-  //   while (min < max) {
-  //       const l = result.length-1
-  //       if (result.length === 1 && result[l].length < 2) {
-  //         //@ts-ignore
-  //         result[l].push(min)
-  //       } else {
-  //         //@ts-ignore
-  //         const s = result[l]
-  //         const val = s[1]?s[1]+1:s[0]+1
-  //         result.push([val, min])
-  //       }
-  //       min += delta;
-  //   }
-
-  //   //@ts-ignore
-  //   const l = result[result.length-1]
-  //   const s = l[1]?l[1]+1:l[0]+1
-
-  //   //@ts-ignore
-  //   if (s[l].length === 1) s[l].push(l[0]+1)
-  //   result.push([s, (s===max)?max+1:max]);
-  //   return result;
+  return intervals
 }
 
 // (FIX) infinate is defined as undefined
@@ -279,6 +245,8 @@ export const removeLeadColInApolloURL = (url: string) => {
   return decodeURI(`${url.split('?')[0]}?${params.toString()}`)
 }
 
+// ==================
+
 export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue | STaskQueue>) => ({
   addToQueue: (queueName: keyof typeof tq, t: T) => {
     // @ts-ignore
@@ -320,35 +288,27 @@ export const TaskQueueHelper = <T>(tq: ObservableObject<TaskQueue | STaskQueue>)
       }
     }
   },
-  addProcess: (taskID: string, PtaskID: string) => {
+  addProcessToTask: (taskID: string, PtaskID: string) => {
     for (const queues in tq) {
-      const t = tq[queues].find((t1) => t1.taskID.peek() === taskID)
-      if (t) {
-        return t.processes.push(PtaskID)
+      const task = tq[queues].find((t1) => t1.taskID.peek() === PtaskID)
+      if (task) {
+        task.processes.push(taskID)
+        return
       }
     }
   },
-  deleteProcess: (taskID: string) => {
+  deleteProcessFromTask: (taskID: string, PtaskID: string) => {
     for (const queues in tq) {
-      for (const task of tq[queues]) {
-        if (task.processes.peek().includes(taskID)) {
-          return task.set((t) => t.filter((t0) => t0 !== taskID))
-        }
+      const task = tq[queues].find((t1) => t1.taskID.peek() === PtaskID)
+      if (task) {
+        task.processes.set((t) => t.filter((t0) => t0 !== taskID))
+        return
       }
     }
   }
 })
 
 // ==================
-
-// const downloadCSVButton = () => {
-//   const evtHdlr = () => {
-//     el.setAttribute('href', window.URL.createObjectURL(new Blob([storageImport.getDataInCSVFmt()], {type: 'text/csv'})))
-//     el.click()
-//   }
-//   const el = createButton('a', 'dcv-button','Download CSV', evtHdlr);
-//   return el
-// }
 
 export const downloadData = (
   records: Record<string, any>[],
@@ -394,3 +354,8 @@ const arrOfObjToCsv = (data: Record<string, any>) => {
 }
 
 // ==================
+
+// for diagram (react flow)
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min
+}

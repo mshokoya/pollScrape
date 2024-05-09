@@ -1,4 +1,3 @@
-import { Schema, model } from 'mongoose'
 import {
   CreateOptions,
   DataTypes,
@@ -8,7 +7,6 @@ import {
   SaveOptions
 } from 'sequelize'
 import { sequelize } from '../db'
-import { truncate } from 'original-fs'
 import { IAccount } from '../../../../shared'
 
 // @ts-ignore
@@ -193,28 +191,3 @@ export const AccountModel_ = {
       .then((a1) => ({ ...a1.dataValues, history: JSON.parse(a1.dataValues.history) }))
   }
 }
-
-const accountSchema = new Schema<IAccount>({
-  domain: { type: String, default: '' },
-  accountType: { type: String, default: 'free' }, // free or premuim
-  trialTime: { type: String, default: '' }, // should be trial end date & time
-  suspended: { type: Boolean, default: false },
-  loginType: { type: String, default: 'default' }, // (FIX) remove and switch with domain
-  verified: { type: String, default: 'no' },
-  email: { type: String, default: '' },
-  password: { type: String, default: '' },
-  cookies: { type: String, default: '' },
-  proxy: { type: String, default: '' },
-  emailCreditsUsed: { type: Number, default: -1 },
-  emailCreditsLimit: { type: Number, default: -1 },
-  renewalDateTime: { type: Number, default: -1 }, // as Date
-  renewalStartDate: { type: Number, default: -1 }, // as Date
-  renewalEndDate: { type: Number, default: -1 }, // as Date
-  trialDaysLeft: { type: Number, default: -1 },
-  // @ts-ignore
-  lastUsed: { type: Date, default: new Date().getTime() }, // used to pick which to use to scrape
-  // @ts-ignore
-  history: { type: [Schema.Types.Mixed], default: [] }
-})
-
-export const AccountModel = model<IAccount>('accounts', accountSchema)

@@ -28,12 +28,29 @@ export const CHANNELS = {
   a_recordsGetAll: 'a_rga',
   a_recordGet: 'a_rg',
   //scrape
-  a_scrape: 'a_s'
+  a_scrape: 'a_s',
+  // cache
+  cache_get: 'c_g',
+  cache_delete: 'c_d',
+  cache_deleteMeta: 'c_dm',
+  cache_getMeta: 'c_gm',
+  cache_addAccount: 'c_aa',
+  cache_removeAccount: 'c_ra',
+  cache_getAllMetaIDs: 'c_gami',
+  cache_getAllAccountIDs: 'c_gaai',
+  // fork
+  fork_stop: 'f_s',
+  fork_create: 'f_c',
+  fork_setMaxTasks: 'f_smt',
+  fork_get: 'f_g',
+  // taskQueue
+  taskQueue_queues: 't_tqs'
 }
 
 export const QUEUE_CHANNELS = {
   scrapeProcessQueue: 'sqp',
   scrapeQueue: 'sq',
   taskQueue: 'tq',
-  processQueue: 'pq'
+  processQueue: 'pq',
+  timeoutQueue: 'toq'
 }

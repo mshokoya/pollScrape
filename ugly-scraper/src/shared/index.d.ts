@@ -1,6 +1,5 @@
 import { IpcMain } from 'electron'
 import { CHANNELS } from './util'
-import { MessagePortMain, UtilityProcess } from 'electron/main'
 import { ChildProcess } from 'child_process'
 type IPC_APP = {
   ipcMain: IpcMain
@@ -47,6 +46,8 @@ type TaskQueueEvent<T = Record<string, any>, ReqType = string> = {
   status?: string
   useFork: boolean
   taskType: ReqType
+  timeout?: [timeout: number, rounds: number]
+  // entity/actions
   metadata: {
     taskID: string
     taskGroup: string
@@ -72,8 +73,9 @@ type ScrapeQueueEvent<T = Record<string, any>> = {
 type SQueueItem<T = Record<string, any>> = {
   pid: string
   taskID: string
+  taskType
   taskGroup: string
-  action: (a: T) => Promise<void>
+  action: string
   args: Omit<T, 'taskID'>
   metadata: Record<string, any>
 }
@@ -81,6 +83,7 @@ type SQueueItem<T = Record<string, any>> = {
 type SProcessQueueItem = {
   task: SQueueItem
   process: Promise<any>
+  abortController: AbortController
 }
 
 type ForkScrapeEventArgs = {
@@ -97,7 +100,7 @@ type ForkScrapeEventArgs = {
 }
 
 type ForkScrapeEvent = {
-  taskType: 'scrape'
+  taskType: 'scrape' | 'move'
   meta: ForkScrapeEventArgs
 }
 
@@ -140,6 +143,7 @@ type Forks = {
   [key: string]: {
     fork: ChildProcess
     TIP: string[] // ids
+    stopType?: StopType
   }
 }
 
@@ -244,4 +248,12 @@ export type IRecord = {
   Phone: string
   Industry: string
   Keywords: string[]
+}
+
+type StopType = 'force' | 'waitAll' | 'waitPs'
+
+type Timeout = {
+  time: number
+  rounds: number
+  _TO: NodeJS.Timeout
 }
