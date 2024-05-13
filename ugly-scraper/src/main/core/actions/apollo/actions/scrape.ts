@@ -11,13 +11,15 @@ export const scrape = async (
     chunk,
     accountID,
     metadata,
-    useProxy
+    useProxy,
+    maxLeads
   }: {
     taskID: string
     chunk: [number, number]
     accountID: string
     metadata: IMetaData
     useProxy: boolean
+    maxLeads: number
   },
   signal: AbortSignal
 ) => {
@@ -34,10 +36,19 @@ export const scrape = async (
 
       browserCTX_ID = browserCTX.id
 
-      if (!browserCTX) throw new AppError(taskID, 'Failed to scrape, browser could not be started')
+      await browserCTX.page.setRequestInterception(true)
+
+      browserCTX.page.on('request', (request) => {
+        if (['image', 'stylesheet', 'font'].indexOf(request.resourceType()) !== -1) {
+          request.abort()
+        } else {
+          request.continue()
+        }
+      })
+
       const account = await AccountModel_.findById(accountID)
       if (!account) throw new AppError(taskID, 'Failed to scrape, account could not be found')
-      await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk)
+      await apolloScrape(taskID, browserCTX, metadata, useProxy, account, chunk, maxLeads)
     })
   } finally {
     // (FIX) make sure this works
